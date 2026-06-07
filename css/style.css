@@ -3160,6 +3160,12 @@ ul { list-style: none; }
   transition: border-color 0.2s;
   resize: none;
 }
+.cart-form-vehiculo {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 8px;
+}
+
 .cart-form input::placeholder,
 .cart-form textarea::placeholder { color: var(--gray-400); }
 .cart-form input:focus,
