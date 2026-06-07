@@ -337,9 +337,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 </button>
                 ${producto.variantId ? `
                 <div class="detalle-acciones-compra">
-                  <a class="btn btn-outline" href="https://is-perfomance.myshopify.com/cart/${producto.variantId}:1" target="_blank" rel="noopener">
+                  <button class="btn btn-outline" id="btn-comprar-ahora">
                     Comprar ahora
-                  </a>
+                  </button>
                   <button class="btn btn-secondary" id="btn-add-directo">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -372,5 +372,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   document.getElementById('btn-add-directo')?.addEventListener('click', () => {
     Carrito.add(producto);
     mostrarToast(producto.nombre, false);
+  });
+
+  document.getElementById('btn-comprar-ahora')?.addEventListener('click', () => {
+    Carrito.add(producto);
+    const url = checkoutUrl(Carrito.get());
+    if (url) window.open(url, '_blank');
   });
 });
