@@ -88,6 +88,7 @@ function abrirModalCarrito() {
               <div class="cart-item-info">
                 <span class="cart-item-name">${i.nombre}</span>
                 <span class="cart-item-qty">x${i.qty}${i.precio ? ' · ' + formatCLP(i.precio * i.qty) : ''}</span>
+                <span class="cart-item-compat" data-nombre="${i.nombre}"></span>
               </div>
               <button class="cart-item-remove" data-id="${i.shopifyId}">✕</button>
             </div>`).join('')}
@@ -122,6 +123,10 @@ function abrirModalCarrito() {
   document.getElementById('cart-close')?.addEventListener('click', cerrarCarrito);
   document.getElementById('cart-seguir')?.addEventListener('click', cerrarCarrito);
   overlay.addEventListener('click', e => { if (e.target === overlay) cerrarCarrito(); });
+
+  ['sol-marca', 'sol-modelo', 'sol-año'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', actualizarCompatCarrito);
+  });
 
   overlay.querySelectorAll('.cart-item-remove').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -198,9 +203,29 @@ function mostrarToast(mensaje, esConfirmacion = false) {
   setTimeout(hide, esConfirmacion ? 4000 : 5000);
 }
 
+// ── Compatibilidad en carrito ────────────────────────────────────────
+function actualizarCompatCarrito() {
+  const marca  = document.getElementById('sol-marca')?.value.trim() || '';
+  const modelo = document.getElementById('sol-modelo')?.value.trim() || '';
+  const año    = parseInt(document.getElementById('sol-año')?.value) || 0;
+
+  document.querySelectorAll('.cart-item-compat').forEach(el => {
+    if (!marca) { el.textContent = ''; el.className = 'cart-item-compat'; return; }
+    const prod = (window._todosProductos || []).find(p => p.nombre === el.dataset.nombre);
+    if (!prod || !prod.vehiculos.length) { el.textContent = ''; return; }
+    const ok = prod.vehiculos.some(v => {
+      if (marca && v.marca !== marca) return false;
+      if (modelo && v.modelo !== modelo) return false;
+      if (año && !v.años.includes(año)) return false;
+      return true;
+    });
+    el.textContent = ok ? '✓ Compatible' : '✗ No compatible con tu vehículo';
+    el.className = 'cart-item-compat ' + (ok ? 'compat-ok' : 'compat-no');
+  });
+}
+
 // ── Página de detalle ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function () {
-  // Limpiar ítems obsoletos del carrito (sin variantId — datos de versión anterior)
   const itemsActuales = Carrito.get();
   if (itemsActuales.some(i => !i.variantId)) {
     Carrito.save(itemsActuales.filter(i => i.variantId));
@@ -214,6 +239,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (!id) { container.innerHTML = '<div class="detalle-error">Producto no especificado.</div>'; return; }
 
   const productos = await cargarProductos();
+  window._todosProductos = productos;
   const producto = productos.find(p => p.id === id);
   if (!producto) { container.innerHTML = '<div class="detalle-error">Producto no encontrado.</div>'; return; }
 
@@ -310,18 +336,20 @@ document.addEventListener('DOMContentLoaded', async function () {
                   <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.108.55 4.086 1.512 5.802L0 24l6.389-1.674A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.213-3.724.976.994-3.622-.234-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
                   Solicitar instalación
                 </button>
-                ${producto.variantId
-                  ? `<a class="btn btn-outline" id="btn-compra-directa"
-                        href="https://is-perfomance.myshopify.com/cart/${producto.variantId}:1"
-                        target="_blank" rel="noopener">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
-                      Comprar sin instalación
-                    </a>`
-                  : ''}
-                <p class="detalle-acciones-hint">¿No necesitas instalación? Puedes comprar directamente y retirar en tienda.</p>
+                ${producto.variantId ? `
+                <div class="detalle-acciones-compra">
+                  <a class="btn btn-outline" href="https://is-perfomance.myshopify.com/cart/${producto.variantId}:1" target="_blank" rel="noopener">
+                    Comprar ahora
+                  </a>
+                  <button class="btn btn-secondary" id="btn-add-directo">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                    </svg>
+                    Agregar al carrito
+                  </button>
+                </div>
+                <p class="detalle-acciones-hint">Sin instalación — retiras en tienda.</p>` : ''}
                </div>`
           }
         </div>
@@ -337,8 +365,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
   });
 
-  // Agregar al carrito
   document.getElementById('btn-agregar-carrito')?.addEventListener('click', () => {
+    Carrito.add(producto);
+    mostrarToast(producto.nombre, false);
+  });
+
+  document.getElementById('btn-add-directo')?.addEventListener('click', () => {
     Carrito.add(producto);
     mostrarToast(producto.nombre, false);
   });
