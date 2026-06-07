@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISperformance - Detailing & Equipamiento</title>
+  <meta name="description" content="ISperformance - Taller de detailing automotriz y equipamiento." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
+  <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+</head>
+<body class="subpage isperformance-page">
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="https://daretoh.github.io/ISGROUP/" class="logo">
+        <img src="assets/images/ISGROUP-pb2.png" alt="IS GROUP" class="logo-img" />
+      </a>
+      <ul class="nav-links">
+        <li><a href="https://daretoh.github.io/ISGROUP/" class="nav-link">Inicio</a></li>
+        <li><a href="#equipos" class="nav-link">Equipos</a></li>
+        <li><a href="#servicios" class="nav-link active">Servicios</a></li>
+        <li><a href="#contacto" class="nav-link">Contacto</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="page-hero slide-section slide-center">
+    <div class="container page-hero-content">
+      <div class="page-hero-logo">
+        <img src="assets/images/ISperformanceLogo.png" alt="ISperformance" />
+      </div>
+      <h1 class="page-hero-title">ISperformance</h1>
+      <p class="page-hero-sub">Detailing &amp; Equipamiento</p>
+      <p class="page-hero-desc">
+        Taller especializado en detailing automotriz profesional,
+        pulido, protección cerámica y equipamiento para vehículos.
+      </p>
+    </div>
+    <div class="scroll-hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      <span>Conoce nuestros servicios</span>
+    </div>
+  </section>
+
+  <!-- EQUIPOS / TIENDA -->
+  <section class="equipos-tienda slide-section slide-top bg-slide-dim reveal" id="equipos">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Equipamiento</span>
+        <h2 class="section-title">Tienda de equipos</h2>
+        <p class="section-desc">Busca productos compatibles con tu vehículo.</p>
+      </div>
+
+      <div class="filtro-card">
+        <div class="filtro-grid">
+          <div class="filtro-field">
+            <label for="filtro-marca">Marca</label>
+            <select id="filtro-marca" disabled>
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+          <div class="filtro-field">
+            <label for="filtro-modelo">Modelo</label>
+            <select id="filtro-modelo" disabled>
+              <option value="">Selecciona una marca primero</option>
+            </select>
+          </div>
+          <div class="filtro-field">
+            <label for="filtro-ano">Año</label>
+            <select id="filtro-ano" disabled>
+              <option value="">Selecciona un modelo primero</option>
+            </select>
+          </div>
+          <div class="filtro-actions">
+            <button class="btn btn-primary" id="filtro-buscar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Buscar
+            </button>
+            <button class="btn btn-secondary" id="filtro-limpiar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="equipos-total" id="equipos-total">0 productos</div>
+
+      <div id="equipos-resultados">
+        <div class="equipos-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <p>Selecciona un vehículo para ver productos compatibles.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARCAS / PROVEEDORES -->
+  <section class="marcas slide-section" id="marcas">
+    <div class="container">
+      <div class="marcas-track">
+        <div class="marcas-strip">
+          <img src="img/logos/BULX15_LOGO.png" alt="BULX15" loading="lazy" />
+          <img src="img/logos/LOGO_KEKO.png" alt="Keko" loading="lazy" />
+          <img src="img/logos/RETRAX.png" alt="Retrax" loading="lazy" />
+          <img src="img/logos/BULX15_LOGO.png" alt="BULX15" loading="lazy" />
+          <img src="img/logos/LOGO_KEKO.png" alt="Keko" loading="lazy" />
+          <img src="img/logos/RETRAX.png" alt="Retrax" loading="lazy" />
+          <img src="img/logos/BULX15_LOGO.png" alt="BULX15" loading="lazy" />
+          <img src="img/logos/LOGO_KEKO.png" alt="Keko" loading="lazy" />
+          <img src="img/logos/RETRAX.png" alt="Retrax" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICIOS DETAILING -->
+  <section class="servicios slide-section slide-top bg-slide-alt reveal" id="servicios">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Detailing</span>
+        <h2 class="section-title">Catálogo de servicios</h2>
+        <p class="section-desc">"Cuidado real, resultados visibles"</p>
+      </div>
+
+      <div class="size-legend">
+        <span class="size-tag">S</span> City Car <span class="size-div">|</span>
+        <span class="size-tag">M</span> Sedan / Hatch <span class="size-div">|</span>
+        <span class="size-tag">L</span> SUV / Camioneta 4x4 (2 corridas) <span class="size-div">|</span>
+        <span class="size-tag">XL</span> Full Size / Van (3 corridas)
+      </div>
+
+      <details class="serv-cat-details" open>
+        <summary class="serv-cat-summary">
+          <div class="serv-cat-summary-left">
+            <span class="serv-cat-title">Limpieza</span>
+            <span class="serv-cat-resumen">Lavado exterior, descontaminación y limpieza de motor</span>
+          </div>
+        </summary>
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-price">$35k – $55k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.5 2H9l-1 7h8l-.5 4H6l-1 4h13l.5-4H11l.5-4H15l1-7Z"/></svg>
+            </div>
+            <h3>Core — Limpieza Básica</h3>
+            <p>Lavado exterior con espuma activa, limpieza de plásticos y ruedas, aspirado básico, cera de mantención e hidratación de plásticos.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$35k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$40k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$45k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$55k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$50k – $65k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>Advance — Limpieza Intermedia</h3>
+            <p>Limpieza exterior e interior detallada con sellado sintético de pintura (2-3 meses de protección).</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$50k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$55k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$60k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$65k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$80k – $100k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><circle cx="12" cy="16" r=".5"/></svg>
+            </div>
+            <h3>Pro — Limpieza Avanzada</h3>
+            <p>Limpieza profunda con descontaminación de pintura y protección avanzada con tecnología cerámica (3-6 meses).</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$80k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$90k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$95k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$100k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$25k – $45k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+            </div>
+            <h3>Limpieza de Motor</h3>
+            <p>Eliminación segura de polvo, grasa y suciedad acumulada. Protección de componentes eléctricos. Acondicionador de plásticos.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$25k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$30k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$40k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$45k</span></div>
+            </div>
+          </article>
+        </div>
+      </details>
+
+      <details class="serv-cat-details">
+        <summary class="serv-cat-summary">
+          <div class="serv-cat-summary-left">
+            <span class="serv-cat-title">Pulido de Pintura</span>
+            <span class="serv-cat-resumen">Corrección de barniz y restauración de brillo</span>
+          </div>
+        </summary>
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-price">$120k – $170k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+            </div>
+            <h3>Pulido Estándar</h3>
+            <p>Corrección estética del barniz, eliminación visible de rayas superficiales y mejora notable del brillo. 9-11 hrs. Recomendado con tratamiento cerámico (1-2 años).</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$120k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$140k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$150k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$170k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$170k – $230k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+            </div>
+            <h3>Pulido Premium</h3>
+            <p>Corrección avanzada del barniz, reducción de rayas medias y profundas, restauración profunda del brillo. 15-16 hrs. Incluye impermeabilizante de vidrios.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$170k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$190k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$210k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$230k</span></div>
+            </div>
+          </article>
+        </div>
+      </details>
+
+      <details class="serv-cat-details">
+        <summary class="serv-cat-summary">
+          <div class="serv-cat-summary-left">
+            <span class="serv-cat-title">Protección Cerámica</span>
+            <span class="serv-cat-resumen">Recubrimientos de 1 a 5 años y mantención periódica</span>
+          </div>
+        </summary>
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-price">$200k – $350k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h3>Cerámico 1 año</h3>
+            <p>Protección cerámica con preparación completa. Incluye pulido de preparación, cerámico para pintura y vidrios. 2-3 días.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$200k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$250k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$300k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$350k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$250k – $400k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h3>Cerámico 2 años</h3>
+            <p>Protección extendida con pulido estándar, limpieza de motor y tapiz. Recubrimiento cerámico con duración de 2 años. 2-3 días.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$250k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$300k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$350k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$400k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$300k – $450k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h3>Cerámico 5 años</h3>
+            <p>Protección máxima con pulido técnico avanzado. Mayor corrección estética y preparación óptima. 3-4 días.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$300k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$350k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$400k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$450k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$45k – $65k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12h6"/><path d="M12 9v6"/></svg>
+            </div>
+            <h3>Mantención Cerámica</h3>
+            <p>Cuidado periódico para extender la vida del tratamiento cerámico. Lavado seguro con shampoo pH neutro, reactivación hidrofóbica. 1.5-2.5 hrs.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$45k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$50k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$55k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$65k</span></div>
+            </div>
+          </article>
+        </div>
+      </details>
+
+      <details class="serv-cat-details">
+        <summary class="serv-cat-summary">
+          <div class="serv-cat-summary-left">
+            <span class="serv-cat-title">Detallado Interior</span>
+            <span class="serv-cat-resumen">Limpieza profunda de tapiz, asientos y techo</span>
+          </div>
+        </summary>
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-price">$130k – $200k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>Detallado Integral Interior</h3>
+            <p>Limpieza profunda y restauración interior: tapiz, asientos, alfombras, cielo, plásticos y eliminación de olores. 1-2 días.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$130k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$150k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$170k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$200k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$260k – $400k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>Detallado Integral Full</h3>
+            <p>Restauración estética completa interior y exterior. Descontaminación, limpieza de motor, asientos, techo y protección cerámica 3-6 meses.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$260k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$300k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$340k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$400k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$80k – $100k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M9 3v18"/></svg>
+            </div>
+            <h3>Limpieza Profunda de Asientos</h3>
+            <p>Lavado y extracción de asientos con bactericida, eliminación de manchas y olores. Acondicionador de cuero si aplica.</p>
+            <div class="servicio-grid-precios one-row">
+              <div class="servicio-size-row"><span class="size-label">2 corridas</span><span class="price-label">$80k</span></div>
+              <div class="servicio-size-row"><span class="size-label">3 corridas</span><span class="price-label">$100k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">Desde $40k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 22 16 8"/><path d="M8 8a6 6 0 0 0 6-6"/><path d="M6 6a4 4 0 0 0 4-4"/></svg>
+            </div>
+            <h3>Tratamiento Interior de Techo</h3>
+            <p>Limpieza cuidadosa del techo con productos seguros para telas delicadas. Sellado textil hidrorrepelente opcional.</p>
+            <div class="servicio-grid-precios one-row">
+              <div class="servicio-size-row"><span class="size-label">Limpieza</span><span class="price-label">$40k</span></div>
+              <div class="servicio-size-row"><span class="size-label">+ Protección</span><span class="price-label">$70k</span></div>
+            </div>
+          </article>
+        </div>
+      </details>
+
+      <details class="serv-cat-details">
+        <summary class="serv-cat-summary">
+          <div class="serv-cat-summary-left">
+            <span class="serv-cat-title">Especiales</span>
+            <span class="serv-cat-resumen">Tratamiento de vidrios y preparación para la venta</span>
+          </div>
+        </summary>
+        <div class="servicios-grid">
+          <article class="servicio-card">
+            <div class="servicio-price">$30k – $70k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+            </div>
+            <h3>Tratamiento de Vidrios</h3>
+            <p>Limpieza profunda + sellado cerámico hidrorrepelente. Mejora visibilidad bajo lluvia. Parabrisas: $20k, laterales: $5k c/u.</p>
+            <div class="servicio-grid-precios three-col">
+              <div class="servicio-size-row"><span class="size-label">4 vidrios</span><span class="price-label">$30k</span></div>
+              <div class="servicio-size-row"><span class="size-label">6 vidrios</span><span class="price-label">$40k</span></div>
+              <div class="servicio-size-row"><span class="size-label">8 vidrios</span><span class="price-label">$70k</span></div>
+            </div>
+          </article>
+          <article class="servicio-card">
+            <div class="servicio-price">$90k – $150k</div>
+            <div class="servicio-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <h3>Preparación para la Venta</h3>
+            <p>Mejora la presentación del vehículo: lavado detallado, pulido rápido de realce, limpieza de motor y encerado con máquina DA.</p>
+            <div class="servicio-grid-precios">
+              <div class="servicio-size-row"><span class="size-label">S</span><span class="price-label">$90k</span></div>
+              <div class="servicio-size-row"><span class="size-label">M</span><span class="price-label">$110k</span></div>
+              <div class="servicio-size-row"><span class="size-label">L</span><span class="price-label">$130k</span></div>
+              <div class="servicio-size-row"><span class="size-label">XL</span><span class="price-label">$150k</span></div>
+            </div>
+          </article>
+        </div>
+      </details>
+
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section class="contacto slide-section slide-center bg-slide-dark reveal" id="contacto">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Contacto</span>
+        <h2 class="section-title">Agenda tu servicio</h2>
+      </div>
+      <div class="contacto-grid">
+        <div class="contacto-info">
+          <div class="contacto-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>4x4.lsperformance@gmail.com</span>
+          </div>
+          <div class="contacto-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>+56 9 8561 5636</span>
+          </div>
+          <div class="contacto-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Calle Italia #1965, Puerto Montt, Chile</span>
+          </div>
+          <div class="contacto-social">
+            <a href="https://wa.me/56985615636" target="_blank" rel="noopener noreferrer" class="social-link" title="WhatsApp">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/lsperformance.pm/" target="_blank" rel="noopener noreferrer" class="social-link" title="Instagram">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162S8.597 18.162 12 18.162 18.162 15.403 18.162 12 15.403 5.838 12 5.838zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="https://www.tiktok.com/@isperformanceptomontt" target="_blank" rel="noopener noreferrer" class="social-link" title="TikTok">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61585534560813" target="_blank" rel="noopener noreferrer" class="social-link" title="Facebook">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://linktr.ee/isperformance.pm" target="_blank" rel="noopener noreferrer" class="social-link" title="Linktree">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </a>
+          </div>
+          <p style="font-size:0.82rem;color:var(--gray-400);margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="https://share.google/ZZUDD11KU1LqO59Zy" target="_blank" rel="noopener noreferrer" style="color:var(--orange-500);">⭐ Deja tu reseña</a>
+          </p>
+          <div class="contacto-mapa">
+            <iframe src="https://www.google.com/maps?q=Calle+Italia+%231965+Puerto+Montt+Chile&output=embed" loading="lazy" title="Mapa de ubicación"></iframe>
+            <a href="https://www.google.com/maps/dir//Calle+Italia+%231965+Puerto+Montt+Chile" target="_blank" rel="noopener noreferrer" class="contacto-mapa-link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Cómo llegar
+              <span>↗</span>
+            </a>
+          </div>
+        </div>
+        <form class="contacto-form">
+          <input type="text" placeholder="Tu nombre" required />
+          <input type="email" placeholder="Tu correo" required />
+          <textarea rows="4" placeholder="Describe tu vehículo y el servicio que buscas..." required></textarea>
+          <button type="submit" class="btn btn-primary">Solicitar cotización</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <img src="assets/images/ISGROUP-pb2.png" alt="IS GROUP" class="logo-img" />
+      </div>
+      <div class="footer-links">
+        <a href="https://daretoh.github.io/ISGROUP/" class="footer-link">Volver al inicio</a>
+      </div>
+      <p class="footer-copy">© 2026 ISperformance — IS GROUP. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js?v=9"></script>
+  <script src="js/productos.js?v=9"></script>
+  <script src="js/filtros.js?v=9"></script>
+</body>
+</html>
