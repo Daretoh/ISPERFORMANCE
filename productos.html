@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Productos — ISperformance</title>
+  <meta name="description" content="Catálogo completo de tapas, pisaderas y barras antivuelco para 4x4." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css?v=30" />
+  <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+  <style>
+    /* ── Layout página de catálogo ── */
+    .catalogo-page {
+      min-height: 100vh;
+      background: var(--dark-900);
+      padding-top: 80px;
+    }
+
+    .catalogo-hero {
+      background: linear-gradient(135deg, #0a0a0a 60%, #0e0b07 100%);
+      border-bottom: 1px solid rgba(255,107,0,0.15);
+      padding: 36px 0 28px;
+    }
+
+    .catalogo-hero-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .catalogo-hero-text h1 {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+      color: var(--white);
+      margin: 0 0 4px;
+    }
+
+    .catalogo-hero-text p {
+      font-size: 0.88rem;
+      color: var(--gray-400);
+      margin: 0;
+    }
+
+    .catalogo-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      min-width: 280px;
+      transition: border-color 0.2s;
+    }
+
+    .catalogo-search:focus-within {
+      border-color: rgba(255,107,0,0.5);
+      background: rgba(255,107,0,0.05);
+      box-shadow: 0 0 0 3px rgba(255,107,0,0.08);
+    }
+
+    .catalogo-search svg { flex-shrink: 0; color: var(--gray-400); }
+
+    .catalogo-search input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 0.88rem;
+      color: var(--white);
+      font-family: var(--font);
+    }
+
+    .catalogo-search input::placeholder { color: var(--gray-500); }
+
+    .catalogo-search-clear {
+      background: none;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+
+    .catalogo-search-clear:hover { color: var(--white); }
+
+    /* ── Body del catálogo: sidebar + grid ── */
+    .catalogo-body {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 0;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+      align-items: start;
+    }
+
+    /* ── Sidebar ── */
+    .catalogo-sidebar {
+      position: sticky;
+      top: 90px;
+      padding: 28px 20px 28px 0;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sidebar-section {
+      margin-bottom: 28px;
+    }
+
+    .sidebar-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gray-500);
+      margin: 0 0 12px;
+    }
+
+    /* Categoría botones */
+    .cat-filter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cat-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: var(--radius-sm);
+      background: none;
+      border: 1px solid transparent;
+      color: var(--gray-300);
+      font-size: 0.88rem;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+
+    .cat-filter-btn:hover {
+      background: rgba(255,255,255,0.05);
+      color: var(--white);
+    }
+
+    .cat-filter-btn.active {
+      background: rgba(255,107,0,0.12);
+      border-color: rgba(255,107,0,0.35);
+      color: var(--orange-500);
+    }
+
+    .cat-filter-btn .cat-count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      font-weight: 400;
+    }
+
+    .cat-filter-btn.active .cat-count {
+      color: var(--orange-400);
+    }
+
+    /* Filtro vehículo en sidebar */
+    .sidebar-vehicle-filter select {
+      width: 100%;
+      background: var(--dark-700);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      color: var(--white);
+      font-size: 0.84rem;
+      font-family: var(--font);
+      padding: 9px 12px;
+      margin-bottom: 8px;
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .sidebar-vehicle-filter select:focus {
+      border-color: rgba(255,107,0,0.4);
+    }
+
+    .sidebar-vehicle-filter select:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .sidebar-vehicle-filter select option {
+      background: #1a1a1a;
+      color: var(--white);
+    }
+
+    .sidebar-buscar-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 9px 16px;
+      background: var(--orange-500);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: var(--font);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .sidebar-buscar-btn:hover {
+      background: var(--orange-400);
+      transform: translateY(-1px);
+    }
+
+    .sidebar-limpiar-btn {
+      width: 100%;
+      margin-top: 8px;
+      background: none;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--gray-400);
+      font-size: 0.82rem;
+      font-family: var(--font);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .sidebar-limpiar-btn:hover {
+      border-color: rgba(255,255,255,0.25);
+      color: var(--white);
+    }
+
+    /* ── Grid de productos ── */
+    .catalogo-main {
+      padding: 28px 0 0 28px;
+    }
+
+    .catalogo-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .catalogo-count {
+      font-size: 0.82rem;
+      color: var(--gray-400);
+    }
+
+    .catalogo-count strong {
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .catalogo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .catalogo-empty {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .catalogo-empty svg {
+      opacity: 0.3;
+      margin-bottom: 12px;
+    }
+
+    .catalogo-loading {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+
+    .catalogo-loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,107,0,0.2);
+      border-top-color: var(--orange-500);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Mobile sidebar ── */
+    .sidebar-mobile-toggle {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,107,0,0.1);
+      border: 1px solid rgba(255,107,0,0.3);
+      border-radius: var(--radius-sm);
+      color: var(--orange-500);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font);
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 300;
+    }
+
+    @media (max-width: 860px) {
+      .catalogo-body {
+        grid-template-columns: 1fr;
+        padding: 0 16px 60px;
+      }
+
+      .catalogo-sidebar {
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 280px;
+        height: 100vh;
+        overflow-y: auto;
+        background: var(--dark-800);
+        border-right: 1px solid rgba(255,255,255,0.08);
+        z-index: 400;
+        padding: 80px 20px 28px;
+        transition: left 0.25s ease;
+      }
+
+      .catalogo-sidebar.open {
+        left: 0;
+      }
+
+      .sidebar-overlay.visible {
+        display: block;
+      }
+
+      .catalogo-main {
+        padding: 20px 0 0;
+      }
+
+      .sidebar-mobile-toggle {
+        display: flex;
+      }
+
+      .catalogo-hero-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .catalogo-search {
+        width: 100%;
+        min-width: unset;
+      }
+
+      .catalogo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body class="subpage isperformance-page">
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <img src="assets/images/ISGROUP-pb2.png" alt="IS GROUP" class="logo-img" />
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link">Inicio</a></li>
+        <li class="nav-has-dropdown">
+          <a href="productos.html" class="nav-link active">
+            Productos
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </a>
+          <div class="nav-dropdown">
+            <a href="productos.html?categoria=tapas" class="nav-dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
+              Tapas de Cajón
+            </a>
+            <a href="productos.html?categoria=pisaderas" class="nav-dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              Pisaderas &amp; Estribos
+            </a>
+            <a href="productos.html?categoria=barras" class="nav-dropdown-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Barras Antivuelco
+            </a>
+          </div>
+        </li>
+        <li><a href="index.html#servicios" class="nav-link">Servicios</a></li>
+        <li><a href="index.html#contacto" class="nav-link">Contacto</a></li>
+      </ul>
+      <div class="nav-right">
+        <a href="index.html" class="nav-search-btn" aria-label="Volver al inicio" title="Volver al inicio">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </a>
+        <a href="https://wa.me/56985615636" class="nav-wa-btn" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.108.55 4.086 1.512 5.802L0 24l6.389-1.674A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.213-3.724.976.994-3.622-.234-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          <span>Cotizar</span>
+        </a>
+        <button class="nav-cart-btn" id="nav-cart-btn" aria-label="Ver carrito">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-badge" style="display:none">0</span>
+        </button>
+        <button class="menu-toggle" id="menuToggle" aria-label="Menú">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO DEL CATÁLOGO -->
+  <div class="catalogo-page">
+    <div class="catalogo-hero">
+      <div class="container">
+        <div class="catalogo-hero-inner">
+          <div class="catalogo-hero-text">
+            <h1 id="cat-page-title">Catálogo de productos</h1>
+            <p>Equipamiento 4x4 para tu camioneta — instalación incluida en Puerto Montt</p>
+          </div>
+          <div class="catalogo-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="cat-buscar-texto" placeholder="Buscar producto..." autocomplete="off" />
+            <button class="catalogo-search-clear" id="cat-buscar-clear" style="display:none" aria-label="Limpiar">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="catalogo-body">
+
+      <!-- Sidebar overlay (móvil) -->
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+      <!-- Sidebar de filtros -->
+      <aside class="catalogo-sidebar" id="catalogo-sidebar">
+        <!-- Categorías -->
+        <div class="sidebar-section">
+          <p class="sidebar-section-title">Categoría</p>
+          <div class="cat-filter-list">
+            <button class="cat-filter-btn active" data-cat="">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Todos los productos
+              <span class="cat-count" id="count-todos">—</span>
+            </button>
+            <button class="cat-filter-btn" data-cat="Tapas">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>
+              Tapas de Cajón
+              <span class="cat-count" id="count-tapas">—</span>
+            </button>
+            <button class="cat-filter-btn" data-cat="Pisaderas">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+              Pisaderas &amp; Estribos
+              <span class="cat-count" id="count-pisaderas">—</span>
+            </button>
+            <button class="cat-filter-btn" data-cat="Barras">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Barras Antivuelco
+              <span class="cat-count" id="count-barras">—</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtro vehículo -->
+        <div class="sidebar-section">
+          <p class="sidebar-section-title">Vehículo compatible</p>
+          <div class="sidebar-vehicle-filter">
+            <select id="sb-marca">
+              <option value="">Marca</option>
+            </select>
+            <select id="sb-modelo" disabled>
+              <option value="">Modelo</option>
+            </select>
+            <select id="sb-ano" disabled>
+              <option value="">Año</option>
+            </select>
+            <button class="sidebar-buscar-btn" id="sb-buscar">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              Filtrar vehículo
+            </button>
+            <button class="sidebar-limpiar-btn" id="sb-limpiar">Limpiar filtros</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Contenido principal -->
+      <main class="catalogo-main">
+        <div class="catalogo-toolbar">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button class="sidebar-mobile-toggle" id="sidebar-mobile-toggle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="11" y2="18"/></svg>
+              Filtros
+            </button>
+            <p class="catalogo-count" id="catalogo-count"><strong>—</strong> productos</p>
+          </div>
+        </div>
+        <div class="catalogo-grid" id="catalogo-grid">
+          <div class="catalogo-loading">
+            <div class="catalogo-loading-spinner"></div>
+            <p>Cargando productos...</p>
+          </div>
+        </div>
+      </main>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <img src="assets/images/ISGROUP-pb2.png" alt="IS GROUP" class="logo-img" />
+      </div>
+      <div class="footer-links">
+        <a href="index.html" class="footer-link">Volver al inicio</a>
+      </div>
+      <p class="footer-copy">© 2026 ISperformance — IS GROUP. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js?v=30"></script>
+  <script src="js/carrito.js?v=30"></script>
+  <script src="js/productos.js?v=30"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async function () {
+
+    let todosLosProductos = [];
+    let catActiva = '';
+    let marcaFiltro = '', modeloFiltro = '', añoFiltro = '';
+
+    // ── Leer ?categoria= de la URL ──
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = (urlParams.get('categoria') || '').toLowerCase();
+
+    const CAT_URL_MAP = {
+      'tapas': 'Tapas',
+      'pisaderas': 'Pisaderas',
+      'barras': 'Barras'
+    };
+
+    if (catParam && CAT_URL_MAP[catParam]) {
+      catActiva = CAT_URL_MAP[catParam];
+    }
+
+    // ── Cargar productos ──
+    todosLosProductos = await cargarProductos();
+
+    // ── Poblar contadores de categoría ──
+    function actualizarContadores(lista) {
+      document.getElementById('count-todos').textContent = lista.length;
+      document.getElementById('count-tapas').textContent = lista.filter(p => p.categoria === 'Tapas').length;
+      document.getElementById('count-pisaderas').textContent = lista.filter(p => p.categoria === 'Pisaderas').length;
+      document.getElementById('count-barras').textContent = lista.filter(p => p.categoria === 'Barras').length;
+    }
+
+    actualizarContadores(todosLosProductos);
+
+    // ── Selects de vehículo ──
+    const sbMarca = document.getElementById('sb-marca');
+    const sbModelo = document.getElementById('sb-modelo');
+    const sbAno = document.getElementById('sb-ano');
+
+    function getMarcas() {
+      const s = new Set();
+      todosLosProductos.forEach(p => p.vehiculos.forEach(v => { if (v.marca) s.add(v.marca); }));
+      return [...s].sort();
+    }
+
+    function getModelos(marca) {
+      const s = new Set();
+      todosLosProductos.forEach(p => p.vehiculos.forEach(v => {
+        if (v.marca === marca && v.modelo) s.add(v.modelo);
+      }));
+      return [...s].sort();
+    }
+
+    function getAnos(marca, modelo) {
+      const s = new Set();
+      todosLosProductos.forEach(p => p.vehiculos.forEach(v => {
+        if (v.marca === marca && v.modelo === modelo) v.años.forEach(a => s.add(a));
+      }));
+      return [...s].sort((a, b) => b - a);
+    }
+
+    getMarcas().forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = m;
+      sbMarca.appendChild(opt);
+    });
+
+    sbMarca.addEventListener('change', function () {
+      const marca = this.value;
+      sbModelo.innerHTML = '<option value="">Modelo</option>';
+      sbAno.innerHTML = '<option value="">Año</option>';
+      sbAno.disabled = true;
+      if (marca) {
+        getModelos(marca).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = m;
+          sbModelo.appendChild(opt);
+        });
+        sbModelo.disabled = false;
+      } else {
+        sbModelo.disabled = true;
+      }
+    });
+
+    sbModelo.addEventListener('change', function () {
+      const modelo = this.value;
+      sbAno.innerHTML = '<option value="">Año</option>';
+      if (modelo) {
+        getAnos(sbMarca.value, modelo).forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = a;
+          sbAno.appendChild(opt);
+        });
+        sbAno.disabled = false;
+      } else {
+        sbAno.disabled = true;
+      }
+    });
+
+    document.getElementById('sb-buscar').addEventListener('click', () => {
+      marcaFiltro = sbMarca.value;
+      modeloFiltro = sbModelo.value;
+      añoFiltro = sbAno.value;
+      renderCatalogo();
+      cerrarSidebar();
+    });
+
+    document.getElementById('sb-limpiar').addEventListener('click', () => {
+      sbMarca.value = '';
+      sbModelo.innerHTML = '<option value="">Modelo</option>';
+      sbModelo.disabled = true;
+      sbAno.innerHTML = '<option value="">Año</option>';
+      sbAno.disabled = true;
+      marcaFiltro = '';
+      modeloFiltro = '';
+      añoFiltro = '';
+      document.getElementById('cat-buscar-texto').value = '';
+      document.getElementById('cat-buscar-clear').style.display = 'none';
+      renderCatalogo();
+    });
+
+    // ── Botones de categoría ──
+    document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        catActiva = btn.dataset.cat;
+        actualizarTituloPage();
+        renderCatalogo();
+        cerrarSidebar();
+      });
+    });
+
+    function activarCatBtn(cat) {
+      document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cat === cat);
+      });
+    }
+
+    function actualizarTituloPage() {
+      const titles = {
+        '': 'Catálogo de productos',
+        'Tapas': 'Tapas de Cajón',
+        'Pisaderas': 'Pisaderas & Estribos',
+        'Barras': 'Barras Antivuelco'
+      };
+      document.getElementById('cat-page-title').textContent = titles[catActiva] || 'Catálogo';
+    }
+
+    // ── Búsqueda por texto ──
+    const textInput = document.getElementById('cat-buscar-texto');
+    const textClear = document.getElementById('cat-buscar-clear');
+
+    textInput.addEventListener('input', function () {
+      const q = this.value.trim();
+      textClear.style.display = q ? 'block' : 'none';
+      renderCatalogo();
+    });
+
+    textClear.addEventListener('click', () => {
+      textInput.value = '';
+      textClear.style.display = 'none';
+      textInput.focus();
+      renderCatalogo();
+    });
+
+    // ── Card HTML ──
+    function buildCard(p) {
+      const waMsg = encodeURIComponent(`Hola, me interesa el producto: ${p.nombre}. ¿Podrían darme más información y precio?`);
+      const waLink = `https://wa.me/56985615636?text=${waMsg}`;
+      const sinStock = p.stock !== null && p.stock === 0;
+      const stockBadge = p.stock === null ? '' :
+        p.stock > 0
+          ? `<span class="stock-badge stock-in">En stock</span>`
+          : `<span class="stock-badge stock-out">Sin stock</span>`;
+
+      const compatItems = p.vehiculos.filter(v => v.marca);
+      const compatVisible = compatItems.slice(0, 2);
+      const compatResto = compatItems.length - 2;
+      let compatTags = compatVisible.map(v => {
+        const rango = v.años.length ? `${Math.min(...v.años)}–${Math.max(...v.años)}` : '';
+        return `<span class="compat-tag">${v.marca} ${v.modelo}${rango ? ' ' + rango : ''}</span>`;
+      }).join('');
+      if (compatResto > 0) compatTags += `<span class="compat-tag compat-tag-more">+${compatResto} más</span>`;
+
+      return `
+        <article class="equipo-card${sinStock ? ' sin-stock' : ''}" data-id="${p.id}" style="cursor:pointer">
+          <div class="equipo-card-img">
+            <img src="${p.imagen}" alt="${p.nombre}" loading="lazy"
+                 onerror="this.src='https://placehold.co/400x280/1A1A1A/FF6B00?text=${encodeURIComponent(p.nombre)}'" />
+            ${stockBadge ? `<div class="card-stock-badge">${stockBadge}</div>` : ''}
+          </div>
+          <div class="equipo-card-body">
+            <span class="equipo-card-cat">${p.categoria}</span>
+            <h3 class="equipo-card-title">${p.nombre}</h3>
+            <p class="equipo-card-desc">${p.descripcion}</p>
+            ${compatTags ? `<div class="equipo-card-compat">${compatTags}</div>` : ''}
+            <div class="equipo-card-footer">
+              <span class="equipo-card-precio">${p.precio ? '$' + Math.round(p.precio).toLocaleString('es-CL') : 'Consultar precio'}</span>
+              <a class="btn btn-wa" href="${waLink}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.108.55 4.086 1.512 5.802L0 24l6.389-1.674A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.213-3.724.976.994-3.622-.234-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+                Consultar
+              </a>
+            </div>
+          </div>
+        </article>`;
+    }
+
+    // ── Render principal ──
+    function renderCatalogo() {
+      let lista = [...todosLosProductos];
+
+      // Filtro categoría
+      if (catActiva) {
+        lista = lista.filter(p => p.categoria === catActiva);
+      }
+
+      // Filtro vehículo
+      if (marcaFiltro || modeloFiltro || añoFiltro) {
+        lista = lista.filter(p =>
+          p.vehiculos.some(v => {
+            if (marcaFiltro && v.marca !== marcaFiltro) return false;
+            if (modeloFiltro && v.modelo !== modeloFiltro) return false;
+            if (añoFiltro && !v.años.includes(parseInt(añoFiltro))) return false;
+            return true;
+          })
+        );
+      }
+
+      // Filtro texto
+      const q = textInput.value.trim().toLowerCase();
+      if (q) {
+        lista = lista.filter(p =>
+          p.nombre.toLowerCase().includes(q) ||
+          (p.descripcion && p.descripcion.toLowerCase().includes(q)) ||
+          (p.categoria && p.categoria.toLowerCase().includes(q))
+        );
+      }
+
+      const grid = document.getElementById('catalogo-grid');
+      const countEl = document.getElementById('catalogo-count');
+      countEl.innerHTML = `<strong>${lista.length}</strong> producto${lista.length !== 1 ? 's' : ''}`;
+      actualizarContadores(todosLosProductos);
+
+      if (!lista.length) {
+        grid.innerHTML = `
+          <div class="catalogo-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <p>No se encontraron productos con esos filtros.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = lista.map(buildCard).join('');
+
+      // Click a detalle
+      grid.querySelectorAll('.equipo-card').forEach(card => {
+        card.addEventListener('click', e => {
+          if (e.target.closest('.btn-wa')) return;
+          const id = parseInt(card.dataset.id);
+          const p = todosLosProductos.find(x => x.id === id);
+          if (p) window.location.href = 'producto.html?id=' + p.id;
+        });
+      });
+    }
+
+    // ── Sidebar móvil toggle ──
+    function cerrarSidebar() {
+      document.getElementById('catalogo-sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('visible');
+    }
+
+    document.getElementById('sidebar-mobile-toggle').addEventListener('click', () => {
+      document.getElementById('catalogo-sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('visible');
+    });
+
+    document.getElementById('sidebar-overlay').addEventListener('click', cerrarSidebar);
+
+    // ── Init ──
+    activarCatBtn(catActiva);
+    actualizarTituloPage();
+    renderCatalogo();
+  });
+  </script>
+</body>
+</html>
