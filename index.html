@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=23" />
+  <link rel="stylesheet" href="css/style.css?v=24" />
   <link rel="icon" type="image/png" href="assets/images/favicon.png" />
 </head>
 <body class="subpage isperformance-page">
@@ -26,13 +26,17 @@
         <li><a href="#contacto" class="nav-link">Contacto</a></li>
       </ul>
       <div class="nav-right">
+        <a href="https://wa.me/56985615636" class="nav-wa-btn" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.108.55 4.086 1.512 5.802L0 24l6.389-1.674A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.36-.213-3.724.976.994-3.622-.234-.373A9.818 9.818 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          <span>Cotizar</span>
+        </a>
         <button class="nav-cart-btn" id="nav-cart-btn" aria-label="Ver carrito">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-        </svg>
-        <span class="cart-badge" style="display:none">0</span>
-      </button>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          <span class="cart-badge" style="display:none">0</span>
+        </button>
         <button class="menu-toggle" id="menuToggle" aria-label="Menú">
           <span></span><span></span><span></span>
         </button>
@@ -65,10 +69,121 @@
         Taller especializado en detailing automotriz profesional,
         pulido, protección cerámica y equipamiento para vehículos.
       </p>
+
+      <div class="hero-filtro">
+        <p class="hero-filtro-label">¿Buscas accesorios para tu camioneta?</p>
+        <div class="hero-filtro-row">
+          <select id="hero-marca">
+            <option value="">Marca</option>
+          </select>
+          <select id="hero-modelo" disabled>
+            <option value="">Modelo</option>
+          </select>
+          <select id="hero-ano" disabled>
+            <option value="">Año</option>
+          </select>
+          <button id="hero-buscar" class="hero-buscar-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Ver productos
+          </button>
+        </div>
+      </div>
     </div>
     <div class="scroll-hint">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
       <span>Conoce nuestros servicios</span>
+    </div>
+  </section>
+
+  <!-- TRUST BADGES -->
+  <div class="trust-strip">
+    <div class="container">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="trust-text">
+            <strong>Instalación en tienda</strong>
+            <span>Calle Italia #1965, Puerto Montt</span>
+          </div>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="trust-text">
+            <strong>Garantía de producto</strong>
+            <span>Respaldo directo con el fabricante</span>
+          </div>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="trust-text">
+            <strong>Pago 100% seguro</strong>
+            <span>Checkout procesado por Shopify</span>
+          </div>
+        </div>
+        <div class="trust-sep"></div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div class="trust-text">
+            <strong>Respuesta rápida</strong>
+            <span>WhatsApp en horario laboral</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORÍAS VISUALES -->
+  <section class="categorias-section">
+    <div class="container">
+      <div class="section-header" style="margin-bottom:40px">
+        <span class="section-tag">Equipamiento 4x4</span>
+        <h2 class="section-title">¿Qué estás buscando?</h2>
+      </div>
+      <div class="categorias-grid">
+        <a href="#equipos" class="cat-visual-card">
+          <div class="cat-visual-bg cat-bg-tapas"></div>
+          <div class="cat-visual-inner">
+            <div class="cat-visual-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <h3>Tapas &amp; Lonas</h3>
+            <p>Protección y estilo para tu cajón</p>
+            <span class="cat-visual-cta">Ver productos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+        <a href="#equipos" class="cat-visual-card">
+          <div class="cat-visual-bg cat-bg-pisaderas"></div>
+          <div class="cat-visual-inner">
+            <div class="cat-visual-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+            </div>
+            <h3>Pisaderas &amp; Estribos</h3>
+            <p>Acceso fácil y seguro a tu vehículo</p>
+            <span class="cat-visual-cta">Ver productos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+        <a href="#equipos" class="cat-visual-card">
+          <div class="cat-visual-bg cat-bg-barras"></div>
+          <div class="cat-visual-inner">
+            <div class="cat-visual-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
+            </div>
+            <h3>Barras Antivuelco</h3>
+            <p>Seguridad y presencia para tu 4x4</p>
+            <span class="cat-visual-cta">Ver productos <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+          </div>
+        </a>
+      </div>
     </div>
   </section>
 
@@ -510,9 +625,9 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=23"></script>
-  <script src="js/carrito.js?v=23"></script>
-  <script src="js/productos.js?v=23"></script>
-  <script src="js/filtros.js?v=23"></script>
+  <script src="js/main.js?v=24"></script>
+  <script src="js/carrito.js?v=24"></script>
+  <script src="js/productos.js?v=24"></script>
+  <script src="js/filtros.js?v=24"></script>
 </body>
 </html>

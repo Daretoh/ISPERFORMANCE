@@ -230,4 +230,63 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   poblarMarca();
   limpiarFiltros();
+
+  // ── Hero filtro ──
+  const heroMarcaEl  = document.getElementById('hero-marca');
+  const heroModeloEl = document.getElementById('hero-modelo');
+  const heroAnoEl    = document.getElementById('hero-ano');
+  const heroBuscarBtn = document.getElementById('hero-buscar');
+
+  if (heroMarcaEl) {
+    heroMarcaEl.innerHTML = '<option value="">Marca</option>';
+    getMarcas().forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = m;
+      heroMarcaEl.appendChild(opt);
+    });
+
+    heroMarcaEl.addEventListener('change', function () {
+      const marca = this.value;
+      heroModeloEl.innerHTML = '<option value="">Modelo</option>';
+      heroAnoEl.innerHTML = '<option value="">Año</option>';
+      heroAnoEl.disabled = true;
+      if (marca) {
+        getModelos(marca).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = m;
+          heroModeloEl.appendChild(opt);
+        });
+        heroModeloEl.disabled = false;
+      } else {
+        heroModeloEl.disabled = true;
+      }
+    });
+
+    heroModeloEl.addEventListener('change', function () {
+      const modelo = this.value;
+      heroAnoEl.innerHTML = '<option value="">Año</option>';
+      if (modelo) {
+        getAños(heroMarcaEl.value, modelo).forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = opt.textContent = a;
+          heroAnoEl.appendChild(opt);
+        });
+        heroAnoEl.disabled = false;
+      } else {
+        heroAnoEl.disabled = true;
+      }
+    });
+
+    if (heroBuscarBtn) {
+      heroBuscarBtn.addEventListener('click', () => {
+        marcaEl.value = heroMarcaEl.value;
+        poblarModelo(heroMarcaEl.value);
+        modeloEl.value = heroModeloEl.value;
+        poblarAño(heroMarcaEl.value, heroModeloEl.value);
+        añoEl.value = heroAnoEl.value;
+        aplicarFiltros();
+        document.getElementById('equipos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }
 });
