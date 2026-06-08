@@ -125,10 +125,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
 
         const vehiculosMostrar = hayFiltro && vehiculosFiltrados.length ? vehiculosFiltrados : p.vehiculos;
-        const compatTags = vehiculosMostrar.filter(v => v.marca).map(v => {
-          const rango = v.años.length ? `${Math.min(...v.años)}-${Math.max(...v.años)}` : '';
-          return `<span class="compat-tag">${v.marca} ${v.modelo} ${rango}</span>`;
+        const compatItems = vehiculosMostrar.filter(v => v.marca);
+        const compatVisible = compatItems.slice(0, 2);
+        const compatResto = compatItems.length - 2;
+        let compatTags = compatVisible.map(v => {
+          const rango = v.años.length ? `${Math.min(...v.años)}–${Math.max(...v.años)}` : '';
+          return `<span class="compat-tag">${v.marca} ${v.modelo}${rango ? ' ' + rango : ''}</span>`;
         }).join('');
+        if (compatResto > 0) compatTags += `<span class="compat-tag compat-tag-more">+${compatResto} más</span>`;
 
         const precio = vehiculosFiltrados.length ? Math.max(...vehiculosFiltrados.map(v => v.precio)) : 0;
 
