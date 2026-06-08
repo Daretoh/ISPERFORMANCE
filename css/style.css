@@ -1107,6 +1107,71 @@ ul { list-style: none; }
   text-align: center;
 }
 
+/* ---- Hero collage de camionetas ---- */
+.hero-collage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-col-left,
+.hero-col-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.hero-col-left {
+  left: 0;
+  align-items: flex-start;
+  mask-image: linear-gradient(to right, black 30%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 30%, transparent 100%);
+}
+
+.hero-col-right {
+  right: 0;
+  align-items: flex-end;
+  mask-image: linear-gradient(to left, black 30%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, black 30%, transparent 100%);
+}
+
+.hero-col-left img,
+.hero-col-right img {
+  width: 360px;
+  height: 210px;
+  object-fit: cover;
+  border-radius: 12px;
+  opacity: 0.38;
+  transition: opacity 0.3s;
+  display: block;
+}
+
+.hero-col-left img:nth-child(2) {
+  transform: translateX(48px);
+}
+
+.hero-col-right img:nth-child(2) {
+  transform: translateX(-48px);
+}
+
+@media (max-width: 1100px) {
+  .hero-col-left img,
+  .hero-col-right img { width: 260px; height: 160px; }
+}
+
+@media (max-width: 768px) {
+  .hero-collage { display: none; }
+}
+
 /* ---- Full-page slide sections ---- */
 .slide-section {
   min-height: 100vh;
