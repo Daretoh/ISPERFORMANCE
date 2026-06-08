@@ -197,6 +197,9 @@ ul { list-style: none; }
 /* ---- Nav dropdown ---- */
 .nav-has-dropdown {
   position: relative;
+  /* El padding-bottom extiende el área hover para cubrir el gap hasta el dropdown */
+  padding-bottom: 18px;
+  margin-bottom: -18px;
 }
 
 .nav-has-dropdown > a {
@@ -216,17 +219,17 @@ ul { list-style: none; }
 
 .nav-dropdown {
   position: absolute;
-  top: calc(100% + 14px);
+  top: calc(100% - 18px + 6px); /* alineado al final del padding */
   left: 50%;
-  transform: translateX(-50%) translateY(-6px);
+  transform: translateX(-50%);
   background: var(--dark-800);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-sm);
   padding: 6px;
-  min-width: 200px;
+  min-width: 210px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.15s ease;
   z-index: 200;
   box-shadow: 0 20px 48px rgba(0,0,0,0.55);
 }
@@ -235,7 +238,6 @@ ul { list-style: none; }
 .nav-has-dropdown.open .nav-dropdown {
   opacity: 1;
   pointer-events: all;
-  transform: translateX(-50%) translateY(0);
 }
 
 .nav-dropdown-item {
@@ -3866,6 +3868,61 @@ ul { list-style: none; }
   .hero-filtro-row { flex-direction: column; }
   .hero-filtro-row select,
   .hero-buscar-btn { width: 100%; }
+}
+
+/* ── Hero search bar (búsqueda por texto debajo del filtro) ── */
+.hero-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  margin-top: 12px;
+  max-width: 560px;
+  width: 100%;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.hero-search-bar:focus-within {
+  border-color: rgba(255, 107, 0, 0.5);
+  background: rgba(255, 107, 0, 0.05);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.08);
+}
+
+.hero-search-bar svg {
+  flex-shrink: 0;
+  color: var(--gray-400);
+}
+
+.hero-search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.88rem;
+  color: var(--white);
+  font-family: var(--font);
+}
+
+.hero-search-bar input::placeholder {
+  color: var(--gray-500);
+}
+
+.hero-search-bar .producto-search-clear {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.hero-search-bar .producto-search-clear:hover {
+  color: var(--white);
 }
 
 /* ========================================

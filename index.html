@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=29" />
+  <link rel="stylesheet" href="css/style.css?v=30" />
   <link rel="icon" type="image/png" href="assets/images/favicon.png" />
 </head>
 <body class="subpage isperformance-page">
@@ -93,7 +93,7 @@
       </p>
 
       <div class="hero-filtro">
-        <p class="hero-filtro-label">¿Buscas accesorios para tu camioneta?</p>
+        <p class="hero-filtro-label">Filtra por tu camioneta</p>
         <div class="hero-filtro-row">
           <select id="hero-marca">
             <option value="">Marca</option>
@@ -109,6 +109,12 @@
             Ver productos
           </button>
         </div>
+      </div>
+
+      <div class="hero-search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="producto-buscar-texto" placeholder="O busca por nombre de producto..." autocomplete="off" />
+        <button class="producto-search-clear" id="producto-buscar-clear" style="display:none" aria-label="Limpiar">✕</button>
       </div>
     </div>
     <div class="scroll-hint">
@@ -225,13 +231,6 @@
         <select id="filtro-ano"><option value=""></option></select>
         <button id="filtro-buscar"></button>
         <button id="filtro-limpiar"></button>
-      </div>
-
-      <!-- Búsqueda por texto -->
-      <div class="producto-search-bar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="producto-buscar-texto" placeholder="Buscar producto por nombre o categoría..." autocomplete="off" />
-        <button class="producto-search-clear" id="producto-buscar-clear" style="display:none" aria-label="Limpiar búsqueda">✕</button>
       </div>
 
       <div class="equipos-total" id="equipos-total">0 productos</div>
@@ -637,9 +636,9 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=29"></script>
-  <script src="js/carrito.js?v=29"></script>
-  <script src="js/productos.js?v=29"></script>
-  <script src="js/filtros.js?v=29"></script>
+  <script src="js/main.js?v=30"></script>
+  <script src="js/carrito.js?v=30"></script>
+  <script src="js/productos.js?v=30"></script>
+  <script src="js/filtros.js?v=30"></script>
 </body>
 </html>
