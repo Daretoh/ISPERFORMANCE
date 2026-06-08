@@ -12,6 +12,17 @@ if (location.hash) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ---- Hero parallax scroll ----
+  const heroSection = document.querySelector('.page-hero');
+  if (heroSection) {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      const shift = -(scrollY * 0.35).toFixed(1);
+      heroSection.style.setProperty('--hero-scroll', shift + 'px');
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
   // ---- Mobile Menu ----
   const toggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');

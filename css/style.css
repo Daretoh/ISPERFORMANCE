@@ -1107,12 +1107,17 @@ ul { list-style: none; }
   text-align: center;
 }
 
-/* ---- Hero collage de camionetas ---- */
+/* ---- Hero collage — efecto 3D + parallax scroll ---- */
+.page-hero {
+  perspective: 1200px;
+}
+
 .hero-collage {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  transform-style: preserve-3d;
 }
 
 .page-hero-content {
@@ -1124,48 +1129,85 @@ ul { list-style: none; }
 .hero-col-right {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   gap: 20px;
+  will-change: transform;
 }
 
 .hero-col-left {
   left: 0;
   align-items: flex-start;
-  mask-image: linear-gradient(to right, black 30%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, black 30%, transparent 100%);
+  transform: translateY(calc(-50% + var(--hero-scroll, 0px)));
+  mask-image: linear-gradient(to right, black 20%, transparent 95%);
+  -webkit-mask-image: linear-gradient(to right, black 20%, transparent 95%);
 }
 
 .hero-col-right {
   right: 0;
   align-items: flex-end;
-  mask-image: linear-gradient(to left, black 30%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to left, black 30%, transparent 100%);
+  transform: translateY(calc(-50% + var(--hero-scroll, 0px)));
+  mask-image: linear-gradient(to left, black 20%, transparent 95%);
+  -webkit-mask-image: linear-gradient(to left, black 20%, transparent 95%);
 }
 
 .hero-col-left img,
 .hero-col-right img {
-  width: 360px;
-  height: 210px;
+  width: 380px;
+  height: 220px;
   object-fit: cover;
-  border-radius: 12px;
-  opacity: 0.38;
-  transition: opacity 0.3s;
+  border-radius: 14px;
+  opacity: 0;
   display: block;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  animation: heroTruckIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+.hero-col-left img { transform: rotateY(18deg) rotateX(-4deg) translateZ(30px); }
+.hero-col-right img { transform: rotateY(-18deg) rotateX(-4deg) translateZ(30px); }
+
+.hero-col-left img:nth-child(1) { animation-delay: 0.15s; }
 .hero-col-left img:nth-child(2) {
-  transform: translateX(48px);
+  animation-delay: 0.3s;
+  margin-left: 44px;
+}
+.hero-col-right img:nth-child(1) { animation-delay: 0.2s; }
+.hero-col-right img:nth-child(2) {
+  animation-delay: 0.35s;
+  margin-right: 44px;
 }
 
-.hero-col-right img:nth-child(2) {
-  transform: translateX(-48px);
+@keyframes heroTruckIn {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 0.42;
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.hero-col-right img {
+  animation-name: heroTruckInRight;
+}
+
+@keyframes heroTruckInRight {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    opacity: 0.42;
+    clip-path: inset(0 0 0 0%);
+  }
 }
 
 @media (max-width: 1100px) {
   .hero-col-left img,
-  .hero-col-right img { width: 260px; height: 160px; }
+  .hero-col-right img { width: 270px; height: 165px; }
+  .hero-col-left img:nth-child(2) { margin-left: 28px; }
+  .hero-col-right img:nth-child(2) { margin-right: 28px; }
 }
 
 @media (max-width: 768px) {
