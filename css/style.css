@@ -1155,10 +1155,9 @@ ul { list-style: none; }
 .hero-col-right img {
   width: 380px;
   height: 220px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 14px;
-  background: var(--dark-800);
+  object-fit: contain;
+  object-position: center bottom;
+  border-radius: 0;
   opacity: 0;
   display: block;
   animation: heroTruckFade 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
