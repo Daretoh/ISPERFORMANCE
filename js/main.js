@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ---- Nav search bar: aparece al hacer scroll pasando el hero search ----
-  const heroSearchBar = document.querySelector('.hero-search-bar');
+  const heroSearchBar = document.querySelector('.hero-search-bar') || document.querySelector('.catalogo-search');
   const navbar = document.querySelector('.navbar');
   const navInput = document.getElementById('nav-buscar-texto');
-  const heroInput = document.getElementById('producto-buscar-texto');
+  const heroInput = document.getElementById('producto-buscar-texto') || document.getElementById('cat-buscar-texto');
   const navClear = document.getElementById('nav-buscar-clear');
 
   if (heroSearchBar && navbar) {
