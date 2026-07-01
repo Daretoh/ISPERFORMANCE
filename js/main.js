@@ -23,19 +23,37 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
-  // ---- Lupa → volver al hero ----
-  const toHeroBtn = document.getElementById('nav-to-hero');
-  if (toHeroBtn) {
-    toHeroBtn.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      const input = document.getElementById('producto-buscar-texto');
-      if (input) {
-        setTimeout(() => {
-          const heroFiltro = document.getElementById('hero-marca');
-          if (heroFiltro) heroFiltro.focus();
-        }, 600);
-      }
+  // ---- Nav search bar: aparece al hacer scroll pasando el hero search ----
+  const heroSearchBar = document.querySelector('.hero-search-bar');
+  const navbar = document.querySelector('.navbar');
+  const navInput = document.getElementById('nav-buscar-texto');
+  const heroInput = document.getElementById('producto-buscar-texto');
+  const navClear = document.getElementById('nav-buscar-clear');
+
+  if (heroSearchBar && navbar) {
+    const searchObserver = new IntersectionObserver((entries) => {
+      navbar.classList.toggle('search-visible', !entries[0].isIntersecting);
+    }, { threshold: 0, rootMargin: '-72px 0px 0px 0px' });
+    searchObserver.observe(heroSearchBar);
+  }
+
+  if (navInput && heroInput) {
+    navInput.addEventListener('input', () => {
+      heroInput.value = navInput.value;
+      heroInput.dispatchEvent(new Event('input', { bubbles: true }));
+      if (navClear) navClear.style.display = navInput.value ? '' : 'none';
     });
+    heroInput.addEventListener('input', () => {
+      navInput.value = heroInput.value;
+    });
+    if (navClear) {
+      navClear.addEventListener('click', () => {
+        navInput.value = '';
+        heroInput.value = '';
+        heroInput.dispatchEvent(new Event('input', { bubbles: true }));
+        navClear.style.display = 'none';
+      });
+    }
   }
 
   // ---- Nav dropdown: categorías (scroll a carrusel) ----
