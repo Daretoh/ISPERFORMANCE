@@ -3783,7 +3783,7 @@ ul { list-style: none; }
   position: relative;
   background:
     linear-gradient(175deg, rgba(10,10,10,0.70) 0%, rgba(10,10,10,0.78) 55%, rgba(10,10,10,0.88) 100%),
-    url('../assets/images/hero/portada.png') center center / cover no-repeat,
+    url('../assets/images/hero/portada-v2.png') center center / cover no-repeat,
     linear-gradient(175deg, #0a0a0a 60%, #0e0b07 100%);
 }
 /* El banner reemplaza el collage de camionetas */
