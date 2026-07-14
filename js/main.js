@@ -12,6 +12,29 @@ if (location.hash) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ---- Carrusel de fondo del hero ----
+  const carousel = document.querySelector('.hero-carousel');
+  if (carousel) {
+    const slides = Array.from(carousel.querySelectorAll('.hero-slide'));
+    if (slides.length > 1) {
+      let idx = 0;
+      let timer = null;
+      const INTERVALO = 7000; // ms entre slides
+      const go = (n) => {
+        slides[idx].classList.remove('active');
+        idx = (n + slides.length) % slides.length;
+        slides[idx].classList.add('active');
+        const vid = slides[idx].querySelector('video');
+        if (vid) { try { vid.currentTime = 0; vid.play(); } catch (e) {} }
+      };
+      const start = () => { timer = setInterval(() => go(idx + 1), INTERVALO); };
+      const reset = () => { clearInterval(timer); start(); };
+      document.querySelector('.hero-car-next')?.addEventListener('click', () => { go(idx + 1); reset(); });
+      document.querySelector('.hero-car-prev')?.addEventListener('click', () => { go(idx - 1); reset(); });
+      start();
+    }
+  }
+
   // ---- Hero parallax scroll ----
   const heroSection = document.querySelector('.page-hero');
   if (heroSection) {
