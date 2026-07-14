@@ -3777,6 +3777,19 @@ ul { list-style: none; }
 }
 
 /* ========================================
+   HERO — BANNER DE PORTADA
+   ======================================== */
+.page-hero {
+  position: relative;
+  background:
+    linear-gradient(175deg, rgba(10,10,10,0.70) 0%, rgba(10,10,10,0.78) 55%, rgba(10,10,10,0.88) 100%),
+    url('../assets/images/hero/portada.png') center center / cover no-repeat,
+    linear-gradient(175deg, #0a0a0a 60%, #0e0b07 100%);
+}
+/* El banner reemplaza el collage de camionetas */
+.hero-collage { display: none !important; }
+
+/* ========================================
    NAV — BOTÓN WHATSAPP
    ======================================== */
 .nav-wa-btn {
