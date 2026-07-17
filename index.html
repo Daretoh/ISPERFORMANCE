@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=38" />
+  <link rel="stylesheet" href="css/style.css?v=39" />
   <link rel="icon" type="image/png" href="assets/images/favicon.png" />
 </head>
 <body class="subpage isperformance-page">
@@ -95,29 +95,52 @@
         pulido, protección cerámica y equipamiento para vehículos.
       </p>
 
-      <div class="hero-filtro">
-        <p class="hero-filtro-label">Filtra por tu camioneta</p>
-        <div class="hero-filtro-row">
-          <select id="hero-marca">
-            <option value="">Marca</option>
-          </select>
-          <select id="hero-modelo" disabled>
-            <option value="">Modelo</option>
-          </select>
-          <select id="hero-ano" disabled>
-            <option value="">Año</option>
-          </select>
-          <button id="hero-buscar" class="hero-buscar-btn">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Ver productos
-          </button>
-        </div>
-      </div>
+      <p class="hero-dos-tipos">Ofrecemos <strong>dos tipos de productos</strong>:</p>
+      <div class="hero-accesos">
 
-      <div class="hero-search-bar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="producto-buscar-texto" placeholder="O busca por nombre de producto..." autocomplete="off" />
-        <button class="producto-search-clear" id="producto-buscar-clear" style="display:none" aria-label="Limpiar">✕</button>
+        <!-- SERVICIOS -->
+        <div class="hero-acceso hero-acceso--serv">
+          <span class="hero-acceso-badge hero-acceso-badge--serv">Servicios</span>
+          <div class="hero-acceso-ico">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 20a4 4 0 0 1-4-4c0-2 1.5-3.5 3-5.5S9 6 12 3c3 3 4.5 5.5 6 7.5s3 3.5 3 5.5a4 4 0 0 1-4 4z"/></svg>
+          </div>
+          <h3 class="hero-acceso-titulo">Detailing &amp; Lavado de autos</h3>
+          <p class="hero-acceso-desc">Lavado, pulido, protección cerámica y detallado interior para tu vehículo.</p>
+          <a href="#servicios" class="hero-acceso-cta">
+            Ver servicios
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+        <!-- EQUIPAMIENTO -->
+        <div class="hero-acceso hero-acceso--equipo">
+          <span class="hero-acceso-badge hero-acceso-badge--equipo">Equipamiento 4x4</span>
+          <h3 class="hero-acceso-titulo">Accesorios para tu camioneta</h3>
+          <p class="hero-acceso-desc">Tapas, pisaderas, barras y más. Filtra por tu vehículo:</p>
+          <div class="hero-filtro">
+            <div class="hero-filtro-row">
+              <select id="hero-marca">
+                <option value="">Marca</option>
+              </select>
+              <select id="hero-modelo" disabled>
+                <option value="">Modelo</option>
+              </select>
+              <select id="hero-ano" disabled>
+                <option value="">Año</option>
+              </select>
+              <button id="hero-buscar" class="hero-buscar-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                Ver productos
+              </button>
+            </div>
+          </div>
+          <div class="hero-search-bar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="producto-buscar-texto" placeholder="O busca por nombre de producto..." autocomplete="off" />
+            <button class="producto-search-clear" id="producto-buscar-clear" style="display:none" aria-label="Limpiar">✕</button>
+          </div>
+        </div>
+
       </div>
     </div>
     <div class="scroll-hint">
@@ -639,9 +662,9 @@
     </div>
   </footer>
 
-  <script src="js/main.js?v=38"></script>
-  <script src="js/carrito.js?v=38"></script>
-  <script src="js/productos.js?v=38"></script>
-  <script src="js/filtros.js?v=38"></script>
+  <script src="js/main.js?v=39"></script>
+  <script src="js/carrito.js?v=39"></script>
+  <script src="js/productos.js?v=39"></script>
+  <script src="js/filtros.js?v=39"></script>
 </body>
 </html>
