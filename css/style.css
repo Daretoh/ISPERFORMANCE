@@ -3882,6 +3882,37 @@ ul { list-style: none; }
 }
 
 /* ========================================
+   TIENDA — CHIPS DE CATEGORÍA (compactos)
+   ======================================== */
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-start;
+  margin: 4px 0 28px;
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--gray-200);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all 0.18s;
+}
+.cat-chip svg { color: var(--orange-500); flex-shrink: 0; }
+.cat-chip:hover {
+  border-color: rgba(255, 107, 0, 0.5);
+  background: rgba(255, 107, 0, 0.1);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+/* ========================================
    HERO — DOS ACCESOS (Servicios / Equipamiento)
    ======================================== */
 .hero-dos-tipos {
