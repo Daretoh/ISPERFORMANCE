@@ -245,11 +245,13 @@ document.addEventListener('DOMContentLoaded', async function () {
   const textInput = document.getElementById('producto-buscar-texto');
   const textClear = document.getElementById('producto-buscar-clear');
 
+  let heroSearchScrolled = false;
   if (textInput) {
     textInput.addEventListener('input', function () {
       const q = this.value.trim();
       textClear.style.display = q ? 'block' : 'none';
       if (!q) {
+        heroSearchScrolled = false;
         aplicarFiltros();
         return;
       }
@@ -260,6 +262,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         (p.categoria && p.categoria.toLowerCase().includes(lc))
       );
       renderProductos(filtrados);
+      // Llevar al usuario a los resultados la primera vez que escribe
+      if (!heroSearchScrolled) {
+        const sec = document.getElementById('equipos');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        heroSearchScrolled = true;
+      }
     });
 
     if (textClear) {
