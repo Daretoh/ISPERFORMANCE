@@ -429,8 +429,11 @@ ul { list-style: none; }
 .nav-home {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  line-height: 0;
   color: var(--gray-200);
 }
+.nav-home svg { display: block; }
 .nav-home:hover { color: var(--orange-500); }
 
 .nav-link {
