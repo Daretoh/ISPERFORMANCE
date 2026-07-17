@@ -416,7 +416,7 @@ ul { list-style: none; }
 }
 
 .logo-img {
-  height: 40px;
+  height: 56px;
   width: auto;
   display: block;
 }
@@ -1477,7 +1477,7 @@ ul { list-style: none; }
 }
 
 .page-hero-content {
-  max-width: 640px;
+  max-width: 860px;
 }
 
 .page-hero-logo {
@@ -3879,6 +3879,116 @@ ul { list-style: none; }
 @media (max-width: 640px) {
   .nav-wa-btn span { display: none; }
   .nav-wa-btn { padding: 6px 8px; }
+}
+
+/* ========================================
+   HERO — DOS ACCESOS (Servicios / Equipamiento)
+   ======================================== */
+.hero-dos-tipos {
+  margin-top: 30px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  color: var(--gray-300);
+}
+.hero-dos-tipos strong { color: var(--white); }
+
+.hero-accesos {
+  display: flex;
+  gap: 16px;
+  text-align: left;
+  align-items: stretch;
+}
+.hero-acceso {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+}
+.hero-acceso--serv { flex: 0 0 250px; }
+.hero-acceso--equipo { flex: 1; min-width: 0; border-color: rgba(255, 107, 0, 0.22); }
+
+.hero-acceso-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 11px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.hero-acceso-badge--serv {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gray-100);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.hero-acceso-badge--equipo {
+  background: rgba(255, 107, 0, 0.15);
+  color: var(--orange-400);
+  border: 1px solid rgba(255, 107, 0, 0.35);
+}
+.hero-acceso-ico {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+  margin-bottom: 12px;
+}
+.hero-acceso-titulo {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+.hero-acceso-desc {
+  font-size: 0.85rem;
+  color: var(--gray-300);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.hero-acceso--serv .hero-acceso-cta {
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  background: var(--orange-500);
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+.hero-acceso--serv .hero-acceso-cta:hover {
+  background: var(--orange-400);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 107, 0, 0.35);
+}
+/* El filtro y el buscador viven dentro de la card de equipamiento */
+.hero-acceso--equipo .hero-filtro {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.hero-acceso--equipo .hero-search-bar { max-width: none; }
+
+@media (max-width: 760px) {
+  .hero-accesos { flex-direction: column; }
+  .hero-acceso--serv { flex: 1 1 auto; }
 }
 
 /* ========================================
