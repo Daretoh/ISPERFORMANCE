@@ -424,7 +424,14 @@ ul { list-style: none; }
 .nav-links {
   display: flex;
   gap: 32px;
+  align-items: center;
 }
+.nav-home {
+  display: inline-flex;
+  align-items: center;
+  color: var(--gray-200);
+}
+.nav-home:hover { color: var(--orange-500); }
 
 .nav-link {
   font-size: 0.9rem;
