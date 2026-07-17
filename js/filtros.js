@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   const resultadosEl = document.getElementById('equipos-resultados');
   const totalEl = document.getElementById('equipos-total');
 
+  // Baja suavemente hasta los resultados (con margen para el navbar fijo)
+  function scrollAResultados() {
+    const target = document.getElementById('equipos-total') || resultadosEl || document.getElementById('equipos');
+    if (!target) return;
+    const y = target.getBoundingClientRect().top + window.scrollY - 88;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+
   function uniqueSorted(arr) {
     return [...new Set(arr)].sort();
   }
@@ -264,8 +272,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       renderProductos(filtrados);
       // Llevar al usuario a los resultados la primera vez que escribe
       if (!heroSearchScrolled) {
-        const sec = document.getElementById('equipos');
-        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollAResultados();
         heroSearchScrolled = true;
       }
     });
@@ -334,7 +341,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         poblarAño(heroMarcaEl.value, heroModeloEl.value);
         añoEl.value = heroAnoEl.value;
         aplicarFiltros();
-        document.getElementById('equipos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollAResultados();
       });
     }
   }
