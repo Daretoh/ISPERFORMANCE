@@ -14,7 +14,13 @@ document.addEventListener('DOMContentLoaded', async function () {
   function scrollAResultados() {
     const target = document.getElementById('equipos-total') || resultadosEl || document.getElementById('equipos');
     if (!target) return;
-    const y = target.getBoundingClientRect().top + window.scrollY - 88;
+    // quitar la animación reveal para medir la posición real
+    const sec = document.getElementById('equipos');
+    if (sec) sec.classList.add('visible');
+    const rect = target.getBoundingClientRect();
+    // si los resultados ya están bien posicionados arriba, no re-scrollear (evita rebotes al seguir escribiendo)
+    if (rect.top > 60 && rect.top < 300) return;
+    const y = rect.top + window.scrollY - 96;
     window.scrollTo({ top: y, behavior: 'smooth' });
   }
 
@@ -253,13 +259,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   const textInput = document.getElementById('producto-buscar-texto');
   const textClear = document.getElementById('producto-buscar-clear');
 
-  let heroSearchScrolled = false;
   if (textInput) {
     textInput.addEventListener('input', function () {
       const q = this.value.trim();
       textClear.style.display = q ? 'block' : 'none';
       if (!q) {
-        heroSearchScrolled = false;
         aplicarFiltros();
         return;
       }
@@ -270,11 +274,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         (p.categoria && p.categoria.toLowerCase().includes(lc))
       );
       renderProductos(filtrados);
-      // Llevar al usuario a los resultados la primera vez que escribe
-      if (!heroSearchScrolled) {
-        scrollAResultados();
-        heroSearchScrolled = true;
-      }
+      // Llevar al usuario a los resultados (la guardia evita rebotes al seguir escribiendo)
+      scrollAResultados();
     });
 
     if (textClear) {
