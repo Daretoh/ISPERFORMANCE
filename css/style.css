@@ -3891,6 +3891,15 @@ ul { list-style: none; }
   .nav-wa-btn { padding: 6px 8px; }
 }
 
+/* Botón agendar hora (en el header de servicios) */
+.agenda-btn {
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.agenda-btn svg { flex-shrink: 0; }
+
 /* ========================================
    TIENDA — CHIPS DE CATEGORÍA (compactos)
    ======================================== */
