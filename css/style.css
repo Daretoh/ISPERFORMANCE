@@ -3112,7 +3112,38 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   width: max-content;
-  animation: marquee 20s linear infinite;
+  animation: marquee 38s linear infinite;
+}
+
+/* Chips blancos con logos de proveedores */
+.marca-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 58px;
+  min-width: 120px;
+  padding: 0 22px;
+  margin: 0 12px;
+  background: #fff;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.marca-chip img {
+  height: 34px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  display: block;
+  opacity: 1;
+  padding: 0;
+}
+.marca-chip--text {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  font-family: var(--font);
 }
 
 .marca-label {
