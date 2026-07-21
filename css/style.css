@@ -3096,11 +3096,11 @@ ul { list-style: none; }
    MARCAS / PROVEEDORES
    ======================================== */
 .marcas {
-  padding: 18px 0;
+  padding: 22px 0;
   overflow: hidden;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  background: var(--dark-800);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #ffffff;
 }
 
 .marcas-track {
@@ -3115,36 +3115,27 @@ ul { list-style: none; }
   animation: marquee 38s linear infinite;
 }
 
-/* Chips blancos con logos de proveedores */
+/* Logos de proveedores (sin caja, sobre banda clara) */
 .marca-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 58px;
-  min-width: 120px;
-  padding: 0 22px;
-  margin: 0 12px;
-  background: #fff;
-  border-radius: 10px;
+  height: 64px;
+  margin: 0 32px;
+  background: none;
   flex-shrink: 0;
 }
 .marca-chip img {
-  height: 34px;
+  height: 38px;
   width: auto;
-  max-width: 150px;
+  max-width: 190px;
   object-fit: contain;
   display: block;
   opacity: 1;
   padding: 0;
 }
-.marca-chip--text {
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: #1a1a1a;
-  text-transform: uppercase;
-  font-family: var(--font);
-}
+/* Algunos logos se ven mejor un poco más grandes */
+.marca-chip.is-big img { height: 54px; max-width: 220px; }
 
 .marca-label {
   font-size: 0.78rem;
