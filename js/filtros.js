@@ -259,11 +259,13 @@ document.addEventListener('DOMContentLoaded', async function () {
   const textInput = document.getElementById('producto-buscar-texto');
   const textClear = document.getElementById('producto-buscar-clear');
 
+  let focoEnNav = false;
   if (textInput) {
     textInput.addEventListener('input', function () {
       const q = this.value.trim();
       textClear.style.display = q ? 'block' : 'none';
       if (!q) {
+        focoEnNav = false;
         aplicarFiltros();
         return;
       }
@@ -274,8 +276,20 @@ document.addEventListener('DOMContentLoaded', async function () {
         (p.categoria && p.categoria.toLowerCase().includes(lc))
       );
       renderProductos(filtrados);
-      // Llevar al usuario a los resultados (la guardia evita rebotes al seguir escribiendo)
       scrollAResultados();
+      // Al primer caracter, pasar el foco al buscador fijo del navbar (siempre visible)
+      // para que el navegador no devuelva la vista arriba en cada tecla.
+      if (!focoEnNav) {
+        const navbar = document.querySelector('.navbar');
+        const navInput = document.getElementById('nav-buscar-texto');
+        if (navbar && navInput) {
+          navbar.classList.add('search-visible');
+          try { navInput.focus({ preventScroll: true }); } catch (e) { navInput.focus(); }
+          const v = navInput.value;
+          if (navInput.setSelectionRange) navInput.setSelectionRange(v.length, v.length);
+          focoEnNav = true;
+        }
+      }
     });
 
     if (textClear) {
