@@ -4547,3 +4547,51 @@ ul { list-style: none; }
     height: 145px;
   }
 }
+
+/* ========================================
+   DETAILING — Productos / Empresa / Clientes
+   ======================================== */
+.det-prod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.det-prod-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  transition: transform .2s, border-color .2s;
+}
+.det-prod-card:hover { transform: translateY(-4px); border-color: rgba(255,107,0,0.4); }
+.det-prod-img { height: 180px; display:flex; align-items:center; justify-content:center; margin-bottom: 14px; }
+.det-prod-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
+.det-prod-marca {
+  display:inline-block; font-size:0.66rem; font-weight:800; letter-spacing:1.5px;
+  color: var(--orange-400); background: rgba(255,107,0,0.12);
+  border:1px solid rgba(255,107,0,0.3); padding:3px 10px; border-radius:999px; margin-bottom:8px;
+}
+.det-prod-card h3 { font-size:1rem; color:var(--white); margin-bottom:6px; }
+.det-prod-card p { font-size:0.84rem; color:var(--gray-400); line-height:1.5; }
+.det-prod-nota { text-align:center; margin-top:26px; color:var(--gray-300); font-size:0.9rem; }
+.det-prod-nota a { color: var(--orange-500); font-weight:600; }
+
+.det-empresa-texto {
+  max-width: 720px; margin: 0 auto; text-align:center;
+  font-size: 1.1rem; line-height: 1.8; color: var(--gray-200);
+}
+.det-empresa-texto strong { color: var(--white); }
+.det-empresa-tags { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:26px; }
+.det-empresa-tags span {
+  font-size:0.82rem; font-weight:600; color:var(--gray-200);
+  background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12);
+  padding:7px 16px; border-radius:999px;
+}
+
+.det-clientes { padding: 70px 0; background: var(--dark-800); }
+.det-clientes-img {
+  max-width: 1100px; margin: 30px auto 0; background:#fff;
+  border-radius: var(--radius); padding: 30px 24px;
+}
+.det-clientes-img img { width:100%; height:auto; display:block; }
