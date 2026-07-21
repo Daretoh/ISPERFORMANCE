@@ -3913,6 +3913,28 @@ ul { list-style: none; }
   .nav-wa-btn { padding: 6px 8px; }
 }
 
+/* Botones CTA del hero de detailing */
+.hero-cta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+.hero-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 /* Botón agendar hora (en el header de servicios) */
 .agenda-btn {
   margin-top: 20px;
