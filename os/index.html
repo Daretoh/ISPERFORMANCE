@@ -172,6 +172,9 @@
   .kcard .ksvc{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
   .kcard .ksvc span{font:600 10px/1 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 6px;color:var(--ink-2);}
   .kcard .ktime{font:600 10.5px/1.4 var(--mono);color:var(--ink-faint);margin:6px 0;}
+  .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
+  .kcard .kw:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .kcard .kw::placeholder{color:var(--ink-faint);font-weight:500;}
   .kcard .kbtns{display:flex;gap:6px;margin-top:9px;}
   .kbtn{flex:1;font:700 11px/1 var(--sans);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:8px 6px;cursor:pointer;}
   .kbtn.fwd{background:var(--accent);border-color:var(--accent);color:#fff;} .kbtn.fwd:hover{filter:brightness(1.06);}
@@ -292,10 +295,9 @@
           </div>
           <div class="fieldset">
             <div class="fs-title"><span class="i">▸</span> Cliente</div>
-            <div class="row c3">
+            <div class="row c2">
               <label class="f"><span class="lab">Nombre</span><input name="cliente" placeholder="Nombre y apellido"></label>
               <label class="f"><span class="lab">Contacto</span><input name="contacto" placeholder="+56 9 ..."></label>
-              <label class="f"><span class="lab">Llegada / ubicación</span><input name="ubicacion" placeholder="Taller / a domicilio"></label>
             </div>
           </div>
           <div class="fieldset">
@@ -308,9 +310,8 @@
             <div class="svc-list" id="svc-list"></div>
           </div>
           <div class="fieldset">
-            <div class="fs-title"><span class="i">▸</span> Trabajador y cita</div>
-            <div class="row c3">
-              <label class="f"><span class="lab">Trabajador a cargo</span><input name="trabajador" list="trabajadores" placeholder="Nombre"></label>
+            <div class="fs-title"><span class="i">▸</span> Cita coordinada</div>
+            <div class="row c2">
               <label class="f"><span class="lab">Fecha coordinada</span><input name="fCoord" type="date"></label>
               <label class="f"><span class="lab">Hora coordinada</span><input name="hCoord" type="time"></label>
             </div>
@@ -329,7 +330,6 @@
             <div class="sum-body">
               <div class="sline"><span class="k">Vehículo</span><span class="v" id="r-veh">—</span></div>
               <div class="sline"><span class="k">Servicios</span><span class="v" id="r-svc">0</span></div>
-              <div class="sline"><span class="k">Trabajador</span><span class="v" id="r-trab">—</span></div>
               <div class="sline"><span class="k">Cita</span><span class="v" id="r-cita">—</span></div>
               <div class="sline"><span class="k">Fotos / videos</span><span class="v" id="r-media">0</span></div>
               <div class="sline big"><span class="k">Precio estimado</span><span class="v num" id="r-precio" style="color:var(--accent-ink)">$0</span></div>
@@ -496,7 +496,6 @@
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
     document.getElementById("r-svc").textContent=chosenSvcs.length;
-    document.getElementById("r-trab").textContent=form.trabajador.value||"—";
     document.getElementById("r-cita").textContent=form.fCoord.value?(fFecha(form.fCoord.value)+" "+(form.hCoord.value||"")):"—";
     document.getElementById("r-media").textContent=pendingMedia.length;
     var t=form.talla.value, est=0, variable=false;
@@ -508,8 +507,8 @@
   form.addEventListener("submit",function(ev){
     ev.preventDefault();
     var e={id:Date.now(),estado:"EN ESPERA",cobrado:false,servicios:chosenSvcs.slice(),media:pendingMedia.slice(),
-      fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
-    ["marca","modelo","patente","anioVeh","talla","cliente","contacto","ubicacion","trabajador","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
+      trabajador:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
+    ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
     data.unshift(e); save(data);
     chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip();
@@ -534,14 +533,16 @@
         var btns="";
         if(ci>0) btns+='<button class="kbtn back" data-id="'+e.id+'" data-dir="-1">‹ Volver</button>';
         if(ci<3) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Comenzar","Terminar","Entregar"][ci]+' ›</button>';
-        return '<div class="kcard"><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+' · '+(e.trabajador||"sin asignar")+'</div>'+
+        return '<div class="kcard"><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
+          '<input class="kw" list="trabajadores" data-id="'+e.id+'" placeholder="👤 Asignar trabajador" value="'+(e.trabajador||"")+'">'+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
       return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(+b.dataset.id, +b.dataset.dir); }); });
+    board.querySelectorAll(".kw").forEach(function(inp){ inp.addEventListener("change",function(){ var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(e){ e.trabajador=inp.value.trim(); save(data); fillTrabajadores(); toast("Trabajador asignado: "+(e.trabajador||"—")); } }); });
   }
   function advance(id,dir){
     var e=data.filter(function(x){return x.id===id;})[0]; if(!e)return;
