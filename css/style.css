@@ -160,6 +160,21 @@ ul { list-style: none; }
   transition: opacity 0.2s;
   flex-shrink: 0;
 }
+.nav-user-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  padding: 6px;
+  opacity: 0.85;
+  transition: opacity 0.2s, color 0.2s;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+.nav-user-btn:hover {
+  opacity: 1;
+  color: var(--orange-500);
+}
 
 .nav-cart-btn:hover { opacity: 1; }
 
