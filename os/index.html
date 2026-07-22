@@ -332,6 +332,7 @@
               <div class="sline"><span class="k">Trabajador</span><span class="v" id="r-trab">—</span></div>
               <div class="sline"><span class="k">Cita</span><span class="v" id="r-cita">—</span></div>
               <div class="sline"><span class="k">Fotos / videos</span><span class="v" id="r-media">0</span></div>
+              <div class="sline big"><span class="k">Precio estimado</span><span class="v num" id="r-precio" style="color:var(--accent-ink)">$0</span></div>
             </div>
             <div class="actions">
               <button type="submit" class="btn primary">💾 Ingresar vehículo</button>
@@ -385,11 +386,31 @@
 <script>
 (function(){
   "use strict";
-  var KEY="isp_os_v3";
+  var KEY="isp_os_v4";
   var MESLC=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   var ESTADOS=["EN ESPERA","EN PROCESO","TERMINADO","ENTREGADO"];
-  // catálogo placeholder — se reemplaza por el catálogo real
-  var CATALOGO=["ADVANCE","PRO","PREMIUM","BÁSICO","LAVADO DETALLADO","PULIDO Y REALCE","TRATAMIENTO CERÁMICO","LIMPIEZA DE MOTOR","DESMANCHADO DE TAPIZ"];
+  // catálogo real IS Performance (ver os/catalogo.json). p = precio por talla; null = precio variable
+  var CATALOGO=[
+    {n:"CORE — Limpieza básica",cat:"Limpiezas",p:{S:35000,M:40000,L:45000,XL:55000}},
+    {n:"ADVANCE — Limpieza intermedia",cat:"Limpiezas",p:{S:50000,M:55000,L:60000,XL:65000}},
+    {n:"PRO — Limpieza avanzada",cat:"Limpiezas",p:{S:80000,M:90000,L:95000,XL:100000}},
+    {n:"Limpieza de motor",cat:"Limpiezas",p:{S:25000,M:30000,L:40000,XL:45000}},
+    {n:"Pulido estándar",cat:"Pulido de pintura",p:{S:120000,M:140000,L:150000,XL:170000}},
+    {n:"Pulido premium",cat:"Pulido de pintura",p:{S:170000,M:190000,L:210000,XL:230000}},
+    {n:"Tratamiento cerámico — 1 año",cat:"Protección y sellados",p:{S:200000,M:250000,L:300000,XL:350000}},
+    {n:"Tratamiento cerámico — 2 años",cat:"Protección y sellados",p:{S:250000,M:300000,L:350000,XL:400000}},
+    {n:"Tratamiento cerámico — 3 años",cat:"Protección y sellados",p:{S:300000,M:350000,L:400000,XL:450000}},
+    {n:"Mantención cerámica",cat:"Protección y sellados",p:{S:45000,M:50000,L:55000,XL:65000}},
+    {n:"Tratamiento de vidrios",cat:"Protección y sellados",p:null},
+    {n:"Detallado integral interior",cat:"Sanitización interior",p:{S:130000,M:150000,L:170000,XL:200000}},
+    {n:"Detallado integral full",cat:"Sanitización interior",p:{S:260000,M:300000,L:340000,XL:400000}},
+    {n:"Limpieza profunda de asientos",cat:"Sanitización interior",p:null},
+    {n:"Tratamiento interior de techo",cat:"Sanitización interior",p:null},
+    {n:"Preparación para la venta",cat:"Pre-venta",p:{S:90000,M:110000,L:130000,XL:150000}}
+  ];
+  function svcInfo(nombre){ for(var i=0;i<CATALOGO.length;i++){ if(CATALOGO[i].n===nombre) return CATALOGO[i]; } return null; }
+  function precioServicio(nombre,talla){ var s=svcInfo(nombre); return (s&&s.p&&s.p[talla])?s.p[talla]:0; }
+  function sugerirPrecio(e){ var t=e.talla||"M",sum=0; (e.servicios||[]).forEach(function(n){ sum+=precioServicio(n,t); }); return sum; }
 
   function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||null; }catch(e){ return null; } }
   function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a, function(k,v){ return k==="url"?undefined:v; })); }catch(e){} }
@@ -403,11 +424,11 @@
 
   function seed(){
     return [
-      {id:1,marca:"NISSAN",modelo:"VERSA",patente:"",anioVeh:2022,talla:"M",cliente:"Juan Pérez",contacto:"+56 9 1111 1111",ubicacion:"Taller",servicios:["ADVANCE"],trabajador:"Mario",fCoord:"2026-07-02",hCoord:"10:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-02",hInicio:"10:15",fSalida:"2026-07-02",hSalida:"14:00",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:55000,costoProducto:8000,envio:0,costoExterno:0,costoEmpresa:5000,cobrado:true},
-      {id:2,marca:"DODGE",modelo:"JOURNEY",patente:"HYWL40",anioVeh:2017,talla:"XL",cliente:"María Soto",contacto:"+56 9 2222 2222",ubicacion:"Taller",servicios:["PRO","DESMANCHADO DE TAPIZ"],trabajador:"Javier",fCoord:"2026-07-03",hCoord:"14:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-03",hInicio:"14:10",fSalida:"2026-07-03",hSalida:"18:30",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:100000,costoProducto:18000,envio:0,costoExterno:6000,costoEmpresa:9000,cobrado:true},
-      {id:3,marca:"MAZDA",modelo:"CX-5",patente:"KLMN88",anioVeh:2021,talla:"L",cliente:"Pedro Rojas",contacto:"+56 9 3333 3333",ubicacion:"A domicilio",servicios:["PULIDO Y REALCE"],trabajador:"Javier",fCoord:"2026-07-22",hCoord:"10:30",media:[],estado:"EN PROCESO",fInicio:"2026-07-22",hInicio:"10:40",fSalida:"",hSalida:"",docTipo:"FACTURA",modoPago:"",aplicaBono:"NO",precioVenta:150000,costoProducto:22000,envio:4000,costoExterno:0,costoEmpresa:12000,cobrado:false},
-      {id:4,marca:"SUBARU",modelo:"OUTBACK",patente:"PQRS22",anioVeh:2019,talla:"L",cliente:"Ana Díaz",contacto:"+56 9 4444 4444",ubicacion:"Taller",servicios:["PRO"],trabajador:"Camila",fCoord:"2026-07-22",hCoord:"12:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false},
-      {id:5,marca:"TOYOTA",modelo:"RAV4",patente:"TUVW11",anioVeh:2023,talla:"L",cliente:"Luis Vega",contacto:"+56 9 5555 5555",ubicacion:"Taller",servicios:["TRATAMIENTO CERÁMICO"],trabajador:"Mario",fCoord:"2026-07-24",hCoord:"09:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false}
+      {id:1,marca:"NISSAN",modelo:"VERSA",patente:"",anioVeh:2022,talla:"M",cliente:"Juan Pérez",contacto:"+56 9 1111 1111",ubicacion:"Taller",servicios:["ADVANCE — Limpieza intermedia"],trabajador:"Mario",fCoord:"2026-07-02",hCoord:"10:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-02",hInicio:"10:15",fSalida:"2026-07-02",hSalida:"14:00",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:55000,costoProducto:8000,envio:0,costoExterno:0,costoEmpresa:5000,cobrado:true},
+      {id:2,marca:"DODGE",modelo:"JOURNEY",patente:"HYWL40",anioVeh:2017,talla:"XL",cliente:"María Soto",contacto:"+56 9 2222 2222",ubicacion:"Taller",servicios:["PRO — Limpieza avanzada"],trabajador:"Javier",fCoord:"2026-07-03",hCoord:"14:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-03",hInicio:"14:10",fSalida:"2026-07-03",hSalida:"18:30",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:100000,costoProducto:18000,envio:0,costoExterno:6000,costoEmpresa:9000,cobrado:true},
+      {id:3,marca:"MAZDA",modelo:"CX-5",patente:"KLMN88",anioVeh:2021,talla:"L",cliente:"Pedro Rojas",contacto:"+56 9 3333 3333",ubicacion:"A domicilio",servicios:["Pulido estándar"],trabajador:"Javier",fCoord:"2026-07-22",hCoord:"10:30",media:[],estado:"EN PROCESO",fInicio:"2026-07-22",hInicio:"10:40",fSalida:"",hSalida:"",docTipo:"FACTURA",modoPago:"",aplicaBono:"NO",precioVenta:150000,costoProducto:22000,envio:4000,costoExterno:0,costoEmpresa:12000,cobrado:false},
+      {id:4,marca:"SUBARU",modelo:"OUTBACK",patente:"PQRS22",anioVeh:2019,talla:"L",cliente:"Ana Díaz",contacto:"+56 9 4444 4444",ubicacion:"Taller",servicios:["PRO — Limpieza avanzada"],trabajador:"Camila",fCoord:"2026-07-22",hCoord:"12:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false},
+      {id:5,marca:"TOYOTA",modelo:"RAV4",patente:"TUVW11",anioVeh:2023,talla:"L",cliente:"Luis Vega",contacto:"+56 9 5555 5555",ubicacion:"Taller",servicios:["Tratamiento cerámico — 1 año"],trabajador:"Mario",fCoord:"2026-07-24",hCoord:"09:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false}
     ];
   }
 
@@ -444,7 +465,9 @@
   // ---------- recepción ----------
   var form=document.getElementById("form");
   var svcSelect=document.getElementById("svc-select");
-  CATALOGO.forEach(function(s){ var o=document.createElement("option");o.textContent=s;o.value=s;svcSelect.appendChild(o); });
+  (function(){ var cats={}; CATALOGO.forEach(function(s){ (cats[s.cat]=cats[s.cat]||[]).push(s); });
+    Object.keys(cats).forEach(function(cat){ var g=document.createElement("optgroup"); g.label=cat;
+      cats[cat].forEach(function(s){ var o=document.createElement("option"); o.value=s.n; o.textContent=s.n+(s.p?"":" (precio variable)"); g.appendChild(o); }); svcSelect.appendChild(g); }); })();
   form.fCoord.value=todayISO();
   var chosenSvcs=[];
   document.getElementById("svc-add-btn").addEventListener("click",function(){
@@ -476,6 +499,9 @@
     document.getElementById("r-trab").textContent=form.trabajador.value||"—";
     document.getElementById("r-cita").textContent=form.fCoord.value?(fFecha(form.fCoord.value)+" "+(form.hCoord.value||"")):"—";
     document.getElementById("r-media").textContent=pendingMedia.length;
+    var t=form.talla.value, est=0, variable=false;
+    chosenSvcs.forEach(function(n){ var s=svcInfo(n); if(s&&s.p){ est+=precioServicio(n,t); } else { variable=true; } });
+    document.getElementById("r-precio").textContent=clp(est)+(variable?" +":"");
   }
   form.addEventListener("input",recepSummary);
   form.addEventListener("reset",function(){ chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
@@ -542,6 +568,7 @@
   }
   function renderCobroForm(e){
     var wrap=document.getElementById("cobro-form-wrap"); if(!e){wrap.innerHTML="";return;}
+    if(!e.precioVenta){ e.precioVenta=sugerirPrecio(e); } // sugiere precio desde el catálogo según talla
     wrap.innerHTML=
     '<div class="formgrid"><div class="panel">'+
       '<div class="fieldset"><div class="fs-title"><span class="i">▸</span> '+e.marca+' '+(e.modelo||"")+' · '+(e.patente||"—")+'</div>'+

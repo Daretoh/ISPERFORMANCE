@@ -1,0 +1,247 @@
+{
+  "moneda": "CLP",
+  "actualizado": "2026-07-22",
+  "tallas": {
+    "S": "City Car",
+    "M": "Sedán / Hatch / Deportivo",
+    "L": "SUV / Camioneta / 4x4 2 corridas",
+    "XL": "Full size / Van / 4x4 3 corridas"
+  },
+  "categorias": [
+    "Limpiezas",
+    "Pulido de pintura",
+    "Protección y sellados",
+    "Sanitización interior",
+    "Pre-venta"
+  ],
+  "servicios": [
+    {
+      "id": "core",
+      "nombre": "CORE — Limpieza básica",
+      "categoria": "Limpiezas",
+      "tiempo": "2-3 horas aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 35000, "M": 40000, "L": 45000, "XL": 55000 },
+      "nota": "Servicio sujeto a evaluación previa según el estado del vehículo",
+      "incluye": {
+        "exterior": ["Lavado exterior con espuma activa (snow foam)", "Limpieza de plásticos exteriores", "Limpieza de ruedas (exterior)", "Limpieza de vidrios exteriores", "Limpieza de guardabarros"],
+        "interior": ["Aspirado básico de alfombras y maletero", "Limpieza de tablero, puertas y consola", "Limpieza de plásticos interiores", "Limpieza de vidrios interiores"],
+        "proteccion": ["Cera de mantención", "Hidratación de plásticos interiores y exteriores", "Brillo para neumáticos"]
+      }
+    },
+    {
+      "id": "advance",
+      "nombre": "ADVANCE — Limpieza intermedia",
+      "categoria": "Limpiezas",
+      "tiempo": "3,5-4 horas aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 50000, "M": 55000, "L": 60000, "XL": 65000 },
+      "incluye": {
+        "exterior": ["Pre-lavado", "Lavado exterior con espuma activa (snow foam)", "Limpieza de plásticos exteriores", "Limpieza de emblemas y parrillas", "Limpieza de ruedas (exterior)", "Limpieza de vidrios exteriores", "Limpieza de guardabarros"],
+        "interior": ["Aspirado y limpieza de alfombras y maletero", "Limpieza de tablero, puertas y consola", "Limpieza de plásticos interiores", "Limpieza de vidrios interiores"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Sellado sintético de pintura (duración 2-3 meses)", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "pro",
+      "nombre": "PRO — Limpieza avanzada",
+      "categoria": "Limpiezas",
+      "tiempo": "5,5-6 horas aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 80000, "M": 90000, "L": 95000, "XL": 100000 },
+      "incluye": {
+        "exterior": ["Pre-lavado profundo", "Lavado exterior con espuma activa (snow foam)", "Limpieza detallada de plásticos exteriores", "Limpieza de canaletas de puertas", "Limpieza de emblemas y parrillas", "Limpieza de ruedas (cara externa e interna)", "Descontaminación de pintura", "Limpieza de vidrios exteriores", "Limpieza de guardabarros", "Limpieza del escape"],
+        "interior": ["Aspirado profundo de alfombra, tapiz y maletero", "Limpieza de tablero, puertas y consola", "Limpieza de volante y palanca de cambios", "Limpieza de plásticos interiores", "Limpieza de vidrios interiores", "Limpieza de pedales"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Protección avanzada con tecnología cerámica (duración 3-6 meses)", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "motor",
+      "nombre": "Limpieza de motor",
+      "categoria": "Limpiezas",
+      "tiempo": "1,5 hora aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 25000, "M": 30000, "L": 40000, "XL": 45000 },
+      "descripcion": "Eliminación segura de polvo, grasa liviana y suciedad acumulada en el compartimiento del motor, mediante un proceso controlado que no afecta componentes eléctricos ni electrónicos.",
+      "incluye": {
+        "procesos": ["Protección de componentes eléctricos sensibles", "Aplicación de desengrasante automotriz específico", "Limpieza manual con brochas y herramientas especializadas", "Retiro controlado de residuos", "Secado cuidadoso de la superficie"],
+        "proteccion": ["Acondicionador de plásticos y mangueras", "Protección hidrorrepelente en superficies plásticas", "Terminación estética del motor"]
+      }
+    },
+    {
+      "id": "pulido-estandar",
+      "nombre": "Pulido estándar",
+      "categoria": "Pulido de pintura",
+      "tiempo": "1 a 2 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 120000, "M": 140000, "L": 150000, "XL": 170000 },
+      "descripcion": "Corrección estética y recuperación de brillo.",
+      "nota": "Tratamiento cerámico recomendado como servicio adicional (1-2 años)",
+      "incluye": {
+        "limpieza": ["Preparación de vehículo (basada en limpieza Advance)"],
+        "procesos": ["Descontaminación de pintura", "Aislamiento de zonas sensibles", "Corrección estética del barniz", "Eliminación visible de rayas superficiales", "Mejora notable del brillo y el gloss"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Cera líquida de mantenimiento (2-3 meses)", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "pulido-premium",
+      "nombre": "Pulido premium",
+      "categoria": "Pulido de pintura",
+      "tiempo": "1 a 2 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 170000, "M": 190000, "L": 210000, "XL": 230000 },
+      "descripcion": "Corrección superior y acabado de alto nivel.",
+      "nota": "Tratamiento cerámico recomendado como servicio adicional (2-3 años)",
+      "incluye": {
+        "limpieza": ["Preparación de vehículo (basada en limpieza Advance)"],
+        "procesos": ["Descontaminación de pintura", "Aislamiento de zonas sensibles", "Corrección avanzada del barniz", "Reducción significativa de rayas medias y profundas", "Eliminación casi total de rayas superficiales", "Restauración profunda del brillo y el gloss"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Sellado premium de terminación", "Impermeabilizante para parabrisas", "Impermeabilizante para vidrios", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "ceramico-1",
+      "nombre": "Tratamiento cerámico — Protección 1 año",
+      "categoria": "Protección y sellados",
+      "tiempo": "2 a 3 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 200000, "M": 250000, "L": 300000, "XL": 350000 },
+      "incluye": {
+        "limpieza": ["Preparación de vehículo (basada en limpieza Advance IS Performance)"],
+        "procesos": ["Descontaminación de pintura", "Pulido de preparación para aplicación cerámica"],
+        "proteccion": ["Recubrimiento cerámico de pintura (duración 1 año)", "Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Cerámico hidrorrepelente para vidrios", "Cerámico hidrorrepelente para vidrios laterales", "Sellado de neumáticos de larga duración"]
+      }
+    },
+    {
+      "id": "ceramico-2",
+      "nombre": "Tratamiento cerámico — Protección 2 años",
+      "categoria": "Protección y sellados",
+      "tiempo": "2 a 3 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 250000, "M": 300000, "L": 350000, "XL": 400000 },
+      "incluye": {
+        "limpieza": ["Preparación de vehículo (basada en limpieza Pro IS Performance)"],
+        "procesos": ["Descontaminación de pintura", "Descontaminación de vidrios", "Pulido estándar", "Limpieza de mantención de motor", "Limpieza de mantención de tapiz y superficies interiores"],
+        "proteccion": ["Recubrimiento cerámico de pintura (duración 2 años)", "Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Cerámico hidrorrepelente para vidrios", "Cerámico hidrorrepelente para vidrios laterales", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "ceramico-3",
+      "nombre": "Tratamiento cerámico — Protección 3 años",
+      "categoria": "Protección y sellados",
+      "tiempo": "3 a 4 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 300000, "M": 350000, "L": 400000, "XL": 450000 },
+      "incluye": {
+        "limpieza": ["Preparación de vehículo (basada en limpieza Pro IS Performance)"],
+        "procesos": ["Descontaminación de pintura", "Descontaminación de vidrios", "Pulido premium (mayor corrección estética y preparación óptima para recubrimiento de larga duración)", "Limpieza de motor", "Limpieza profunda de tapiz y superficies interiores"],
+        "proteccion": ["Recubrimiento cerámico de pintura (duración 3 años)", "Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Cerámico hidrorrepelente para vidrios", "Cerámico hidrorrepelente para vidrios laterales", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "mantencion-ceramica",
+      "nombre": "Mantención cerámica IS Performance",
+      "categoria": "Protección y sellados",
+      "tiempo": "1,5-2,5 horas aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 45000, "M": 50000, "L": 55000, "XL": 65000 },
+      "descripcion": "Servicio de cuidado periódico diseñado para mantener y extender la vida útil del tratamiento cerámico.",
+      "incluye": {
+        "exterior": ["Lavado seguro con shampoo PH neutro, apto para cerámicos", "Snow foam sin agentes abrasivos", "Limpieza suave de llantas (sin ácidos)", "Limpieza de neumáticos", "Limpieza de vidrios exteriores"],
+        "interior": ["Aspirado general de alfombras y maletero", "Limpieza de tablero, puertas y consola", "Limpieza de vidrios interiores", "Limpieza de plásticos interiores"],
+        "proteccion": ["Reactivación del efecto hidrofóbico del cerámico", "Protección rápida de plásticos exteriores", "Sellado de neumáticos"]
+      }
+    },
+    {
+      "id": "vidrios",
+      "nombre": "Tratamiento de vidrios",
+      "categoria": "Protección y sellados",
+      "tiempo": "1 hora aprox",
+      "precio_tipo": "especial",
+      "precios_especiales": {
+        "Sellado cerámico (4 vidrios)": 30000,
+        "Sellado cerámico (6 vidrios)": 40000,
+        "Sellado cerámico (8 vidrios)": 70000,
+        "Parabrisa": 20000,
+        "Vidrios laterales (c/u)": 5000
+      },
+      "descripcion": "Limpieza profunda de vidrios, eliminación de gotas secas y contaminantes adheridos al cristal.",
+      "nota": "El sellado cerámico no elimina rayas ni daños profundos del vidrio. Su función es mejorar visibilidad y protección.",
+      "incluye": {
+        "proteccion": ["Sellado cerámico de vidrios: efecto hidrorrepelente activo", "Mejora visibilidad bajo lluvia", "Reduce la adherencia de agua y suciedad", "Facilita la limpieza y el mantenimiento"]
+      }
+    },
+    {
+      "id": "detallado-interior",
+      "nombre": "Detallado integral interior",
+      "categoria": "Sanitización interior",
+      "tiempo": "1 a 2 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 130000, "M": 150000, "L": 170000, "XL": 200000 },
+      "descripcion": "Servicio profundo de limpieza y restauración interior, enfocado en higiene, detalle y confort del habitáculo.",
+      "requisito": "Requiere limpieza base previa según estado del vehículo: CORE / ADVANCE",
+      "incluye": {
+        "interior": ["Aspirado profundo de tapiz, alfombras y asientos", "Limpieza profunda de asientos (tela o cuero)", "Limpieza y extracción de alfombras", "Limpieza de tablero, puertas y consola", "Limpieza de plásticos interiores", "Limpieza de pilares, parasoles y burletes", "Limpieza de vidrios interiores", "Eliminación de olores interiores", "Limpieza de cielo", "Desmonte de asientos en caso de ser necesario"],
+        "proteccion": ["Acondicionador y protección UV de plásticos interiores", "Acondicionador de cueros con protección UV (si aplica)"]
+      }
+    },
+    {
+      "id": "detallado-full",
+      "nombre": "Detallado integral full",
+      "categoria": "Sanitización interior",
+      "tiempo": "1 a 2 días (según estado del vehículo)",
+      "precio_tipo": "talla",
+      "precios": { "S": 260000, "M": 300000, "L": 340000, "XL": 400000 },
+      "descripcion": "Servicio completo de restauración estética interior y exterior.",
+      "incluye": {
+        "exterior": ["Pre-lavado profundo", "Lavado exterior con espuma activa", "Limpieza detallada de plásticos exteriores", "Limpieza de emblemas, parrillas y canaletas", "Desmonte y limpieza profunda de llantas y neumáticos", "Limpieza de pasos de rueda y guardabarros", "Descontaminación de pintura", "Limpieza de motor", "Limpieza de escape"],
+        "interior": ["Aspirado profundo de tapiz, alfombras y asientos", "Desmonte y limpieza profunda de asientos (tela o cuero)", "Desmonte y limpieza de alfombras (solo si es necesario)", "Limpieza de tablero, puertas y consola", "Limpieza de pilares, burletes y plásticos interiores", "Limpieza de parasol", "Limpieza de vidrios interiores", "Eliminación de olores interiores", "Limpieza de techo"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Protección avanzada con tecnología cerámica (duración 6 meses)", "Sellador para neumáticos"]
+      }
+    },
+    {
+      "id": "asientos",
+      "nombre": "Limpieza profunda de asientos",
+      "categoria": "Sanitización interior",
+      "tiempo": "2-3 horas aprox",
+      "precio_tipo": "especial",
+      "precios_especiales": {
+        "2 corridas de asientos": 80000,
+        "3 corridas de asientos": 100000
+      },
+      "incluye": {
+        "interior": ["Aspirado profundo de asientos y zonas de contacto", "Lavado y extracción de asientos con bactericida", "Eliminación de manchas y suciedad adherida", "Eliminación de olores leves", "Secado controlado de asientos"],
+        "cuero": ["Limpieza manual de asientos de cuero", "Acondicionador específico para cuero", "Protección UV para cuero", "Desmonte de asientos (solo si es estrictamente necesario y previa evaluación)"],
+        "proteccion": ["Protección UV en superficies tratadas", "Acondicionador de tapiz o cuero según material"]
+      }
+    },
+    {
+      "id": "techo",
+      "nombre": "Tratamiento interior de techo",
+      "categoria": "Sanitización interior",
+      "tiempo": "1-2 horas aprox",
+      "precio_tipo": "especial",
+      "precios_especiales": {
+        "Limpieza interior (desde)": 40000,
+        "Protección (desde)": 30000
+      },
+      "incluye": {
+        "interior": ["Limpieza manual del techo con técnicas específicas", "Uso de productos premium seguros para telas delicadas", "Eliminación de manchas leves y suciedad superficial adherida", "Desodorización del área tratada", "Secado controlado para evitar deformaciones o manchas"],
+        "proteccion": ["Sellado textil hidrorrepelente (opcional)", "Protección UV", "Facilita limpieza futura", "Prolonga la vida útil del material"]
+      }
+    },
+    {
+      "id": "pre-venta",
+      "nombre": "Preparación para la venta",
+      "categoria": "Pre-venta",
+      "tiempo": "5-6 horas aprox",
+      "precio_tipo": "talla",
+      "precios": { "S": 90000, "M": 110000, "L": 130000, "XL": 150000 },
+      "descripcion": "Enfocada en mejorar la presentación para su venta o publicación.",
+      "incluye": {
+        "limpieza": ["Preparación del vehículo basada en limpieza Advance"],
+        "procesos": ["Lavado exterior detallado", "Limpieza profunda de llantas y neumáticos", "Limpieza interior completa (aspirado, plásticos, tablero, puertas y vidrios)", "Pulido rápido de realce de brillo (no correctivo, sin eliminación de rayas)", "Limpieza estética de motor"],
+        "proteccion": ["Acondicionador de plásticos exteriores", "Acondicionador de plásticos interiores", "Encerado con máquina de doble acción (duración 3-6 meses)", "Acondicionador de neumáticos"]
+      }
+    }
+  ]
+}
