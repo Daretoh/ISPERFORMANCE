@@ -176,6 +176,13 @@
   .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
   .kcard .kw:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .kcard .kw::placeholder{color:var(--ink-faint);font-weight:500;}
+  .kmedia-btn{width:100%;margin-top:8px;font:650 11.5px/1 var(--sans);padding:8px;border:1px dashed var(--line-strong);border-radius:6px;background:transparent;color:var(--ink-muted);cursor:pointer;}
+  .kmedia-btn:hover{color:var(--accent-ink);border-color:var(--accent);background:var(--accent-soft);}
+  .lrow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px;color:var(--ink-2);align-items:center;}
+  .lrow:last-child{border-bottom:none;}
+  .lrow .num{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap;}
+  .ldel{border:none;background:var(--surface-3);color:var(--ink-muted);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;margin-left:6px;}
+  .ldel:hover{background:var(--crit);color:#fff;}
   .ktimes{margin-top:8px;}
   .ktimes summary{cursor:pointer;font:700 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);list-style:none;padding:4px 0;}
   .ktimes summary::-webkit-details-marker{display:none;}
@@ -281,6 +288,7 @@
         <button data-view="recepcion" class="active">➕ Recepción</button>
         <button data-view="seguimiento">🔧 Seguimiento</button>
         <button data-view="cobro">💵 Cobro</button>
+        <button data-view="costos">💰 Costos</button>
         <button data-view="panel">📊 Panel</button>
         <button data-view="agenda">📅 Agenda</button>
       </nav>
@@ -332,12 +340,6 @@
               <label class="f"><span class="lab">Hora coordinada</span><input name="hCoord" type="time"></label>
             </div>
           </div>
-          <div class="fieldset">
-            <div class="fs-title"><span class="i">▸</span> Fotos y videos <span class="hint">del vehículo</span></div>
-            <input type="file" id="media-input" accept="image/*,video/*" multiple hidden>
-            <button type="button" class="mediabtn" id="media-btn">📷 Agregar fotos o videos</button>
-            <div class="media-strip" id="media-strip"></div>
-          </div>
         </div>
 
         <aside class="summary">
@@ -347,7 +349,6 @@
               <div class="sline"><span class="k">Vehículo</span><span class="v" id="r-veh">—</span></div>
               <div class="sline"><span class="k">Servicios</span><span class="v" id="r-svc">0</span></div>
               <div class="sline"><span class="k">Cita</span><span class="v" id="r-cita">—</span></div>
-              <div class="sline"><span class="k">Fotos / videos</span><span class="v" id="r-media">0</span></div>
               <div class="sline big"><span class="k">Precio estimado</span><span class="v num" id="r-precio" style="color:var(--accent-ink)">$0</span></div>
             </div>
             <div class="actions">
@@ -366,6 +367,7 @@
     <section class="view" id="view-seguimiento">
       <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Cuando llegue el auto agendado, toca <b>“Ingresó”</b> — la hora queda registrada sola. Igual con inicio y salida del trabajo. Si necesitas corregir, usa <b>“⏱ Editar tiempos”</b> en cada tarjeta (incluye tiempo muerto).</p></div>
       <div class="board" id="board"></div>
+      <input type="file" id="kmedia-input" accept="image/*,video/*" multiple hidden>
     </section>
 
     <!-- ============ COBRO ============ -->
@@ -374,6 +376,36 @@
       <div class="cobro-grid">
         <div class="panel pick" id="cobro-pick"></div>
         <div id="cobro-form-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ============ COSTOS ============ -->
+    <section class="view" id="view-costos">
+      <div class="vhead"><div class="eye">Empresa</div><h1>Horas y gastos</h1><p>Registra las <b>horas trabajadas</b> del equipo (entrada/salida) y los <b>gastos del taller</b> (arriendo, luz, insumos…). Todo esto alimenta el Panel.</p></div>
+      <div class="dash-grid">
+        <div class="chart">
+          <h3>🕒 Horas trabajadas<span class="tag">reloj</span></h3>
+          <form id="reloj-form" class="row c3" autocomplete="off" style="margin-bottom:16px">
+            <label class="f"><span class="lab">Trabajador</span><input name="rTrab" list="trabajadores" required placeholder="Nombre"></label>
+            <label class="f"><span class="lab">Fecha</span><input name="rFecha" type="date" required></label>
+            <label class="f"><span class="lab">Descanso (min)</span><input name="rDesc" type="number" min="0" step="5" value="60"></label>
+            <label class="f"><span class="lab">Entrada</span><input name="rIn" type="time" required></label>
+            <label class="f"><span class="lab">Salida</span><input name="rOut" type="time" required></label>
+            <button type="submit" class="btn primary" style="align-self:end">Registrar</button>
+          </form>
+          <div id="reloj-list"></div>
+        </div>
+        <div class="chart">
+          <h3>💸 Gastos del taller<span class="tag">comunes</span></h3>
+          <form id="gasto-form" class="row c3" autocomplete="off" style="margin-bottom:16px">
+            <label class="f"><span class="lab">Concepto</span><input name="gCon" required placeholder="Arriendo, luz, insumos…"></label>
+            <label class="f"><span class="lab">Tipo</span><select name="gTipo"><option>FIJO</option><option>VARIABLE</option></select></label>
+            <label class="f"><span class="lab">Monto</span><input name="gMonto" type="number" min="0" step="1000" required placeholder="100000"></label>
+            <label class="f"><span class="lab">Fecha</span><input name="gFecha" type="date" required></label>
+            <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
+          </form>
+          <div id="gasto-list"></div>
+        </div>
       </div>
     </section>
 
@@ -466,6 +498,7 @@
   function renderTab(v){
     if(v==="seguimiento") renderBoard();
     else if(v==="cobro") renderCobro();
+    else if(v==="costos") renderCostos();
     else if(v==="panel") renderPanel();
     else if(v==="agenda") renderCal();
   }
@@ -496,44 +529,42 @@
     el.querySelectorAll("button").forEach(function(b){ b.addEventListener("click",function(){ chosenSvcs.splice(+b.dataset.i,1); renderSvcList(); recepSummary(); }); });
   }
 
-  var pendingMedia=[];
-  var mediaInput=document.getElementById("media-input"), mediaStrip=document.getElementById("media-strip");
-  document.getElementById("media-btn").addEventListener("click",function(){ mediaInput.click(); });
-  mediaInput.addEventListener("change",function(){
-    Array.prototype.forEach.call(mediaInput.files,function(f){ pendingMedia.push({name:f.name,type:f.type.indexOf("video")===0?"video":"image",url:URL.createObjectURL(f)}); });
-    mediaInput.value=""; renderMediaStrip(); recepSummary();
+  // fotos/videos: se agregan al INGRESO del vehículo, desde su tarjeta en Seguimiento
+  var mediaTarget=null;
+  var kmediaInput=document.getElementById("kmedia-input");
+  kmediaInput.addEventListener("change",function(){
+    var e=data.filter(function(x){return x.id===mediaTarget;})[0];
+    if(e){ e.media=e.media||[];
+      Array.prototype.forEach.call(kmediaInput.files,function(f){ e.media.push({name:f.name,type:f.type.indexOf("video")===0?"video":"image",url:URL.createObjectURL(f)}); });
+      save(data); renderBoard(); toast("📷 "+e.media.length+" archivo(s) — "+e.marca+" "+(e.modelo||""));
+    }
+    kmediaInput.value="";
   });
-  function renderMediaStrip(){
-    mediaStrip.innerHTML=pendingMedia.map(function(m,i){
-      var inner=m.type==="video"?'<div class="vid">🎬</div>':'<img src="'+m.url+'" alt="">';
-      return '<div class="thumb">'+inner+'<span class="nm">'+m.name+'</span><button type="button" class="rm" data-i="'+i+'" aria-label="Quitar">×</button></div>';
-    }).join("");
-    mediaStrip.querySelectorAll(".rm").forEach(function(b){ b.addEventListener("click",function(){ pendingMedia.splice(+b.dataset.i,1); renderMediaStrip(); recepSummary(); }); });
-  }
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
     document.getElementById("r-svc").textContent=chosenSvcs.length;
     document.getElementById("r-cita").textContent=form.fCoord.value?(fFecha(form.fCoord.value)+" "+(form.hCoord.value||"")):"—";
-    document.getElementById("r-media").textContent=pendingMedia.length;
     var t=form.talla.value, est=0, variable=false;
     chosenSvcs.forEach(function(n){ var s=svcInfo(n); if(s&&s.p){ est+=precioServicio(n,t); } else { variable=true; } });
     document.getElementById("r-precio").textContent=clp(est)+(variable?" +":"");
   }
   form.addEventListener("input",recepSummary);
-  form.addEventListener("reset",function(){ chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
+  form.addEventListener("reset",function(){ chosenSvcs=[]; renderSvcList(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
   form.addEventListener("submit",function(ev){
     ev.preventDefault();
-    var e={id:Date.now(),estado:"AGENDADO",cobrado:false,servicios:chosenSvcs.slice(),media:pendingMedia.slice(),
+    var e={id:Date.now(),estado:"AGENDADO",cobrado:false,servicios:chosenSvcs.slice(),media:[],
       trabajador:"",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
     data.unshift(e); save(data);
-    chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip();
+    chosenSvcs=[]; renderSvcList();
     form.reset(); form.fCoord.value=todayISO(); recepSummary(); fillMarcas(); fillTrabajadores(); updateCounts();
     toast("✓ "+e.marca+" "+e.modelo+" agendado — visible en Agenda y Seguimiento");
   });
   function fillMarcas(){ var s={},dl=document.getElementById("marcas");dl.innerHTML=""; data.forEach(function(e){ if(e.marca&&!s[e.marca]){s[e.marca]=1;var o=document.createElement("option");o.value=e.marca;dl.appendChild(o);} }); }
-  function fillTrabajadores(){ var s={},dl=document.getElementById("trabajadores");dl.innerHTML=""; data.forEach(function(e){ if(e.trabajador&&!s[e.trabajador]){s[e.trabajador]=1;var o=document.createElement("option");o.value=e.trabajador;dl.appendChild(o);} }); }
+  function fillTrabajadores(){ var s={},dl=document.getElementById("trabajadores");dl.innerHTML="";
+    (reloj||[]).forEach(function(r){ if(r.trab&&!s[r.trab]){s[r.trab]=1;var o=document.createElement("option");o.value=r.trab;dl.appendChild(o);} });
+    Object.keys(VH||{}).forEach(function(k){ if(!s[k]){s[k]=1;var o=document.createElement("option");o.value=k;dl.appendChild(o);} }); }
   fillMarcas(); fillTrabajadores(); recepSummary();
 
   // ---------- seguimiento (board) ----------
@@ -553,7 +584,10 @@
         var btns="";
         if(ci>0) btns+='<button class="kbtn back" data-id="'+e.id+'" data-dir="-1">‹ Volver</button>';
         if(ci<4) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Ingresó","Comenzar","Terminar","Entregar"][ci]+' ›</button>';
-        var tedit='<details class="ktimes"><summary>⏱ Editar tiempos</summary>'+
+        var nm=(e.media||[]).length;
+        var tedit='<details class="ktimes"><summary>⏱ Tiempos y cita</summary>'+
+          '<div class="trow"><span>Cita fecha</span><input type="date" class="cedit" data-id="'+e.id+'" data-k="fCoord" value="'+(e.fCoord||"")+'"></div>'+
+          '<div class="trow"><span>Cita hora</span><input type="time" class="cedit" data-id="'+e.id+'" data-k="hCoord" value="'+(e.hCoord||"")+'"></div>'+
           '<div class="trow"><span>Ingreso</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hIngreso" value="'+(e.hIngreso||"")+'"></div>'+
           '<div class="trow"><span>Inicio trabajo</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hInicio" value="'+(e.hInicio||"")+'"></div>'+
           '<div class="trow"><span>Salida</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hSalida" value="'+(e.hSalida||"")+'"></div>'+
@@ -562,14 +596,18 @@
         return '<div class="kcard"><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
-          '<input class="kw" list="trabajadores" data-id="'+e.id+'" placeholder="👤 Asignar trabajador" value="'+(e.trabajador||"")+'">'+
+          '<button type="button" class="kmedia-btn" data-id="'+e.id+'">📷 Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
       return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(+b.dataset.id, +b.dataset.dir); }); });
-    board.querySelectorAll(".kw").forEach(function(inp){ inp.addEventListener("change",function(){ var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(e){ e.trabajador=inp.value.trim(); save(data); fillTrabajadores(); toast("Trabajador asignado: "+(e.trabajador||"—")); } }); });
+    board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){ mediaTarget=+b.dataset.id; kmediaInput.click(); }); });
+    board.querySelectorAll(".cedit").forEach(function(inp){ inp.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
+      e[inp.dataset.k]=inp.value; save(data); toast("Cita reagendada: "+fFecha(e.fCoord)+" "+(e.hCoord||""));
+    }); });
     board.querySelectorAll(".tedit").forEach(function(inp){ inp.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
       var k=inp.dataset.k; e[k]=inp.value;
@@ -666,6 +704,46 @@
     return '<label class="f"><span class="lab">'+lab+'</span><input name="'+name+'" type="'+type+'" value="'+(val||0)+'" step="500" min="0"></label>';
   }
 
+  // ---------- costos: reloj + gastos ----------
+  function loadArr(k){ try{ return JSON.parse(localStorage.getItem(k))||null; }catch(e){ return null; } }
+  function saveArr(k,a){ try{ localStorage.setItem(k,JSON.stringify(a)); }catch(e){} }
+  var reloj=loadArr("isp_reloj")||[
+    {id:1,trab:"Mario",fecha:"2026-07-22",hIn:"09:00",hOut:"18:30",desc:60},
+    {id:2,trab:"Javier",fecha:"2026-07-22",hIn:"09:00",hOut:"18:00",desc:60}
+  ];
+  var gastos=loadArr("isp_gastos")||[
+    {id:1,con:"Arriendo taller",tipo:"FIJO",monto:400000,fecha:"2026-07-01"},
+    {id:2,con:"Luz y agua",tipo:"FIJO",monto:60000,fecha:"2026-07-05"}
+  ];
+  saveArr("isp_reloj",reloj); saveArr("isp_gastos",gastos);
+  function horasReloj(r){ if(!r.hIn||!r.hOut)return 0; var a=new Date(r.fecha+"T"+r.hIn+":00"),b=new Date(r.fecha+"T"+r.hOut+":00"); var h=(b-a)/3600000-(+r.desc||0)/60; return h>0?h:0; }
+
+  var relojForm=document.getElementById("reloj-form");
+  relojForm.rFecha.value=todayISO();
+  relojForm.addEventListener("submit",function(ev){ ev.preventDefault();
+    reloj.unshift({id:Date.now(),trab:relojForm.rTrab.value.trim(),fecha:relojForm.rFecha.value,hIn:relojForm.rIn.value,hOut:relojForm.rOut.value,desc:parseFloat(relojForm.rDesc.value)||0});
+    saveArr("isp_reloj",reloj); relojForm.rTrab.value=""; renderCostos(); fillTrabajadores(); toast("✓ Horas registradas");
+  });
+  var gastoForm=document.getElementById("gasto-form");
+  gastoForm.gFecha.value=todayISO();
+  gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
+    gastos.unshift({id:Date.now(),con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,fecha:gastoForm.gFecha.value});
+    saveArr("isp_gastos",gastos); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; renderCostos(); toast("✓ Gasto agregado");
+  });
+  function renderCostos(){
+    document.getElementById("reloj-list").innerHTML=(reloj.slice(0,15).map(function(r){
+      return '<div class="lrow"><span><b>'+r.trab+'</b> · '+fFecha(r.fecha)+' · '+r.hIn+'–'+r.hOut+(+r.desc?' (−'+r.desc+'m)':'')+'</span><span class="num">'+horasReloj(r).toFixed(1)+' h <button class="ldel" data-s="reloj" data-id="'+r.id+'" aria-label="Borrar">×</button></span></div>';
+    }).join(""))||'<div class="col-empty">Sin registros aún</div>';
+    document.getElementById("gasto-list").innerHTML=(gastos.slice(0,15).map(function(g){
+      return '<div class="lrow"><span><b>'+g.con+'</b> · '+g.tipo+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
+    }).join(""))||'<div class="col-empty">Sin gastos aún</div>';
+    document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
+      if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==+b.dataset.id;}); saveArr("isp_reloj",reloj); }
+      else { gastos=gastos.filter(function(x){return x.id!==+b.dataset.id;}); saveArr("isp_gastos",gastos); }
+      renderCostos();
+    }); });
+  }
+
   // ---------- panel ----------
   function periodoStart(p){
     var now=new Date();
@@ -686,18 +764,18 @@
   function saveVH(m){ try{ localStorage.setItem("isp_valorhora",JSON.stringify(m)); }catch(e){} }
   var VH=loadVH();
 
-  function trabTable(arr){
-    var m={};
-    arr.forEach(function(e){ if(!e.trabajador)return; var t=m[e.trabajador]=m[e.trabajador]||{n:0,h:0,ing:0};
-      t.n++; t.h+=horasTrabajadas(e); if(e.cobrado)t.ing+=(+e.precioVenta||0); });
+  function trabTable(){
+    var start=periodoStart(state.periodo), m={};
+    (reloj||[]).forEach(function(r){ if(!r.trab)return; if(start&&new Date(r.fecha+"T00:00:00")<start)return;
+      var t=m[r.trab]=m[r.trab]||{h:0,d:0}; t.h+=horasReloj(r); t.d++; });
     var keys=Object.keys(m).sort();
-    if(!keys.length) return '<div class="chart" style="margin-top:16px"><h3>Trabajadores</h3><div class="col-empty">Sin trabajadores asignados en este período</div></div>';
-    var rows=keys.map(function(k){ var t=m[k]; var vh=+VH[k]||0; var costo=t.h*vh;
-      return '<tr><td><b>'+k+'</b></td><td class="r">'+t.n+'</td><td class="r">'+t.h.toFixed(1)+' h</td>'+
+    if(!keys.length) return '<div class="chart" style="margin-top:16px"><h3>Trabajadores<span class="tag">horas del período</span></h3><div class="col-empty">Registra las horas del equipo en la pestaña 💰 Costos</div></div>';
+    var rows=keys.map(function(k){ var t=m[k]; var vh=+VH[k]||0;
+      return '<tr><td><b>'+k+'</b></td><td class="r">'+t.d+'</td><td class="r">'+t.h.toFixed(1)+' h</td>'+
         '<td class="r"><input class="vh" data-t="'+k+'" type="number" min="0" step="500" value="'+(vh||"")+'" placeholder="$/hora"></td>'+
-        '<td class="r">'+(vh?clp(costo):"—")+'</td><td class="r">'+clp(t.ing)+'</td></tr>';
+        '<td class="r">'+(vh?clp(t.h*vh):"—")+'</td></tr>';
     }).join("");
-    return '<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Servicios</th><th class="r">Horas trabajadas</th><th class="r">Valor hora</th><th class="r">Costo mano de obra</th><th class="r">Ingreso generado</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    return '<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas trabajadas</th><th class="r">Valor hora</th><th class="r">Costo mano de obra</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 
   function renderPanel(){
@@ -724,14 +802,23 @@
       kpiCard("proceso","En proceso",enProceso,"en el taller ahora","")+
     '</div><div id="kpi-detail-slot"></div>';
 
-    var tabla=trabTable(enPeriodo);
+    var tabla=trabTable();
+    var gastosPeriodo=(gastos||[]).filter(function(g){ return !start||new Date(g.fecha+"T00:00:00")>=start; }).reduce(function(s,g){return s+(+g.monto||0);},0);
+    var moPeriodo=0; (reloj||[]).forEach(function(r){ if(start&&new Date(r.fecha+"T00:00:00")<start)return; moPeriodo+=horasReloj(r)*(+VH[r.trab]||0); });
+    var resultado=util-moPeriodo-gastosPeriodo;
+    var resumen='<div class="chart" style="margin-top:16px"><h3>Resultado del período<span class="tag">estimado</span></h3>'+
+      '<div class="lrow"><span>Utilidad de servicios (cobrados)</span><span class="num">'+clp(util)+'</span></div>'+
+      '<div class="lrow"><span>− Mano de obra registrada (horas × valor)</span><span class="num">'+clp(moPeriodo)+'</span></div>'+
+      '<div class="lrow"><span>− Gastos del taller</span><span class="num">'+clp(gastosPeriodo)+'</span></div>'+
+      '<div class="lrow"><span><b>= Resultado</b></span><span class="num" style="font-weight:800;color:'+(resultado>=0?'var(--ok)':'var(--crit)')+'">'+clp(resultado)+'</span></div>'+
+    '</div>';
     var porSvc=agrupaSvc(base,function(e){return utilidad(e);});
     var charts='<div class="dash-grid">'+
       chart("Utilidad por servicio","CLP",porSvc,clp,false)+
       chartMeses()+
     '</div>';
 
-    box.innerHTML=filtros+kpis+tabla+charts;
+    box.innerHTML=filtros+kpis+tabla+resumen+charts;
     box.querySelectorAll(".pfilter button").forEach(function(b){ b.addEventListener("click",function(){ state.periodo=b.dataset.p; renderPanel(); }); });
     box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ VH[inp.dataset.t]=parseFloat(inp.value)||0; saveVH(VH); renderPanel(); }); });
     box.querySelectorAll(".kpi").forEach(function(k){ k.addEventListener("click",function(){ toggleKpi(k.dataset.k, base); }); });
