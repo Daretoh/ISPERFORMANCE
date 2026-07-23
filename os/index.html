@@ -152,7 +152,8 @@
   tbody tr:hover{background:var(--surface-2);}
   td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;}
   .chip{display:inline-flex;align-items:center;gap:4px;font:700 10px/1 var(--mono);padding:4px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;}
-  .chip.espera{background:var(--surface-3);color:var(--ink-muted);}
+  .chip.agendado{background:var(--surface-3);color:var(--ink-muted);}
+  .chip.espera{background:var(--accent-soft);color:var(--accent-ink);}
   .chip.proc{background:var(--warn-soft);color:var(--warn);}
   .chip.term{background:var(--info-soft);color:var(--info);}
   .chip.entreg{background:var(--ok-soft);color:var(--ok);}
@@ -160,10 +161,10 @@
   .chip.pend{background:var(--crit-soft);color:var(--crit);}
 
   /* kanban seguimiento */
-  .board{display:grid;grid-template-columns:repeat(4,minmax(230px,1fr));gap:14px;overflow-x:auto;padding-bottom:8px;}
+  .board{display:grid;grid-template-columns:repeat(5,minmax(215px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px;}
   .col{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius);padding:12px;min-height:120px;}
   .col-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;font:700 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;}
-  .col-h .c-espera{color:var(--ink-muted);} .col-h .c-proc{color:var(--warn);} .col-h .c-term{color:var(--info);} .col-h .c-entreg{color:var(--ok);}
+  .col-h .c-agend{color:var(--ink-faint);} .col-h .c-espera{color:var(--accent);} .col-h .c-proc{color:var(--warn);} .col-h .c-term{color:var(--info);} .col-h .c-entreg{color:var(--ok);}
   .col-h .num{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--ink-muted);}
   .kcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:11px 12px;margin-bottom:10px;}
   .kcard:last-child{margin-bottom:0;}
@@ -175,6 +176,20 @@
   .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
   .kcard .kw:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .kcard .kw::placeholder{color:var(--ink-faint);font-weight:500;}
+  .ktimes{margin-top:8px;}
+  .ktimes summary{cursor:pointer;font:700 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);list-style:none;padding:4px 0;}
+  .ktimes summary::-webkit-details-marker{display:none;}
+  .ktimes summary:hover{color:var(--accent-ink);}
+  .trow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
+  .trow span{font:600 10.5px/1 var(--mono);color:var(--ink-muted);}
+  .trow input{width:110px;font:600 12px/1 var(--mono);padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:var(--ground);color:var(--ink);}
+  .trow input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .pfilter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px;width:fit-content;}
+  .pfilter button{font:650 12.5px/1 var(--sans);border:none;background:transparent;color:var(--ink-muted);padding:8px 13px;border-radius:999px;cursor:pointer;}
+  .pfilter button.on{background:var(--accent);color:#fff;}
+  .pfilter button:hover:not(.on){color:var(--ink);background:var(--surface);}
+  input.vh{width:90px;font:600 12.5px/1 var(--mono);padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--ground);color:var(--ink);text-align:right;}
+  input.vh:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .kcard .kbtns{display:flex;gap:6px;margin-top:9px;}
   .kbtn{flex:1;font:700 11px/1 var(--sans);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:8px 6px;cursor:pointer;}
   .kbtn.fwd{background:var(--accent);border-color:var(--accent);color:#fff;} .kbtn.fwd:hover{filter:brightness(1.06);}
@@ -210,7 +225,8 @@
   .ev.term{background:var(--info-soft);color:var(--info);border-left-color:var(--info);}
   .ev.proc{background:var(--warn-soft);color:var(--warn);border-left-color:var(--warn);}
   .ev.entreg{background:var(--ok-soft);color:var(--ok);border-left-color:var(--ok);}
-  .ev.espera{background:var(--surface-3);color:var(--ink-muted);border-left-color:var(--ink-faint);}
+  .ev.espera{background:var(--accent-soft);color:var(--accent-ink);border-left-color:var(--accent);}
+  .ev.agendado{background:var(--surface-3);color:var(--ink-muted);border-left-color:var(--ink-faint);}
   .cal-more{font:600 10px/1 var(--mono);color:var(--ink-faint);}
 
   .empty{text-align:center;padding:50px 20px;color:var(--ink-faint);}
@@ -335,11 +351,11 @@
               <div class="sline big"><span class="k">Precio estimado</span><span class="v num" id="r-precio" style="color:var(--accent-ink)">$0</span></div>
             </div>
             <div class="actions">
-              <button type="submit" class="btn primary">💾 Ingresar vehículo</button>
+              <button type="submit" class="btn primary">📅 Agendar vehículo</button>
               <button type="reset" class="btn ghost">Limpiar</button>
             </div>
           </div>
-          <p class="hint" style="padding:10px 4px;display:block">Al ingresar, el vehículo entra en <b>Seguimiento</b> como “En espera”. El cobro se hace después, en su pestaña.</p>
+          <p class="hint" style="padding:10px 4px;display:block">Al guardar, la cita queda en la <b>Agenda</b>. Cuando el auto llegue al taller, en <b>Seguimiento</b> tocas “Ingresó” y la hora de ingreso se registra sola.</p>
         </aside>
       </form>
       <datalist id="marcas"></datalist>
@@ -348,7 +364,7 @@
 
     <!-- ============ SEGUIMIENTO ============ -->
     <section class="view" id="view-seguimiento">
-      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Avanza cada vehículo por su estado. La <b>hora de inicio y salida se registran solas</b> al mover el auto — sin teclear.</p></div>
+      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Cuando llegue el auto agendado, toca <b>“Ingresó”</b> — la hora queda registrada sola. Igual con inicio y salida del trabajo. Si necesitas corregir, usa <b>“⏱ Editar tiempos”</b> en cada tarjeta (incluye tiempo muerto).</p></div>
       <div class="board" id="board"></div>
     </section>
 
@@ -386,9 +402,10 @@
 <script>
 (function(){
   "use strict";
-  var KEY="isp_os_v4";
+  var KEY="isp_os_v5";
   var MESLC=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  var ESTADOS=["EN ESPERA","EN PROCESO","TERMINADO","ENTREGADO"];
+  var ESTADOS=["AGENDADO","EN ESPERA","EN PROCESO","TERMINADO","ENTREGADO"];
+  var PERIODOS=[["dia","Hoy"],["semana","7 días"],["mes","Este mes"],["trimestre","3 meses"],["semestre","6 meses"],["todo","Todo"]];
   // catálogo real IS Performance (ver os/catalogo.json). p = precio por talla; null = precio variable
   var CATALOGO=[
     {n:"CORE — Limpieza básica",cat:"Limpiezas",p:{S:35000,M:40000,L:45000,XL:55000}},
@@ -424,16 +441,16 @@
 
   function seed(){
     return [
-      {id:1,marca:"NISSAN",modelo:"VERSA",patente:"",anioVeh:2022,talla:"M",cliente:"Juan Pérez",contacto:"+56 9 1111 1111",ubicacion:"Taller",servicios:["ADVANCE — Limpieza intermedia"],trabajador:"Mario",fCoord:"2026-07-02",hCoord:"10:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-02",hInicio:"10:15",fSalida:"2026-07-02",hSalida:"14:00",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:55000,costoProducto:8000,envio:0,costoExterno:0,costoEmpresa:5000,cobrado:true},
-      {id:2,marca:"DODGE",modelo:"JOURNEY",patente:"HYWL40",anioVeh:2017,talla:"XL",cliente:"María Soto",contacto:"+56 9 2222 2222",ubicacion:"Taller",servicios:["PRO — Limpieza avanzada"],trabajador:"Javier",fCoord:"2026-07-03",hCoord:"14:00",media:[],estado:"ENTREGADO",fInicio:"2026-07-03",hInicio:"14:10",fSalida:"2026-07-03",hSalida:"18:30",docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:100000,costoProducto:18000,envio:0,costoExterno:6000,costoEmpresa:9000,cobrado:true},
-      {id:3,marca:"MAZDA",modelo:"CX-5",patente:"KLMN88",anioVeh:2021,talla:"L",cliente:"Pedro Rojas",contacto:"+56 9 3333 3333",ubicacion:"A domicilio",servicios:["Pulido estándar"],trabajador:"Javier",fCoord:"2026-07-22",hCoord:"10:30",media:[],estado:"EN PROCESO",fInicio:"2026-07-22",hInicio:"10:40",fSalida:"",hSalida:"",docTipo:"FACTURA",modoPago:"",aplicaBono:"NO",precioVenta:150000,costoProducto:22000,envio:4000,costoExterno:0,costoEmpresa:12000,cobrado:false},
-      {id:4,marca:"SUBARU",modelo:"OUTBACK",patente:"PQRS22",anioVeh:2019,talla:"L",cliente:"Ana Díaz",contacto:"+56 9 4444 4444",ubicacion:"Taller",servicios:["PRO — Limpieza avanzada"],trabajador:"Camila",fCoord:"2026-07-22",hCoord:"12:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false},
-      {id:5,marca:"TOYOTA",modelo:"RAV4",patente:"TUVW11",anioVeh:2023,talla:"L",cliente:"Luis Vega",contacto:"+56 9 5555 5555",ubicacion:"Taller",servicios:["Tratamiento cerámico — 1 año"],trabajador:"Mario",fCoord:"2026-07-24",hCoord:"09:00",media:[],estado:"EN ESPERA",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false}
+      {id:1,marca:"NISSAN",modelo:"VERSA",patente:"",anioVeh:2022,talla:"M",cliente:"Juan Pérez",contacto:"+56 9 1111 1111",servicios:["ADVANCE — Limpieza intermedia"],trabajador:"Mario",fCoord:"2026-07-02",hCoord:"10:00",media:[],estado:"ENTREGADO",fIngreso:"2026-07-02",hIngreso:"10:05",fInicio:"2026-07-02",hInicio:"10:15",fSalida:"2026-07-02",hSalida:"14:00",tMuerto:0,docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:55000,costoProducto:8000,envio:0,costoExterno:0,costoEmpresa:5000,cobrado:true},
+      {id:2,marca:"DODGE",modelo:"JOURNEY",patente:"HYWL40",anioVeh:2017,talla:"XL",cliente:"María Soto",contacto:"+56 9 2222 2222",servicios:["PRO — Limpieza avanzada"],trabajador:"Javier",fCoord:"2026-07-03",hCoord:"14:00",media:[],estado:"ENTREGADO",fIngreso:"2026-07-03",hIngreso:"13:55",fInicio:"2026-07-03",hInicio:"14:10",fSalida:"2026-07-03",hSalida:"18:30",tMuerto:30,docTipo:"BOLETA",modoPago:"TRANSFERENCIA",aplicaBono:"SI",precioVenta:100000,costoProducto:18000,envio:0,costoExterno:6000,costoEmpresa:9000,cobrado:true},
+      {id:3,marca:"MAZDA",modelo:"CX-5",patente:"KLMN88",anioVeh:2021,talla:"L",cliente:"Pedro Rojas",contacto:"+56 9 3333 3333",servicios:["Pulido estándar"],trabajador:"Javier",fCoord:"2026-07-22",hCoord:"10:30",media:[],estado:"EN PROCESO",fIngreso:"2026-07-22",hIngreso:"10:32",fInicio:"2026-07-22",hInicio:"10:40",fSalida:"",hSalida:"",tMuerto:0,docTipo:"FACTURA",modoPago:"",aplicaBono:"NO",precioVenta:150000,costoProducto:22000,envio:4000,costoExterno:0,costoEmpresa:12000,cobrado:false},
+      {id:4,marca:"SUBARU",modelo:"OUTBACK",patente:"PQRS22",anioVeh:2019,talla:"L",cliente:"Ana Díaz",contacto:"+56 9 4444 4444",servicios:["PRO — Limpieza avanzada"],trabajador:"Camila",fCoord:"2026-07-22",hCoord:"12:00",media:[],estado:"EN ESPERA",fIngreso:"2026-07-22",hIngreso:"11:58",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false},
+      {id:5,marca:"TOYOTA",modelo:"RAV4",patente:"TUVW11",anioVeh:2023,talla:"L",cliente:"Luis Vega",contacto:"+56 9 5555 5555",servicios:["Tratamiento cerámico — 1 año"],trabajador:"",fCoord:"2026-07-24",hCoord:"09:00",media:[],estado:"AGENDADO",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0,cobrado:false}
     ];
   }
 
   var data = load(); if(!data){ data=seed(); save(data); }
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date() };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes" };
 
   // ---------- tabs ----------
   var tabsEl=document.getElementById("tabs");
@@ -454,7 +471,7 @@
   }
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
-    var porCobrar=data.filter(function(e){return !e.cobrado && e.estado!=="EN ESPERA";}).length;
+    var porCobrar=data.filter(function(e){return !e.cobrado && ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;}).length;
     setCnt("seguimiento",proc); setCnt("cobro",porCobrar);
   }
   function setCnt(view,n){
@@ -506,14 +523,14 @@
   form.addEventListener("reset",function(){ chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
   form.addEventListener("submit",function(ev){
     ev.preventDefault();
-    var e={id:Date.now(),estado:"EN ESPERA",cobrado:false,servicios:chosenSvcs.slice(),media:pendingMedia.slice(),
-      trabajador:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
+    var e={id:Date.now(),estado:"AGENDADO",cobrado:false,servicios:chosenSvcs.slice(),media:pendingMedia.slice(),
+      trabajador:"",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
     data.unshift(e); save(data);
     chosenSvcs=[]; pendingMedia=[]; renderSvcList(); renderMediaStrip();
     form.reset(); form.fCoord.value=todayISO(); recepSummary(); fillMarcas(); fillTrabajadores(); updateCounts();
-    toast("✓ "+e.marca+" "+e.modelo+" ingresado — ahora en Seguimiento");
+    toast("✓ "+e.marca+" "+e.modelo+" agendado — visible en Agenda y Seguimiento");
   });
   function fillMarcas(){ var s={},dl=document.getElementById("marcas");dl.innerHTML=""; data.forEach(function(e){ if(e.marca&&!s[e.marca]){s[e.marca]=1;var o=document.createElement("option");o.value=e.marca;dl.appendChild(o);} }); }
   function fillTrabajadores(){ var s={},dl=document.getElementById("trabajadores");dl.innerHTML=""; data.forEach(function(e){ if(e.trabajador&&!s[e.trabajador]){s[e.trabajador]=1;var o=document.createElement("option");o.value=e.trabajador;dl.appendChild(o);} }); }
@@ -524,30 +541,53 @@
     var board=document.getElementById("board");
     board.innerHTML=ESTADOS.map(function(st,ci){
       var items=data.filter(function(e){return e.estado===st;});
-      var cls=["c-espera","c-proc","c-term","c-entreg"][ci];
+      var cls=["c-agend","c-espera","c-proc","c-term","c-entreg"][ci];
       var cards=items.map(function(e){
         var svcs=(e.servicios||[]).map(function(s){return '<span>'+s+'</span>';}).join("");
         var tline="";
-        if(e.hInicio) tline+="▶ Inicio "+fFecha(e.fInicio)+" "+e.hInicio;
-        if(e.hSalida) tline+=(tline?" · ":"")+"■ Salida "+fFecha(e.fSalida)+" "+e.hSalida;
+        if(e.hCoord && ci===0) tline+="📅 Cita "+fFecha(e.fCoord)+" "+e.hCoord;
+        if(e.hIngreso) tline+=(tline?" · ":"")+"⏵ Ingreso "+e.hIngreso;
+        if(e.hInicio) tline+=(tline?" · ":"")+"▶ Inicio "+e.hInicio;
+        if(e.hSalida) tline+=(tline?" · ":"")+"■ Salida "+e.hSalida;
+        if(+e.tMuerto) tline+=(tline?" · ":"")+"⏸ "+e.tMuerto+" min muerto";
         var btns="";
         if(ci>0) btns+='<button class="kbtn back" data-id="'+e.id+'" data-dir="-1">‹ Volver</button>';
-        if(ci<3) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Comenzar","Terminar","Entregar"][ci]+' ›</button>';
+        if(ci<4) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Ingresó","Comenzar","Terminar","Entregar"][ci]+' ›</button>';
+        var tedit='<details class="ktimes"><summary>⏱ Editar tiempos</summary>'+
+          '<div class="trow"><span>Ingreso</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hIngreso" value="'+(e.hIngreso||"")+'"></div>'+
+          '<div class="trow"><span>Inicio trabajo</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hInicio" value="'+(e.hInicio||"")+'"></div>'+
+          '<div class="trow"><span>Salida</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hSalida" value="'+(e.hSalida||"")+'"></div>'+
+          '<div class="trow"><span>T. muerto (min)</span><input type="number" min="0" step="5" class="tmin" data-id="'+e.id+'" value="'+(+e.tMuerto||0)+'"></div>'+
+          '</details>';
         return '<div class="kcard"><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           '<input class="kw" list="trabajadores" data-id="'+e.id+'" placeholder="👤 Asignar trabajador" value="'+(e.trabajador||"")+'">'+
+          tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
       return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(+b.dataset.id, +b.dataset.dir); }); });
     board.querySelectorAll(".kw").forEach(function(inp){ inp.addEventListener("change",function(){ var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(e){ e.trabajador=inp.value.trim(); save(data); fillTrabajadores(); toast("Trabajador asignado: "+(e.trabajador||"—")); } }); });
+    board.querySelectorAll(".tedit").forEach(function(inp){ inp.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
+      var k=inp.dataset.k; e[k]=inp.value;
+      var fk={hIngreso:"fIngreso",hInicio:"fInicio",hSalida:"fSalida"}[k];
+      if(inp.value && !e[fk]) e[fk]=todayISO();
+      if(!inp.value) e[fk]="";
+      save(data); toast("Tiempo actualizado");
+    }); });
+    board.querySelectorAll(".tmin").forEach(function(inp){ inp.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
+      e.tMuerto=Math.max(0,parseFloat(inp.value)||0); save(data); toast("Tiempo muerto: "+e.tMuerto+" min");
+    }); });
   }
   function advance(id,dir){
     var e=data.filter(function(x){return x.id===id;})[0]; if(!e)return;
-    var i=ESTADOS.indexOf(e.estado)+dir; if(i<0||i>3)return;
+    var i=ESTADOS.indexOf(e.estado)+dir; if(i<0||i>4)return;
     e.estado=ESTADOS[i];
+    if(e.estado==="EN ESPERA" && dir>0 && !e.hIngreso){ e.fIngreso=todayISO(); e.hIngreso=nowTime(); }
     if(e.estado==="EN PROCESO" && !e.hInicio){ e.fInicio=todayISO(); e.hInicio=nowTime(); }
     if(e.estado==="TERMINADO" && !e.hSalida){ e.fSalida=todayISO(); e.hSalida=nowTime(); }
     save(data); renderBoard(); updateCounts();
@@ -557,7 +597,7 @@
   // ---------- cobro ----------
   function renderCobro(){
     var pick=document.getElementById("cobro-pick");
-    var lista=data.filter(function(e){return e.estado!=="EN ESPERA";});
+    var lista=data.filter(function(e){return ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;});
     if(lista.length===0){ pick.innerHTML='<div class="empty" style="padding:26px">Sin vehículos para cobrar aún.</div>'; document.getElementById("cobro-form-wrap").innerHTML=""; return; }
     pick.innerHTML=lista.map(function(e){
       var badge=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip pend">Por cobrar</span>';
@@ -627,38 +667,73 @@
   }
 
   // ---------- panel ----------
+  function periodoStart(p){
+    var now=new Date();
+    if(p==="dia") return new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    if(p==="semana"){ var d=new Date(now); d.setDate(d.getDate()-7); return d; }
+    if(p==="mes") return new Date(now.getFullYear(),now.getMonth(),1);
+    if(p==="trimestre"){ var d3=new Date(now); d3.setMonth(d3.getMonth()-3); return d3; }
+    if(p==="semestre"){ var d6=new Date(now); d6.setMonth(d6.getMonth()-6); return d6; }
+    return null;
+  }
+  function horasTrabajadas(e){
+    if(!e.fInicio||!e.hInicio||!e.fSalida||!e.hSalida) return 0;
+    var a=new Date(e.fInicio+"T"+e.hInicio+":00"), b=new Date(e.fSalida+"T"+e.hSalida+":00");
+    var h=(b-a)/3600000-(+e.tMuerto||0)/60;
+    return h>0?h:0;
+  }
+  function loadVH(){ try{ return JSON.parse(localStorage.getItem("isp_valorhora"))||{}; }catch(e){ return {}; } }
+  function saveVH(m){ try{ localStorage.setItem("isp_valorhora",JSON.stringify(m)); }catch(e){} }
+  var VH=loadVH();
+
+  function trabTable(arr){
+    var m={};
+    arr.forEach(function(e){ if(!e.trabajador)return; var t=m[e.trabajador]=m[e.trabajador]||{n:0,h:0,ing:0};
+      t.n++; t.h+=horasTrabajadas(e); if(e.cobrado)t.ing+=(+e.precioVenta||0); });
+    var keys=Object.keys(m).sort();
+    if(!keys.length) return '<div class="chart" style="margin-top:16px"><h3>Trabajadores</h3><div class="col-empty">Sin trabajadores asignados en este período</div></div>';
+    var rows=keys.map(function(k){ var t=m[k]; var vh=+VH[k]||0; var costo=t.h*vh;
+      return '<tr><td><b>'+k+'</b></td><td class="r">'+t.n+'</td><td class="r">'+t.h.toFixed(1)+' h</td>'+
+        '<td class="r"><input class="vh" data-t="'+k+'" type="number" min="0" step="500" value="'+(vh||"")+'" placeholder="$/hora"></td>'+
+        '<td class="r">'+(vh?clp(costo):"—")+'</td><td class="r">'+clp(t.ing)+'</td></tr>';
+    }).join("");
+    return '<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Servicios</th><th class="r">Horas trabajadas</th><th class="r">Valor hora</th><th class="r">Costo mano de obra</th><th class="r">Ingreso generado</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
   function renderPanel(){
     var box=document.getElementById("panel-content");
     if(data.length===0){ box.innerHTML='<div class="empty"><div class="big">📭</div>Aún no hay vehículos.</div>'; return; }
-    var now=new Date(), ym=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-    var mesCobrados=data.filter(function(e){return e.cobrado && (e.fCoord||"").slice(0,7)===ym;});
-    var base=mesCobrados.length?mesCobrados:data.filter(function(e){return e.cobrado;});
+    var start=periodoStart(state.periodo);
+    var enPeriodo=data.filter(function(e){ var d=e.fCoord||e.fIngreso; if(!d)return !start; return !start||new Date(d+"T00:00:00")>=start; });
+    var base=enPeriodo.filter(function(e){return e.cobrado;});
     var ventas=base.reduce(function(s,e){return s+(+e.precioVenta||0);},0);
     var util=base.reduce(function(s,e){return s+utilidad(e);},0);
     var autos=base.length, ticket=autos?ventas/autos:0, margen=ventas?util/ventas:0;
     var enProceso=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
-    document.getElementById("panel-sub").textContent="Basado en "+base.length+" servicios cobrados · toca un indicador para el detalle";
+    var pLabel=""; PERIODOS.forEach(function(p){ if(p[0]===state.periodo)pLabel=p[1]; });
+    document.getElementById("panel-sub").textContent=pLabel+" · "+base.length+" servicios cobrados · toca un indicador para el detalle";
+
+    var filtros='<div class="pfilter">'+PERIODOS.map(function(p){
+      return '<button data-p="'+p[0]+'"'+(p[0]===state.periodo?' class="on"':'')+'>'+p[1]+'</button>';
+    }).join("")+'</div>';
 
     var kpis='<div class="kpis">'+
       kpiCard("ventas","Ventas",clp(ventas),autos+" vehículos","accent")+
       kpiCard("util","Utilidad",clp(util),(margen*100).toFixed(0)+"% margen","good")+
       kpiCard("ticket","Ticket promedio",clp(ticket),"por vehículo","")+
-      kpiCard("proceso","En proceso",enProceso,"en el taller","")+
+      kpiCard("proceso","En proceso",enProceso,"en el taller ahora","")+
     '</div><div id="kpi-detail-slot"></div>';
 
+    var tabla=trabTable(enPeriodo);
     var porSvc=agrupaSvc(base,function(e){return utilidad(e);});
-    var porTrab=agrupa(base.filter(function(e){return e.trabajador;}),"trabajador",function(e){return +e.precioVenta||0;});
-    var porTalla=agrupa(base,"talla",function(){return 1;});
-
     var charts='<div class="dash-grid">'+
-      chart("Ventas por trabajador","CLP",porTrab,clp,true)+
       chart("Utilidad por servicio","CLP",porSvc,clp,false)+
-    '</div><div class="dash-grid">'+
-      chart("Vehículos por talla","N°",porTalla,function(v){return v+" autos";},true)+
       chartMeses()+
     '</div>';
 
-    box.innerHTML=kpis+charts;
+    box.innerHTML=filtros+kpis+tabla+charts;
+    box.querySelectorAll(".pfilter button").forEach(function(b){ b.addEventListener("click",function(){ state.periodo=b.dataset.p; renderPanel(); }); });
+    box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ VH[inp.dataset.t]=parseFloat(inp.value)||0; saveVH(VH); renderPanel(); }); });
     box.querySelectorAll(".kpi").forEach(function(k){ k.addEventListener("click",function(){ toggleKpi(k.dataset.k, base); }); });
     if(state.kpiOpen) openKpi(state.kpiOpen, base, box);
   }
@@ -700,7 +775,7 @@
   }
 
   // ---------- agenda ----------
-  function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":"espera"; }
+  function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":st==="EN ESPERA"?"espera":"agendado"; }
   function renderCal(){
     var y=state.calRef.getFullYear(), m=state.calRef.getMonth();
     document.getElementById("cal-month").textContent=MESLC[m]+" "+y;

@@ -176,6 +176,21 @@ ul { list-style: none; }
   color: var(--orange-500);
 }
 
+/* Comparador de niveles de limpieza */
+.cmp-block { margin-top: 30px; }
+.cmp-title { font-size: 1.15rem; font-weight: 800; margin: 0 0 4px; color: var(--white); }
+.cmp-sub { color: rgba(255,255,255,.55); font-size: .88rem; margin: 0 0 14px; }
+.cmp-wrap { overflow-x: auto; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: var(--dark-800); }
+table.cmp { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .85rem; color: var(--white); }
+.cmp th, .cmp td { padding: 9px 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.08); }
+.cmp td:first-child { text-align: left; color: rgba(255,255,255,.72); }
+.cmp thead th { background: rgba(255,255,255,.05); font-weight: 800; text-transform: uppercase; letter-spacing: .05em; font-size: .78rem; }
+.cmp thead th:nth-child(4) { color: var(--orange-500); }
+.cmp tr.cmp-sec td { background: rgba(255,255,255,.04); color: var(--orange-500); font-weight: 700; text-transform: uppercase; font-size: .72rem; letter-spacing: .08em; text-align: left; }
+.cmp td.y { color: var(--orange-500); font-weight: 700; }
+.cmp td.n { color: rgba(255,255,255,.25); }
+.cmp tbody tr:last-child td { border-bottom: none; }
+
 .nav-cart-btn:hover { opacity: 1; }
 
 .nav-cart-btn .cart-badge {
