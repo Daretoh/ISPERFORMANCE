@@ -231,6 +231,7 @@
   .cell.today .dn{color:#fff;background:var(--accent);border-radius:6px;padding:3px 6px;align-self:flex-start;}
   .ev{font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:5px;background:var(--info-soft);color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--info);}
   .ev .evh{font-family:var(--mono);font-weight:700;}
+  .ev .evs{font-weight:800;}
   .ev.term{background:var(--info-soft);color:var(--info);border-left-color:var(--info);}
   .ev.proc{background:var(--warn-soft);color:var(--warn);border-left-color:var(--warn);}
   .ev.entreg{background:var(--ok-soft);color:var(--ok);border-left-color:var(--ok);}
@@ -908,6 +909,7 @@
 
   // ---------- agenda ----------
   function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":st==="EN ESPERA"?"espera":"agendado"; }
+  function svcCorto(n){ if(!n)return""; var i=n.indexOf("—"); return (i>0?n.slice(0,i):n).trim(); }
   function renderCal(){
     var y=state.calRef.getFullYear(), m=state.calRef.getMonth();
     document.getElementById("cal-month").textContent=MESLC[m]+" "+y;
@@ -920,7 +922,7 @@
     document.getElementById("cal-grid").innerHTML=cells.map(function(c){
       var cls="cell"+(c.out?" out":"")+(c.iso===today?" today":""); var evs="";
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
-        evs=list.slice(0,3).map(function(e){ var svc=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+svc+'"><span class="evh">'+(e.hCoord||"--")+'</span> '+e.marca+' · '+svc+'</span>'; }).join("");
+        evs=list.slice(0,3).map(function(e){ var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>'; }).join("");
         if(list.length>3)evs+='<span class="cal-more">+'+(list.length-3)+' más</span>';
       }
       return '<div class="'+cls+'"><span class="dn">'+c.d+'</span>'+evs+'</div>';
