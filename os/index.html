@@ -214,6 +214,21 @@
   .pick-item:hover{background:var(--surface-2);}
   .pick-item.sel{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));}
   .pick-item .p1{font-weight:700;font-size:13.5px;} .pick-item .p2{font-size:11.5px;color:var(--ink-muted);margin-top:2px;display:flex;gap:6px;align-items:center;}
+  .cli-search{display:block;width:100%;max-width:440px;margin-bottom:16px;font:500 14px/1 var(--sans);padding:11px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);}
+  .cli-search:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .chip.dormido{background:var(--crit-soft);color:var(--crit);} .chip.activo{background:var(--ok-soft);color:var(--ok);}
+  .ficha{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;}
+  .ficha .fh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .ficha .fh h2{margin:0;font-size:1.3rem;letter-spacing:-.02em;} .ficha .fh .fc{font:600 12px/1.4 var(--mono);color:var(--ink-muted);margin-top:4px;}
+  .ficha .fkpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px;}
+  @media (max-width:600px){.ficha .fkpis{grid-template-columns:repeat(2,1fr);}}
+  .fkpi{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px;}
+  .fkpi .l{font:700 9.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;}
+  .fkpi .v{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .fsec{margin-bottom:16px;} .fsec h4{font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 9px;}
+  .fchips{display:flex;flex-wrap:wrap;gap:6px;} .fchips span{font:600 11px/1.3 var(--sans);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:5px 9px;color:var(--ink-2);}
+  .obs-area{width:100%;min-height:74px;font:500 13px/1.5 var(--sans);padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);resize:vertical;}
+  .obs-area:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
 
   .cal-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .cal-head .m{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;min-width:170px;text-transform:capitalize;}
@@ -296,6 +311,7 @@
         <button data-view="cobro">💵 Cobro</button>
         <button data-view="costos">💰 Costos</button>
         <button data-view="panel">📊 Panel</button>
+        <button data-view="clientes">👥 Clientes</button>
         <button data-view="agenda">📅 Agenda</button>
       </nav>
       <span class="navuser" id="nav-user-name"></span>
@@ -422,6 +438,16 @@
       <div id="panel-content"></div>
     </section>
 
+    <!-- ============ CLIENTES ============ -->
+    <section class="view" id="view-clientes">
+      <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1><p>Historial, total gastado y frecuencia — calculado desde los vehículos. Elige un cliente para ver su ficha.</p></div>
+      <input type="search" id="cli-buscar" class="cli-search" placeholder="🔍 Buscar por nombre o teléfono…">
+      <div class="cobro-grid">
+        <div class="panel pick" id="cli-lista"></div>
+        <div id="cli-ficha"></div>
+      </div>
+    </section>
+
     <!-- ============ AGENDA ============ -->
     <section class="view" id="view-agenda">
       <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Citas por fecha coordinada, con hora y servicios. Color según estado del proceso.</p></div>
@@ -513,12 +539,14 @@
       sb.from('vehiculos').select('*').order('created_at',{ascending:false}),
       sb.from('reloj').select('*').order('fecha',{ascending:false}),
       sb.from('gastos').select('*').order('fecha',{ascending:false}),
-      sb.from('valor_hora').select('*')
+      sb.from('valor_hora').select('*'),
+      sb.from('clientes').select('*')
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
       gastos=(res[2].data||[]).map(gastoFromDB);
       VH={}; (res[3].data||[]).forEach(function(row){ VH[row.trabajador]=row.valor; });
+      clientesInfo={}; (res[4].data||[]).forEach(function(row){ clientesInfo[row.clave]=row; });
     });
   }
   var _rtOn=false, _rtT;
@@ -533,7 +561,8 @@
     }
   }).catch(function(){ toast('⚠ No se pudieron cargar los datos. Recarga la página.'); }); }
   window.ISP_onLogin=loadAllData;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes" };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"" };
+  var clientesInfo={};  // observaciones por cliente (tabla clientes)
 
   // ---------- tabs ----------
   var tabsEl=document.getElementById("tabs");
@@ -551,6 +580,7 @@
     else if(v==="cobro") renderCobro();
     else if(v==="costos") renderCostos();
     else if(v==="panel") renderPanel();
+    else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
   }
   function updateCounts(){
@@ -906,6 +936,73 @@
     var rows=items.map(function(i){return '<div class="bar-row"><span class="bl">'+i.k+'</span><span class="bar-track"><span class="bar-fill" style="width:'+Math.max(3,i.v/max*100)+'%"></span></span><span class="bv">'+clp(i.v)+'</span></div>';}).join("");
     return '<div class="chart"><h3>Ventas por mes<span class="tag">CLP</span></h3>'+(rows||'<div class="col-empty">Sin datos</div>')+'</div>';
   }
+
+  // ---------- clientes (CRM) ----------
+  function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
+  function diasDesde(iso){ if(!iso)return null; var d=new Date(iso+"T00:00:00"); return Math.floor((Date.now()-d)/86400000); }
+  function agruparClientes(){
+    var m={};
+    data.forEach(function(e){ var k=clientKey(e); if(!k)return;
+      var c=m[k]=m[k]||{clave:k,nombre:e.cliente||"",contacto:e.contacto||"",visitas:0,total:0,ultima:"",vehiculos:{},servicios:{},items:[]};
+      if(e.cliente && !c.nombre) c.nombre=e.cliente;
+      if(e.contacto && !c.contacto) c.contacto=e.contacto;
+      c.visitas++;
+      if(e.cobrado) c.total+=(+e.precioVenta||0);
+      var f=e.fCoord||e.fIngreso||""; if(f>c.ultima) c.ultima=f;
+      if(e.patente) c.vehiculos[e.patente]=(e.marca+" "+(e.modelo||"")).trim();
+      (e.servicios||[]).forEach(function(s){ c.servicios[s]=1; });
+      c.items.push(e);
+    });
+    return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.total-a.total;});
+  }
+  function renderClientes(){
+    var lista=agruparClientes();
+    var q=(state.clienteBuscar||"").trim().toLowerCase();
+    if(q) lista=lista.filter(function(c){ return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0; });
+    var cont=document.getElementById("cli-lista");
+    if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
+    cont.innerHTML=lista.map(function(c){
+      var dias=diasDesde(c.ultima); var dorm=dias!=null && dias>90;
+      var badge=dorm?'<span class="chip dormido">'+dias+'d</span>':'<span class="chip activo">'+c.visitas+'×</span>';
+      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+(c.nombre||"(sin nombre)")+'</div><div class="p2">'+clp(c.total)+' '+badge+'</div></div>';
+    }).join("");
+    cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
+    if(state.clienteSel==null || !lista.some(function(c){return c.clave===state.clienteSel;})) state.clienteSel=lista[0].clave;
+    renderFicha(lista.filter(function(c){return c.clave===state.clienteSel;})[0]);
+  }
+  function renderFicha(c){
+    var wrap=document.getElementById("cli-ficha"); if(!c){wrap.innerHTML="";return;}
+    var dias=diasDesde(c.ultima);
+    var vehs=Object.keys(c.vehiculos).map(function(p){return '<span>'+(c.vehiculos[p]||"")+' · '+p+'</span>';}).join("")||'<span style="opacity:.5">sin patente</span>';
+    var svcs=Object.keys(c.servicios).map(function(s){return '<span>'+svcCorto(s)+'</span>';}).join("")||'<span style="opacity:.5">—</span>';
+    var hist=c.items.slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;}).map(function(e){
+      var st=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip '+estClass(e.estado)+'">'+e.estado+'</span>';
+      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td></tr>';
+    }).join("");
+    var info=clientesInfo[c.clave]||{};
+    wrap.innerHTML='<div class="ficha">'+
+      '<div class="fh"><div><h2>'+(c.nombre||"(sin nombre)")+'</h2>'+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+'</div>'+
+        (dias!=null && dias>90?'<span class="chip dormido">'+dias+' días sin venir</span>':'')+'</div>'+
+      '<div class="fkpis">'+
+        '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
+        '<div class="fkpi"><div class="l">Visitas</div><div class="v">'+c.visitas+'</div></div>'+
+        '<div class="fkpi"><div class="l">Última visita</div><div class="v" style="font-size:.95rem">'+(c.ultima?fFecha(c.ultima):"—")+'</div></div>'+
+        '<div class="fkpi"><div class="l">Ticket prom.</div><div class="v">'+clp(c.visitas?c.total/c.visitas:0)+'</div></div>'+
+      '</div>'+
+      '<div class="fsec"><h4>Vehículos</h4><div class="fchips">'+vehs+'</div></div>'+
+      '<div class="fsec"><h4>Servicios usados</h4><div class="fchips">'+svcs+'</div></div>'+
+      '<div class="fsec"><h4>Observaciones</h4><textarea class="obs-area" id="cli-obs" placeholder="Notas: preferencias, acuerdos, recordatorios…">'+(info.observaciones||"")+'</textarea><button class="btn primary" id="cli-obs-save" style="margin-top:8px">Guardar observaciones</button></div>'+
+      '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
+    '</div>';
+    wrap.querySelector("#cli-obs-save").addEventListener("click",function(){
+      var obs=wrap.querySelector("#cli-obs").value;
+      clientesInfo[c.clave]={clave:c.clave,observaciones:obs,nombre:c.nombre,contacto:c.contacto};
+      upsertCliente(c.clave,c.nombre,c.contacto,obs); toast("✓ Observaciones guardadas");
+    });
+  }
+  function upsertCliente(clave,nombre,contacto,obs){ var sb=sbc(); if(sb) sb.from('clientes').upsert({clave:clave,nombre:nombre,contacto:contacto,observaciones:obs}).then(function(r){ if(r.error) toast('⚠ No se pudo guardar (¿corriste el SQL de clientes?)'); }); }
+  var _cliBuscar=document.getElementById("cli-buscar");
+  if(_cliBuscar) _cliBuscar.addEventListener("input",function(){ state.clienteBuscar=_cliBuscar.value; renderClientes(); });
 
   // ---------- agenda ----------
   function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":st==="EN ESPERA"?"espera":"agendado"; }
