@@ -3183,6 +3183,25 @@ table.cmp { border-collapse: collapse; width: 100%; min-width: 640px; font-size:
 .marca-chip.is-big img { height: 54px; max-width: 220px; }
 .marca-chip.cli img { height: 52px; max-width: 168px; }
 
+/* Servicios: barra lateral compacta (home) */
+.serv-side { display: grid; grid-template-columns: 240px 1fr; gap: 22px; align-items: start; max-width: 920px; margin: 0 auto; }
+.serv-side-nav { display: flex; flex-direction: column; gap: 7px; position: sticky; top: 84px; }
+.ss-cat { text-align: left; background: var(--dark-700); border: 1px solid rgba(255,255,255,0.08); color: var(--white); padding: 14px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; transition: background 0.15s, border-color 0.15s; font-family: inherit; }
+.ss-cat span { font-size: 0.72rem; font-weight: 700; color: var(--gray-400); background: rgba(255,255,255,0.06); border-radius: 999px; padding: 2px 8px; }
+.ss-cat:hover { border-color: var(--orange-500); }
+.ss-cat.on { background: var(--orange-500); color: #fff; border-color: var(--orange-500); }
+.ss-cat.on span { color: #fff; background: rgba(255,255,255,0.22); }
+.serv-side-panel { display: grid; gap: 11px; }
+.ss-item { background: var(--dark-800); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 15px 18px; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.ss-item .n { font-weight: 800; color: var(--white); font-size: 1rem; margin: 0 0 4px; }
+.ss-item .d { color: var(--gray-400); font-size: 0.85rem; margin: 0; line-height: 1.45; }
+.ss-item .p { color: var(--orange-500); font-weight: 800; white-space: nowrap; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  .serv-side { grid-template-columns: 1fr; }
+  .serv-side-nav { flex-direction: row; overflow-x: auto; position: static; padding-bottom: 4px; }
+  .ss-cat { white-space: nowrap; }
+}
+
 .marca-label {
   font-size: 0.78rem;
   font-weight: 800;
