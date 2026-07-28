@@ -487,7 +487,51 @@
     ];
   }
 
-  var data = load(); if(!data){ data=seed(); save(data); }
+  var data = [];  // se carga desde Supabase al iniciar sesión
+
+  // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
+  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:[] }; }
+  function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha}; }
+  function sbc(){ return window.ISP_SB; }
+
+  // ---- escritura en la base (optimista: la cache local ya quedó actualizada) ----
+  function persistVeh(e){ var sb=sbc(); if(!sb)return; sb.from('vehiculos').update(vehToDB(e)).eq('id',e.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar en la nube'); }); }
+  function addVehiculo(e){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.from('vehiculos').insert(vehToDB(e)).select().single().then(function(r){ if(r.error){ toast('⚠ Error al guardar'); return null; } e.id=r.data.id; data.unshift(e); return e; }); }
+  function deleteVeh(id){ var sb=sbc(); if(sb) sb.from('vehiculos').delete().eq('id',id).then(function(r){ if(r.error) toast('⚠ No se pudo eliminar'); }); }
+  function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
+  function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
+  function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('gastos').insert({concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha}).select().single().then(function(r){ if(!r.error) gastos.unshift(gastoFromDB(r.data)); else toast('⚠ Error'); }); }
+  function delGastoDB(id){ var sb=sbc(); if(sb) sb.from('gastos').delete().eq('id',id).then(function(){}); }
+  function upsertVH(t,val){ var sb=sbc(); if(sb) sb.from('valor_hora').upsert({trabajador:t,valor:val}).then(function(){}); }
+
+  // ---- carga inicial + tiempo real (compartido con el equipo) ----
+  function mapLoad(){ var sb=sbc(); if(!sb)return Promise.resolve();
+    return Promise.all([
+      sb.from('vehiculos').select('*').order('created_at',{ascending:false}),
+      sb.from('reloj').select('*').order('fecha',{ascending:false}),
+      sb.from('gastos').select('*').order('fecha',{ascending:false}),
+      sb.from('valor_hora').select('*')
+    ]).then(function(res){
+      data=(res[0].data||[]).map(vehFromDB);
+      reloj=(res[1].data||[]).map(relojFromDB);
+      gastos=(res[2].data||[]).map(gastoFromDB);
+      VH={}; (res[3].data||[]).forEach(function(row){ VH[row.trabajador]=row.valor; });
+    });
+  }
+  var _rtOn=false, _rtT;
+  function loadAllData(){ mapLoad().then(function(){
+    fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view);
+    if(!_rtOn && sbc()){ _rtOn=true;
+      try {
+        sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(){
+          clearTimeout(_rtT); _rtT=setTimeout(function(){ mapLoad().then(function(){ updateCounts(); renderTab(state.view); }); },600);
+        }).subscribe();
+      } catch(err){ /* tiempo real opcional: si falla, el panel sigue funcionando (se ve al recargar) */ }
+    }
+  }).catch(function(){ toast('⚠ No se pudieron cargar los datos. Recarga la página.'); }); }
+  window.ISP_onLogin=loadAllData;
   var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes" };
 
   // ---------- tabs ----------
@@ -542,7 +586,7 @@
     var e=data.filter(function(x){return x.id===mediaTarget;})[0];
     if(e){ e.media=e.media||[];
       Array.prototype.forEach.call(kmediaInput.files,function(f){ e.media.push({name:f.name,type:f.type.indexOf("video")===0?"video":"image",url:URL.createObjectURL(f)}); });
-      save(data); renderBoard(); toast("📷 "+e.media.length+" archivo(s) — "+e.marca+" "+(e.modelo||""));
+      renderBoard(); toast("📷 "+e.media.length+" archivo(s) — "+e.marca+" "+(e.modelo||""));
     }
     kmediaInput.value="";
   });
@@ -562,7 +606,7 @@
       trabajador:"",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
-    data.unshift(e); save(data);
+    addVehiculo(e);
     chosenSvcs=[]; renderSvcList();
     form.reset(); form.fCoord.value=todayISO(); recepSummary(); fillMarcas(); fillTrabajadores(); updateCounts();
     toast("✓ "+e.marca+" "+e.modelo+" agendado — visible en Agenda y Seguimiento");
@@ -608,29 +652,29 @@
       }).join("");
       return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
     }).join("");
-    board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(+b.dataset.id, +b.dataset.dir); }); });
+    board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(b.dataset.id, +b.dataset.dir); }); });
     board.querySelectorAll(".kdel").forEach(function(b){ b.addEventListener("click",function(){
-      var e=data.filter(function(x){return x.id===+b.dataset.id;})[0]; if(!e)return;
+      var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e)return;
       if(confirm("¿Eliminar "+e.marca+" "+(e.modelo||"")+" ("+(e.patente||"sin patente")+")?\n\nEsto lo borra de Agenda, Seguimiento y Cobro. No se puede deshacer.")){
-        data=data.filter(function(x){return x.id!==+b.dataset.id;}); save(data); renderBoard(); updateCounts(); toast("Eliminado: "+e.marca+" "+(e.modelo||""));
+        data=data.filter(function(x){return x.id!==b.dataset.id;}); deleteVeh(b.dataset.id); renderBoard(); updateCounts(); toast("Eliminado: "+e.marca+" "+(e.modelo||""));
       }
     }); });
-    board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){ mediaTarget=+b.dataset.id; kmediaInput.click(); }); });
+    board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){ mediaTarget=b.dataset.id; kmediaInput.click(); }); });
     board.querySelectorAll(".cedit").forEach(function(inp){ inp.addEventListener("change",function(){
-      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
-      e[inp.dataset.k]=inp.value; save(data); toast("Cita reagendada: "+fFecha(e.fCoord)+" "+(e.hCoord||""));
+      var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
+      e[inp.dataset.k]=inp.value; persistVeh(e); toast("Cita reagendada: "+fFecha(e.fCoord)+" "+(e.hCoord||""));
     }); });
     board.querySelectorAll(".tedit").forEach(function(inp){ inp.addEventListener("change",function(){
-      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
+      var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
       var k=inp.dataset.k; e[k]=inp.value;
       var fk={hIngreso:"fIngreso",hInicio:"fInicio",hSalida:"fSalida"}[k];
       if(inp.value && !e[fk]) e[fk]=todayISO();
       if(!inp.value) e[fk]="";
-      save(data); toast("Tiempo actualizado");
+      persistVeh(e); toast("Tiempo actualizado");
     }); });
     board.querySelectorAll(".tmin").forEach(function(inp){ inp.addEventListener("change",function(){
-      var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
-      e.tMuerto=Math.max(0,parseFloat(inp.value)||0); save(data); toast("Tiempo muerto: "+e.tMuerto+" min");
+      var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
+      e.tMuerto=Math.max(0,parseFloat(inp.value)||0); persistVeh(e); toast("Tiempo muerto: "+e.tMuerto+" min");
     }); });
   }
   function advance(id,dir){
@@ -640,7 +684,7 @@
     if(e.estado==="EN ESPERA" && dir>0 && !e.hIngreso){ e.fIngreso=todayISO(); e.hIngreso=nowTime(); }
     if(e.estado==="EN PROCESO" && !e.hInicio){ e.fInicio=todayISO(); e.hInicio=nowTime(); }
     if(e.estado==="TERMINADO" && !e.hSalida){ e.fSalida=todayISO(); e.hSalida=nowTime(); }
-    save(data); renderBoard(); updateCounts();
+    persistVeh(e); renderBoard(); updateCounts();
     toast(e.marca+" "+(e.modelo||"")+" → "+e.estado);
   }
 
@@ -653,7 +697,7 @@
       var badge=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip pend">Por cobrar</span>';
       return '<div class="pick-item'+(state.cobroSel===e.id?' sel':'')+'" data-id="'+e.id+'"><div class="p1">'+e.marca+' '+(e.modelo||"")+'</div><div class="p2">'+(e.patente||"—")+' '+badge+'</div></div>';
     }).join("");
-    pick.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.cobroSel=+it.dataset.id; renderCobro(); }); });
+    pick.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.cobroSel=it.dataset.id; renderCobro(); }); });
     if(state.cobroSel==null || !data.some(function(e){return e.id===state.cobroSel;})) state.cobroSel=lista[0].id;
     renderCobroForm(data.filter(function(e){return e.id===state.cobroSel;})[0]);
   }
@@ -709,7 +753,7 @@
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
     wrap.querySelector("#doc-btn").addEventListener("click",function(){ toast("En la versión real: se adjunta y se lee el documento automáticamente."); });
-    wrap.querySelector("#c-save").addEventListener("click",function(){ readForm(); e.cobrado=true; save(data); renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
+    wrap.querySelector("#c-save").addEventListener("click",function(){ readForm(); e.cobrado=true; persistVeh(e); renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
   }
   function field(lab,name,type,val,opts){
     if(type==="select"){ return '<label class="f"><span class="lab">'+lab+'</span><select name="'+name+'">'+opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>';}).join("")+'</select></label>'; }
@@ -717,30 +761,21 @@
   }
 
   // ---------- costos: reloj + gastos ----------
-  function loadArr(k){ try{ return JSON.parse(localStorage.getItem(k))||null; }catch(e){ return null; } }
-  function saveArr(k,a){ try{ localStorage.setItem(k,JSON.stringify(a)); }catch(e){} }
-  var reloj=loadArr("isp_reloj")||[
-    {id:1,trab:"Mario",fecha:"2026-07-22",hIn:"09:00",hOut:"18:30",desc:60},
-    {id:2,trab:"Javier",fecha:"2026-07-22",hIn:"09:00",hOut:"18:00",desc:60}
-  ];
-  var gastos=loadArr("isp_gastos")||[
-    {id:1,con:"Arriendo taller",tipo:"FIJO",monto:400000,fecha:"2026-07-01"},
-    {id:2,con:"Luz y agua",tipo:"FIJO",monto:60000,fecha:"2026-07-05"}
-  ];
-  saveArr("isp_reloj",reloj); saveArr("isp_gastos",gastos);
+  var reloj=[];   // se carga desde Supabase
+  var gastos=[];  // se carga desde Supabase
   function horasReloj(r){ if(!r.hIn||!r.hOut)return 0; var a=new Date(r.fecha+"T"+r.hIn+":00"),b=new Date(r.fecha+"T"+r.hOut+":00"); var h=(b-a)/3600000-(+r.desc||0)/60; return h>0?h:0; }
 
   var relojForm=document.getElementById("reloj-form");
   relojForm.rFecha.value=todayISO();
   relojForm.addEventListener("submit",function(ev){ ev.preventDefault();
-    reloj.unshift({id:Date.now(),trab:relojForm.rTrab.value.trim(),fecha:relojForm.rFecha.value,hIn:relojForm.rIn.value,hOut:relojForm.rOut.value,desc:parseFloat(relojForm.rDesc.value)||0});
-    saveArr("isp_reloj",reloj); relojForm.rTrab.value=""; renderCostos(); fillTrabajadores(); toast("✓ Horas registradas");
+    var o={trab:relojForm.rTrab.value.trim(),fecha:relojForm.rFecha.value,hIn:relojForm.rIn.value,hOut:relojForm.rOut.value,desc:parseFloat(relojForm.rDesc.value)||0};
+    addRelojDB(o).then(function(){ relojForm.rTrab.value=""; renderCostos(); fillTrabajadores(); toast("✓ Horas registradas"); });
   });
   var gastoForm=document.getElementById("gasto-form");
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
-    gastos.unshift({id:Date.now(),con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,fecha:gastoForm.gFecha.value});
-    saveArr("isp_gastos",gastos); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; renderCostos(); toast("✓ Gasto agregado");
+    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,fecha:gastoForm.gFecha.value};
+    addGastoDB(o).then(function(){ gastoForm.gCon.value=""; gastoForm.gMonto.value=""; renderCostos(); toast("✓ Gasto agregado"); });
   });
   function renderCostos(){
     document.getElementById("reloj-list").innerHTML=(reloj.slice(0,15).map(function(r){
@@ -750,8 +785,8 @@
       return '<div class="lrow"><span><b>'+g.con+'</b> · '+g.tipo+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
     }).join(""))||'<div class="col-empty">Sin gastos aún</div>';
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
-      if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==+b.dataset.id;}); saveArr("isp_reloj",reloj); }
-      else { gastos=gastos.filter(function(x){return x.id!==+b.dataset.id;}); saveArr("isp_gastos",gastos); }
+      if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
+      else { gastos=gastos.filter(function(x){return x.id!==b.dataset.id;}); delGastoDB(b.dataset.id); }
       renderCostos();
     }); });
   }
@@ -772,9 +807,7 @@
     var h=(b-a)/3600000-(+e.tMuerto||0)/60;
     return h>0?h:0;
   }
-  function loadVH(){ try{ return JSON.parse(localStorage.getItem("isp_valorhora"))||{}; }catch(e){ return {}; } }
-  function saveVH(m){ try{ localStorage.setItem("isp_valorhora",JSON.stringify(m)); }catch(e){} }
-  var VH=loadVH();
+  var VH={};  // se carga desde Supabase
 
   function trabTable(){
     var start=periodoStart(state.periodo), m={};
@@ -832,7 +865,7 @@
 
     box.innerHTML=filtros+kpis+tabla+resumen+charts;
     box.querySelectorAll(".pfilter button").forEach(function(b){ b.addEventListener("click",function(){ state.periodo=b.dataset.p; renderPanel(); }); });
-    box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ VH[inp.dataset.t]=parseFloat(inp.value)||0; saveVH(VH); renderPanel(); }); });
+    box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ var val=parseFloat(inp.value)||0; VH[inp.dataset.t]=val; upsertVH(inp.dataset.t,val); renderPanel(); }); });
     box.querySelectorAll(".kpi").forEach(function(k){ k.addEventListener("click",function(){ toggleKpi(k.dataset.k, base); }); });
     if(state.kpiOpen) openKpi(state.kpiOpen, base, box);
   }
@@ -914,7 +947,7 @@
   var err=document.getElementById('lerr');
   var userChip=document.getElementById('nav-user-name');
 
-  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.textContent=email||''; }
+  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.textContent=email||''; if(window.ISP_onLogin) window.ISP_onLogin(); }
   function cerrar(){ appEl.classList.remove('on'); loginEl.style.display='flex'; }
   function showErr(msg){ err.textContent=msg; err.classList.add('show'); }
 
