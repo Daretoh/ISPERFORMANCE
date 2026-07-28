@@ -262,7 +262,10 @@
   .app.on{display:block;}
   .logout{background:transparent;border:1px solid var(--line-strong);color:var(--ink-muted);border-radius:999px;padding:7px 12px;font:600 12px/1 var(--sans);cursor:pointer;margin-left:8px;}
   .logout:hover{color:var(--ink);border-color:var(--accent);}
+  .navuser{font:600 11px/1 var(--mono);color:var(--ink-muted);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .navuser:empty{display:none;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -271,8 +274,8 @@
     <div class="llogo"><span class="dot"></span> IS Performance OS</div>
     <div class="lsub">Acceso interno</div>
     <form id="login-form">
-      <label for="lu">Usuario</label>
-      <input id="lu" type="text" autocomplete="username" placeholder="Tu usuario" required>
+      <label for="lu">Correo</label>
+      <input id="lu" type="email" autocomplete="username" placeholder="ventas@isperformance.cl" required>
       <label for="lp">Contraseña</label>
       <input id="lp" type="password" autocomplete="current-password" placeholder="Tu contraseña" required>
       <div class="lerr" id="lerr">Usuario o contraseña incorrectos.</div>
@@ -294,6 +297,7 @@
         <button data-view="panel">📊 Panel</button>
         <button data-view="agenda">📅 Agenda</button>
       </nav>
+      <span class="navuser" id="nav-user-name"></span>
       <button class="logout" id="logout-btn" title="Cerrar sesión">Salir</button>
     </div>
   </header>
@@ -901,34 +905,48 @@
 </script>
 
 <script>
-/* ---- Acceso interno (mismo patrón que el cotizador ISmarket) ---- */
+/* ---- Acceso interno con Supabase Auth (login real por correo) ---- */
 (function(){
   "use strict";
-  var USUARIOS = { 'EnzoC':'ISP2026+', 'JorgeC':'ISP2026+', 'CristopherR':'ISP2026+', 'GreciaM':'ISP2026+' };
-  var KEY='isp_os_auth';
   var loginEl=document.getElementById('login');
   var appEl=document.querySelector('.app');
   var form=document.getElementById('login-form');
   var err=document.getElementById('lerr');
+  var userChip=document.getElementById('nav-user-name');
 
-  function abrir(){ loginEl.style.display='none'; appEl.classList.add('on'); }
+  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.textContent=email||''; }
   function cerrar(){ appEl.classList.remove('on'); loginEl.style.display='flex'; }
+  function showErr(msg){ err.textContent=msg; err.classList.add('show'); }
 
-  if(sessionStorage.getItem(KEY)) abrir();
+  if(!window.supabase || !window.supabase.createClient){
+    showErr('No se pudo cargar el sistema de acceso. Revisa tu conexión y recarga.');
+    return;
+  }
+  var sb=window.supabase.createClient(
+    'https://fyjvcnqklgzrscgpytqj.supabase.co',
+    'sb_publishable_yxIzCk7NCZRHoy6HuSjgaQ_PHLJ9JSv'
+  );
+  window.ISP_SB=sb; // disponible para la capa de datos (siguiente paso)
+
+  sb.auth.getSession().then(function(res){
+    var s=res && res.data && res.data.session;
+    if(s) abrir(s.user && s.user.email);
+  });
 
   form.addEventListener('submit',function(e){
     e.preventDefault();
-    var u=document.getElementById('lu').value.trim();
-    var p=document.getElementById('lp').value;
-    if(USUARIOS[u] && USUARIOS[u]===p){
-      sessionStorage.setItem(KEY,u); err.classList.remove('show'); abrir();
-    } else {
-      err.classList.add('show');
-    }
+    err.classList.remove('show');
+    var email=document.getElementById('lu').value.trim();
+    var pass=document.getElementById('lp').value;
+    var btn=form.querySelector('.lbtn'); btn.disabled=true; btn.textContent='Ingresando…';
+    sb.auth.signInWithPassword({ email:email, password:pass }).then(function(res){
+      btn.disabled=false; btn.textContent='Ingresar';
+      if(res.error){ showErr('Correo o contraseña incorrectos.'); }
+      else { abrir(email); }
+    });
   });
   document.getElementById('logout-btn').addEventListener('click',function(){
-    sessionStorage.removeItem(KEY); cerrar();
-    document.getElementById('lp').value='';
+    sb.auth.signOut().then(function(){ cerrar(); document.getElementById('lp').value=''; document.getElementById('lu').value=''; });
   });
 })();
 </script>
