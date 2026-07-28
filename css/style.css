@@ -3126,12 +3126,23 @@ table.cmp { border-collapse: collapse; width: 100%; min-width: 640px; font-size:
    MARCAS / PROVEEDORES
    ======================================== */
 .marcas {
-  padding: 22px 0;
+  padding: 30px 0;
   overflow: hidden;
   border-top: 1px solid rgba(255,255,255,0.08);
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: #ffffff;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(255,107,0,0.10), transparent 45%),
+    radial-gradient(circle at 85% 50%, rgba(255,107,0,0.08), transparent 45%),
+    linear-gradient(120deg, var(--dark-900), var(--dark-700), var(--dark-800), var(--dark-900));
+  background-size: 100% 100%, 100% 100%, 240% 240%;
+  animation: marcasBG 16s ease infinite;
 }
+@keyframes marcasBG {
+  0% { background-position: 0% 50%, 0% 50%, 0% 50%; }
+  50% { background-position: 0% 50%, 0% 50%, 100% 50%; }
+  100% { background-position: 0% 50%, 0% 50%, 0% 50%; }
+}
+@media (prefers-reduced-motion: reduce) { .marcas { animation: none; } }
 
 .marcas-track {
   width: 100%;
@@ -3145,14 +3156,18 @@ table.cmp { border-collapse: collapse; width: 100%; min-width: 640px; font-size:
   animation: marquee 38s linear infinite;
 }
 
-/* Logos de proveedores (sin caja, sobre banda clara) */
+/* Logos en chips claros sobre banda oscura animada */
 .marca-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 64px;
-  margin: 0 32px;
-  background: none;
+  height: 76px;
+  min-width: 150px;
+  margin: 0 12px;
+  padding: 0 26px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.28);
   flex-shrink: 0;
 }
 .marca-chip img {
@@ -3166,6 +3181,7 @@ table.cmp { border-collapse: collapse; width: 100%; min-width: 640px; font-size:
 }
 /* Algunos logos se ven mejor un poco más grandes */
 .marca-chip.is-big img { height: 54px; max-width: 220px; }
+.marca-chip.cli img { height: 52px; max-width: 168px; }
 
 .marca-label {
   font-size: 0.78rem;

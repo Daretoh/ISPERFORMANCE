@@ -166,7 +166,9 @@
   .col-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;font:700 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;}
   .col-h .c-agend{color:var(--ink-faint);} .col-h .c-espera{color:var(--accent);} .col-h .c-proc{color:var(--warn);} .col-h .c-term{color:var(--info);} .col-h .c-entreg{color:var(--ok);}
   .col-h .num{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--ink-muted);}
-  .kcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:11px 12px;margin-bottom:10px;}
+  .kcard{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:11px 12px;margin-bottom:10px;}
+  .kdel{position:absolute;top:7px;right:7px;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:13px;opacity:.55;padding:3px;line-height:1;border-radius:5px;}
+  .kdel:hover{opacity:1;color:var(--crit);background:var(--crit-soft);}
   .kcard:last-child{margin-bottom:0;}
   .kcard .kv1{font-weight:750;font-size:14px;letter-spacing:-.01em;}
   .kcard .kv2{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
@@ -593,7 +595,7 @@
           '<div class="trow"><span>Salida</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hSalida" value="'+(e.hSalida||"")+'"></div>'+
           '<div class="trow"><span>T. muerto (min)</span><input type="number" min="0" step="5" class="tmin" data-id="'+e.id+'" value="'+(+e.tMuerto||0)+'"></div>'+
           '</details>';
-        return '<div class="kcard"><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
+        return '<div class="kcard"><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">🗑</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           '<button type="button" class="kmedia-btn" data-id="'+e.id+'">📷 Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
@@ -603,6 +605,12 @@
       return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(+b.dataset.id, +b.dataset.dir); }); });
+    board.querySelectorAll(".kdel").forEach(function(b){ b.addEventListener("click",function(){
+      var e=data.filter(function(x){return x.id===+b.dataset.id;})[0]; if(!e)return;
+      if(confirm("¿Eliminar "+e.marca+" "+(e.modelo||"")+" ("+(e.patente||"sin patente")+")?\n\nEsto lo borra de Agenda, Seguimiento y Cobro. No se puede deshacer.")){
+        data=data.filter(function(x){return x.id!==+b.dataset.id;}); save(data); renderBoard(); updateCounts(); toast("Eliminado: "+e.marca+" "+(e.modelo||""));
+      }
+    }); });
     board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){ mediaTarget=+b.dataset.id; kmediaInput.click(); }); });
     board.querySelectorAll(".cedit").forEach(function(inp){ inp.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===+inp.dataset.id;})[0]; if(!e)return;
