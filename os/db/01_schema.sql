@@ -100,10 +100,14 @@ create policy equipo_gastos     on gastos     for all to authenticated using (tr
 create policy equipo_valorhora  on valor_hora for all to authenticated using (true) with check (true);
 
 -- ============ TIEMPO REAL (para que el equipo vea cambios en vivo) ============
-alter publication supabase_realtime add table vehiculos;
-alter publication supabase_realtime add table reloj;
-alter publication supabase_realtime add table gastos;
-alter publication supabase_realtime add table valor_hora;
+-- Envuelto en bloque seguro: ignora las tablas que ya estén en la publicación.
+do $$
+begin
+  begin alter publication supabase_realtime add table vehiculos;  exception when duplicate_object then null; end;
+  begin alter publication supabase_realtime add table reloj;      exception when duplicate_object then null; end;
+  begin alter publication supabase_realtime add table gastos;     exception when duplicate_object then null; end;
+  begin alter publication supabase_realtime add table valor_hora; exception when duplicate_object then null; end;
+end $$;
 
 -- ============ CATÁLOGO (16 servicios) ============
 insert into servicios (id,nombre,categoria,precio_s,precio_m,precio_l,precio_xl,precio_variable,tiempo,orden) values
