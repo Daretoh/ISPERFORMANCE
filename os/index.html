@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#14110E">
+<link rel="manifest" href="/os/manifest.webmanifest">
+<link rel="icon" href="/os/icon-192.png">
+<link rel="apple-touch-icon" href="/os/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IS OS">
 <title>IS Performance OS — Acceso interno</title>
 <style>
   :root{
@@ -1123,6 +1130,14 @@
     sb.auth.signOut().then(function(){ cerrar(); document.getElementById('lp').value=''; document.getElementById('lu').value=''; });
   });
 })();
+</script>
+<script>
+/* Registro del Service Worker (PWA) */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/os/sw.js').catch(function () { /* sin SW la app igual funciona */ });
+  });
+}
 </script>
 </body>
 </html>
