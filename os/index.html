@@ -229,6 +229,12 @@
   .fchips{display:flex;flex-wrap:wrap;gap:6px;} .fchips span{font:600 11px/1.3 var(--sans);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:5px 9px;color:var(--ink-2);}
   .obs-area{width:100%;min-height:74px;font:500 13px/1.5 var(--sans);padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);resize:vertical;}
   .obs-area:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .ac-drop{position:absolute;top:100%;left:0;right:0;z-index:40;margin-top:4px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow);max-height:240px;overflow-y:auto;display:none;}
+  .ac-item{padding:9px 11px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item:hover{background:var(--accent-soft);}
+  .ac-item .p1{font-weight:700;font-size:13px;}
+  .ac-item .p2{font-size:11px;color:var(--ink-muted);margin-top:2px;}
 
   .cal-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .cal-head .m{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;min-width:170px;text-transform:capitalize;}
@@ -343,7 +349,7 @@
           <div class="fieldset">
             <div class="fs-title"><span class="i">▸</span> Cliente</div>
             <div class="row c2">
-              <label class="f"><span class="lab">Nombre</span><input name="cliente" placeholder="Nombre y apellido"></label>
+              <label class="f" style="position:relative"><span class="lab">Nombre <span class="hint" style="text-transform:none;letter-spacing:0">— escribe para buscar cliente</span></span><input name="cliente" id="rec-cliente" placeholder="Nombre y apellido" autocomplete="off"><div class="ac-drop" id="ac-cliente"></div></label>
               <label class="f"><span class="lab">Contacto</span><input name="contacto" placeholder="+56 9 ..."></label>
             </div>
           </div>
@@ -647,6 +653,30 @@
     (reloj||[]).forEach(function(r){ if(r.trab&&!s[r.trab]){s[r.trab]=1;var o=document.createElement("option");o.value=r.trab;dl.appendChild(o);} });
     Object.keys(VH||{}).forEach(function(k){ if(!s[k]){s[k]=1;var o=document.createElement("option");o.value=k;dl.appendChild(o);} }); }
   fillMarcas(); fillTrabajadores(); recepSummary();
+
+  // ---- autocompletado de cliente en Recepción ----
+  (function(){
+    var inp=document.getElementById("rec-cliente"), drop=document.getElementById("ac-cliente"); if(!inp||!drop) return;
+    function hide(){ drop.style.display="none"; drop.innerHTML=""; }
+    function fillFrom(c){
+      form.cliente.value=c.nombre||"";
+      if(c.contacto) form.contacto.value=c.contacto;
+      var last=(c.items||[]).slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;})[0];
+      if(last){ if(last.marca)form.marca.value=last.marca; if(last.modelo)form.modelo.value=last.modelo; if(last.patente)form.patente.value=last.patente; if(last.anioVeh)form.anioVeh.value=last.anioVeh; if(last.talla)form.talla.value=last.talla; }
+      hide(); recepSummary();
+      toast("Cliente cargado: "+(c.nombre||"")+" — revisa y ajusta si cambió el vehículo");
+    }
+    inp.addEventListener("input",function(){
+      var q=inp.value.trim().toLowerCase(); if(q.length<2){ hide(); return; }
+      var matches=agruparClientes().filter(function(c){ return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0; }).slice(0,6);
+      if(!matches.length){ hide(); return; }
+      drop.innerHTML=matches.map(function(c,i){ var last=(c.items||[])[0]; var veh=last?(last.marca+" "+(last.modelo||"")).trim():""; return '<div class="ac-item" data-i="'+i+'"><div class="p1">'+(c.nombre||"(sin nombre)")+'</div><div class="p2">'+(c.contacto||"sin teléfono")+' · '+c.visitas+' visita'+(c.visitas>1?'s':'')+(veh?' · '+veh:'')+'</div></div>'; }).join("");
+      drop.style.display="block";
+      drop.querySelectorAll(".ac-item").forEach(function(it){ it.addEventListener("mousedown",function(ev){ ev.preventDefault(); fillFrom(matches[+it.dataset.i]); }); });
+    });
+    inp.addEventListener("blur",function(){ setTimeout(hide,150); });
+    inp.addEventListener("keydown",function(e){ if(e.key==="Escape") hide(); });
+  })();
 
   // ---------- seguimiento (board) ----------
   function renderBoard(){
