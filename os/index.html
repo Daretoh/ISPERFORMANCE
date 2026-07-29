@@ -241,11 +241,14 @@
   .cal-nav{display:flex;gap:6px;}
   .cal-nav button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;font-size:16px;line-height:1;}
   .cal-nav button:hover{background:var(--surface-2);}
-  .cal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  #view-agenda.active{position:relative;left:50%;transform:translateX(-50%);width:96vw;max-width:1500px;}
+  .cal-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .cal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-width:700px;}
   .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface-2);border-bottom:1px solid var(--line);}
   .cal-dow div{padding:9px 10px;font:700 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-  .cell{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;display:flex;flex-direction:column;gap:4px;}
+  .cell{min-height:clamp(88px,12vh,150px);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;display:flex;flex-direction:column;gap:4px;}
+  @media (max-width:640px){ #view-agenda.active{width:100%;left:auto;transform:none;} .cell{min-height:76px;} .ev{font-size:9.5px;padding:2px 4px;} .cal-dow div{padding:7px 6px;font-size:9px;} }
   .cell:nth-child(7n){border-right:none;}
   .cell.out{background:var(--surface-2);}
   .cell .dn{font:700 12px/1 var(--mono);color:var(--ink-muted);}
@@ -461,9 +464,11 @@
         <div class="cal-nav"><button id="cal-prev">‹</button><button id="cal-next">›</button></div>
         <div class="m" id="cal-month"></div>
       </div>
-      <div class="cal">
-        <div class="cal-dow"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
-        <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-wrap">
+        <div class="cal">
+          <div class="cal-dow"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -683,6 +688,11 @@
     var board=document.getElementById("board");
     board.innerHTML=ESTADOS.map(function(st,ci){
       var items=data.filter(function(e){return e.estado===st;});
+      var ocultos=0;
+      if(ci>=3){ // Terminado / Entregado: solo la última semana (lo antiguo vive en Clientes/Panel)
+        items=items.slice().sort(function(a,b){ var fa=a.fSalida||a.fCoord||a.fIngreso||"",fb=b.fSalida||b.fCoord||b.fIngreso||""; return fa<fb?1:-1; });
+        var tot=items.length; items=items.filter(function(e){ var f=e.fSalida||e.fCoord||e.fIngreso||""; var d=diasDesde(f); return d==null||d<=7; }); ocultos=tot-items.length;
+      }
       var cls=["c-agend","c-espera","c-proc","c-term","c-entreg"][ci];
       var cards=items.map(function(e){
         var svcs=(e.servicios||[]).map(function(s){return '<span>'+s+'</span>';}).join("");
@@ -711,7 +721,7 @@
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
-      return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+'</div>';
+      return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+(ocultos>0?'<div class="col-empty">+'+ocultos+' anteriores · ver en 👥 Clientes</div>':'')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(b.dataset.id, +b.dataset.dir); }); });
     board.querySelectorAll(".kdel").forEach(function(b){ b.addEventListener("click",function(){
@@ -970,6 +980,7 @@
   // ---------- clientes (CRM) ----------
   function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
   function diasDesde(iso){ if(!iso)return null; var d=new Date(iso+"T00:00:00"); return Math.floor((Date.now()-d)/86400000); }
+  function normPat(p){ return (""+p).toUpperCase().replace(/[^A-Z0-9]/g,""); } // une "SD.HR.52" y "SDHR52"
   function agruparClientes(){
     var m={};
     data.forEach(function(e){ var k=clientKey(e); if(!k)return;
@@ -979,8 +990,8 @@
       c.visitas++;
       if(e.cobrado) c.total+=(+e.precioVenta||0);
       var f=e.fCoord||e.fIngreso||""; if(f>c.ultima) c.ultima=f;
-      if(e.patente) c.vehiculos[e.patente]=(e.marca+" "+(e.modelo||"")).trim();
-      (e.servicios||[]).forEach(function(s){ c.servicios[s]=1; });
+      if(e.patente){ var np=normPat(e.patente); if(np){ var ve=c.vehiculos[np]=c.vehiculos[np]||{label:(e.marca+" "+(e.modelo||"")).trim(),patente:np,count:0}; ve.count++; } }
+      (e.servicios||[]).forEach(function(s){ var sk=(s||"").trim(); if(sk) c.servicios[sk]=(c.servicios[sk]||0)+1; });
       c.items.push(e);
     });
     return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.total-a.total;});
@@ -1003,8 +1014,8 @@
   function renderFicha(c){
     var wrap=document.getElementById("cli-ficha"); if(!c){wrap.innerHTML="";return;}
     var dias=diasDesde(c.ultima);
-    var vehs=Object.keys(c.vehiculos).map(function(p){return '<span>'+(c.vehiculos[p]||"")+' · '+p+'</span>';}).join("")||'<span style="opacity:.5">sin patente</span>';
-    var svcs=Object.keys(c.servicios).map(function(s){return '<span>'+svcCorto(s)+'</span>';}).join("")||'<span style="opacity:.5">—</span>';
+    var vehs=Object.keys(c.vehiculos).map(function(k){var ve=c.vehiculos[k];return '<span>'+(ve.label||"")+' · '+ve.patente+(ve.count>1?' ('+ve.count+'×)':'')+'</span>';}).join("")||'<span style="opacity:.5">sin patente</span>';
+    var svcs=Object.keys(c.servicios).sort(function(a,b){return c.servicios[b]-c.servicios[a];}).map(function(s){var n=c.servicios[s];return '<span>'+svcCorto(s)+(n>1?' ('+n+'×)':'')+'</span>';}).join("")||'<span style="opacity:.5">—</span>';
     var hist=c.items.slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;}).map(function(e){
       var st=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip '+estClass(e.estado)+'">'+e.estado+'</span>';
       return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td></tr>';
@@ -1049,8 +1060,8 @@
     document.getElementById("cal-grid").innerHTML=cells.map(function(c){
       var cls="cell"+(c.out?" out":"")+(c.iso===today?" today":""); var evs="";
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
-        evs=list.slice(0,3).map(function(e){ var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>'; }).join("");
-        if(list.length>3)evs+='<span class="cal-more">+'+(list.length-3)+' más</span>';
+        evs=list.slice(0,4).map(function(e){ var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>'; }).join("");
+        if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
       return '<div class="'+cls+'"><span class="dn">'+c.d+'</span>'+evs+'</div>';
     }).join("");
