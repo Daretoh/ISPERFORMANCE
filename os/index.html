@@ -459,7 +459,7 @@
 
     <!-- ============ AGENDA ============ -->
     <section class="view" id="view-agenda">
-      <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Citas por fecha coordinada, con hora y servicios. Color según estado del proceso.</p></div>
+      <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Citas <b>pendientes y en curso</b> (agendado, en espera, en proceso). Los trabajos ya entregados no aparecen aquí — están en 👥 Clientes.</p></div>
       <div class="cal-head">
         <div class="cal-nav"><button id="cal-prev">‹</button><button id="cal-next">›</button></div>
         <div class="m" id="cal-month"></div>
@@ -1053,7 +1053,8 @@
     document.getElementById("cal-month").textContent=MESLC[m]+" "+y;
     var first=new Date(y,m,1); var startDow=(first.getDay()+6)%7;
     var dim=new Date(y,m+1,0).getDate(), prev=new Date(y,m,0).getDate(), today=todayISO();
-    var byDay={}; data.forEach(function(e){ var k=e.fCoord; if(k){(byDay[k]=byDay[k]||[]).push(e);} });
+    // La agenda muestra solo lo pendiente/activo (no el historial ya terminado/entregado, que vive en Clientes)
+    var byDay={}; data.forEach(function(e){ if(e.estado==="ENTREGADO"||e.estado==="TERMINADO") return; var k=e.fCoord; if(k){(byDay[k]=byDay[k]||[]).push(e);} });
     var cells=[]; for(var i=0;i<startDow;i++)cells.push({d:prev-startDow+1+i,out:true});
     for(var d=1;d<=dim;d++)cells.push({d:d,iso:y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")});
     while(cells.length%7!==0)cells.push({d:cells.length-startDow-dim+1,out:true});
