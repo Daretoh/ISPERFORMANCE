@@ -536,7 +536,9 @@
   function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a, function(k,v){ return k==="url"?undefined:v; })); }catch(e){} }
   function clp(n){ n=Math.round(+n||0); return "$"+n.toLocaleString("es-CL"); }
   function costoTotal(e){ return (+e.costoProducto||0)+(+e.envio||0)+(+e.costoExterno||0)+(+e.costoEmpresa||0); }
-  function utilidad(e){ return (+e.precioVenta||0)-costoTotal(e); }
+  // Regalo/Sorteo/Cortesía/Garantía NO son ingreso: solo cuenta lo abonado (normalmente $0).
+  function ingresoReal(e){ return (e.tipoVenta && e.tipoVenta!=="NORMAL") ? (+e.abono||0) : (+e.precioVenta||0); }
+  function utilidad(e){ return ingresoReal(e)-costoTotal(e); }
   function iva(p){ return Math.round((+p||0)*0.19); }
   function nowTime(){ var d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
   function todayISO(){ return new Date().toISOString().slice(0,10); }
@@ -838,8 +840,8 @@
       '<div class="sum-body">'+
         '<div class="sline"><span class="k">Precio venta</span><span class="v num" id="c-precio">'+clp(e.precioVenta)+'</span></div>'+
         '<div class="sline"><span class="k">Abono / anticipo</span><span class="v num" id="c-abono">'+clp(e.abono)+'</span></div>'+
-        '<div class="sline"><span class="k">Saldo a cobrar</span><span class="v num" id="c-saldo" style="color:var(--accent-ink);font-weight:800">'+clp((e.precioVenta||0)-(e.abono||0))+'</span></div>'+
-        '<div class="sline"><span class="k">IVA incluido (19%)</span><span class="v num" id="c-iva">'+clp(iva(e.precioVenta))+'</span></div>'+
+        '<div class="sline"><span class="k">Saldo a cobrar</span><span class="v num" id="c-saldo" style="color:var(--accent-ink);font-weight:800">'+clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:((e.precioVenta||0)-(e.abono||0)))+'</span></div>'+
+        '<div class="sline"><span class="k">IVA incluido (19%)</span><span class="v num" id="c-iva">'+clp(iva(ingresoReal(e)))+'</span></div>'+
         '<div class="sline"><span class="k">Costo total</span><span class="v num" id="c-costo">'+clp(costoTotal(e))+'</span></div>'+
         '<div class="sline big util'+(utilidad(e)<0?' neg':'')+'"><span class="k">Utilidad</span><span class="v num" id="c-util">'+clp(utilidad(e))+'</span></div>'+
         '<div class="sline"><span class="k">Margen</span><span class="marginpill" id="c-margen">0%</span></div>'+
@@ -856,12 +858,12 @@
       readForm();
       wrap.querySelector("#c-precio").textContent=clp(e.precioVenta);
       wrap.querySelector("#c-abono").textContent=clp(e.abono);
-      wrap.querySelector("#c-saldo").textContent=clp((e.precioVenta||0)-(e.abono||0));
-      wrap.querySelector("#c-iva").textContent=clp(iva(e.precioVenta));
+      wrap.querySelector("#c-saldo").textContent=clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:((e.precioVenta||0)-(e.abono||0)));
+      wrap.querySelector("#c-iva").textContent=clp(iva(ingresoReal(e)));
       wrap.querySelector("#c-costo").textContent=clp(costoTotal(e));
       wrap.querySelector("#c-util").textContent=clp(utilidad(e));
       wrap.querySelector(".sline.util").classList.toggle("neg",utilidad(e)<0);
-      var m=e.precioVenta>0?utilidad(e)/e.precioVenta:0, mp=wrap.querySelector("#c-margen");
+      var ir=ingresoReal(e); var m=ir>0?utilidad(e)/ir:0, mp=wrap.querySelector("#c-margen");
       mp.textContent=(m*100).toFixed(0)+"%"; mp.className="marginpill"+(m<0?" neg":(m<0.3?" low":""));
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
@@ -942,7 +944,7 @@
     var start=periodoStart(state.periodo);
     var enPeriodo=data.filter(function(e){ var d=e.fCoord||e.fIngreso; if(!d)return !start; return !start||new Date(d+"T00:00:00")>=start; });
     var base=enPeriodo.filter(function(e){return e.cobrado;});
-    var ventas=base.reduce(function(s,e){return s+(+e.precioVenta||0);},0);
+    var ventas=base.reduce(function(s,e){return s+ingresoReal(e);},0);
     var util=base.reduce(function(s,e){return s+utilidad(e);},0);
     var autos=base.length, ticket=autos?ventas/autos:0, margen=ventas?util/ventas:0;
     var enProceso=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
@@ -987,7 +989,7 @@
   function openKpi(k,base,box){
     box.querySelectorAll(".kpi").forEach(function(c){ c.classList.toggle("open",c.dataset.k===k); });
     var slot=box.querySelector("#kpi-detail-slot"); var html="";
-    if(k==="ventas"){ var byDay=agrupa(base,"fCoord",function(e){return +e.precioVenta||0;}).sort(function(a,b){return a.k<b.k?-1:1;});
+    if(k==="ventas"){ var byDay=agrupa(base,"fCoord",function(e){return ingresoReal(e);}).sort(function(a,b){return a.k<b.k?-1:1;});
       html=detailBars("Ventas por día de cita", byDay.map(function(i){return {k:fFecha(i.k),v:i.v};}), clp); }
     else if(k==="util"){ html=detailBars("Utilidad por servicio", agrupaSvc(base,function(e){return utilidad(e);}), clp); }
     else if(k==="ticket"){ html=detailList("Detalle de cada vehículo", base.map(function(e){return {a:e.marca+" "+(e.modelo||""),b:clp(e.precioVenta)};})); }
@@ -1011,7 +1013,7 @@
     return '<div class="chart"><h3>'+title+'<span class="tag">'+tag+'</span></h3>'+(rows||'<div class="col-empty">Sin datos</div>')+'</div>';
   }
   function chartMeses(){
-    var m={}; data.filter(function(e){return e.cobrado;}).forEach(function(e){ var k=(e.fCoord||"").slice(0,7); if(k)m[k]=(m[k]||0)+(+e.precioVenta||0); });
+    var m={}; data.filter(function(e){return e.cobrado;}).forEach(function(e){ var k=(e.fCoord||"").slice(0,7); if(k)m[k]=(m[k]||0)+ingresoReal(e); });
     var keys=Object.keys(m).sort().slice(-6);
     var items=keys.map(function(k){ var p=k.split("-"); return {k:MESLC[+p[1]-1].slice(0,3)+" "+p[0].slice(2), v:m[k]}; });
     var max=items.reduce(function(mx,i){return Math.max(mx,i.v);},0)||1;
@@ -1030,7 +1032,7 @@
       if(e.cliente && !c.nombre) c.nombre=e.cliente;
       if(e.contacto && !c.contacto) c.contacto=e.contacto;
       c.visitas++;
-      if(e.cobrado) c.total+=(+e.precioVenta||0);
+      if(e.cobrado) c.total+=ingresoReal(e);
       var f=e.fCoord||e.fIngreso||""; if(f>c.ultima) c.ultima=f;
       if(e.patente){ var np=normPat(e.patente); if(np){ var ve=c.vehiculos[np]=c.vehiculos[np]||{label:(e.marca+" "+(e.modelo||"")).trim(),patente:np,count:0}; ve.count++; } }
       (e.servicios||[]).forEach(function(s){ var sk=(s||"").trim(); if(sk) c.servicios[sk]=(c.servicios[sk]||0)+1; });
