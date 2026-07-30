@@ -1,6 +1,6 @@
 /* IS Performance OS — Service Worker (PWA) */
-var CACHE = 'isp-os-v1';
-var SHELL = ['/os/', '/os/index.html', '/os/icon-192.png', '/os/icon-512.png', '/os/apple-touch-icon.png', '/os/manifest.webmanifest'];
+var CACHE = 'isp-os-v2';
+var SHELL = ['/os/', '/os/index.html', '/os/icon-192.png', '/os/icon-512.png', '/os/maskable-512.png', '/os/apple-touch-icon.png', '/os/manifest.webmanifest'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

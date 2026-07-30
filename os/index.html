@@ -322,13 +322,13 @@
     <div class="top-in">
       <div class="logo"><span class="dot"></span> IS&nbsp;Performance <small>OS · prototipo</small></div>
       <nav class="tabs" id="tabs">
-        <button data-view="recepcion" class="active">➕ Recepción</button>
+        <button data-view="recepcion" class="active">➕ Agendamiento</button>
+        <button data-view="agenda">📅 Agenda</button>
         <button data-view="seguimiento">🔧 Seguimiento</button>
+        <button data-view="clientes">👥 Clientes</button>
         <button data-view="cobro">💵 Cobro</button>
         <button data-view="costos">💰 Costos</button>
         <button data-view="panel">📊 Panel</button>
-        <button data-view="clientes">👥 Clientes</button>
-        <button data-view="agenda">📅 Agenda</button>
       </nav>
       <span class="navuser" id="nav-user-name"></span>
       <button class="logout" id="logout-btn" title="Cerrar sesión">Salir</button>
@@ -340,7 +340,7 @@
 
     <!-- ============ RECEPCIÓN ============ -->
     <section class="view active" id="view-recepcion">
-      <div class="vhead"><div class="eye">Entrada</div><h1>Recepción de vehículo</h1><p>Registra el auto que llega. Escribe y avanza con <b>Tab</b>. Los costos y el cobro van en su propia pestaña.</p></div>
+      <div class="vhead"><div class="eye">Agendamiento</div><h1>Agendar vehículo</h1><p>Registra la cita del auto. Escribe y avanza con <b>Tab</b>. Los costos y el cobro van en su propia pestaña.</p></div>
       <form id="form" class="formgrid" autocomplete="off">
         <div class="panel">
           <div class="fieldset">
@@ -377,6 +377,10 @@
             <div class="row c2">
               <label class="f"><span class="lab">Fecha coordinada</span><input name="fCoord" type="date"></label>
               <label class="f"><span class="lab">Hora coordinada</span><input name="hCoord" type="time"></label>
+            </div>
+            <div class="row c2" style="margin-top:12px">
+              <label class="f"><span class="lab">Tipo</span><select name="tipoVenta"><option>NORMAL</option><option>REGALO</option><option>SORTEO</option><option>CORTESÍA</option><option>GARANTÍA</option></select></label>
+              <label class="f"><span class="lab">Abono / anticipo $</span><input name="abono" type="number" min="0" step="1000" placeholder="0"></label>
             </div>
           </div>
         </div>
@@ -535,8 +539,8 @@
   var data = [];  // se carga desde Supabase al iniciar sesión
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
-  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado }; }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:[] }; }
+  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:[] }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha}; }
   function sbc(){ return window.ISP_SB; }
@@ -579,6 +583,15 @@
     }
   }).catch(function(){ toast('⚠ No se pudieron cargar los datos. Recarga la página.'); }); }
   window.ISP_onLogin=loadAllData;
+
+  // ---- roles: qué pestañas ve cada correo (vacío/no listado = ve todo) ----
+  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','clientes'] };
+  function applyRole(email){
+    var allowed=ROLES[(email||'').toLowerCase()];
+    tabsEl.querySelectorAll('button').forEach(function(b){ b.style.display=(!allowed||allowed.indexOf(b.dataset.view)>=0)?'':'none'; });
+    if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
+  }
+  window.ISP_applyRole=applyRole;
   var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
 
@@ -653,7 +666,8 @@
     ev.preventDefault();
     var e={id:Date.now(),estado:"AGENDADO",cobrado:false,servicios:chosenSvcs.slice(),media:[],
       trabajador:"",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
-    ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
+    ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord","tipoVenta"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
+    e.abono=parseFloat(form.abono.value)||0;
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
     addVehiculo(e);
     chosenSvcs=[]; renderSvcList();
@@ -784,14 +798,15 @@
     if(!e.precioVenta){ e.precioVenta=sugerirPrecio(e); } // sugiere precio desde el catálogo según talla
     wrap.innerHTML=
     '<div class="formgrid"><div class="panel">'+
-      '<div class="fieldset"><div class="fs-title"><span class="i">▸</span> '+e.marca+' '+(e.modelo||"")+' · '+(e.patente||"—")+'</div>'+
+      '<div class="fieldset"><div class="fs-title"><span class="i">▸</span> '+e.marca+' '+(e.modelo||"")+' · '+(e.patente||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend" style="margin-left:6px">'+e.tipoVenta+'</span>':'')+'</div>'+
         '<div class="row c3">'+
           field("Documento","docTipo","select",e.docTipo,["BOLETA","FACTURA"])+
           field("Modo de pago","modoPago","select",e.modoPago,["","TRANSFERENCIA","EFECTIVO","DÉBITO","CRÉDITO"])+
-          field("Aplica bono","aplicaBono","select",e.aplicaBono,["NO","SI"])+
+          field("Tipo","tipoVenta","select",e.tipoVenta,["NORMAL","REGALO","SORTEO","CORTESÍA","GARANTÍA"])+
         '</div>'+
-        '<div class="row c2" style="margin-top:12px">'+
+        '<div class="row c3" style="margin-top:12px">'+
           field("Precio venta","precioVenta","number",e.precioVenta)+
+          field("Abono / anticipo","abono","number",e.abono)+
           '<label class="f"><span class="lab">Documento adjunto</span><button type="button" class="mediabtn" id="doc-btn" style="padding:9px">📎 Adjuntar boleta / voucher</button></label>'+
         '</div>'+
       '</div>'+
@@ -806,6 +821,8 @@
     '<aside class="summary"><div class="panel sum-card"><div class="sum-head"><div class="t">◆ Resumen automático</div></div>'+
       '<div class="sum-body">'+
         '<div class="sline"><span class="k">Precio venta</span><span class="v num" id="c-precio">'+clp(e.precioVenta)+'</span></div>'+
+        '<div class="sline"><span class="k">Abono / anticipo</span><span class="v num" id="c-abono">'+clp(e.abono)+'</span></div>'+
+        '<div class="sline"><span class="k">Saldo a cobrar</span><span class="v num" id="c-saldo" style="color:var(--accent-ink);font-weight:800">'+clp((e.precioVenta||0)-(e.abono||0))+'</span></div>'+
         '<div class="sline"><span class="k">IVA incluido (19%)</span><span class="v num" id="c-iva">'+clp(iva(e.precioVenta))+'</span></div>'+
         '<div class="sline"><span class="k">Costo total</span><span class="v num" id="c-costo">'+clp(costoTotal(e))+'</span></div>'+
         '<div class="sline big util'+(utilidad(e)<0?' neg':'')+'"><span class="k">Utilidad</span><span class="v num" id="c-util">'+clp(utilidad(e))+'</span></div>'+
@@ -816,12 +833,14 @@
 
     var f=wrap.querySelector(".formgrid");
     function readForm(){
-      ["docTipo","modoPago","aplicaBono"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=el.value; });
-      ["precioVenta","costoProducto","envio","costoExterno","costoEmpresa"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=parseFloat(el.value)||0; });
+      ["docTipo","modoPago","tipoVenta"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=el.value; });
+      ["precioVenta","abono","costoProducto","envio","costoExterno","costoEmpresa"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=parseFloat(el.value)||0; });
     }
     function refresh(){
       readForm();
       wrap.querySelector("#c-precio").textContent=clp(e.precioVenta);
+      wrap.querySelector("#c-abono").textContent=clp(e.abono);
+      wrap.querySelector("#c-saldo").textContent=clp((e.precioVenta||0)-(e.abono||0));
       wrap.querySelector("#c-iva").textContent=clp(iva(e.precioVenta));
       wrap.querySelector("#c-costo").textContent=clp(costoTotal(e));
       wrap.querySelector("#c-util").textContent=clp(utilidad(e));
@@ -1025,7 +1044,7 @@
     var svcs=Object.keys(c.servicios).sort(function(a,b){return c.servicios[b]-c.servicios[a];}).map(function(s){var n=c.servicios[s];return '<span>'+svcCorto(s)+(n>1?' ('+n+'×)':'')+'</span>';}).join("")||'<span style="opacity:.5">—</span>';
     var hist=c.items.slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;}).map(function(e){
       var st=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip '+estClass(e.estado)+'">'+e.estado+'</span>';
-      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td></tr>';
+      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td></tr>';
     }).join("");
     var info=clientesInfo[c.clave]||{};
     wrap.innerHTML='<div class="ficha">'+
@@ -1105,14 +1124,18 @@
   }
   var sb=window.supabase.createClient(
     'https://fyjvcnqklgzrscgpytqj.supabase.co',
-    'sb_publishable_yxIzCk7NCZRHoy6HuSjgaQ_PHLJ9JSv'
+    'sb_publishable_yxIzCk7NCZRHoy6HuSjgaQ_PHLJ9JSv',
+    { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage } }
   );
-  window.ISP_SB=sb; // disponible para la capa de datos (siguiente paso)
+  window.ISP_SB=sb; // disponible para la capa de datos
+
+  function entrar(email){ abrir(email); if(window.ISP_applyRole) window.ISP_applyRole(email); }
 
   sb.auth.getSession().then(function(res){
     var s=res && res.data && res.data.session;
-    if(s) abrir(s.user && s.user.email);
+    if(s) entrar(s.user && s.user.email);
   });
+  sb.auth.onAuthStateChange(function(evt,session){ if(session && evt==='SIGNED_IN'){ entrar(session.user && session.user.email); } });
 
   form.addEventListener('submit',function(e){
     e.preventDefault();
@@ -1123,7 +1146,7 @@
     sb.auth.signInWithPassword({ email:email, password:pass }).then(function(res){
       btn.disabled=false; btn.textContent='Ingresar';
       if(res.error){ showErr('Correo o contraseña incorrectos.'); }
-      else { abrir(email); }
+      else { entrar(email); }
     });
   });
   document.getElementById('logout-btn').addEventListener('click',function(){
