@@ -39,18 +39,32 @@
   .app{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
   .num{font-variant-numeric:tabular-nums;}
 
-  header.top{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--ground) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
-  .top-in{max-width:1180px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:15px;white-space:nowrap;}
-  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-  .logo small{font:600 10px/1 var(--mono);color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;}
-  nav.tabs{display:flex;gap:2px;margin-left:auto;background:var(--surface-2);padding:3px;border-radius:999px;border:1px solid var(--line);overflow-x:auto;max-width:100%;}
-  nav.tabs button{font:600 13px/1 var(--sans);border:none;background:transparent;color:var(--ink-muted);padding:8px 13px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
-  nav.tabs button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
-  nav.tabs button:hover:not(.active){color:var(--ink);}
-  nav.tabs button .cnt{font:700 10px/1 var(--mono);background:var(--accent-soft);color:var(--accent-ink);padding:2px 5px;border-radius:999px;}
+  /* ---- barra lateral ---- */
+  .app.on{display:flex;align-items:stretch;min-height:100vh;}
+  .sidebar{width:238px;flex:none;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50;}
+  .side-logo{padding:16px 16px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;}
+  .side-logo img{height:30px;width:auto;display:block;}
+  .side-logo .side-sub{font:800 11px/1 var(--mono);letter-spacing:.16em;color:var(--accent);text-transform:uppercase;}
+  nav.tabs{display:flex;flex-direction:column;gap:2px;padding:12px 10px;flex:1;overflow-y:auto;}
+  nav.tabs button{font:600 14px/1 var(--sans);border:none;background:transparent;color:var(--ink-muted);padding:11px 12px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:10px;white-space:nowrap;width:100%;text-align:left;}
+  nav.tabs button.active{background:var(--accent-soft);color:var(--accent-ink);}
+  nav.tabs button:hover:not(.active){background:var(--surface-2);color:var(--ink);}
+  nav.tabs button .cnt{margin-left:auto;font:700 10px/1 var(--mono);background:var(--accent);color:#fff;padding:3px 6px;border-radius:999px;}
+  .side-foot{border-top:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;gap:8px;}
+  .main-col{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .mtop{display:none;}
+  .side-overlay{display:none;}
+  .hamb{border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;width:38px;height:38px;font-size:18px;line-height:1;cursor:pointer;color:var(--ink);flex:none;}
+  .mtop-logo{height:26px;width:auto;}
+  @media (max-width:860px){
+    .app.on{display:block;}
+    .sidebar{position:fixed;left:0;top:0;height:100vh;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.35);}
+    .sidebar.open{transform:none;}
+    .mtop{display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:color-mix(in srgb,var(--ground) 92%,transparent);backdrop-filter:blur(8px);z-index:40;}
+    .side-overlay.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:45;}
+  }
 
-  main{max-width:1180px;margin:0 auto;padding:22px 20px 70px;}
+  main{max-width:1240px;margin:0 auto;padding:22px 20px 70px;width:100%;}
   .view{display:none;}
   .view.active{display:block;animation:fade .22s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
@@ -248,7 +262,6 @@
   .cal-nav{display:flex;gap:6px;}
   .cal-nav button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;font-size:16px;line-height:1;}
   .cal-nav button:hover{background:var(--surface-2);}
-  #view-agenda.active{position:relative;left:50%;transform:translateX(-50%);width:96vw;max-width:1500px;}
   .cal-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .cal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-width:700px;}
   .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface-2);border-bottom:1px solid var(--line);}
@@ -291,10 +304,11 @@
   #login .lerr.show{display:block;}
   #login .lnote{margin-top:18px;font-size:11px;color:var(--ink-faint);line-height:1.5;text-align:center;}
   .app{display:none;}
-  .app.on{display:block;}
-  .logout{background:transparent;border:1px solid var(--line-strong);color:var(--ink-muted);border-radius:999px;padding:7px 12px;font:600 12px/1 var(--sans);cursor:pointer;margin-left:8px;}
-  .logout:hover{color:var(--ink);border-color:var(--accent);}
-  .navuser{font:600 11px/1 var(--mono);color:var(--ink-muted);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:6px 10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .logout{width:100%;background:transparent;border:1px solid var(--crit);color:var(--crit);border-radius:8px;padding:10px;font:700 13px/1 var(--sans);cursor:pointer;}
+  .logout:hover{background:var(--crit);color:#fff;}
+  .navuser{display:flex;align-items:center;gap:7px;font:600 12px/1.3 var(--sans);color:var(--ink-2);padding:4px 6px;word-break:break-all;}
+  .navuser svg{flex:none;color:var(--ink-faint);}
+  .navuser:empty{display:none;}
   .navuser:empty{display:none;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -318,25 +332,25 @@
 </div>
 
 <div class="app">
-  <header class="top">
-    <div class="top-in">
-      <div class="logo"><span class="dot"></span> IS&nbsp;Performance <small>OS · prototipo</small></div>
-      <nav class="tabs" id="tabs">
-        <button data-view="recepcion" class="active">➕ Agendamiento</button>
-        <button data-view="agenda">📅 Agenda</button>
-        <button data-view="seguimiento">🔧 Seguimiento</button>
-        <button data-view="clientes">👥 Clientes</button>
-        <button data-view="cobro">💵 Cobro</button>
-        <button data-view="costos">💰 Costos</button>
-        <button data-view="panel">📊 Panel</button>
-      </nav>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-logo"><img src="/assets/images/ISperformanceLogo.svg" alt="IS Performance"><span class="side-sub">OS</span></div>
+    <nav class="tabs" id="tabs">
+      <button data-view="recepcion" class="active">➕ Agendamiento</button>
+      <button data-view="agenda">📅 Agenda</button>
+      <button data-view="seguimiento">🔧 Seguimiento</button>
+      <button data-view="clientes">👥 Clientes</button>
+      <button data-view="cobro">💵 Cobro</button>
+      <button data-view="costos">💰 Costos</button>
+      <button data-view="panel">📊 Panel</button>
+    </nav>
+    <div class="side-foot">
       <span class="navuser" id="nav-user-name"></span>
       <button class="logout" id="logout-btn" title="Cerrar sesión">Salir</button>
     </div>
-  </header>
-
-  <main>
-    <div class="banner">🔧 <span><b>Prototipo de demostración.</b> Los datos se guardan solo en este navegador. La versión real los guardará en la nube, protegidos y visibles desde cualquier dispositivo.</span></div>
+  </aside>
+  <div class="main-col">
+    <header class="mtop"><button class="hamb" id="hamb" aria-label="Abrir menú">☰</button><img class="mtop-logo" src="/assets/images/ISperformanceLogo.svg" alt="IS Performance"></header>
+    <main>
 
     <!-- ============ RECEPCIÓN ============ -->
     <section class="view active" id="view-recepcion">
@@ -483,6 +497,8 @@
       </div>
     </section>
   </main>
+  </div>
+  <div class="side-overlay" id="side-overlay"></div>
   <div class="toast" id="toast"></div>
 </div>
 
@@ -1100,6 +1116,13 @@
   var toastEl=document.getElementById("toast"), tt;
   function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("show"); clearTimeout(tt); tt=setTimeout(function(){toastEl.classList.remove("show");},2600); }
 
+  // ---- menú lateral en móvil ----
+  var _hamb=document.getElementById("hamb"), _sidebar=document.getElementById("sidebar"), _ovl=document.getElementById("side-overlay");
+  function sideOpen(o){ if(_sidebar)_sidebar.classList.toggle("open",o); if(_ovl)_ovl.classList.toggle("show",o); }
+  if(_hamb) _hamb.addEventListener("click",function(){ sideOpen(!_sidebar.classList.contains("open")); });
+  if(_ovl) _ovl.addEventListener("click",function(){ sideOpen(false); });
+  tabsEl.addEventListener("click",function(ev){ if(ev.target.closest("button")) sideOpen(false); });
+
   updateCounts();
 })();
 </script>
@@ -1114,7 +1137,7 @@
   var err=document.getElementById('lerr');
   var userChip=document.getElementById('nav-user-name');
 
-  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.textContent=email||''; if(window.ISP_onLogin) window.ISP_onLogin(); }
+  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+(email||''); if(window.ISP_onLogin) window.ISP_onLogin(); }
   function cerrar(){ appEl.classList.remove('on'); loginEl.style.display='flex'; }
   function showErr(msg){ err.textContent=msg; err.classList.add('show'); }
 
