@@ -256,6 +256,13 @@
   .ac-item:hover{background:var(--accent-soft);}
   .ac-item .p1{font-weight:700;font-size:13px;}
   .ac-item .p2{font-size:11px;color:var(--ink-muted);margin-top:2px;}
+  .stock-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+  .stock-newwrap{margin-bottom:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow);}
+  .stock-newwrap summary{cursor:pointer;font:700 12px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);}
+  .stk-btn{font:700 11px/1 var(--sans);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:6px 8px;cursor:pointer;}
+  .stk-btn.ent:hover{background:var(--ok);color:#fff;border-color:var(--ok);}
+  .stk-btn.sal:hover{background:var(--warn);color:#fff;border-color:var(--warn);}
+  .stk-btn.del:hover{background:var(--crit);color:#fff;border-color:var(--crit);}
 
   .cal-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .cal-head .m{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;min-width:170px;text-transform:capitalize;}
@@ -342,6 +349,7 @@
       <button data-view="seguimiento">🔧 Seguimiento</button>
       <button data-view="clientes">👥 Clientes</button>
       <button data-view="cobro">💵 Cobro</button>
+      <button data-view="stock">📦 Stock</button>
       <button data-view="costos">💰 Costos</button>
       <button data-view="panel">📊 Panel</button>
     </nav>
@@ -468,6 +476,29 @@
       </div>
     </section>
 
+    <!-- ============ STOCK ============ -->
+    <section class="view" id="view-stock">
+      <div class="vhead"><div class="eye">Inventario</div><h1>Stock</h1><p>Equipamiento y productos en un solo lugar. <b>Stock = entradas − salidas</b>. Los productos de detailing (Haulmer) se agregan luego.</p></div>
+      <div id="stock-kpis"></div>
+      <div class="stock-bar">
+        <div class="pfilter" id="stock-filtro"><button data-f="TODOS" class="on">Todos</button><button data-f="EQUIPAMIENTO">Equipamiento</button><button data-f="DETAILING">Detailing</button></div>
+        <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
+      </div>
+      <details class="stock-newwrap">
+        <summary>➕ Agregar producto</summary>
+        <form id="stock-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
+          <label class="f"><span class="lab">Tipo</span><select name="tipo"><option>EQUIPAMIENTO</option><option>DETAILING</option></select></label>
+          <label class="f"><span class="lab">Producto</span><input name="producto" required placeholder="Barra antivuelco, Shampoo…"></label>
+          <label class="f"><span class="lab">Marca / modelo</span><input name="marca" placeholder=""></label>
+          <label class="f"><span class="lab">Compatibilidad</span><input name="compatibilidad" placeholder="L200, Hilux…"></label>
+          <label class="f"><span class="lab">Medidas</span><input name="medidas" placeholder=""></label>
+          <label class="f"><span class="lab">Stock inicial</span><input name="entrada" type="number" min="0" value="1"></label>
+          <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
+        </form>
+      </details>
+      <div id="stock-table"></div>
+    </section>
+
     <!-- ============ PANEL ============ -->
     <section class="view" id="view-panel">
       <div class="vhead"><div class="eye">Este mes</div><h1>Panel de control</h1><p id="panel-sub">Toca cada indicador para ver el detalle.</p></div>
@@ -582,13 +613,15 @@
       sb.from('reloj').select('*').order('fecha',{ascending:false}),
       sb.from('gastos').select('*').order('fecha',{ascending:false}),
       sb.from('valor_hora').select('*'),
-      sb.from('clientes').select('*')
+      sb.from('clientes').select('*'),
+      sb.from('productos').select('*').order('producto')
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
       gastos=(res[2].data||[]).map(gastoFromDB);
       VH={}; (res[3].data||[]).forEach(function(row){ VH[row.trabajador]=row.valor; });
       clientesInfo={}; (res[4].data||[]).forEach(function(row){ clientesInfo[row.clave]=row; });
+      productos=(res[5].data||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -612,8 +645,9 @@
     if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
   }
   window.ISP_applyRole=applyRole;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"" };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", stockFiltro:"TODOS", stockBuscar:"" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
+  var productos=[];     // inventario (tabla productos)
 
   // ---------- tabs ----------
   var tabsEl=document.getElementById("tabs");
@@ -630,6 +664,7 @@
     if(v==="seguimiento") renderBoard();
     else if(v==="cobro") renderCobro();
     else if(v==="costos") renderCostos();
+    else if(v==="stock") renderStock();
     else if(v==="panel") renderPanel();
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
@@ -1031,6 +1066,50 @@
     var rows=items.map(function(i){return '<div class="bar-row"><span class="bl">'+i.k+'</span><span class="bar-track"><span class="bar-fill" style="width:'+Math.max(3,i.v/max*100)+'%"></span></span><span class="bv">'+clp(i.v)+'</span></div>';}).join("");
     return '<div class="chart"><h3>Ventas por mes<span class="tag">CLP</span></h3>'+(rows||'<div class="col-empty">Sin datos</div>')+'</div>';
   }
+
+  // ---------- stock / inventario ----------
+  function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
+  function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
+  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function delProductoDB(id){ var sb=sbc(); if(sb) sb.from('productos').delete().eq('id',id).then(function(){}); }
+  function kstat(l,v,s){ return '<div class="kpi" style="cursor:default"><div class="kl">'+l+'</div><div class="kv">'+v+'</div><div class="ks">'+s+'</div></div>'; }
+  function renderStock(){
+    var f=state.stockFiltro, q=(state.stockBuscar||"").trim().toLowerCase();
+    document.querySelectorAll("#stock-filtro button").forEach(function(b){ b.classList.toggle("on",b.dataset.f===f); });
+    var lista=productos.filter(function(p){
+      if(f!=="TODOS" && (p.tipo||"EQUIPAMIENTO")!==f) return false;
+      if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")).toLowerCase().indexOf(q)>=0;
+      return true;
+    }).sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
+    var equip=productos.filter(function(p){return (p.tipo||"EQUIPAMIENTO")==="EQUIPAMIENTO";}).length;
+    var det=productos.filter(function(p){return p.tipo==="DETAILING";}).length;
+    var sinStk=productos.filter(function(p){return stockDe(p)<=0;}).length;
+    document.getElementById("stock-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+
+      kstat("Equipamiento",equip,"productos")+kstat("Detailing",det,"productos")+kstat("Sin stock",sinStk,"reponer")+kstat("Total",productos.length,"items")+'</div>';
+    var rows=lista.map(function(p){
+      var s=stockDe(p); var col=s<=0?'var(--crit)':(s<=1?'var(--warn)':'var(--ink)');
+      return '<tr><td><b>'+(p.producto||"")+'</b></td><td>'+(p.marca||"—")+'</td><td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>'+
+        '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
+        '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
+        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">+ ent</button> <button class="stk-btn sal" data-id="'+p.id+'">− sal</button> <button class="stk-btn del" data-id="'+p.id+'">🗑</button></td></tr>';
+    }).join("");
+    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Mover</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">Sin productos'+(q?' para "'+q+'"':'')+'</td></tr>')+'</tbody></table></div>';
+    document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
+      var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
+      if(b.classList.contains("ent")){ p.entrada=(+p.entrada||0)+1; saveProducto(p); renderStock(); toast("+1 entrada: "+p.producto); }
+      else if(b.classList.contains("sal")){ p.salida=(+p.salida||0)+1; saveProducto(p); renderStock(); toast("−1 salida: "+p.producto); }
+      else if(b.classList.contains("del")){ if(confirm("¿Eliminar "+p.producto+"?")){ productos=productos.filter(function(x){return x.id!==b.dataset.id;}); delProductoDB(b.dataset.id); renderStock(); toast("Eliminado"); } }
+    }); });
+  }
+  (function(){
+    document.querySelectorAll("#stock-filtro button").forEach(function(b){ b.addEventListener("click",function(){ state.stockFiltro=b.dataset.f; renderStock(); }); });
+    var sBuscar=document.getElementById("stock-buscar"); if(sBuscar) sBuscar.addEventListener("input",function(){ state.stockBuscar=sBuscar.value; renderStock(); });
+    var sForm=document.getElementById("stock-form");
+    if(sForm) sForm.addEventListener("submit",function(ev){ ev.preventDefault();
+      var o={tipo:sForm.tipo.value,producto:sForm.producto.value.trim(),marca:sForm.marca.value.trim(),compatibilidad:sForm.compatibilidad.value.trim(),medidas:sForm.medidas.value.trim(),entrada:parseInt(sForm.entrada.value)||0,salida:0};
+      addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Producto agregado"); });
+    });
+  })();
 
   // ---------- clientes (CRM) ----------
   function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
