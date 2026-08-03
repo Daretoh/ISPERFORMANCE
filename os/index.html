@@ -263,6 +263,25 @@
   .stk-btn.ent:hover{background:var(--ok);color:#fff;border-color:var(--ok);}
   .stk-btn.sal:hover{background:var(--warn);color:#fff;border-color:var(--warn);}
   .stk-btn.del:hover{background:var(--crit);color:#fff;border-color:var(--crit);}
+  /* galería de adjuntos */
+  .media-modal{display:none;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
+  .media-modal.show{display:flex;}
+  .media-modal-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);width:100%;max-width:620px;max-height:86vh;display:flex;flex-direction:column;}
+  .media-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:750;}
+  .media-modal-head button{border:none;background:var(--surface-2);width:30px;height:30px;border-radius:8px;font-size:18px;cursor:pointer;color:var(--ink-muted);}
+  .media-modal-head button:hover{background:var(--crit);color:#fff;}
+  .media-modal-body{padding:16px 18px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;}
+  .media-modal-foot{padding:14px 18px;border-top:1px solid var(--line);}
+  .gal-item{position:relative;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface-2);}
+  .gal-item img{width:100%;height:110px;object-fit:cover;display:block;background:var(--surface-3);}
+  .gal-doc{height:110px;display:flex;align-items:center;justify-content:center;font-size:34px;}
+  .gal-nm{display:block;font:600 10px/1.3 var(--sans);color:var(--ink-2);padding:5px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .gal-open{position:absolute;left:5px;bottom:26px;font:700 9px/1 var(--mono);background:rgba(0,0,0,.6);color:#fff;padding:3px 6px;border-radius:5px;text-decoration:none;}
+  .gal-del{position:absolute;top:4px;right:4px;border:none;background:rgba(0,0,0,.6);color:#fff;width:20px;height:20px;border-radius:50%;font-size:13px;cursor:pointer;}
+  .gal-del:hover{background:var(--crit);}
+  .kmedia-btn.cobro{color:var(--ink-2);}
+  .gadj{border:none;background:var(--surface-3);color:var(--ink-muted);border-radius:999px;padding:3px 8px;cursor:pointer;font-size:11px;margin-left:4px;}
+  .gadj:hover{background:var(--accent-soft);color:var(--accent-ink);}
 
   .cal-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .cal-head .m{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;min-width:170px;text-transform:capitalize;}
@@ -532,6 +551,16 @@
   </main>
   </div>
   <div class="side-overlay" id="side-overlay"></div>
+
+  <div class="media-modal" id="media-modal">
+    <div class="media-modal-box">
+      <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
+      <div class="media-modal-body" id="media-modal-body"></div>
+      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">➕ Agregar archivos</button></div>
+    </div>
+  </div>
+  <input type="file" id="media-modal-input" multiple hidden>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -590,10 +619,10 @@
   var data = [];  // se carga desde Supabase al iniciar sesión
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
-  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado }; }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:[] }; }
+  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
-  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
 
   // ---- escritura en la base (optimista: la cache local ya quedó actualizada) ----
@@ -602,7 +631,8 @@
   function deleteVeh(id){ var sb=sbc(); if(sb) sb.from('vehiculos').delete().eq('id',id).then(function(r){ if(r.error) toast('⚠ No se pudo eliminar'); }); }
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
-  function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('gastos').insert({concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha}).select().single().then(function(r){ if(!r.error) gastos.unshift(gastoFromDB(r.data)); else toast('⚠ Error'); }); }
+  function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('gastos').insert({concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,media:[]}).select().single().then(function(r){ if(!r.error) gastos.unshift(gastoFromDB(r.data)); else toast('⚠ Error'); }); }
+  function updateGastoDB(g){ var sb=sbc(); if(sb) sb.from('gastos').update({media:g.media}).eq('id',g.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
   function delGastoDB(id){ var sb=sbc(); if(sb) sb.from('gastos').delete().eq('id',id).then(function(){}); }
   function upsertVH(t,val){ var sb=sbc(); if(sb) sb.from('valor_hora').upsert({trabajador:t,valor:val}).then(function(){}); }
 
@@ -699,16 +729,45 @@
     el.querySelectorAll("button").forEach(function(b){ b.addEventListener("click",function(){ chosenSvcs.splice(+b.dataset.i,1); renderSvcList(); recepSummary(); }); });
   }
 
-  // fotos/videos: se agregan al INGRESO del vehículo, desde su tarjeta en Seguimiento
-  var mediaTarget=null;
-  var kmediaInput=document.getElementById("kmedia-input");
-  kmediaInput.addEventListener("change",function(){
-    var e=data.filter(function(x){return x.id===mediaTarget;})[0];
-    if(e){ e.media=e.media||[];
-      Array.prototype.forEach.call(kmediaInput.files,function(f){ e.media.push({name:f.name,type:f.type.indexOf("video")===0?"video":"image",url:URL.createObjectURL(f)}); });
-      renderBoard(); toast("📷 "+e.media.length+" archivo(s) — "+e.marca+" "+(e.modelo||""));
-    }
-    kmediaInput.value="";
+  // ---------- adjuntos (Supabase Storage): fotos, videos, boletas, facturas ----------
+  function tipoArchivo(f){ var t=f.type||""; if(t.indexOf("video")===0)return "video"; if(t.indexOf("image")===0)return "image"; return "doc"; }
+  function subirArchivo(file,carpeta){ var sb=sbc(); if(!sb)return Promise.resolve(null);
+    var safe=(file.name||"archivo").replace(/[^a-zA-Z0-9._-]/g,"_");
+    var path=carpeta+"/"+Date.now()+"_"+safe;
+    return sb.storage.from("adjuntos").upload(path,file).then(function(r){
+      if(r.error){ toast("⚠ No se pudo subir: "+(r.error.message||"")); return null; }
+      return {path:path,tipo:tipoArchivo(file),nombre:file.name};
+    });
+  }
+  function urlFirmada(path){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.storage.from("adjuntos").createSignedUrl(path,3600).then(function(r){ return (r.data&&r.data.signedUrl)||null; }); }
+  var _galCtx=null; // {media, carpeta, acepta, onChange}
+  var _mm=document.getElementById("media-modal"), _mmBody=document.getElementById("media-modal-body"), _mmInput=document.getElementById("media-modal-input"), _mmAdd=document.getElementById("media-modal-add");
+  function galRender(){
+    var media=_galCtx.media;
+    if(!media.length){ _mmBody.innerHTML='<div class="col-empty" style="grid-column:1/-1">Sin archivos aún — usa "Agregar archivos"</div>'; return; }
+    _mmBody.innerHTML=media.map(function(m,i){
+      var inner=m.tipo==="image"?'<img data-path="'+m.path+'" alt="">':'<div class="gal-doc">'+(m.tipo==="video"?"🎬":"📄")+'</div>';
+      return '<div class="gal-item">'+inner+'<a class="gal-open" href="#" data-path="'+m.path+'">abrir</a><button class="gal-del" data-i="'+i+'" aria-label="Quitar">×</button><span class="gal-nm">'+(m.nombre||"")+'</span></div>';
+    }).join("");
+    _mmBody.querySelectorAll("img[data-path]").forEach(function(img){ urlFirmada(img.dataset.path).then(function(u){ if(u)img.src=u; }); });
+    _mmBody.querySelectorAll(".gal-open").forEach(function(a){ a.addEventListener("click",function(ev){ ev.preventDefault(); urlFirmada(a.dataset.path).then(function(u){ if(u)window.open(u,"_blank"); }); }); });
+    _mmBody.querySelectorAll(".gal-del").forEach(function(b){ b.addEventListener("click",function(){ if(confirm("¿Quitar este archivo?")){ media.splice(+b.dataset.i,1); _galCtx.onChange(); galRender(); } }); });
+  }
+  function abrirGaleria(titulo,media,carpeta,acepta,onChange){
+    _galCtx={media:media,carpeta:carpeta,acepta:acepta,onChange:onChange};
+    document.getElementById("media-modal-title").textContent=titulo;
+    _mmInput.accept=acepta; _mm.classList.add("show"); galRender();
+  }
+  document.getElementById("media-modal-close").addEventListener("click",function(){ _mm.classList.remove("show"); });
+  _mm.addEventListener("click",function(ev){ if(ev.target===_mm) _mm.classList.remove("show"); });
+  _mmAdd.addEventListener("click",function(){ _mmInput.click(); });
+  _mmInput.addEventListener("change",function(){
+    if(!_galCtx)return; var files=Array.prototype.slice.call(_mmInput.files); if(!files.length)return;
+    _mmAdd.disabled=true; _mmAdd.textContent="Subiendo…";
+    Promise.all(files.map(function(f){ return subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d)_galCtx.media.push(d); }); })).then(function(){
+      _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _galCtx.onChange(); galRender(); toast("✓ Archivos guardados");
+    });
+    _mmInput.value="";
   });
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
@@ -810,7 +869,10 @@
         data=data.filter(function(x){return x.id!==b.dataset.id;}); deleteVeh(b.dataset.id); renderBoard(); updateCounts(); toast("Eliminado: "+e.marca+" "+(e.modelo||""));
       }
     }); });
-    board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){ mediaTarget=b.dataset.id; kmediaInput.click(); }); });
+    board.querySelectorAll(".kmedia-btn").forEach(function(b){ b.addEventListener("click",function(){
+      var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e)return; e.media=e.media||[];
+      abrirGaleria("Fotos y videos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,video/*", function(){ persistVeh(e); renderBoard(); });
+    }); });
     board.querySelectorAll(".cedit").forEach(function(inp){ inp.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
       e[inp.dataset.k]=inp.value; persistVeh(e); toast("Cita reagendada: "+fFecha(e.fCoord)+" "+(e.hCoord||""));
@@ -913,7 +975,7 @@
       mp.textContent=(m*100).toFixed(0)+"%"; mp.className="marginpill"+(m<0?" neg":(m<0.3?" low":""));
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
-    wrap.querySelector("#doc-btn").addEventListener("click",function(){ toast("En la versión real: se adjunta y se lee el documento automáticamente."); });
+    wrap.querySelector("#doc-btn").addEventListener("click",function(){ e.media=e.media||[]; abrirGaleria("Boletas / vouchers — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,application/pdf", function(){ persistVeh(e); }); });
     wrap.querySelector("#c-save").addEventListener("click",function(){ readForm(); e.cobrado=true; persistVeh(e); renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
   }
   function field(lab,name,type,val,opts){
@@ -943,12 +1005,17 @@
       return '<div class="lrow"><span><b>'+r.trab+'</b> · '+fFecha(r.fecha)+' · '+r.hIn+'–'+r.hOut+(+r.desc?' (−'+r.desc+'m)':'')+'</span><span class="num">'+horasReloj(r).toFixed(1)+' h <button class="ldel" data-s="reloj" data-id="'+r.id+'" aria-label="Borrar">×</button></span></div>';
     }).join(""))||'<div class="col-empty">Sin registros aún</div>';
     document.getElementById("gasto-list").innerHTML=(gastos.slice(0,15).map(function(g){
-      return '<div class="lrow"><span><b>'+g.con+'</b> · '+g.tipo+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
+      var nm=(g.media&&g.media.length)?' '+g.media.length:'';
+      return '<div class="lrow"><span><b>'+g.con+'</b> · '+g.tipo+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="gadj" data-id="'+g.id+'" title="Factura adjunta">📎'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
     }).join(""))||'<div class="col-empty">Sin gastos aún</div>';
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
       else { gastos=gastos.filter(function(x){return x.id!==b.dataset.id;}); delGastoDB(b.dataset.id); }
       renderCostos();
+    }); });
+    document.querySelectorAll("#gasto-list .gadj").forEach(function(b){ b.addEventListener("click",function(){
+      var g=gastos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!g)return; g.media=g.media||[];
+      abrirGaleria("Factura — "+g.con, g.media, "gasto/"+g.id, "image/*,application/pdf", function(){ updateGastoDB(g); renderCostos(); });
     }); });
   }
 
