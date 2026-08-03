@@ -451,7 +451,7 @@
 
     <!-- ============ SEGUIMIENTO ============ -->
     <section class="view" id="view-seguimiento">
-      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Cuando llegue el auto agendado, toca <b>“Ingresó”</b> — la hora queda registrada sola. Igual con inicio y salida del trabajo. Si necesitas corregir, usa <b>“⏱ Editar tiempos”</b> en cada tarjeta (incluye tiempo muerto).</p></div>
+      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Actividad de <b>este mes</b>. Toca <b>“Ingresó”</b> cuando llegue el auto — la hora queda sola. Terminado/Entregado de meses anteriores se ven en 📅 Agenda.</p></div>
       <div class="board" id="board"></div>
       <input type="file" id="kmedia-input" accept="image/*,video/*" multiple hidden>
     </section>
@@ -536,7 +536,7 @@
 
     <!-- ============ AGENDA ============ -->
     <section class="view" id="view-agenda">
-      <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Citas <b>pendientes y en curso</b> (agendado, en espera, en proceso). Los trabajos ya entregados no aparecen aquí — están en 👥 Clientes.</p></div>
+      <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Todo por fecha — usa ‹ › para navegar los meses y ver qué tuviste (ej: julio). Color según estado. Lo sin fecha aparece en enero.</p></div>
       <div class="cal-head">
         <div class="cal-nav"><button id="cal-prev">‹</button><button id="cal-next">›</button></div>
         <div class="m" id="cal-month"></div>
@@ -827,9 +827,9 @@
     board.innerHTML=ESTADOS.map(function(st,ci){
       var items=data.filter(function(e){return e.estado===st;});
       var ocultos=0;
-      if(ci>=3){ // Terminado / Entregado: solo la última semana (lo antiguo vive en Clientes/Panel)
+      if(ci>=3){ // Terminado / Entregado: solo de ESTE MES (lo antiguo vive en Clientes/Agenda)
         items=items.slice().sort(function(a,b){ var fa=a.fSalida||a.fCoord||a.fIngreso||"",fb=b.fSalida||b.fCoord||b.fIngreso||""; return fa<fb?1:-1; });
-        var tot=items.length; items=items.filter(function(e){ var f=e.fSalida||e.fCoord||e.fIngreso||""; var d=diasDesde(f); return d==null||d<=7; }); ocultos=tot-items.length;
+        var tot=items.length; items=items.filter(function(e){ var f=e.fSalida||e.fCoord||e.fIngreso||""; return !f || esEsteMes(f); }); ocultos=tot-items.length;
       }
       var cls=["c-agend","c-espera","c-proc","c-term","c-entreg"][ci];
       var cards=items.map(function(e){
@@ -860,7 +860,7 @@
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
-      return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+(ocultos>0?'<div class="col-empty">+'+ocultos+' anteriores · ver en 👥 Clientes</div>':'')+'</div>';
+      return '<div class="col"><div class="col-h"><span class="'+cls+'">'+st+'</span><span class="num">'+items.length+'</span></div>'+(cards||'<div class="col-empty">Vacío</div>')+(ocultos>0?'<div class="col-empty">+'+ocultos+' de meses anteriores · ver en 📅 Agenda</div>':'')+'</div>';
     }).join("");
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(b.dataset.id, +b.dataset.dir); }); });
     board.querySelectorAll(".kdel").forEach(function(b){ b.addEventListener("click",function(){
@@ -1181,6 +1181,7 @@
   // ---------- clientes (CRM) ----------
   function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
   function diasDesde(iso){ if(!iso)return null; var d=new Date(iso+"T00:00:00"); return Math.floor((Date.now()-d)/86400000); }
+  function esEsteMes(iso){ if(!iso)return false; var d=new Date(iso+"T00:00:00"), n=new Date(); return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth(); }
   function normPat(p){ return (""+p).toUpperCase().replace(/[^A-Z0-9]/g,""); } // une "SD.HR.52" y "SDHR52"
   function agruparClientes(){
     var m={};
@@ -1254,8 +1255,9 @@
     document.getElementById("cal-month").textContent=MESLC[m]+" "+y;
     var first=new Date(y,m,1); var startDow=(first.getDay()+6)%7;
     var dim=new Date(y,m+1,0).getDate(), prev=new Date(y,m,0).getDate(), today=todayISO();
-    // La agenda muestra solo lo pendiente/activo (no el historial ya terminado/entregado, que vive en Clientes)
-    var byDay={}; data.forEach(function(e){ if(e.estado==="ENTREGADO"||e.estado==="TERMINADO") return; var k=e.fCoord; if(k){(byDay[k]=byDay[k]||[]).push(e);} });
+    // La agenda muestra TODO por fecha (navega los meses para ver el historial). Sin fecha -> 1 de enero del año en curso.
+    var eneroDefault=(new Date().getFullYear())+"-01-01";
+    var byDay={}; data.forEach(function(e){ var k=e.fCoord||e.fIngreso||eneroDefault; (byDay[k]=byDay[k]||[]).push(e); });
     var cells=[]; for(var i=0;i<startDow;i++)cells.push({d:prev-startDow+1+i,out:true});
     for(var d=1;d<=dim;d++)cells.push({d:d,iso:y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")});
     while(cells.length%7!==0)cells.push({d:cells.length-startDow-dim+1,out:true});
