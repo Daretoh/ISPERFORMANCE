@@ -293,13 +293,13 @@
   .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface-2);border-bottom:1px solid var(--line);}
   .cal-dow div{padding:9px 10px;font:700 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-  .cell{min-height:clamp(88px,12vh,150px);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;display:flex;flex-direction:column;gap:4px;}
+  .cell{min-height:clamp(88px,12vh,150px);min-width:0;overflow:hidden;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;display:flex;flex-direction:column;gap:4px;}
   @media (max-width:640px){ #view-agenda.active{width:100%;left:auto;transform:none;} .cell{min-height:76px;} .ev{font-size:9.5px;padding:2px 4px;} .cal-dow div{padding:7px 6px;font-size:9px;} }
   .cell:nth-child(7n){border-right:none;}
   .cell.out{background:var(--surface-2);}
   .cell .dn{font:700 12px/1 var(--mono);color:var(--ink-muted);}
   .cell.today .dn{color:#fff;background:var(--accent);border-radius:6px;padding:3px 6px;align-self:flex-start;}
-  .ev{font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:5px;background:var(--info-soft);color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--info);}
+  .ev{display:block;max-width:100%;min-width:0;font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:5px;background:var(--info-soft);color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--info);}
   .ev .evh{font-family:var(--mono);font-weight:700;}
   .ev .evs{font-weight:800;}
   .ev.term{background:var(--info-soft);color:var(--info);border-left-color:var(--info);}
