@@ -532,11 +532,11 @@
           <label class="f"><span class="lab">Fecha</span><input name="fecha" type="date"></label>
           <label class="f"><span class="lab">Hora</span><input name="hora" type="time"></label>
           <label class="f"><span class="lab">Prioridad</span><select name="prioridad"><option>MEDIA</option><option>ALTA</option><option>BAJA</option></select></label>
-          <label class="f"><span class="lab">Responsable</span><input name="responsable" list="trabajadores" placeholder="Quién"></label>
+          <label class="f"><span class="lab">Responsable</span><select name="responsable"><option value="">— Todos —</option><option>Grecia Mendoza</option><option>Jorge Castro</option><option>Ventas</option></select></label>
           <button type="submit" class="btn primary" style="align-self:end">Agregar tarea</button>
         </form>
       </details>
-      <div class="pfilter" id="tarea-filtro" style="margin-bottom:14px"><button data-f="PENDIENTE" class="on">Pendientes</button><button data-f="HECHA">Hechas</button><button data-f="TODAS">Todas</button></div>
+      <div class="pfilter" id="tarea-filtro" style="margin-bottom:14px"><button data-f="PENDIENTE" class="on">Pendientes</button><button data-f="MIAS">Mías</button><button data-f="HECHA">Hechas</button><button data-f="TODAS">Todas</button></div>
       <div id="tarea-list"></div>
     </section>
 
@@ -729,6 +729,9 @@
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var productos=[];     // inventario (tabla productos)
   var tareas=[];        // tareas / recordatorios (tabla tareas)
+  var VAPID_PUBLIC="BDt1m2YVzH-GB8MN4CF5ORzPhoEEBEJK3licTQH4K-oy_o1pXMMSbJl7HHbmeHY3XrOzUP-CvcNgz1V_J_CMupw";
+  var EQUIPO={ 'administrativa@innovaservi.com':'Grecia Mendoza', 'jorge.castro@innovaservi.com':'Jorge Castro', 'ventas@isperformance.cl':'Ventas' };
+  function miNombre(){ return EQUIPO[(window.ISP_EMAIL||'').toLowerCase()] || (window.ISP_EMAIL||''); }
 
   // ---------- tabs ----------
   var tabsEl=document.getElementById("tabs");
@@ -1195,7 +1198,7 @@
   function renderTareas(){
     var f=state.tareaFiltro;
     document.querySelectorAll("#tarea-filtro button").forEach(function(b){ b.classList.toggle("on",b.dataset.f===f); });
-    var lista=tareas.filter(function(t){ if(f==='TODAS')return true; return (t.estado||'PENDIENTE')===f; });
+    var lista=tareas.filter(function(t){ if(f==='TODAS')return true; if(f==='MIAS')return (t.responsable||'')===miNombre() && (t.estado||'PENDIENTE')!=='HECHA'; return (t.estado||'PENDIENTE')===f; });
     lista=lista.slice().sort(function(a,b){ var fa=a.fecha||'9999-99-99', fb=b.fecha||'9999-99-99'; if(fa!==fb)return fa<fb?-1:1; return (a.hora||'')<(b.hora||'')?-1:1; });
     var cont=document.getElementById("tarea-list");
     if(!lista.length){ cont.innerHTML='<div class="col-empty" style="padding:24px">'+(f==='PENDIENTE'?'Sin tareas pendientes 🎉':'Sin tareas')+'</div>'; return; }
@@ -1380,14 +1383,24 @@
   // ---- notificaciones (paso 1: permiso + aviso local) ----
   var _notifBtn=document.getElementById("notif-btn");
   function notificar(titulo,cuerpo){ if(('Notification' in window)&&Notification.permission==='granted'&&navigator.serviceWorker){ navigator.serviceWorker.ready.then(function(reg){ try{ reg.showNotification(titulo,{body:cuerpo,icon:'/os/icon-192.png',badge:'/os/icon-192.png'}); }catch(e){} }); } }
+  function b64ToUint8(base64){ var pad='='.repeat((4-base64.length%4)%4); var b=(base64+pad).replace(/-/g,'+').replace(/_/g,'/'); var raw=atob(b); var arr=new Uint8Array(raw.length); for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i); return arr; }
+  function suscribirPush(){
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||Notification.permission!=='granted')return;
+    navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(sub){ return sub || reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64ToUint8(VAPID_PUBLIC)}); });
+    }).then(function(sub){
+      if(!sub)return; var j=sub.toJSON(); var kk=j.keys||{};
+      var sb=sbc(); if(sb) sb.from('push_subs').upsert({endpoint:sub.endpoint,p256dh:kk.p256dh,auth:kk.auth,email:(window.ISP_EMAIL||''),nombre:miNombre()},{onConflict:'endpoint'}).then(function(){});
+    }).catch(function(){});
+  }
   function refreshNotifBtn(){ if(!_notifBtn)return; if(!('Notification' in window)){ _notifBtn.style.display='none'; return; }
     _notifBtn.textContent=(Notification.permission==='granted')?'🔔 Avisos activados':(Notification.permission==='denied'?'🔕 Avisos bloqueados':'🔔 Activar avisos');
   }
   if(_notifBtn) _notifBtn.addEventListener("click",function(){
     if(!('Notification' in window)){ toast('Este navegador no soporta notificaciones'); return; }
-    if(Notification.permission==='granted'){ notificar('IS Performance OS','Los avisos ya están activados ✅'); return; }
+    if(Notification.permission==='granted'){ suscribirPush(); notificar('IS Performance OS','Los avisos ya están activados ✅'); return; }
     if(Notification.permission==='denied'){ toast('Bloqueadas — actívalas desde los ajustes del navegador/teléfono.'); return; }
-    Notification.requestPermission().then(function(p){ refreshNotifBtn(); if(p==='granted'){ notificar('IS Performance OS 🔔','¡Avisos activados! Aquí verás recordatorios de tareas.'); } else { toast('No se activaron los avisos'); } });
+    Notification.requestPermission().then(function(p){ refreshNotifBtn(); if(p==='granted'){ suscribirPush(); notificar('IS Performance OS 🔔','¡Avisos activados! Recibirás recordatorios de tus tareas.'); } else { toast('No se activaron los avisos'); } });
   });
   refreshNotifBtn();
   var _tareasNotificadas={};
@@ -1398,6 +1411,7 @@
   setInterval(chequearVencimientos, 60000); // revisa cada minuto mientras la app está abierta
   window.ISP_notifTareas=function(){
     if(!('Notification' in window)||Notification.permission!=='granted'){ return; }
+    suscribirPush(); // re-registra este dispositivo (por si cambió la suscripción)
     if(!window._notifShown){ var venc=(tareas||[]).filter(tareaVencida).length; if(venc>0){ window._notifShown=true; notificar('Tareas vencidas ⚠️','Tienes '+venc+' tarea(s) vencida(s). Revísalas en Tareas.'); } }
     primeVencidas();
   };
@@ -1416,7 +1430,7 @@
   var err=document.getElementById('lerr');
   var userChip=document.getElementById('nav-user-name');
 
-  function abrir(email){ loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+(email||''); if(window.ISP_onLogin) window.ISP_onLogin(); }
+  function abrir(email){ window.ISP_EMAIL=email||''; loginEl.style.display='none'; appEl.classList.add('on'); if(userChip)userChip.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> '+(email||''); if(window.ISP_onLogin) window.ISP_onLogin(); }
   function cerrar(){ appEl.classList.remove('on'); loginEl.style.display='flex'; }
   function showErr(msg){ err.textContent=msg; err.classList.add('show'); }
 
