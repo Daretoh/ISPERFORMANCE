@@ -790,9 +790,9 @@
     var safe=(file.name||"archivo").replace(/[^a-zA-Z0-9._-]/g,"_");
     var path=carpeta+"/"+Date.now()+"_"+safe;
     return sb.storage.from("adjuntos").upload(path,file).then(function(r){
-      if(r.error){ toast("⚠ No se pudo subir: "+(r.error.message||"")); return null; }
+      if(r.error){ return null; }
       return {path:path,tipo:tipoArchivo(file),nombre:file.name};
-    });
+    }).catch(function(){ return null; });
   }
   function urlFirmada(path){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.storage.from("adjuntos").createSignedUrl(path,3600).then(function(r){ return (r.data&&r.data.signedUrl)||null; }); }
   var _galCtx=null; // {media, carpeta, acepta, onChange}
@@ -818,11 +818,16 @@
   _mmAdd.addEventListener("click",function(){ _mmInput.click(); });
   _mmInput.addEventListener("change",function(){
     if(!_galCtx)return; var files=Array.prototype.slice.call(_mmInput.files); if(!files.length)return;
-    _mmAdd.disabled=true; _mmAdd.textContent="Subiendo…";
-    Promise.all(files.map(function(f){ return subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d)_galCtx.media.push(d); }); })).then(function(){
-      _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _galCtx.onChange(); galRender(); toast("✓ Archivos guardados");
-    });
-    _mmInput.value="";
+    _mmInput.value=""; _mmAdd.disabled=true;
+    var total=files.length, ok=0, fail=0, i=0;
+    function siguiente(){
+      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _galCtx.onChange(); galRender();
+        toast(ok+" archivo(s) guardado(s)"+(fail?" · "+fail+" fallaron (¿muy pesados? máx ~50MB)":"")); return; }
+      var f=files[i]; i++;
+      _mmAdd.textContent="Subiendo "+i+"/"+total+"…  ("+Math.max(1,Math.round(f.size/1048576))+" MB)";
+      subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d){ ok++; _galCtx.media.push(d); galRender(); } else { fail++; } siguiente(); });
+    }
+    siguiente();
   });
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
