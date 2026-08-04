@@ -707,7 +707,8 @@
     if(window.ISP_notifTareas) window.ISP_notifTareas();
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
-        sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(){
+        sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(payload){
+          try{ if(payload && payload.table==='tareas' && payload.eventType==='INSERT' && payload.new && !window._skipTareaNotif){ notificar('Nueva tarea 📌', payload.new.titulo||''); } }catch(e){}
           clearTimeout(_rtT); _rtT=setTimeout(function(){ mapLoad().then(function(){ updateCounts(); renderTab(state.view); }); },600);
         }).subscribe();
       } catch(err){ /* tiempo real opcional: si falla, el panel sigue funcionando (se ve al recargar) */ }
@@ -1217,7 +1218,8 @@
     var tForm=document.getElementById("tarea-form");
     if(tForm) tForm.addEventListener("submit",function(ev){ ev.preventDefault();
       var o={titulo:tForm.titulo.value.trim(),fecha:tForm.fecha.value||null,hora:tForm.hora.value||null,prioridad:tForm.prioridad.value,responsable:tForm.responsable.value.trim()||null,estado:'PENDIENTE'};
-      addTareaDB(o).then(function(){ tForm.reset(); tForm.prioridad.value='MEDIA'; renderTareas(); updateCounts(); toast("✓ Tarea agregada"); });
+      window._skipTareaNotif=true; setTimeout(function(){ window._skipTareaNotif=false; },3500);
+      addTareaDB(o).then(function(){ tForm.reset(); tForm.prioridad.value='MEDIA'; renderTareas(); updateCounts(); toast("✓ Tarea agregada — avisada al equipo"); });
     });
   })();
 
@@ -1388,7 +1390,17 @@
     Notification.requestPermission().then(function(p){ refreshNotifBtn(); if(p==='granted'){ notificar('IS Performance OS 🔔','¡Avisos activados! Aquí verás recordatorios de tareas.'); } else { toast('No se activaron los avisos'); } });
   });
   refreshNotifBtn();
-  window.ISP_notifTareas=function(){ if(('Notification' in window)&&Notification.permission==='granted'&&!window._notifShown){ var venc=(tareas||[]).filter(tareaVencida).length; if(venc>0){ window._notifShown=true; notificar('Tareas vencidas ⚠️','Tienes '+venc+' tarea(s) vencida(s). Revísalas en Tareas.'); } } };
+  var _tareasNotificadas={};
+  function tareaDue(t){ if((t.estado||'PENDIENTE')==='HECHA'||!t.fecha)return false; var hoy=todayISO(); return t.fecha<hoy || (t.fecha===hoy && (!t.hora || t.hora<=nowTime())); }
+  function primeVencidas(){ (tareas||[]).forEach(function(t){ if(tareaDue(t)) _tareasNotificadas[t.id]=1; }); } // marca las ya vencidas para no repetir de golpe
+  function chequearVencimientos(){ if(!('Notification' in window)||Notification.permission!=='granted')return;
+    (tareas||[]).forEach(function(t){ if(_tareasNotificadas[t.id])return; if(tareaDue(t)){ _tareasNotificadas[t.id]=1; notificar('Recordatorio ⏰', t.titulo+(t.hora?(' ('+t.hora+')'):'')+(t.responsable?(' — '+t.responsable):'')); } }); }
+  setInterval(chequearVencimientos, 60000); // revisa cada minuto mientras la app está abierta
+  window.ISP_notifTareas=function(){
+    if(!('Notification' in window)||Notification.permission!=='granted'){ return; }
+    if(!window._notifShown){ var venc=(tareas||[]).filter(tareaVencida).length; if(venc>0){ window._notifShown=true; notificar('Tareas vencidas ⚠️','Tienes '+venc+' tarea(s) vencida(s). Revísalas en Tareas.'); } }
+    primeVencidas();
+  };
 
   updateCounts();
 })();
