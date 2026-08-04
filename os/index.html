@@ -279,6 +279,11 @@
   .gal-open{position:absolute;left:5px;bottom:26px;font:700 9px/1 var(--mono);background:rgba(0,0,0,.6);color:#fff;padding:3px 6px;border-radius:5px;text-decoration:none;}
   .gal-del{position:absolute;top:4px;right:4px;border:none;background:rgba(0,0,0,.6);color:#fff;width:20px;height:20px;border-radius:50%;font-size:13px;cursor:pointer;}
   .gal-del:hover{background:var(--crit);}
+  .gal-prog{display:none;height:8px;border-radius:999px;background:var(--surface-3);overflow:hidden;margin-top:12px;}
+  .gal-prog.show{display:block;}
+  .gal-prog>div{height:100%;width:0;background:var(--accent);transition:width .3s;}
+  .gal-prog-txt{display:none;font:600 12px/1.4 var(--mono);color:var(--ink-muted);margin-top:8px;text-align:center;}
+  .gal-prog-txt.show{display:block;}
   .kmedia-btn.cobro{color:var(--ink-2);}
   .gadj{border:none;background:var(--surface-3);color:var(--ink-muted);border-radius:999px;padding:3px 8px;cursor:pointer;font-size:11px;margin-left:4px;}
   .gadj:hover{background:var(--accent-soft);color:var(--accent-ink);}
@@ -316,7 +321,8 @@
   .cell.out{background:var(--surface-2);}
   .cell .dn{font:700 12px/1 var(--mono);color:var(--ink-muted);}
   .cell.today .dn{color:#fff;background:var(--accent);border-radius:6px;padding:3px 6px;align-self:flex-start;}
-  .ev{display:block;max-width:100%;min-width:0;font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:5px;background:var(--info-soft);color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--info);}
+  .ev{display:block;max-width:100%;min-width:0;font-size:10.5px;font-weight:600;padding:3px 6px;border-radius:5px;background:var(--info-soft);color:var(--info);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-left:3px solid var(--info);cursor:pointer;}
+  .ev:hover{filter:brightness(0.96);}
   .ev .evh{font-family:var(--mono);font-weight:700;}
   .ev .evs{font-weight:800;}
   .ev.term{background:var(--info-soft);color:var(--info);border-left-color:var(--info);}
@@ -601,10 +607,17 @@
     <div class="media-modal-box">
       <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
       <div class="media-modal-body" id="media-modal-body"></div>
-      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">➕ Agregar archivos</button></div>
+      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">➕ Agregar archivos</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
     </div>
   </div>
   <input type="file" id="media-modal-input" multiple hidden>
+
+  <div class="media-modal" id="evento-modal">
+    <div class="media-modal-box" style="max-width:440px">
+      <div class="media-modal-head"><span id="evento-modal-title">Detalle</span><button type="button" id="evento-modal-close" aria-label="Cerrar">×</button></div>
+      <div class="media-modal-body" id="evento-modal-body" style="display:block"></div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 </div>
@@ -708,7 +721,7 @@
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
         sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(payload){
-          try{ if(payload && payload.table==='tareas' && payload.eventType==='INSERT' && payload.new && !window._skipTareaNotif){ notificar('Nueva tarea 📌', payload.new.titulo||''); } }catch(e){}
+          try{ if(payload && payload.table==='tareas' && payload.eventType==='INSERT' && payload.new && !window._skipTareaNotif){ var _r=payload.new.responsable; if(!_r || _r===miNombre()){ notificar('Nueva tarea 📌', payload.new.titulo||''); } } }catch(e){}
           clearTimeout(_rtT); _rtT=setTimeout(function(){ mapLoad().then(function(){ updateCounts(); renderTab(state.view); }); },600);
         }).subscribe();
       } catch(err){ /* tiempo real opcional: si falla, el panel sigue funcionando (se ve al recargar) */ }
@@ -816,16 +829,18 @@
   document.getElementById("media-modal-close").addEventListener("click",function(){ _mm.classList.remove("show"); });
   _mm.addEventListener("click",function(ev){ if(ev.target===_mm) _mm.classList.remove("show"); });
   _mmAdd.addEventListener("click",function(){ _mmInput.click(); });
+  var _mmProg=document.getElementById("media-modal-prog"), _mmBar=document.getElementById("media-modal-progbar"), _mmTxt=document.getElementById("media-modal-progtxt");
   _mmInput.addEventListener("change",function(){
     if(!_galCtx)return; var files=Array.prototype.slice.call(_mmInput.files); if(!files.length)return;
     _mmInput.value=""; _mmAdd.disabled=true;
+    _mmProg.classList.add("show"); _mmTxt.classList.add("show"); _mmBar.style.width="0%";
     var total=files.length, ok=0, fail=0, i=0;
     function siguiente(){
-      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _galCtx.onChange(); galRender();
-        toast(ok+" archivo(s) guardado(s)"+(fail?" · "+fail+" fallaron (¿muy pesados? máx ~50MB)":"")); return; }
+      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); _galCtx.onChange(); galRender();
+        toast(ok+" archivo(s) guardado(s)"+(fail?" · "+fail+" no subieron (¿muy pesados? máx ~50MB)":"")); return; }
       var f=files[i]; i++;
-      _mmAdd.textContent="Subiendo "+i+"/"+total+"…  ("+Math.max(1,Math.round(f.size/1048576))+" MB)";
-      subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d){ ok++; _galCtx.media.push(d); galRender(); } else { fail++; } siguiente(); });
+      _mmTxt.textContent="Subiendo "+i+" de "+total+"  ·  "+f.name.slice(0,24)+"  ("+Math.max(1,Math.round(f.size/1048576))+" MB)";
+      subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d){ ok++; _galCtx.media.push(d); galRender(); } else { fail++; } _mmBar.style.width=Math.round(i/total*100)+"%"; siguiente(); });
     }
     siguiente();
   });
@@ -864,10 +879,8 @@
     function fillFrom(c){
       form.cliente.value=c.nombre||"";
       if(c.contacto) form.contacto.value=c.contacto;
-      var last=(c.items||[]).slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;})[0];
-      if(last){ if(last.marca)form.marca.value=last.marca; if(last.modelo)form.modelo.value=last.modelo; if(last.patente)form.patente.value=last.patente; if(last.anioVeh)form.anioVeh.value=last.anioVeh; if(last.talla)form.talla.value=last.talla; }
       hide(); recepSummary();
-      toast("Cliente cargado: "+(c.nombre||"")+" — revisa y ajusta si cambió el vehículo");
+      toast("Cliente: "+(c.nombre||"")+" — completa los datos del vehículo");
     }
     inp.addEventListener("input",function(){
       var q=inp.value.trim().toLowerCase(); if(q.length<2){ hide(); return; }
@@ -1355,7 +1368,7 @@
     // La agenda muestra TODO por fecha (navega los meses para ver el historial). Sin fecha -> 1 de enero del año en curso.
     var eneroDefault=(new Date().getFullYear())+"-01-01";
     var byDay={}; data.forEach(function(e){ var k=e.fCoord||e.fIngreso||eneroDefault; (byDay[k]=byDay[k]||[]).push(e); });
-    (tareas||[]).forEach(function(t){ if(t.fecha){ (byDay[t.fecha]=byDay[t.fecha]||[]).push({_tarea:true,titulo:t.titulo,hCoord:t.hora||"",estado:t.estado}); } });
+    (tareas||[]).forEach(function(t){ if(t.fecha){ (byDay[t.fecha]=byDay[t.fecha]||[]).push({_tarea:true,id:t.id,titulo:t.titulo,hCoord:t.hora||"",estado:t.estado}); } });
     var cells=[]; for(var i=0;i<startDow;i++)cells.push({d:prev-startDow+1+i,out:true});
     for(var d=1;d<=dim;d++)cells.push({d:d,iso:y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")});
     while(cells.length%7!==0)cells.push({d:cells.length-startDow-dim+1,out:true});
@@ -1363,14 +1376,39 @@
       var cls="cell"+(c.out?" out":"")+(c.iso===today?" today":""); var evs="";
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
         evs=list.slice(0,4).map(function(e){
-          if(e._tarea){ return '<span class="ev tarea-ev" title="Tarea: '+e.titulo+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
-          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
+          if(e._tarea){ return '<span class="ev tarea-ev" data-tipo="tarea" data-id="'+e.id+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
+          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; return '<span class="ev '+estClass(e.estado)+'" data-tipo="veh" data-id="'+e.id+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
         }).join("");
         if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
       return '<div class="'+cls+'"><span class="dn">'+c.d+'</span>'+evs+'</div>';
     }).join("");
+    document.querySelectorAll("#cal-grid .ev[data-id]").forEach(function(sp){ sp.addEventListener("click",function(){ abrirEvento(sp.dataset.tipo, sp.dataset.id); }); });
   }
+  function abrirEvento(tipo,id){
+    var m=document.getElementById("evento-modal"), body=document.getElementById("evento-modal-body"), ttl=document.getElementById("evento-modal-title");
+    if(tipo==='tarea'){
+      var t=(tareas||[]).filter(function(x){return x.id===id;})[0]; if(!t)return;
+      ttl.textContent="📌 Tarea";
+      body.innerHTML='<div style="font-weight:750;font-size:1.12rem;margin-bottom:10px">'+t.titulo+'</div><div style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--ink-2)">'+
+        (t.fecha?'<span>📅 '+fFecha(t.fecha)+(t.hora?(' '+t.hora):'')+'</span>':'')+
+        (t.responsable?'<span>👤 '+t.responsable+'</span>':'<span>👤 Todos</span>')+
+        '<span>⚑ Prioridad: '+(t.prioridad||'MEDIA')+'</span><span>Estado: '+(t.estado||'PENDIENTE')+'</span>'+
+        (t.detalle?'<div style="margin-top:4px">'+t.detalle+'</div>':'')+'</div>';
+    } else {
+      var e=(data||[]).filter(function(x){return x.id===id;})[0]; if(!e)return;
+      ttl.textContent="🚗 "+e.marca+" "+(e.modelo||"");
+      body.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--ink-2)">'+
+        '<span><b>Patente:</b> '+(e.patente||"—")+'  ·  <b>Talla:</b> '+(e.talla||"—")+'</span>'+
+        '<span><b>Servicios:</b> '+((e.servicios||[]).join(", ")||"—")+'</span>'+
+        '<span><b>Estado:</b> '+e.estado+'</span>'+
+        (e.hCoord?'<span><b>Cita:</b> '+fFecha(e.fCoord)+' '+e.hCoord+'</span>':'')+
+        (e.cliente?'<span><b>Cliente:</b> '+e.cliente+(e.contacto?(' · '+e.contacto):'')+'</span>':'')+
+        (e.precioVenta?'<span><b>Precio:</b> '+clp(e.precioVenta)+(e.cobrado?' (cobrado)':'')+'</span>':'')+'</div>';
+    }
+    m.classList.add("show");
+  }
+  (function(){ var m=document.getElementById("evento-modal"); document.getElementById("evento-modal-close").addEventListener("click",function(){ m.classList.remove("show"); }); m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); }); })();
   document.getElementById("cal-prev").addEventListener("click",function(){state.calRef.setMonth(state.calRef.getMonth()-1);renderCal();});
   document.getElementById("cal-next").addEventListener("click",function(){state.calRef.setMonth(state.calRef.getMonth()+1);renderCal();});
 
