@@ -350,6 +350,8 @@
   .app{display:none;}
   .logout{width:100%;background:transparent;border:1px solid var(--crit);color:var(--crit);border-radius:8px;padding:10px;font:700 13px/1 var(--sans);cursor:pointer;}
   .logout:hover{background:var(--crit);color:#fff;}
+  .notif-btn{width:100%;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-2);border-radius:8px;padding:9px;font:650 12px/1 var(--sans);cursor:pointer;}
+  .notif-btn:hover{border-color:var(--accent);color:var(--accent-ink);}
   .navuser{display:flex;align-items:center;justify-content:center;text-align:center;gap:7px;font:600 12px/1.3 var(--sans);color:var(--ink-2);padding:4px 6px;word-break:break-all;}
   .navuser svg{flex:none;color:var(--ink-faint);}
   .navuser svg{flex:none;color:var(--ink-faint);}
@@ -398,6 +400,7 @@
     </nav>
     <div class="side-foot">
       <span class="navuser" id="nav-user-name"></span>
+      <button class="notif-btn" id="notif-btn">🔔 Activar avisos</button>
       <button class="logout" id="logout-btn" title="Cerrar sesión">Salir</button>
     </div>
   </aside>
@@ -701,6 +704,7 @@
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
     fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view);
+    if(window.ISP_notifTareas) window.ISP_notifTareas();
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
         sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(){
@@ -1370,6 +1374,21 @@
   if(_hamb) _hamb.addEventListener("click",function(){ sideOpen(!_sidebar.classList.contains("open")); });
   if(_ovl) _ovl.addEventListener("click",function(){ sideOpen(false); });
   tabsEl.addEventListener("click",function(ev){ if(ev.target.closest("button")) sideOpen(false); });
+
+  // ---- notificaciones (paso 1: permiso + aviso local) ----
+  var _notifBtn=document.getElementById("notif-btn");
+  function notificar(titulo,cuerpo){ if(('Notification' in window)&&Notification.permission==='granted'&&navigator.serviceWorker){ navigator.serviceWorker.ready.then(function(reg){ try{ reg.showNotification(titulo,{body:cuerpo,icon:'/os/icon-192.png',badge:'/os/icon-192.png'}); }catch(e){} }); } }
+  function refreshNotifBtn(){ if(!_notifBtn)return; if(!('Notification' in window)){ _notifBtn.style.display='none'; return; }
+    _notifBtn.textContent=(Notification.permission==='granted')?'🔔 Avisos activados':(Notification.permission==='denied'?'🔕 Avisos bloqueados':'🔔 Activar avisos');
+  }
+  if(_notifBtn) _notifBtn.addEventListener("click",function(){
+    if(!('Notification' in window)){ toast('Este navegador no soporta notificaciones'); return; }
+    if(Notification.permission==='granted'){ notificar('IS Performance OS','Los avisos ya están activados ✅'); return; }
+    if(Notification.permission==='denied'){ toast('Bloqueadas — actívalas desde los ajustes del navegador/teléfono.'); return; }
+    Notification.requestPermission().then(function(p){ refreshNotifBtn(); if(p==='granted'){ notificar('IS Performance OS 🔔','¡Avisos activados! Aquí verás recordatorios de tareas.'); } else { toast('No se activaron los avisos'); } });
+  });
+  refreshNotifBtn();
+  window.ISP_notifTareas=function(){ if(('Notification' in window)&&Notification.permission==='granted'&&!window._notifShown){ var venc=(tareas||[]).filter(tareaVencida).length; if(venc>0){ window._notifShown=true; notificar('Tareas vencidas ⚠️','Tienes '+venc+' tarea(s) vencida(s). Revísalas en Tareas.'); } } };
 
   updateCounts();
 })();
