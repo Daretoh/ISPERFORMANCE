@@ -282,6 +282,23 @@
   .kmedia-btn.cobro{color:var(--ink-2);}
   .gadj{border:none;background:var(--surface-3);color:var(--ink-muted);border-radius:999px;padding:3px 8px;cursor:pointer;font-size:11px;margin-left:4px;}
   .gadj:hover{background:var(--accent-soft);color:var(--accent-ink);}
+  /* grupos del menú */
+  .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:12px;}
+  .nav-group-title{font:700 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:4px 12px 5px;}
+  /* tareas */
+  .tarea{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-left-width:4px;border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:11px 13px;margin-bottom:9px;}
+  .tarea.p-alta{border-left-color:var(--crit);} .tarea.p-media{border-left-color:var(--warn);} .tarea.p-baja{border-left-color:var(--info);}
+  .tarea.vencida{background:var(--crit-soft);}
+  .tarea.hecha{opacity:.55;} .tarea.hecha .t-tit{text-decoration:line-through;}
+  .tarea .t-check{width:22px;height:22px;border:2px solid var(--line-strong);border-radius:6px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;background:transparent;line-height:1;}
+  .tarea.hecha .t-check{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .tarea .t-body{flex:1;min-width:0;}
+  .tarea .t-tit{font-weight:700;font-size:14px;}
+  .tarea .t-meta{font:600 11px/1.4 var(--mono);color:var(--ink-muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px;}
+  .tarea .t-meta .venc{color:var(--crit);font-weight:800;}
+  .tarea .t-del{border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:15px;flex:none;}
+  .tarea .t-del:hover{color:var(--crit);}
+  .ev.tarea-ev{background:var(--accent-soft);color:var(--accent-ink);border-left-color:var(--accent);}
 
   .cal-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
   .cal-head .m{font-size:1.15rem;font-weight:750;letter-spacing:-.01em;min-width:170px;text-transform:capitalize;}
@@ -363,14 +380,21 @@
   <aside class="sidebar" id="sidebar">
     <div class="side-logo"><img src="/assets/images/ISperformanceLogo.svg" alt="IS Performance"><span class="side-sub">Sistema interno</span></div>
     <nav class="tabs" id="tabs">
-      <button data-view="recepcion" class="active">➕ Agendamiento</button>
-      <button data-view="agenda">📅 Agenda</button>
-      <button data-view="seguimiento">🔧 Seguimiento</button>
-      <button data-view="clientes">👥 Clientes</button>
-      <button data-view="cobro">💵 Cobro</button>
-      <button data-view="stock">📦 Stock</button>
-      <button data-view="costos">💰 Costos</button>
-      <button data-view="panel">📊 Panel</button>
+      <div class="nav-group">
+        <div class="nav-group-title">Taller</div>
+        <button data-view="recepcion" class="active">➕ Agendamiento</button>
+        <button data-view="agenda">📅 Agenda</button>
+        <button data-view="seguimiento">🔧 Seguimiento</button>
+        <button data-view="tareas">✅ Tareas</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Gestión</div>
+        <button data-view="clientes">👥 Clientes</button>
+        <button data-view="cobro">💵 Cobro</button>
+        <button data-view="stock">📦 Stock</button>
+        <button data-view="costos">💰 Costos</button>
+        <button data-view="panel">📊 Panel</button>
+      </div>
     </nav>
     <div class="side-foot">
       <span class="navuser" id="nav-user-name"></span>
@@ -493,6 +517,24 @@
           <div id="gasto-list"></div>
         </div>
       </div>
+    </section>
+
+    <!-- ============ TAREAS ============ -->
+    <section class="view" id="view-tareas">
+      <div class="vhead"><div class="eye">Recordatorios</div><h1>Tareas</h1><p>Crea tareas y recordatorios del equipo. Las que tienen fecha también aparecen en la 📅 Agenda.</p></div>
+      <details class="stock-newwrap" open>
+        <summary>➕ Nueva tarea</summary>
+        <form id="tarea-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
+          <label class="f" style="grid-column:1/-1"><span class="lab">Tarea</span><input name="titulo" required placeholder="Ej: llamar a cliente Pérez, comprar shampoo…"></label>
+          <label class="f"><span class="lab">Fecha</span><input name="fecha" type="date"></label>
+          <label class="f"><span class="lab">Hora</span><input name="hora" type="time"></label>
+          <label class="f"><span class="lab">Prioridad</span><select name="prioridad"><option>MEDIA</option><option>ALTA</option><option>BAJA</option></select></label>
+          <label class="f"><span class="lab">Responsable</span><input name="responsable" list="trabajadores" placeholder="Quién"></label>
+          <button type="submit" class="btn primary" style="align-self:end">Agregar tarea</button>
+        </form>
+      </details>
+      <div class="pfilter" id="tarea-filtro" style="margin-bottom:14px"><button data-f="PENDIENTE" class="on">Pendientes</button><button data-f="HECHA">Hechas</button><button data-f="TODAS">Todas</button></div>
+      <div id="tarea-list"></div>
     </section>
 
     <!-- ============ STOCK ============ -->
@@ -644,7 +686,8 @@
       sb.from('gastos').select('*').order('fecha',{ascending:false}),
       sb.from('valor_hora').select('*'),
       sb.from('clientes').select('*'),
-      sb.from('productos').select('*').order('producto')
+      sb.from('productos').select('*').order('producto'),
+      sb.from('tareas').select('*').order('fecha')
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -652,6 +695,7 @@
       VH={}; (res[3].data||[]).forEach(function(row){ VH[row.trabajador]=row.valor; });
       clientesInfo={}; (res[4].data||[]).forEach(function(row){ clientesInfo[row.clave]=row; });
       productos=(res[5].data||[]);
+      tareas=(res[6].data||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -668,16 +712,18 @@
   window.ISP_onLogin=loadAllData;
 
   // ---- roles: qué pestañas ve cada correo (vacío/no listado = ve todo) ----
-  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','clientes'] };
+  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes'] };
   function applyRole(email){
     var allowed=ROLES[(email||'').toLowerCase()];
     tabsEl.querySelectorAll('button').forEach(function(b){ b.style.display=(!allowed||allowed.indexOf(b.dataset.view)>=0)?'':'none'; });
+    tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
   }
   window.ISP_applyRole=applyRole;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", stockFiltro:"TODOS", stockBuscar:"" };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var productos=[];     // inventario (tabla productos)
+  var tareas=[];        // tareas / recordatorios (tabla tareas)
 
   // ---------- tabs ----------
   var tabsEl=document.getElementById("tabs");
@@ -694,6 +740,7 @@
     if(v==="seguimiento") renderBoard();
     else if(v==="cobro") renderCobro();
     else if(v==="costos") renderCostos();
+    else if(v==="tareas") renderTareas();
     else if(v==="stock") renderStock();
     else if(v==="panel") renderPanel();
     else if(v==="clientes") renderClientes();
@@ -702,7 +749,7 @@
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
     var porCobrar=data.filter(function(e){return !e.cobrado && ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;}).length;
-    setCnt("seguimiento",proc); setCnt("cobro",porCobrar);
+    setCnt("seguimiento",proc); setCnt("cobro",porCobrar); setCnt("tareas",tareasPendientes());
   }
   function setCnt(view,n){
     var b=tabsEl.querySelector('button[data-view="'+view+'"]'); if(!b)return;
@@ -1134,6 +1181,42 @@
     return '<div class="chart"><h3>Ventas por mes<span class="tag">CLP</span></h3>'+(rows||'<div class="col-empty">Sin datos</div>')+'</div>';
   }
 
+  // ---------- tareas / recordatorios ----------
+  function addTareaDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('tareas').insert(o).select().single().then(function(r){ if(!r.error) tareas.push(r.data); else toast('⚠ Error'); }); }
+  function updateTareaDB(t){ var sb=sbc(); if(sb) sb.from('tareas').update({estado:t.estado,titulo:t.titulo,fecha:t.fecha,hora:t.hora,prioridad:t.prioridad,responsable:t.responsable}).eq('id',t.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function delTareaDB(id){ var sb=sbc(); if(sb) sb.from('tareas').delete().eq('id',id).then(function(){}); }
+  function tareaVencida(t){ if((t.estado||'PENDIENTE')==='HECHA'||!t.fecha)return false; return new Date(t.fecha+(t.hora?('T'+t.hora):'T23:59'))<new Date(); }
+  function tareasPendientes(){ return tareas.filter(function(t){return (t.estado||'PENDIENTE')!=='HECHA';}).length; }
+  function renderTareas(){
+    var f=state.tareaFiltro;
+    document.querySelectorAll("#tarea-filtro button").forEach(function(b){ b.classList.toggle("on",b.dataset.f===f); });
+    var lista=tareas.filter(function(t){ if(f==='TODAS')return true; return (t.estado||'PENDIENTE')===f; });
+    lista=lista.slice().sort(function(a,b){ var fa=a.fecha||'9999-99-99', fb=b.fecha||'9999-99-99'; if(fa!==fb)return fa<fb?-1:1; return (a.hora||'')<(b.hora||'')?-1:1; });
+    var cont=document.getElementById("tarea-list");
+    if(!lista.length){ cont.innerHTML='<div class="col-empty" style="padding:24px">'+(f==='PENDIENTE'?'Sin tareas pendientes 🎉':'Sin tareas')+'</div>'; return; }
+    cont.innerHTML=lista.map(function(t){
+      var venc=tareaVencida(t), hecha=(t.estado==='HECHA'), prio=(t.prioridad||'MEDIA').toLowerCase();
+      var meta=[];
+      if(t.fecha) meta.push('<span'+(venc?' class="venc"':'')+'>📅 '+fFecha(t.fecha)+(t.hora?(' '+t.hora):'')+(venc?' · VENCIDA':'')+'</span>');
+      if(t.responsable) meta.push('<span>👤 '+t.responsable+'</span>');
+      meta.push('<span>'+(t.prioridad||'MEDIA')+'</span>');
+      return '<div class="tarea p-'+prio+(venc?' vencida':'')+(hecha?' hecha':'')+'">'+
+        '<button class="t-check" data-id="'+t.id+'" title="Marcar hecha">✓</button>'+
+        '<div class="t-body"><div class="t-tit">'+t.titulo+'</div>'+(t.detalle?'<div style="font-size:12px;color:var(--ink-muted)">'+t.detalle+'</div>':'')+'<div class="t-meta">'+meta.join('')+'</div></div>'+
+        '<button class="t-del" data-id="'+t.id+'" title="Eliminar">🗑</button></div>';
+    }).join("");
+    cont.querySelectorAll(".t-check").forEach(function(b){ b.addEventListener("click",function(){ var t=tareas.filter(function(x){return x.id===b.dataset.id;})[0]; if(!t)return; t.estado=(t.estado==='HECHA')?'PENDIENTE':'HECHA'; updateTareaDB(t); renderTareas(); updateCounts(); }); });
+    cont.querySelectorAll(".t-del").forEach(function(b){ b.addEventListener("click",function(){ var t=tareas.filter(function(x){return x.id===b.dataset.id;})[0]; if(!t)return; if(confirm('¿Eliminar la tarea "'+t.titulo+'"?')){ tareas=tareas.filter(function(x){return x.id!==b.dataset.id;}); delTareaDB(b.dataset.id); renderTareas(); updateCounts(); } }); });
+  }
+  (function(){
+    document.querySelectorAll("#tarea-filtro button").forEach(function(b){ b.addEventListener("click",function(){ state.tareaFiltro=b.dataset.f; renderTareas(); }); });
+    var tForm=document.getElementById("tarea-form");
+    if(tForm) tForm.addEventListener("submit",function(ev){ ev.preventDefault();
+      var o={titulo:tForm.titulo.value.trim(),fecha:tForm.fecha.value||null,hora:tForm.hora.value||null,prioridad:tForm.prioridad.value,responsable:tForm.responsable.value.trim()||null,estado:'PENDIENTE'};
+      addTareaDB(o).then(function(){ tForm.reset(); tForm.prioridad.value='MEDIA'; renderTareas(); updateCounts(); toast("✓ Tarea agregada"); });
+    });
+  })();
+
   // ---------- stock / inventario ----------
   function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
@@ -1258,13 +1341,17 @@
     // La agenda muestra TODO por fecha (navega los meses para ver el historial). Sin fecha -> 1 de enero del año en curso.
     var eneroDefault=(new Date().getFullYear())+"-01-01";
     var byDay={}; data.forEach(function(e){ var k=e.fCoord||e.fIngreso||eneroDefault; (byDay[k]=byDay[k]||[]).push(e); });
+    (tareas||[]).forEach(function(t){ if(t.fecha){ (byDay[t.fecha]=byDay[t.fecha]||[]).push({_tarea:true,titulo:t.titulo,hCoord:t.hora||"",estado:t.estado}); } });
     var cells=[]; for(var i=0;i<startDow;i++)cells.push({d:prev-startDow+1+i,out:true});
     for(var d=1;d<=dim;d++)cells.push({d:d,iso:y+"-"+String(m+1).padStart(2,"0")+"-"+String(d).padStart(2,"0")});
     while(cells.length%7!==0)cells.push({d:cells.length-startDow-dim+1,out:true});
     document.getElementById("cal-grid").innerHTML=cells.map(function(c){
       var cls="cell"+(c.out?" out":"")+(c.iso===today?" today":""); var evs="";
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
-        evs=list.slice(0,4).map(function(e){ var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>'; }).join("");
+        evs=list.slice(0,4).map(function(e){
+          if(e._tarea){ return '<span class="ev tarea-ev" title="Tarea: '+e.titulo+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
+          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; var full=(e.servicios||[]).join(", ")||"—"; return '<span class="ev '+estClass(e.estado)+'" title="'+e.marca+' '+(e.modelo||"")+' · '+full+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
+        }).join("");
         if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
       return '<div class="'+cls+'"><span class="dn">'+c.d+'</span>'+evs+'</div>';
