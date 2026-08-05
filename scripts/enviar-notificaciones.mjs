@@ -23,45 +23,50 @@ function ahoraChile() {
   return { fecha: `${p.year}-${p.month}-${p.day}`, hora: `${p.hour}:${p.minute}` };
 }
 
+async function enviar(targets, payload) {
+  await Promise.all(targets.map(async s => {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
+    } catch (e) {
+      if (e.statusCode === 404 || e.statusCode === 410) {
+        await sb.from('push_subs').delete().eq('endpoint', s.endpoint); // suscripcion muerta
+      } else {
+        console.error('push error', e.statusCode || e.message);
+      }
+    }
+  }));
+}
+
 async function main() {
   const { fecha, hora } = ahoraChile();
-
-  const { data: tareas, error } = await sb.from('tareas').select('*')
-    .eq('estado', 'PENDIENTE').eq('notificada', false).not('fecha', 'is', null);
-  if (error) { console.error(error); process.exit(1); }
-
-  const due = (tareas || []).filter(t => {
-    if (t.fecha < fecha) return true;                          // dias pasados
-    if (t.fecha === fecha) return (t.hora || '00:00') <= hora; // hoy y ya llego la hora
-    return false;
-  });
-
-  if (!due.length) { console.log('Sin tareas por notificar (' + fecha + ' ' + hora + ').'); return; }
-
   const { data: subs } = await sb.from('push_subs').select('*');
   const allSubs = subs || [];
 
+  // 1) Bandeja de avisos (agendamientos, cambios de estado, nuevas tareas) — a todos o al responsable
+  const { data: notifs } = await sb.from('notificaciones').select('*').eq('enviada', false);
+  for (const n of (notifs || [])) {
+    let targets = (n.destinatario && n.destinatario !== 'ALL') ? allSubs.filter(s => s.nombre === n.destinatario) : allSubs;
+    targets = targets.filter(s => s.email !== n.autor); // no avisar a quien lo hizo
+    const payload = JSON.stringify({ title: n.titulo || 'IS Performance OS', body: n.cuerpo || '', url: '/os/' });
+    await enviar(targets, payload);
+    await sb.from('notificaciones').update({ enviada: true }).eq('id', n.id);
+    console.log(`Aviso: "${n.titulo}" -> ${targets.length} dispositivo(s)`);
+  }
+
+  // 2) Recordatorios de tareas cuya hora ya llego (dirigido al responsable)
+  const { data: tareas, error } = await sb.from('tareas').select('*')
+    .eq('estado', 'PENDIENTE').eq('notificada', false).not('fecha', 'is', null);
+  if (error) { console.error(error); process.exit(1); }
+  const due = (tareas || []).filter(t => t.fecha < fecha || (t.fecha === fecha && (t.hora || '00:00') <= hora));
   for (const t of due) {
     const targets = t.responsable ? allSubs.filter(s => s.nombre === t.responsable) : allSubs;
-    const payload = JSON.stringify({
-      title: '⏰ Recordatorio de tarea',
-      body: t.titulo + (t.hora ? ` (${t.hora})` : ''),
-      url: '/os/'
-    });
-    await Promise.all(targets.map(async s => {
-      try {
-        await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
-      } catch (e) {
-        if (e.statusCode === 404 || e.statusCode === 410) {
-          await sb.from('push_subs').delete().eq('endpoint', s.endpoint); // suscripcion muerta
-        } else {
-          console.error('push error', e.statusCode || e.message);
-        }
-      }
-    }));
+    const payload = JSON.stringify({ title: '⏰ Recordatorio de tarea', body: t.titulo + (t.hora ? ` (${t.hora})` : ''), url: '/os/' });
+    await enviar(targets, payload);
     await sb.from('tareas').update({ notificada: true }).eq('id', t.id);
-    console.log(`Notificada: "${t.titulo}" -> ${targets.length} dispositivo(s)`);
+    console.log(`Recordatorio: "${t.titulo}" -> ${targets.length} dispositivo(s)`);
   }
+
+  if (!(notifs || []).length && !due.length) console.log(`Nada por enviar (${fecha} ${hora}).`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

@@ -682,10 +682,14 @@
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
+  // Bandeja de avisos: cada accion deja un aviso para el equipo (lo reparte el robot + apps abiertas)
+  function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
 
   // ---- escritura en la base (optimista: la cache local ya quedó actualizada) ----
   function persistVeh(e){ var sb=sbc(); if(!sb)return; sb.from('vehiculos').update(vehToDB(e)).eq('id',e.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar en la nube'); }); }
-  function addVehiculo(e){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.from('vehiculos').insert(vehToDB(e)).select().single().then(function(r){ if(r.error){ toast('⚠ Error al guardar'); return null; } e.id=r.data.id; data.unshift(e); return e; }); }
+  function addVehiculo(e){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.from('vehiculos').insert(vehToDB(e)).select().single().then(function(r){ if(r.error){ toast('⚠ Error al guardar'); return null; } e.id=r.data.id; data.unshift(e);
+    emitirNotif('📅 Nuevo agendamiento', (e.marca+' '+(e.modelo||'')).trim()+(e.patente?(' · '+e.patente):'')+(e.fCoord?(' · '+fFecha(e.fCoord)+' '+(e.hCoord||'')):''), 'ALL','agendamiento');
+    return e; }); }
   function deleteVeh(id){ var sb=sbc(); if(sb) sb.from('vehiculos').delete().eq('id',id).then(function(r){ if(r.error) toast('⚠ No se pudo eliminar'); }); }
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
@@ -721,7 +725,7 @@
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
         sbc().channel('isp-cambios').on('postgres_changes',{event:'*',schema:'public'},function(payload){
-          try{ if(payload && payload.table==='tareas' && payload.eventType==='INSERT' && payload.new && !window._skipTareaNotif){ var _r=payload.new.responsable; if(!_r || _r===miNombre()){ notificar('Nueva tarea 📌', payload.new.titulo||''); } } }catch(e){}
+          try{ if(payload && payload.table==='notificaciones' && payload.eventType==='INSERT' && payload.new){ var n=payload.new; if(n.autor!==(window.ISP_EMAIL||'') && (n.destinatario==='ALL' || n.destinatario===miNombre())){ notificar(n.titulo||'IS Performance OS', n.cuerpo||''); } } }catch(e){}
           clearTimeout(_rtT); _rtT=setTimeout(function(){ mapLoad().then(function(){ updateCounts(); renderTab(state.view); }); },600);
         }).subscribe();
       } catch(err){ /* tiempo real opcional: si falla, el panel sigue funcionando (se ve al recargar) */ }
@@ -975,6 +979,7 @@
     if(e.estado==="EN PROCESO" && !e.hInicio){ e.fInicio=todayISO(); e.hInicio=nowTime(); }
     if(e.estado==="TERMINADO" && !e.hSalida){ e.fSalida=todayISO(); e.hSalida=nowTime(); }
     persistVeh(e); renderBoard(); updateCounts();
+    emitirNotif('🔧 '+e.estado, (e.marca+' '+(e.modelo||'')).trim()+(e.patente?(' ('+e.patente+')'):'')+' → '+e.estado, 'ALL','seguimiento');
     toast(e.marca+" "+(e.modelo||"")+" → "+e.estado);
   }
 
@@ -1239,8 +1244,7 @@
     var tForm=document.getElementById("tarea-form");
     if(tForm) tForm.addEventListener("submit",function(ev){ ev.preventDefault();
       var o={titulo:tForm.titulo.value.trim(),fecha:tForm.fecha.value||null,hora:tForm.hora.value||null,prioridad:tForm.prioridad.value,responsable:tForm.responsable.value.trim()||null,estado:'PENDIENTE'};
-      window._skipTareaNotif=true; setTimeout(function(){ window._skipTareaNotif=false; },3500);
-      addTareaDB(o).then(function(){ tForm.reset(); tForm.prioridad.value='MEDIA'; renderTareas(); updateCounts(); toast("✓ Tarea agregada — avisada al equipo"); });
+      addTareaDB(o).then(function(){ emitirNotif('📌 Nueva tarea', o.titulo, o.responsable||'ALL','tarea'); tForm.reset(); tForm.prioridad.value='MEDIA'; renderTareas(); updateCounts(); toast("✓ Tarea agregada — avisada al equipo"); });
     });
   })();
 
