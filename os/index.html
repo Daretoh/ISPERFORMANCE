@@ -1317,6 +1317,11 @@
   function av(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
   function cliTipo(clave){ var i=clientesInfo[clave]||{}; return (i.tipo==='EMPRESA')?'EMPRESA':'NATURAL'; }
   function cliNombre(c){ var i=clientesInfo[c.clave]||{}; if(cliTipo(c.clave)==='EMPRESA' && (i.razon_social||"").trim()) return i.razon_social.trim(); return c.nombre||"(sin nombre)"; }
+  // Niveles de reactivación por días sin venir (ajustables): <=60 al día, 61-120 atención, >120 crítico
+  function nivelDias(dias){ if(dias==null) return {bg:'#ececec',fg:'#888',em:'⚪'}; if(dias<=60) return {bg:'#e6f4ea',fg:'#1e7d34',em:'🟢'}; if(dias<=120) return {bg:'#fff4e0',fg:'#b06a00',em:'🟡'}; return {bg:'#fde8e8',fg:'#c0392b',em:'🔴'}; }
+  function chipDiasCorto(dias){ var n=nivelDias(dias); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+(dias==null?'sin fecha':(dias+'d'))+'</span>'; }
+  function telInternacional(t){ var d=(t||'').replace(/[^0-9]/g,''); if(!d)return''; if(d.indexOf('56')===0)return d; if(d.length===9&&d.charAt(0)==='9')return '56'+d; if(d.length===8)return '569'+d; return d; }
+  function msgReactivacion(c){ var nom=((cliNombre(c)||'').trim().split(/\s+/)[0]||''); var dias=diasDesde(c.ultima); return 'Hola '+nom+' 👋, te saludamos de IS Performance.'+((dias!=null&&dias>30)?(' Notamos que hace '+dias+' días no pasas con tu vehículo.'):'')+' ¿Te gustaría agendar un lavado o detailing? Tenemos horas disponibles esta semana 🚗✨ ¡Te esperamos!'; }
   function renderClientes(){
     var lista=agruparClientes();
     var q=(state.clienteBuscar||"").trim().toLowerCase();
@@ -1325,10 +1330,9 @@
     var cont=document.getElementById("cli-lista");
     if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
     cont.innerHTML=lista.map(function(c){
-      var dias=diasDesde(c.ultima); var dorm=dias!=null && dias>90;
-      var badge=dorm?'<span class="chip dormido">'+dias+'d</span>':'<span class="chip activo">'+c.visitas+'×</span>';
+      var dias=diasDesde(c.ultima);
       var ico=(cliTipo(c.clave)==='EMPRESA')?'🏢 ':'👤 ';
-      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div><div class="p2">'+clp(c.total)+' '+badge+'</div></div>';
+      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div><div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
     }).join("");
     cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
     if(state.clienteSel==null || !lista.some(function(c){return c.clave===state.clienteSel;})) state.clienteSel=lista[0].clave;
@@ -1348,7 +1352,7 @@
     var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff">🏢 Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4">👤 Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
       '<div class="fh"><div><h2>'+(esEmp?'🏢 ':'👤 ')+cliNombre(c)+'</h2>'+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
-        (dias!=null && dias>90?'<span class="chip dormido">'+dias+' días sin venir</span>':'')+'</div>'+
+        (dias!=null?'<span class="chip" style="background:'+nivelDias(dias).bg+';color:'+nivelDias(dias).fg+';font-weight:700">'+nivelDias(dias).em+' '+(dias===0?'vino hoy':('hace '+dias+' días'))+'</span>':'')+'</div>'+
       '<div class="fkpis">'+
         '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
         '<div class="fkpi"><div class="l">Visitas</div><div class="v">'+c.visitas+'</div></div>'+
@@ -1373,6 +1377,14 @@
         '<button class="btn primary" id="cli-datos-save" style="margin-top:8px">Guardar datos</button>'+
       '</div>'+
       '<div class="fsec"><h4>Observaciones</h4><textarea class="obs-area" id="cli-obs" placeholder="Notas: preferencias, acuerdos, recordatorios…">'+(info.observaciones||"")+'</textarea><button class="btn primary" id="cli-obs-save" style="margin-top:8px">Guardar observaciones</button></div>'+
+      '<div class="fsec"><h4>Reactivar por WhatsApp</h4>'+
+        '<textarea class="obs-area" id="cli-wsp" style="min-height:92px">'+msgReactivacion(c)+'</textarea>'+
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
+          '<button class="btn primary" id="cli-wsp-send"'+(c.contacto?'':' disabled')+'>💬 Abrir WhatsApp</button>'+
+          '<button class="btn" id="cli-wsp-copy">Copiar mensaje</button>'+
+        '</div>'+
+        (c.contacto?'':'<div class="hint" style="margin-top:6px;text-transform:none;letter-spacing:0">Sin teléfono guardado — agrégalo en un ingreso para poder enviar.</div>')+
+      '</div>'+
       '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
     '</div>';
     function curInfo(){ var cur=clientesInfo[c.clave]||{}; cur.clave=c.clave; if(!cur.nombre)cur.nombre=c.nombre; if(!cur.contacto)cur.contacto=c.contacto; clientesInfo[c.clave]=cur; return cur; }
@@ -1392,6 +1404,10 @@
       var cur=curInfo(); cur.observaciones=wrap.querySelector("#cli-obs").value;
       upsertCliente(cur); toast("✓ Observaciones guardadas");
     });
+    var _wspSend=wrap.querySelector("#cli-wsp-send");
+    if(_wspSend) _wspSend.addEventListener("click",function(){ var tel=telInternacional(c.contacto); if(!tel){ toast("Este cliente no tiene teléfono"); return; } var txt=wrap.querySelector("#cli-wsp").value; window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(txt),"_blank"); });
+    var _wspCopy=wrap.querySelector("#cli-wsp-copy");
+    if(_wspCopy) _wspCopy.addEventListener("click",function(){ var txt=wrap.querySelector("#cli-wsp").value; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast("✓ Mensaje copiado"); },function(){ toast("No se pudo copiar"); }); } else { var ta=wrap.querySelector("#cli-wsp"); ta.select(); try{ document.execCommand("copy"); toast("✓ Mensaje copiado"); }catch(e){ toast("Copia manual"); } } });
   }
   function upsertCliente(row){ var sb=sbc(); if(sb) sb.from('clientes').upsert(row).then(function(r){ if(r.error) toast('⚠ No se pudo guardar (¿corriste el SQL de clientes/tipo?)'); }); }
   var _cliBuscar=document.getElementById("cli-buscar");
