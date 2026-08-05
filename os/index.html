@@ -1331,7 +1331,7 @@
     var nom=nombreSaludo(c);
     var dias=diasDesde(c.ultima);
     var u=ultimoServicio(c);
-    var saludo='Hola '+(nom?nom+', ':'')+'te saludamos de IS Performance.';
+    var saludo='Hola '+(nom?nom+' ':'')+'👋, te saludamos de IS Performance.';
     var cuerpo;
     if(u){
       var sv=(u.svc||'').toLowerCase();
@@ -1348,7 +1348,7 @@
     } else {
       cuerpo=(dias!=null&&dias>30?(' Notamos que hace '+dias+' días no pasas con tu vehículo.'):'')+' ¿Te gustaría agendar un lavado o detailing? Tenemos horas disponibles esta semana.';
     }
-    return saludo+cuerpo+' ¡Te esperamos!';
+    return saludo+cuerpo+' ¡Te esperamos! ✨';
   }
   function renderClientes(){
     var lista=agruparClientes();
