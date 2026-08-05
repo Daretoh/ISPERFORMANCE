@@ -1376,9 +1376,10 @@
     }).join("");
     var info=clientesInfo[c.clave]||{};
     var esEmp=(info.tipo==='EMPRESA');
+    var rep=(info.representante||'').trim() || (esEmp && c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '');
     var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff">🏢 Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4">👤 Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
-      '<div class="fh"><div><h2>'+(esEmp?'🏢 ':'👤 ')+cliNombre(c)+'</h2>'+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
+      '<div class="fh"><div><h2>'+(esEmp?'🏢 ':'👤 ')+cliNombre(c)+'</h2>'+(esEmp&&rep?'<div class="fc">👤 Rep.: '+rep+'</div>':'')+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
         (dias!=null?'<span class="chip" style="background:'+nivelDias(dias).bg+';color:'+nivelDias(dias).fg+';font-weight:700">'+nivelDias(dias).em+' '+(dias===0?'vino hoy':('hace '+dias+' días'))+'</span>':'')+'</div>'+
       '<div class="fkpis">'+
         '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
@@ -1393,9 +1394,15 @@
           '<label class="f"><span class="lab">Tipo de cliente</span><select id="cli-tipo"><option value="NATURAL"'+(esEmp?'':' selected')+'>👤 Natural (persona)</option><option value="EMPRESA"'+(esEmp?' selected':'')+'>🏢 Empresa</option></select></label>'+
           '<label class="f"><span class="lab">RUT</span><input id="cli-rut" value="'+av(info.rut)+'" placeholder="12.345.678-9"></label>'+
         '</div>'+
-        '<div class="row c2" id="cli-emp-row" style="'+(esEmp?'':'display:none')+'">'+
-          '<label class="f"><span class="lab">Razón social</span><input id="cli-razon" value="'+av(info.razon_social)+'" placeholder="Automotora XYZ SpA"></label>'+
-          '<label class="f"><span class="lab">Giro</span><input id="cli-giro" value="'+av(info.giro)+'" placeholder="Venta de vehículos"></label>'+
+        '<div id="cli-emp-row" style="'+(esEmp?'':'display:none')+'">'+
+          '<div class="row c2">'+
+            '<label class="f"><span class="lab">Razón social</span><input id="cli-razon" value="'+av(info.razon_social)+'" placeholder="Automotora XYZ SpA"></label>'+
+            '<label class="f"><span class="lab">Representante <span class="hint" style="text-transform:none;letter-spacing:0">— nombre de contacto</span></span><input id="cli-rep" value="'+av(info.representante || (esEmp?c.nombre:''))+'" placeholder="Ej: Guillermo Morales"></label>'+
+          '</div>'+
+          '<div class="row c2">'+
+            '<label class="f"><span class="lab">Giro</span><input id="cli-giro" value="'+av(info.giro)+'" placeholder="Venta de vehículos"></label>'+
+            '<div></div>'+
+          '</div>'+
         '</div>'+
         '<div class="row c2">'+
           '<label class="f"><span class="lab">Email (boleta/factura)</span><input id="cli-email" value="'+av(info.email)+'" placeholder="correo@empresa.cl"></label>'+
@@ -1422,6 +1429,7 @@
       cur.tipo=wrap.querySelector("#cli-tipo").value;
       cur.rut=wrap.querySelector("#cli-rut").value.trim();
       cur.razon_social=wrap.querySelector("#cli-razon").value.trim();
+      var _rep=wrap.querySelector("#cli-rep"); cur.representante=_rep?_rep.value.trim():"";
       cur.giro=wrap.querySelector("#cli-giro").value.trim();
       cur.email=wrap.querySelector("#cli-email").value.trim();
       cur.direccion=wrap.querySelector("#cli-dir").value.trim();
