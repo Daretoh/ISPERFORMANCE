@@ -579,6 +579,7 @@
     <section class="view" id="view-clientes">
       <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1><p>Historial, total gastado y frecuencia — calculado desde los vehículos. Elige un cliente para ver su ficha.</p></div>
       <input type="search" id="cli-buscar" class="cli-search" placeholder="🔍 Buscar por nombre o teléfono…">
+      <div class="pfilter" id="cli-filtro" style="margin:10px 0 4px"><button data-t="TODOS" class="on">Todos</button><button data-t="NATURAL">👤 Naturales</button><button data-t="EMPRESA">🏢 Empresas</button></div>
       <div class="cobro-grid">
         <div class="panel pick" id="cli-lista"></div>
         <div id="cli-ficha"></div>
@@ -743,7 +744,7 @@
     if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
   }
   window.ISP_applyRole=applyRole;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var productos=[];     // inventario (tabla productos)
   var tareas=[];        // tareas / recordatorios (tabla tareas)
@@ -1313,16 +1314,21 @@
     });
     return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.total-a.total;});
   }
+  function av(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+  function cliTipo(clave){ var i=clientesInfo[clave]||{}; return (i.tipo==='EMPRESA')?'EMPRESA':'NATURAL'; }
+  function cliNombre(c){ var i=clientesInfo[c.clave]||{}; if(cliTipo(c.clave)==='EMPRESA' && (i.razon_social||"").trim()) return i.razon_social.trim(); return c.nombre||"(sin nombre)"; }
   function renderClientes(){
     var lista=agruparClientes();
     var q=(state.clienteBuscar||"").trim().toLowerCase();
-    if(q) lista=lista.filter(function(c){ return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0; });
+    if(q) lista=lista.filter(function(c){ var i=clientesInfo[c.clave]||{}; return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0 || (i.razon_social||"").toLowerCase().indexOf(q)>=0 || (i.rut||"").toLowerCase().indexOf(q)>=0; });
+    if(state.clienteTipo && state.clienteTipo!=="TODOS") lista=lista.filter(function(c){ return cliTipo(c.clave)===state.clienteTipo; });
     var cont=document.getElementById("cli-lista");
     if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
     cont.innerHTML=lista.map(function(c){
       var dias=diasDesde(c.ultima); var dorm=dias!=null && dias>90;
       var badge=dorm?'<span class="chip dormido">'+dias+'d</span>':'<span class="chip activo">'+c.visitas+'×</span>';
-      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+(c.nombre||"(sin nombre)")+'</div><div class="p2">'+clp(c.total)+' '+badge+'</div></div>';
+      var ico=(cliTipo(c.clave)==='EMPRESA')?'🏢 ':'👤 ';
+      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div><div class="p2">'+clp(c.total)+' '+badge+'</div></div>';
     }).join("");
     cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
     if(state.clienteSel==null || !lista.some(function(c){return c.clave===state.clienteSel;})) state.clienteSel=lista[0].clave;
@@ -1338,8 +1344,10 @@
       return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td></tr>';
     }).join("");
     var info=clientesInfo[c.clave]||{};
+    var esEmp=(info.tipo==='EMPRESA');
+    var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff">🏢 Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4">👤 Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
-      '<div class="fh"><div><h2>'+(c.nombre||"(sin nombre)")+'</h2>'+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+'</div>'+
+      '<div class="fh"><div><h2>'+(esEmp?'🏢 ':'👤 ')+cliNombre(c)+'</h2>'+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
         (dias!=null && dias>90?'<span class="chip dormido">'+dias+' días sin venir</span>':'')+'</div>'+
       '<div class="fkpis">'+
         '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
@@ -1349,18 +1357,47 @@
       '</div>'+
       '<div class="fsec"><h4>Vehículos</h4><div class="fchips">'+vehs+'</div></div>'+
       '<div class="fsec"><h4>Servicios usados</h4><div class="fchips">'+svcs+'</div></div>'+
+      '<div class="fsec"><h4>Datos y facturación</h4>'+
+        '<div class="row c2">'+
+          '<label class="f"><span class="lab">Tipo de cliente</span><select id="cli-tipo"><option value="NATURAL"'+(esEmp?'':' selected')+'>👤 Natural (persona)</option><option value="EMPRESA"'+(esEmp?' selected':'')+'>🏢 Empresa</option></select></label>'+
+          '<label class="f"><span class="lab">RUT</span><input id="cli-rut" value="'+av(info.rut)+'" placeholder="12.345.678-9"></label>'+
+        '</div>'+
+        '<div class="row c2" id="cli-emp-row" style="'+(esEmp?'':'display:none')+'">'+
+          '<label class="f"><span class="lab">Razón social</span><input id="cli-razon" value="'+av(info.razon_social)+'" placeholder="Automotora XYZ SpA"></label>'+
+          '<label class="f"><span class="lab">Giro</span><input id="cli-giro" value="'+av(info.giro)+'" placeholder="Venta de vehículos"></label>'+
+        '</div>'+
+        '<div class="row c2">'+
+          '<label class="f"><span class="lab">Email (boleta/factura)</span><input id="cli-email" value="'+av(info.email)+'" placeholder="correo@empresa.cl"></label>'+
+          '<label class="f"><span class="lab">Dirección</span><input id="cli-dir" value="'+av(info.direccion)+'" placeholder="Calle 123, Puerto Montt"></label>'+
+        '</div>'+
+        '<button class="btn primary" id="cli-datos-save" style="margin-top:8px">Guardar datos</button>'+
+      '</div>'+
       '<div class="fsec"><h4>Observaciones</h4><textarea class="obs-area" id="cli-obs" placeholder="Notas: preferencias, acuerdos, recordatorios…">'+(info.observaciones||"")+'</textarea><button class="btn primary" id="cli-obs-save" style="margin-top:8px">Guardar observaciones</button></div>'+
       '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
     '</div>';
+    function curInfo(){ var cur=clientesInfo[c.clave]||{}; cur.clave=c.clave; if(!cur.nombre)cur.nombre=c.nombre; if(!cur.contacto)cur.contacto=c.contacto; clientesInfo[c.clave]=cur; return cur; }
+    var _tipoSel=wrap.querySelector("#cli-tipo");
+    if(_tipoSel) _tipoSel.addEventListener("change",function(){ var row=wrap.querySelector("#cli-emp-row"); if(row) row.style.display=(_tipoSel.value==="EMPRESA")?"":"none"; });
+    wrap.querySelector("#cli-datos-save").addEventListener("click",function(){
+      var cur=curInfo();
+      cur.tipo=wrap.querySelector("#cli-tipo").value;
+      cur.rut=wrap.querySelector("#cli-rut").value.trim();
+      cur.razon_social=wrap.querySelector("#cli-razon").value.trim();
+      cur.giro=wrap.querySelector("#cli-giro").value.trim();
+      cur.email=wrap.querySelector("#cli-email").value.trim();
+      cur.direccion=wrap.querySelector("#cli-dir").value.trim();
+      upsertCliente(cur); renderClientes(); toast("✓ Datos guardados");
+    });
     wrap.querySelector("#cli-obs-save").addEventListener("click",function(){
-      var obs=wrap.querySelector("#cli-obs").value;
-      clientesInfo[c.clave]={clave:c.clave,observaciones:obs,nombre:c.nombre,contacto:c.contacto};
-      upsertCliente(c.clave,c.nombre,c.contacto,obs); toast("✓ Observaciones guardadas");
+      var cur=curInfo(); cur.observaciones=wrap.querySelector("#cli-obs").value;
+      upsertCliente(cur); toast("✓ Observaciones guardadas");
     });
   }
-  function upsertCliente(clave,nombre,contacto,obs){ var sb=sbc(); if(sb) sb.from('clientes').upsert({clave:clave,nombre:nombre,contacto:contacto,observaciones:obs}).then(function(r){ if(r.error) toast('⚠ No se pudo guardar (¿corriste el SQL de clientes?)'); }); }
+  function upsertCliente(row){ var sb=sbc(); if(sb) sb.from('clientes').upsert(row).then(function(r){ if(r.error) toast('⚠ No se pudo guardar (¿corriste el SQL de clientes/tipo?)'); }); }
   var _cliBuscar=document.getElementById("cli-buscar");
   if(_cliBuscar) _cliBuscar.addEventListener("input",function(){ state.clienteBuscar=_cliBuscar.value; renderClientes(); });
+  var _cliFiltro=document.getElementById("cli-filtro");
+  if(_cliFiltro) _cliFiltro.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return; state.clienteTipo=b.dataset.t; state.clienteSel=null; _cliFiltro.querySelectorAll("button").forEach(function(x){ x.classList.toggle("on",x===b); }); renderClientes(); });
 
   // ---------- agenda ----------
   function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":st==="EN ESPERA"?"espera":"agendado"; }
