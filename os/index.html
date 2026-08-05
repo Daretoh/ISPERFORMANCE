@@ -646,7 +646,8 @@
     {n:"Detallado integral full",cat:"Sanitización interior",p:{S:260000,M:300000,L:340000,XL:400000}},
     {n:"Limpieza profunda de asientos",cat:"Sanitización interior",p:null},
     {n:"Tratamiento interior de techo",cat:"Sanitización interior",p:null},
-    {n:"Preparación para la venta",cat:"Pre-venta",p:{S:90000,M:110000,L:130000,XL:150000}}
+    {n:"Preparación para la venta",cat:"Pre-venta",p:{S:90000,M:110000,L:130000,XL:150000}},
+    {n:"Pendiente de cotización",cat:"Cotización / Empresas",p:null}
   ];
   function svcInfo(nombre){ for(var i=0;i<CATALOGO.length;i++){ if(CATALOGO[i].n===nombre) return CATALOGO[i]; } return null; }
   function precioServicio(nombre,talla){ var s=svcInfo(nombre); return (s&&s.p&&s.p[talla])?s.p[talla]:0; }
@@ -854,7 +855,7 @@
     document.getElementById("r-cita").textContent=form.fCoord.value?(fFecha(form.fCoord.value)+" "+(form.hCoord.value||"")):"—";
     var t=form.talla.value, est=0, variable=false;
     chosenSvcs.forEach(function(n){ var s=svcInfo(n); if(s&&s.p){ est+=precioServicio(n,t); } else { variable=true; } });
-    document.getElementById("r-precio").textContent=clp(est)+(variable?" +":"");
+    document.getElementById("r-precio").textContent=(est===0&&variable)?"Por cotizar":(clp(est)+(variable?" +":""));
   }
   form.addEventListener("input",recepSummary);
   form.addEventListener("reset",function(){ chosenSvcs=[]; renderSvcList(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
