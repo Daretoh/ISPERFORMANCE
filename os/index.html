@@ -1321,7 +1321,34 @@
   function nivelDias(dias){ if(dias==null) return {bg:'#ececec',fg:'#888',em:'⚪'}; if(dias<=60) return {bg:'#e6f4ea',fg:'#1e7d34',em:'🟢'}; if(dias<=120) return {bg:'#fff4e0',fg:'#b06a00',em:'🟡'}; return {bg:'#fde8e8',fg:'#c0392b',em:'🔴'}; }
   function chipDiasCorto(dias){ var n=nivelDias(dias); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+(dias==null?'sin fecha':(dias+'d'))+'</span>'; }
   function telInternacional(t){ var d=(t||'').replace(/[^0-9]/g,''); if(!d)return''; if(d.indexOf('56')===0)return d; if(d.length===9&&d.charAt(0)==='9')return '56'+d; if(d.length===8)return '569'+d; return d; }
-  function msgReactivacion(c){ var nom=((cliNombre(c)||'').trim().split(/\s+/)[0]||''); var dias=diasDesde(c.ultima); return 'Hola '+nom+' 👋, te saludamos de IS Performance.'+((dias!=null&&dias>30)?(' Notamos que hace '+dias+' días no pasas con tu vehículo.'):'')+' ¿Te gustaría agendar un lavado o detailing? Tenemos horas disponibles esta semana 🚗✨ ¡Te esperamos!'; }
+  function ultimoServicio(c){
+    var its=(c.items||[]).slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;});
+    for(var i=0;i<its.length;i++){ var s=(its[i].servicios||[]); if(s.length) return {svc:s[s.length-1], veh:(its[i].marca+" "+(its[i].modelo||"")).trim()}; }
+    return null;
+  }
+  function msgReactivacion(c){
+    var nom=((cliNombre(c)||'').trim().split(/\s+/)[0]||'');
+    var dias=diasDesde(c.ultima);
+    var u=ultimoServicio(c);
+    var saludo='Hola '+nom+' 👋, te saludamos de IS Performance.';
+    var cuerpo;
+    if(u){
+      var sv=(u.svc||'').toLowerCase();
+      var veh=u.veh?(' tu '+u.veh):' tu vehículo';
+      if(sv.indexOf('cerámic')>=0||sv.indexOf('ceramic')>=0){
+        cuerpo=' ¿Cómo va el tratamiento cerámico de'+veh+'? Ya pasó un tiempo desde que lo aplicamos y sería ideal revisarlo y hacerle una mantención para que siga protegido y brillante ✨.';
+      } else if(sv.indexOf('pulido')>=0){
+        cuerpo=' ¿Cómo se ha mantenido el pulido de'+veh+'? Si quieres le damos una revisión o una protección para que dure más y se vea impecable 🚗✨.';
+      } else if(sv.indexOf('lavado')>=0||sv.indexOf('limpieza')>=0||sv.indexOf('detallado')>=0||sv.indexOf('sanitiz')>=0){
+        cuerpo=' ¿Cómo ha estado'+veh+'? Ya lleva un tiempo desde el último '+svcCorto(u.svc).toLowerCase()+', ¿te gustaría agendar uno nuevo para dejarlo como nuevo? ✨';
+      } else {
+        cuerpo=' ¿Cómo ha quedado'+veh+' después del '+svcCorto(u.svc).toLowerCase()+'? Nos encantaría atenderte de nuevo y ayudarte con lo que necesites 🚗✨.';
+      }
+    } else {
+      cuerpo=(dias!=null&&dias>30?(' Notamos que hace '+dias+' días no pasas con tu vehículo.'):'')+' ¿Te gustaría agendar un lavado o detailing? Tenemos horas disponibles esta semana 🚗✨.';
+    }
+    return saludo+cuerpo+' ¡Te esperamos!';
+  }
   function renderClientes(){
     var lista=agruparClientes();
     var q=(state.clienteBuscar||"").trim().toLowerCase();
