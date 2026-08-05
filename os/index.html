@@ -1440,16 +1440,21 @@
       var sb=sbc(); if(sb) sb.from('push_subs').upsert({endpoint:sub.endpoint,p256dh:kk.p256dh,auth:kk.auth,email:(window.ISP_EMAIL||''),nombre:miNombre()},{onConflict:'endpoint'}).then(function(){});
     }).catch(function(){});
   }
-  function refreshNotifBtn(){ if(!_notifBtn)return; if(!('Notification' in window)){ _notifBtn.style.display='none'; return; }
+  function esIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent||''); }
+  function esInstalada(){ return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true; }
+  function refreshNotifBtn(){ if(!_notifBtn)return; if(!('Notification' in window)){ if(esIOS()&&!esInstalada()){ _notifBtn.style.display=''; _notifBtn.textContent='📲 Instalar para avisos'; } else { _notifBtn.style.display='none'; } return; }
     _notifBtn.textContent=(Notification.permission==='granted')?'🔔 Avisos activados':(Notification.permission==='denied'?'🔕 Avisos bloqueados':'🔔 Activar avisos');
   }
   if(_notifBtn) _notifBtn.addEventListener("click",function(){
+    if(esIOS()&&!esInstalada()){ toast('En iPhone primero instala la app: toca Compartir (⬆️) → "Agregar a inicio", y ábrela desde ese ícono. Ahí sí quedan los avisos.'); return; }
     if(!('Notification' in window)){ toast('Este navegador no soporta notificaciones'); return; }
     if(Notification.permission==='granted'){ suscribirPush(); notificar('IS Performance OS','Los avisos ya están activados ✅'); return; }
     if(Notification.permission==='denied'){ toast('Bloqueadas — actívalas desde los ajustes del navegador/teléfono.'); return; }
     Notification.requestPermission().then(function(p){ refreshNotifBtn(); if(p==='granted'){ suscribirPush(); notificar('IS Performance OS 🔔','¡Avisos activados! Recibirás recordatorios de tus tareas.'); } else { toast('No se activaron los avisos'); } });
   });
   refreshNotifBtn();
+  // Al abrir la app instalada con permiso ya dado, re-registra este dispositivo (mantiene viva la suscripción)
+  if(('Notification' in window)&&Notification.permission==='granted'){ suscribirPush(); }
   var _tareasNotificadas={};
   function tareaDue(t){ if((t.estado||'PENDIENTE')==='HECHA'||!t.fecha)return false; var hoy=todayISO(); return t.fecha<hoy || (t.fecha===hoy && (!t.hora || t.hora<=nowTime())); }
   function primeVencidas(){ (tareas||[]).forEach(function(t){ if(tareaDue(t)) _tareasNotificadas[t.id]=1; }); } // marca las ya vencidas para no repetir de golpe
