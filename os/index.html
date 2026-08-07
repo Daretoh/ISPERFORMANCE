@@ -588,6 +588,7 @@
       <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1><p>Historial, total gastado y frecuencia — calculado desde los vehículos. Elige un cliente para ver su ficha.</p></div>
       <input type="search" id="cli-buscar" class="cli-search" placeholder="🔍 Buscar por nombre o teléfono…">
       <div class="pfilter" id="cli-filtro" style="margin:10px 0 4px"><button data-t="TODOS" class="on">Todos</button><button data-t="NATURAL">👤 Naturales</button><button data-t="EMPRESA">🏢 Empresas</button></div>
+      <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="font-size:11px;color:var(--ink-muted)">Ordenar:</span><select id="cli-orden" style="font:600 12px/1 var(--sans);padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer"><option value="reciente">Más recientes</option><option value="antiguo">Más antiguos</option><option value="gasto">Mayor gasto</option></select></div>
       <div class="cobro-grid">
         <div class="panel pick" id="cli-lista"></div>
         <div id="cli-ficha"></div>
@@ -755,7 +756,7 @@
     if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
   }
   window.ISP_applyRole=applyRole;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
+  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
   var productos=[];     // inventario (tabla productos)
@@ -1397,6 +1398,8 @@
     var q=(state.clienteBuscar||"").trim().toLowerCase();
     if(q) lista=lista.filter(function(c){ var i=clientesInfo[c.clave]||{}; return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0 || (i.razon_social||"").toLowerCase().indexOf(q)>=0 || (i.representante||"").toLowerCase().indexOf(q)>=0 || (i.rut||"").toLowerCase().indexOf(q)>=0; });
     if(state.clienteTipo && state.clienteTipo!=="TODOS") lista=lista.filter(function(c){ return cliTipo(c.clave)===state.clienteTipo; });
+    var ord=state.clienteOrden||"reciente";
+    lista.sort(function(a,b){ if(ord==="gasto") return (b.total||0)-(a.total||0); var ua=a.ultima||"", ub=b.ultima||""; if(ord==="antiguo") return ua<ub?-1:(ua>ub?1:0); return ua<ub?1:(ua>ub?-1:0); });
     var cont=document.getElementById("cli-lista");
     if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
     cont.innerHTML=lista.map(function(c){
@@ -1543,6 +1546,8 @@
   if(_cliBuscar) _cliBuscar.addEventListener("input",function(){ state.clienteBuscar=_cliBuscar.value; renderClientes(); });
   var _cliFiltro=document.getElementById("cli-filtro");
   if(_cliFiltro) _cliFiltro.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return; state.clienteTipo=b.dataset.t; state.clienteSel=null; _cliFiltro.querySelectorAll("button").forEach(function(x){ x.classList.toggle("on",x===b); }); renderClientes(); });
+  var _cliOrden=document.getElementById("cli-orden");
+  if(_cliOrden) _cliOrden.addEventListener("change",function(){ state.clienteOrden=_cliOrden.value; state.clienteSel=null; renderClientes(); });
 
   // ---------- agenda ----------
   function estClass(st){ return st==="EN PROCESO"?"proc":st==="TERMINADO"?"term":st==="ENTREGADO"?"entreg":st==="EN ESPERA"?"espera":"agendado"; }
