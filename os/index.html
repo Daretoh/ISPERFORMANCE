@@ -1343,6 +1343,22 @@
   function av(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
   function cliTipo(clave){ var i=clientesInfo[clave]||{}; return (i.tipo==='EMPRESA')?'EMPRESA':'NATURAL'; }
   function cliNombre(c){ var i=clientesInfo[c.clave]||{}; if(cliTipo(c.clave)==='EMPRESA' && (i.razon_social||"").trim()) return i.razon_social.trim(); return c.nombre||"(sin nombre)"; }
+  // ---- fusionar clientes duplicados ----
+  function otherClientsOptions(exc){ return agruparClientes().filter(function(x){return x.clave!==exc;}).map(function(x){ return '<option value="'+av(x.clave)+'">'+av(cliNombre(x))+(x.contacto?(' · '+x.contacto):'')+'</option>'; }).join(''); }
+  function fusionarCliente(cA, cB){ if(!cA||!cB||cA===cB)return;
+    var gs=agruparClientes(); var A=gs.filter(function(x){return x.clave===cA;})[0], B=gs.filter(function(x){return x.clave===cB;})[0];
+    if(!A||!B){ toast('No se pudo fusionar'); return; }
+    var usaTel=(B.clave.indexOf('t:')===0);
+    (A.items||[]).forEach(function(e){ e.contacto=usaTel?B.contacto:''; e.cliente=B.nombre; persistVeh(e); });
+    var sb=sbc(); if(sb) sb.from('seguimientos').update({clave:cB}).eq('clave',cA).then(function(){});
+    seguimientosAll.forEach(function(s){ if(s.clave===cA) s.clave=cB; });
+    var iA=clientesInfo[cA]||{}, iB=clientesInfo[cB]||{};
+    ['tipo','rut','razon_social','representante','giro','direccion','email','observaciones'].forEach(function(k){ if(!iB[k]&&iA[k]) iB[k]=iA[k]; });
+    iB.clave=cB; clientesInfo[cB]=iB; upsertCliente(iB);
+    if(sb) sb.from('clientes').delete().eq('clave',cA).then(function(){});
+    delete clientesInfo[cA];
+    state.clienteSel=cB; renderClientes(); toast('✓ Clientes fusionados');
+  }
   // Niveles de reactivación por días sin venir (ajustables): <=60 al día, 61-120 atención, >120 crítico
   function nivelDias(dias){ if(dias==null) return {bg:'#ececec',fg:'#888',em:'⚪'}; if(dias<=60) return {bg:'#e6f4ea',fg:'#1e7d34',em:'🟢'}; if(dias<=120) return {bg:'#fff4e0',fg:'#b06a00',em:'🟡'}; return {bg:'#fde8e8',fg:'#c0392b',em:'🔴'}; }
   function chipDiasCorto(dias){ var n=nivelDias(dias); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+(dias==null?'sin fecha':(dias+'d'))+'</span>'; }
@@ -1379,14 +1395,16 @@
   function renderClientes(){
     var lista=agruparClientes();
     var q=(state.clienteBuscar||"").trim().toLowerCase();
-    if(q) lista=lista.filter(function(c){ var i=clientesInfo[c.clave]||{}; return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0 || (i.razon_social||"").toLowerCase().indexOf(q)>=0 || (i.rut||"").toLowerCase().indexOf(q)>=0; });
+    if(q) lista=lista.filter(function(c){ var i=clientesInfo[c.clave]||{}; return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0 || (i.razon_social||"").toLowerCase().indexOf(q)>=0 || (i.representante||"").toLowerCase().indexOf(q)>=0 || (i.rut||"").toLowerCase().indexOf(q)>=0; });
     if(state.clienteTipo && state.clienteTipo!=="TODOS") lista=lista.filter(function(c){ return cliTipo(c.clave)===state.clienteTipo; });
     var cont=document.getElementById("cli-lista");
     if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
     cont.innerHTML=lista.map(function(c){
       var dias=diasDesde(c.ultima);
-      var ico=(cliTipo(c.clave)==='EMPRESA')?'🏢 ':'👤 ';
-      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div><div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
+      var esEmp=(cliTipo(c.clave)==='EMPRESA'); var ico=esEmp?'🏢 ':'👤 ';
+      var i=clientesInfo[c.clave]||{};
+      var rep=esEmp ? ((i.representante||'').trim() || (c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '')) : '';
+      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div>'+(rep?'<div class="p2" style="opacity:.72">👤 '+escH(rep)+'</div>':'')+'<div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
     }).join("");
     cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
     if(state.clienteSel==null || !lista.some(function(c){return c.clave===state.clienteSel;})) state.clienteSel=lista[0].clave;
@@ -1456,6 +1474,13 @@
         '<button class="btn primary" id="cli-seg-add" style="margin-top:8px">+ Registrar contacto</button>'+
         '<div id="cli-seg-list" style="margin-top:14px">'+segTimelineHTML(c.clave)+'</div>'+
       '</div>'+
+      '<div class="fsec"><h4>¿Cliente duplicado? Fusionar</h4>'+
+        '<div class="row c2" style="align-items:end">'+
+          '<label class="f"><span class="lab">Fusionar ESTE dentro de…</span><select id="cli-merge"><option value="">— elegir cliente destino —</option>'+otherClientsOptions(c.clave)+'</select></label>'+
+          '<button type="button" class="btn" id="cli-merge-btn">Fusionar</button>'+
+        '</div>'+
+        '<div class="hint" style="text-transform:none;letter-spacing:0;margin-top:6px">Mueve los vehículos, el seguimiento y los datos de este cliente al elegido. No borra el historial.</div>'+
+      '</div>'+
       '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th><th>📁</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
     '</div>';
     function curInfo(){ var cur=clientesInfo[c.clave]||{}; cur.clave=c.clave; if(!cur.nombre)cur.nombre=c.nombre; if(!cur.contacto)cur.contacto=c.contacto; clientesInfo[c.clave]=cur; return cur; }
@@ -1481,6 +1506,8 @@
     var _segAdd=wrap.querySelector("#cli-seg-add");
     if(_segAdd) _segAdd.addEventListener("click",function(){ var f=wrap.querySelector("#cli-seg-fecha").value||todayISO(); var rr=wrap.querySelector("#cli-seg-res").value; var nn=wrap.querySelector("#cli-seg-nota").value.trim(); addSeguimiento(c.clave, f, rr, nn, function(){ wrap.querySelector("#cli-seg-nota").value=''; toast("✓ Contacto registrado"); }); });
     wrap.querySelectorAll(".cli-hist-media").forEach(function(b){ b.addEventListener("click",function(){ var e=data.filter(function(x){return String(x.id)===String(b.dataset.id);})[0]; if(!e){ toast("No encontrado"); return; } e.media=e.media||[]; abrirGaleria("Adjuntos — "+e.marca+" "+(e.modelo||"")+(e.patente?(" ("+e.patente+")"):""), e.media, "veh/"+e.id, "image/*,video/*,application/pdf", function(){ persistVeh(e); renderClientes(); }, {cats:['Exterior','Interior','Motor','Boleta','Respaldo','Factura','Otro'],defCat:'Exterior'}); }); });
+    var _mergeBtn=wrap.querySelector("#cli-merge-btn");
+    if(_mergeBtn) _mergeBtn.addEventListener("click",function(){ var tgt=wrap.querySelector("#cli-merge").value; if(!tgt){ toast("Elige el cliente destino"); return; } if(confirm("¿Fusionar «"+cliNombre(c)+"» dentro del cliente elegido? Se moverán sus vehículos y seguimiento.")){ fusionarCliente(c.clave, tgt); } });
     var _segSortBtn=wrap.querySelector("#cli-seg-sort");
     if(_segSortBtn) _segSortBtn.addEventListener("click",function(){ _segSort=(_segSort==='desc'?'asc':'desc'); _segSortBtn.textContent=(_segSort==='desc'?'↓ Más reciente':'↑ Más antiguo'); var list=document.getElementById('cli-seg-list'); if(list) list.innerHTML=segTimelineHTML(c.clave); });
     var _wspCopy=wrap.querySelector("#cli-wsp-copy");
