@@ -709,7 +709,8 @@
       sb.from('valor_hora').select('*'),
       sb.from('clientes').select('*'),
       sb.from('productos').select('*').order('producto'),
-      sb.from('tareas').select('*').order('fecha')
+      sb.from('tareas').select('*').order('fecha'),
+      sb.from('seguimientos').select('*').order('fecha',{ascending:false})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -718,6 +719,7 @@
       clientesInfo={}; (res[4].data||[]).forEach(function(row){ clientesInfo[row.clave]=row; });
       productos=(res[5].data||[]);
       tareas=(res[6].data||[]);
+      seguimientosAll=((res[7]&&res[7].data)||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -746,6 +748,7 @@
   window.ISP_applyRole=applyRole;
   var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
+  var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
   var productos=[];     // inventario (tabla productos)
   var tareas=[];        // tareas / recordatorios (tabla tareas)
   var VAPID_PUBLIC="BDt1m2YVzH-GB8MN4CF5ORzPhoEEBEJK3licTQH4K-oy_o1pXMMSbJl7HHbmeHY3XrOzUP-CvcNgz1V_J_CMupw";
@@ -1420,6 +1423,15 @@
         '</div>'+
         (c.contacto?'':'<div class="hint" style="margin-top:6px;text-transform:none;letter-spacing:0">Sin teléfono guardado — agrégalo en un ingreso para poder enviar.</div>')+
       '</div>'+
+      '<div class="fsec"><h4>Seguimiento de contacto</h4>'+
+        '<div class="row c3" style="align-items:end">'+
+          '<label class="f"><span class="lab">Fecha</span><input type="date" id="cli-seg-fecha" value="'+todayISO()+'"></label>'+
+          '<label class="f"><span class="lab">Resultado</span><select id="cli-seg-res"><option>Contactado</option><option>Contestó</option><option>No contestó</option><option>Agendó</option><option>No interesado</option><option>Volver a contactar</option></select></label>'+
+          '<label class="f"><span class="lab">Nota (opcional)</span><input id="cli-seg-nota" placeholder="Ej: quedó de confirmar el viernes"></label>'+
+        '</div>'+
+        '<button class="btn primary" id="cli-seg-add" style="margin-top:8px">+ Registrar contacto</button>'+
+        '<div id="cli-seg-list" style="margin-top:14px">'+segTimelineHTML(c.clave)+'</div>'+
+      '</div>'+
       '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
     '</div>';
     function curInfo(){ var cur=clientesInfo[c.clave]||{}; cur.clave=c.clave; if(!cur.nombre)cur.nombre=c.nombre; if(!cur.contacto)cur.contacto=c.contacto; clientesInfo[c.clave]=cur; return cur; }
@@ -1441,11 +1453,36 @@
       upsertCliente(cur); toast("✓ Observaciones guardadas");
     });
     var _wspSend=wrap.querySelector("#cli-wsp-send");
-    if(_wspSend) _wspSend.addEventListener("click",function(){ var tel=telInternacional(c.contacto); if(!tel){ toast("Este cliente no tiene teléfono"); return; } var txt=wrap.querySelector("#cli-wsp").value; window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(txt),"_blank"); });
+    if(_wspSend) _wspSend.addEventListener("click",function(){ var tel=telInternacional(c.contacto); if(!tel){ toast("Este cliente no tiene teléfono"); return; } var txt=wrap.querySelector("#cli-wsp").value; window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(txt),"_blank"); addSeguimiento(c.clave, todayISO(), 'Contactado', 'Por WhatsApp'); });
+    var _segAdd=wrap.querySelector("#cli-seg-add");
+    if(_segAdd) _segAdd.addEventListener("click",function(){ var f=wrap.querySelector("#cli-seg-fecha").value||todayISO(); var rr=wrap.querySelector("#cli-seg-res").value; var nn=wrap.querySelector("#cli-seg-nota").value.trim(); addSeguimiento(c.clave, f, rr, nn, function(){ wrap.querySelector("#cli-seg-nota").value=''; toast("✓ Contacto registrado"); }); });
     var _wspCopy=wrap.querySelector("#cli-wsp-copy");
     if(_wspCopy) _wspCopy.addEventListener("click",function(){ var txt=wrap.querySelector("#cli-wsp").value; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast("✓ Mensaje copiado"); },function(){ toast("No se pudo copiar"); }); } else { var ta=wrap.querySelector("#cli-wsp"); ta.select(); try{ document.execCommand("copy"); toast("✓ Mensaje copiado"); }catch(e){ toast("Copia manual"); } } });
   }
   function upsertCliente(row){ var sb=sbc(); if(sb) sb.from('clientes').upsert(row).then(function(r){ if(r.error) toast('⚠ No se pudo guardar (¿corriste el SQL de clientes/tipo?)'); }); }
+  // ---- bitácora de seguimiento de contacto ----
+  function escH(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function segColor(r){ r=(r||''); if(r==='Contestó'||r==='Agendó')return '#16a34a'; if(r==='No contestó'||r==='Volver a contactar')return '#d97706'; if(r==='No interesado')return '#dc2626'; return '#2563eb'; }
+  function segTimelineHTML(clave){ var list=seguimientosAll.filter(function(s){return s.clave===clave;});
+    if(!list.length) return '<div style="opacity:.6;font-size:.9rem">Sin registros de contacto aún.</div>';
+    return list.map(function(s){ var col=segColor(s.resultado); var quien=EQUIPO[(s.autor||'').toLowerCase()]||s.autor||'';
+      return '<div style="border-left:3px solid '+col+';padding:5px 0 5px 12px;margin-bottom:9px">'+
+        '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+          '<span style="font-weight:700;font-size:.85rem">'+fFecha(s.fecha)+'</span>'+
+          '<span style="background:'+col+'22;color:'+col+';font-weight:700;font-size:.76rem;padding:2px 9px;border-radius:999px">'+escH(s.resultado)+'</span>'+
+          (quien?'<span style="opacity:.55;font-size:.76rem">'+escH(quien)+'</span>':'')+
+        '</div>'+(s.nota?'<div style="font-size:.9rem;margin-top:3px">'+escH(s.nota)+'</div>':'')+'</div>';
+    }).join('');
+  }
+  function addSeguimiento(clave, fecha, resultado, nota, cb){ var sb=sbc(); if(!sb) return;
+    var row={clave:clave, fecha:fecha||todayISO(), resultado:resultado, nota:nota||'', autor:(window.ISP_EMAIL||'')};
+    sb.from('seguimientos').insert(row).select().then(function(r){
+      if(r.error){ toast('⚠ No se pudo registrar (¿corriste el SQL de seguimientos?)'); return; }
+      seguimientosAll.unshift((r.data&&r.data[0])?r.data[0]:row);
+      var list=document.getElementById('cli-seg-list'); if(list) list.innerHTML=segTimelineHTML(clave);
+      if(cb)cb();
+    });
+  }
   var _cliBuscar=document.getElementById("cli-buscar");
   if(_cliBuscar) _cliBuscar.addEventListener("input",function(){ state.clienteBuscar=_cliBuscar.value; renderClientes(); });
   var _cliFiltro=document.getElementById("cli-filtro");
