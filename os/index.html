@@ -78,10 +78,12 @@
   nav.tabs button.active{background:#fff;color:#B84D00;}
   nav.tabs button .cnt{background:#fff;color:#B84D00;}
   .side-foot{border-top:1px solid rgba(255,255,255,.18);}
-  .navuser{color:rgba(255,255,255,.9);}
-  .logout{border-color:rgba(255,255,255,.5);color:#fff;}
-  .logout:hover{background:#fff;color:#B84D00;border-color:#fff;}
-  .notif-btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff;}
+  .side-foot .navuser{color:rgba(255,255,255,.92);}
+  .side-foot .logout{border:1px solid rgba(255,255,255,.6);color:#fff;background:transparent;}
+  .side-foot .logout:hover{background:#fff;color:#B84D00;border-color:#fff;}
+  .side-foot .notif-btn{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff;}
+  .side-foot .notif-btn:hover{background:rgba(255,255,255,.28);color:#fff;}
+  .nav-group-title{color:rgba(255,255,255,.72);}
   .desk-toggle{display:none;}
   @media (min-width:861px){
     .sidebar{transition:width .25s ease;overflow:hidden;}
@@ -849,15 +851,15 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!list.length){ el.innerHTML='<div class="col-empty">Sin resultados.</div>'; return; }
     var html="", lastCat="", open=false;
     list.forEach(function(x){
-      if(x.cat!==lastCat){ if(open)html+='</div>'; html+='<div class="qui-cat">'+esc(x.cat)+'</div><div class="qui-grid">'; open=true; lastCat=x.cat; }
+      if(x.cat!==lastCat){ if(open)html+='</div>'; html+='<div class="qui-cat">'+escH(x.cat)+'</div><div class="qui-grid">'; open=true; lastCat=x.cat; }
       var d="";
-      if(x.dilN && x.dilN!=="—") d+='<span class="qui-dil n">Normal '+esc(x.dilN)+'</span>';
-      if(x.dilA && x.dilA!=="—") d+='<span class="qui-dil a">Alta '+esc(x.dilA)+'</span>';
-      if(x.dur && x.dur!=="—") d+='<span class="qui-dil dur">Dura '+esc(x.dur)+'</span>';
-      html+='<div class="qui-card"><div class="top"><span class="prod">'+esc(x.prod)+'</span>'+(x.marca&&x.marca!=="—"?'<span class="marca">'+esc(x.marca)+'</span>':'')+'</div>'
-        +'<div class="uso">'+esc(x.uso)+'</div>'
+      if(x.dilN && x.dilN!=="—") d+='<span class="qui-dil n">Normal '+escH(x.dilN)+'</span>';
+      if(x.dilA && x.dilA!=="—") d+='<span class="qui-dil a">Alta '+escH(x.dilA)+'</span>';
+      if(x.dur && x.dur!=="—") d+='<span class="qui-dil dur">Dura '+escH(x.dur)+'</span>';
+      html+='<div class="qui-card"><div class="top"><span class="prod">'+escH(x.prod)+'</span>'+(x.marca&&x.marca!=="—"?'<span class="marca">'+escH(x.marca)+'</span>':'')+'</div>'
+        +'<div class="uso">'+escH(x.uso)+'</div>'
         +(d?'<div class="qui-dils">'+d+'</div>':'')
-        +'<div class="qui-meta">'+(x.apl?'<span><b>Aplicar:</b> '+esc(x.apl)+'</span>':'')+(x.nota?'<span class="nota"><b>Ojo:</b> '+esc(x.nota)+'</span>':'')+'</div>'
+        +'<div class="qui-meta">'+(x.apl?'<span><b>Aplicar:</b> '+escH(x.apl)+'</span>':'')+(x.nota?'<span class="nota"><b>Ojo:</b> '+escH(x.nota)+'</span>':'')+'</div>'
         +'</div>';
     });
     if(open)html+='</div>';
