@@ -342,6 +342,29 @@
   .qui-meta{font-size:12.5px;color:var(--ink-muted);display:flex;flex-direction:column;gap:4px;}
   .qui-meta b{color:var(--ink-2);font-weight:700;}
   .qui-meta .nota b{color:var(--warn);}
+  /* Asistencia: gestión + kiosco */
+  .asis-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
+  .asis-row .rut{font:700 11px/1 var(--mono);color:var(--ink-faint);}
+  .asis-row .tin{color:var(--ok);font-weight:700;} .asis-row .tout{color:var(--crit);font-weight:700;}
+  .kiosco{display:none;position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#FF6B00,#B84D00);color:#fff;align-items:center;justify-content:center;padding:20px;}
+  .kiosco.show{display:flex;}
+  .kiosco-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:999px;padding:9px 16px;font:700 13px var(--sans);cursor:pointer;}
+  .kiosco-box{width:100%;max-width:420px;text-align:center;}
+  .kio-clock{font:800 40px/1 var(--mono);letter-spacing:.02em;margin-bottom:14px;opacity:.95;}
+  .kiosco-box h2{font-size:1.7rem;font-weight:800;margin:0 0 4px;}
+  .kiosco-box p{opacity:.9;margin:0 0 16px;}
+  .kio-code{min-height:42px;font:800 34px/1 var(--mono);letter-spacing:.35em;margin:6px 0 16px;}
+  .kio-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .kio-pad button{font:800 26px/1 var(--sans);padding:20px 0;border:none;border-radius:16px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .kio-pad button:active{background:rgba(255,255,255,.32);transform:scale(.97);}
+  .kio-pad .kio-ok{background:#fff;color:#B84D00;} .kio-pad .kio-alt{background:rgba(0,0,0,.14);}
+  .kio-msg{min-height:22px;margin-top:14px;font-weight:700;color:#ffe0d0;}
+  .kio-hi{font-size:2rem;font-weight:800;margin-bottom:4px;}
+  .kio-sub{opacity:.9;margin-bottom:22px;font-size:1.05rem;}
+  .kio-mark{width:100%;font:800 22px/1 var(--sans);padding:22px;border:none;border-radius:18px;background:#fff;color:#B84D00;cursor:pointer;margin-bottom:12px;}
+  .kio-mark.out{background:#111;color:#fff;}
+  .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
+  .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
   /* grupos del menú */
   .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:12px;}
   .nav-group-title{font:700 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:4px 12px 5px;}
@@ -450,6 +473,7 @@
         <button data-view="agenda" class="active"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</button>
         <button data-view="seguimiento"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Seguimiento</button>
         <button data-view="tareas"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tareas</button>
+        <button data-view="asistencia"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Asistencia</button>
       </div>
       <div class="nav-group">
         <div class="nav-group-title">Gestión</div>
@@ -665,9 +689,60 @@
       <input type="search" id="qui-search" class="cli-search" placeholder="Buscar producto, marca o uso… (ej: champú, WINTEX, cerámico)">
       <div id="qui-list"></div>
     </section>
+
+    <!-- ============ ASISTENCIA (reloj entrada/salida por RUT) ============ -->
+    <section class="view" id="view-asistencia">
+      <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1><p>Marcaje de entrada y salida con los últimos 4 dígitos del RUT.</p></div>
+      <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
+      <div class="dash-grid">
+        <div class="card">
+          <h3>Trabajadores</h3>
+          <form id="trab-form" class="row c2" autocomplete="off" style="margin:6px 0 14px">
+            <label class="f"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
+            <label class="f"><span class="lab">Últimos 4 del RUT</span><input name="tRut4" required inputmode="numeric" maxlength="4" pattern="[0-9kK]{4}" placeholder="Ej: 4321"></label>
+            <div style="grid-column:1/-1"><button type="submit" class="btn primary" style="width:100%">Agregar trabajador</button></div>
+          </form>
+          <div id="trab-list"></div>
+        </div>
+        <div class="card">
+          <h3>Marcajes de hoy</h3>
+          <div id="asis-list" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
   </main>
   </div>
   <div class="side-overlay" id="side-overlay"></div>
+
+  <!-- Kiosco: modo tablet para que los trabajadores marquen -->
+  <div class="kiosco" id="kiosco">
+    <button class="kiosco-close" id="kiosco-close">✕ Salir del modo tablet</button>
+    <div class="kiosco-box">
+      <div id="kio-step1">
+        <div class="kio-clock" id="kio-clock">--:--</div>
+        <h2>Marca tu asistencia</h2>
+        <p>Ingresa los <b>últimos 4 dígitos</b> de tu RUT</p>
+        <div class="kio-code" id="kio-code"></div>
+        <div class="kio-pad">
+          <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+          <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+          <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+          <button data-k="del" class="kio-alt">⌫</button><button data-k="0">0</button><button data-k="ok" class="kio-ok">OK</button>
+        </div>
+        <div class="kio-msg" id="kio-msg"></div>
+      </div>
+      <div id="kio-step2" style="display:none">
+        <div class="kio-hi" id="kio-hola"></div>
+        <div class="kio-sub" id="kio-sub"></div>
+        <button class="kio-mark" id="kio-mark"></button>
+        <button class="kio-cancel" id="kio-cancel">No soy yo / Cancelar</button>
+      </div>
+      <div id="kio-done" style="display:none">
+        <div class="kio-check">✓</div>
+        <div class="kio-hi" id="kio-done-txt"></div>
+      </div>
+    </div>
+  </div>
 
   <div class="media-modal" id="media-modal">
     <div class="media-modal-box">
@@ -804,7 +879,7 @@
   window.ISP_onLogin=loadAllData;
 
   // ---- roles: qué pestañas ve cada correo (vacío/no listado = ve todo) ----
-  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','quimicos'] };
+  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','quimicos','asistencia'] };
   function applyRole(email){
     var allowed=ROLES[(email||'').toLowerCase()];
     tabsEl.querySelectorAll('button').forEach(function(b){ b.style.display=(!allowed||allowed.indexOf(b.dataset.view)>=0)?'':'none'; });
@@ -843,6 +918,7 @@
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
     else if(v==="quimicos") renderQuimicos();
+    else if(v==="asistencia") renderAsistencia();
   }
 var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX","uso":"Limpiar llantas aluminio y carrocería con óxido adherido","dilN":"1:9","dilA":"1:3","apl":"Rociador o espumadora","nota":"No dejar secar sobre pintura. Enjuagar inmediatamente.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"LIMPIADOR MULTI","uso":"Primer prelav de carrocería antes del champú","dilN":"1:133","dilA":"—","apl":"Espumadora o rociador","nota":"Siempre como paso 1 antes del champú.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"WINKLER","uso":"Champú alcalino concentrado para carrocería sucia","dilN":"1:150","dilA":"1:16","apl":"Espumadora","nota":"No dejar sobre vidrios sin enjuagar.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ZIOX","uso":"Champú ácido desincrustante para pintura y llantas","dilN":"1:24","dilA":"1:16","apl":"Espumadora o rociador","nota":"Terminar siempre con champú neutro después.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"THICK","uso":"Champú neutro muy concentrado para lavado estándar","dilN":"1:500","dilA":"1:16","apl":"Espumadora","nota":"Muy concentrado: medir con exactitud.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"EOX","uso":"Champú neutro estándar para carrocería","dilN":"1:4","dilA":"1:4","apl":"Espumadora","nota":"Proporción fija 1:4 siempre.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"VONIX","prod":"V-MOL","uso":"Prelav desengrasante para motor, llantas y pickup","dilN":"1:20","dilA":"1:16","apl":"Espumadora o rociador","nota":"Ideal como paso previo al champú en servicios completos.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"DESENGRASANTE IND.","uso":"Quitar grasa de motor, llantas, pisaderas, pisos y neumáticos","dilN":"1:9","dilA":"1:1 / PURO (extremo)","apl":"Rociador directo, dejar actuar","nota":"PURO solo en motor extremo. Nunca sobre pintura.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ALCANCE BIO-W","uso":"Lavado en seco: limpieza + encerado en un solo paso","dilN":"1:50","dilA":"1:10 / PURO insectos","apl":"Rociador + paño microfibra","nota":"Un solo producto que limpia, encera y protege.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"REVELAX","uso":"Preparar pintura post-pulido antes de sellar","dilN":"70:30 (alc:agua)","dilA":"—","apl":"Paño microfibra","nota":"SIEMPRE antes de cualquier sellado. Reemplazable por IPA 70%.","dur":"—"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"CERA EXPRESS","uso":"Brillo rápido de mantenimiento","dilN":"PURO","dilA":"—","apl":"Microfibra sin bordes, retirar 2 min","nota":"No usar bajo sol directo ni superficie caliente.","dur":"6–8 días"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"CHERRY WAX","prod":"CHERRY WAX","uso":"Cera 4 en 1: alto brillo + repelente agua + protección","dilN":"PURO","dilA":"—","apl":"Pad de finish","nota":"Máximo 50 ml por vehículo.","dur":"2–4 semanas"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"SINERGY PAINT","uso":"Sellado cerámico — brillo intenso y larga duración","dilN":"PURO","dilA":"—","apl":"Paño microfibra, 2 pasadas uniformes, retirar con parte seca","nota":"Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"SENSORY","prod":"SENSORY SIO1-TIO2","uso":"Sellado cerámico máxima protección UV, lluvia ácida y oxidación","dilN":"PURO","dilA":"—","apl":"Esponja grande azul, retirar con paño a los 2 min","nota":"Máxima protección. Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"GLAZOX / CERA","uso":"Mantenimiento cerámico de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra uniforme","nota":"Mantenimiento periódico sobre sellado cerámico.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"MEGUIAR\u0027S","prod":"CERAMIC COATING","uso":"Tratamiento cerámico profesional de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Aplicar en ambiente controlado, sin polvo ni viento.","dur":"6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"KOCH CHEMIE","prod":"SO.03 HIDRO FOAM","uso":"Sellador húmedo de mantenimiento cerámico — se aplica en mojado","dilN":"1:150","dilA":"1:50","apl":"Espumadora sobre carrocería húmeda, enjuagar con agua","nota":"Aplicar con auto mojado. Menor dilución = mayor protección.","dur":"3–6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"BIO-W","prod":"BIO-W CERA","uso":"Sellado cerámico mantenimiento — también actúa como champú","dilN":"1:10","dilA":"—","apl":"Rociador + microfibra","nota":"Combinación limpieza + encerado en uno.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"GLASS PREP","uso":"Limpiar vidrios y quitar restos de pasta de pulimento","dilN":"PURO","dilA":"—","apl":"Paño microfibra, dejar actuar y retirar","nota":"Usar ANTES de sellar vidrios.","dur":"—"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"TAR","uso":"Quitar asfalto, adhesivos e insectos de carrocería y vidrios","dilN":"PURO","dilA":"—","apl":"Aplicar, dejar 2–3 min, retirar con microfibra","nota":"Seguro en pintura, vidrio, plástico y metal.","dur":"—"},{"cat":"VIDRIOS","marca":"VINOX","prod":"PRIZM","uso":"Restaurar vidrios con gotas ácidas / lluvia ácida","dilN":"PURO","dilA":"—","apl":"Pincel rápido uniforme, retirar con agua a presión","nota":"Retirar SIEMPRE con agua a presión.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"—","prod":"SIO03 WATER OFF","uso":"Sellado cerámico para todos los vidrios","dilN":"PURO","dilA":"—","apl":"Esponja + paño microfibra","nota":"Aplicar sobre vidrio limpio y seco.","dur":"6 meses"},{"cat":"VIDRIOS","marca":"GLACO","prod":"GLACO","uso":"Sellado repelente agua y suciedad — mayor duración en vidrios","dilN":"PURO","dilA":"—","apl":"Esponja interna del envase, retirar con paño","nota":"Aplicar sobre vidrio completamente seco.","dur":"12 meses"},{"cat":"NEUMÁTICOS","marca":"VONIX","prod":"SHINY","uso":"Revitalizar y dar brillo a neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha, varias pasadas en la cara del neumático","nota":"Limpiar bien el neumático antes.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"VINTEX","prod":"PNEU PRETINHO","uso":"Brillo intenso + protección para neumáticos","dilN":"PURO","dilA":"—","apl":"Pistola de alta presión, retirar exceso con paño","nota":"Retirar exceso o queda pegajoso.","dur":"1–2 meses"},{"cat":"NEUMÁTICOS","marca":"MOTO CLEAN","prod":"RENOU","uso":"Renovar y sellar neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"WZT","prod":"RENOVADOR WZT","uso":"Renovador y sellador para neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX BLACK","uso":"Restaurar plásticos exteriores quemados o muy grises","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos muy dañados. Limpiar antes con APC.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX","uso":"Renovar y acondicionar plásticos exteriores en buen estado","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos que solo necesitan renovarse.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"EOX","prod":"EOX DRESSING","uso":"Acondicionar motor, guardabarro, pickup y neumáticos","dilN":"1:4","dilA":"—","apl":"Pistola de aire o paño microfibra","nota":"No aplicar sobre pinturas.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"VONIX","prod":"VERSE","uso":"Proteger y renovar plásticos, gomas y compartimiento motor","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"NO usar en volante, pedales ni superficies calientes.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"MOTOR CLEAN","prod":"PLASTIC1","uso":"Acondicionar plásticos exteriores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 2–4 meses.","dur":"2–4 meses"},{"cat":"INTERIOR · LIMPIEZA","marca":"WINTEX","prod":"LIMPIADOR APC","uso":"Limpieza general interior: plásticos, tablero, puertas, gomas","dilN":"1:4","dilA":"1:4","apl":"Rociador + paño microfibra o esponja","nota":"Producto polivalente para todo el interior.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"VONIX","prod":"SINTRA PRO","uso":"Desinfectar plásticos, gomas, telas, alfombras y cuero","dilN":"1:5","dilA":"1:1","apl":"Rociador + microfibra","nota":"1:5 plásticos/cuero · 1:1 tapiz/techo · 1:10 paneles.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"—","prod":"LIMPIA ESTOFADOS","uso":"Lavar asientos y tapicería sucia a fondo","dilN":"1:16","dilA":"—","apl":"Rociar abundante + frotar con escobilla o taladro","nota":"Alta suciedad: mezclar con desengrasante puro.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"KOCH CHEMIE","prod":"POL STAR","uso":"Limpiar y acondicionar cuero y alcántara interior","dilN":"1:20","dilA":"—","apl":"Rociador + paño suave","nota":"Usar SIEMPRE antes de HIDRACURO.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"HIDRACURO","uso":"Nutrir, acondicionar y proteger cuero interior","dilN":"PURO","dilA":"—","apl":"Esponja o paño, repetir si el cuero absorbe","nota":"Solo cuero. SIEMPRE después de POL STAR.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"KOCHCHEMIE","prod":"TOP STAR TS","uso":"Acondicionar plásticos y gomas interiores — acabado mate","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Acabado mate. No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"MOTOR CLEAN","prod":"PLASTICI 2","uso":"Acondicionar y proteger plásticos interiores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 3 meses.","dur":"3 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"RESTAURAX","uso":"Restaurar plásticos degradados (parachoques, paneles, laterales)","dilN":"PURO","dilA":"—","apl":"Esponja, pasada uniforme con poco producto","nota":"Duración 6 meses. No empapar.","dur":"6 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"VERSE (interior)","uso":"Proteger plásticos y gomas interiores","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso","nota":"No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"WINTEX","prod":"NEUTRALIZADOR OLORES","uso":"Eliminar olores y ambientar el interior del vehículo","dilN":"PURO","dilA":"—","apl":"Pistola o rociador","nota":"Último paso del servicio interior.","dur":"—"}];
   function renderQuimicos(){
@@ -866,6 +942,71 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(open)html+='</div>';
     el.innerHTML=html;
   }
+  // ---------- Asistencia (reloj entrada/salida por RUT) ----------
+  var _trab=[], _asis=[], _kioBuf="";
+  function cargarAsistencia(cb){
+    var sb=sbc(); if(!sb){ if(cb)cb(); return; }
+    Promise.all([
+      sb.from('trabajadores').select('*').order('nombre'),
+      sb.from('asistencia').select('*').order('ts',{ascending:false}).limit(80)
+    ]).then(function(res){ if(res[0].data)_trab=res[0].data; if(res[1].data)_asis=res[1].data; if(cb)cb(); }, function(){ if(cb)cb(); });
+  }
+  function renderAsistencia(){ cargarAsistencia(pintarAsistencia); }
+  function esHoy(ts){ var d=new Date(ts), n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
+  function hhmm(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+  function pintarAsistencia(){
+    var tl=document.getElementById("trab-list");
+    if(tl){ tl.innerHTML=_trab.length?_trab.map(function(t){ return '<div class="asis-row"><span><b>'+escH(t.nombre)+'</b> <span class="rut">••'+escH(t.rut4)+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
+    var al=document.getElementById("asis-list");
+    if(al){ var hoy=_asis.filter(function(a){return esHoy(a.ts);});
+      al.innerHTML=hoy.length?hoy.map(function(a){ var cl=(a.tipo==="ENTRADA")?"tin":"tout"; return '<div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+'</span></div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
+    document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
+  }
+  function kioReset(){ _kioBuf=""; var c=document.getElementById("kio-code"); if(c)c.textContent=""; var m=document.getElementById("kio-msg"); if(m)m.textContent=""; document.getElementById("kio-step1").style.display=""; document.getElementById("kio-step2").style.display="none"; document.getElementById("kio-done").style.display="none"; }
+  function kioTick(){ var c=document.getElementById("kio-clock"); if(!c)return; var d=new Date(); c.textContent=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); if(document.getElementById("kiosco").classList.contains("show")) setTimeout(kioTick,10000); }
+  function kioOpen(){ cargarAsistencia(function(){ kioReset(); document.getElementById("kiosco").classList.add("show"); kioTick(); }); }
+  function kioClose(){ document.getElementById("kiosco").classList.remove("show"); }
+  function kioKey(k){ var m=document.getElementById("kio-msg"); if(m)m.textContent="";
+    if(k==="del"){ _kioBuf=_kioBuf.slice(0,-1); }
+    else if(k==="ok"){ kioBuscar(); return; }
+    else if(/^[0-9]$/.test(k) && _kioBuf.length<4){ _kioBuf+=k; }
+    document.getElementById("kio-code").textContent=_kioBuf.split("").map(function(){return "•";}).join(" ");
+    if(_kioBuf.length===4) kioBuscar();
+  }
+  function kioBuscar(){ var m=document.getElementById("kio-msg");
+    if(_kioBuf.length<3){ if(m)m.textContent="Ingresa tus 4 dígitos"; return; }
+    var t=_trab.filter(function(x){return String(x.rut4)===_kioBuf;})[0];
+    if(!t){ if(m)m.textContent="No encontrado. Avisa a administración."; _kioBuf=""; document.getElementById("kio-code").textContent=""; return; }
+    var hoy=_asis.filter(function(a){return String(a.rut4)===String(t.rut4)&&esHoy(a.ts);}).sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+    var next=(hoy.length && hoy[0].tipo==="ENTRADA")?"SALIDA":"ENTRADA";
+    document.getElementById("kio-step1").style.display="none";
+    document.getElementById("kio-step2").style.display="";
+    document.getElementById("kio-hola").textContent="Hola, "+t.nombre;
+    document.getElementById("kio-sub").textContent=(next==="ENTRADA")?"¿Marcar tu ENTRADA?":"¿Marcar tu SALIDA?";
+    var mk=document.getElementById("kio-mark"); mk.textContent="Marcar "+next; mk.className="kio-mark"+(next==="SALIDA"?" out":"");
+    mk.onclick=function(){ kioMarcar(t,next); };
+  }
+  function kioMarcar(t,tipo){ var sb=sbc(); if(!sb)return;
+    sb.from("asistencia").insert({nombre:t.nombre,rut4:t.rut4,tipo:tipo}).select().single().then(function(r){
+      if(r.error){ document.getElementById("kio-msg").textContent="Error al marcar. Reintenta."; document.getElementById("kio-step1").style.display=""; document.getElementById("kio-step2").style.display="none"; return; }
+      _asis.unshift(r.data);
+      document.getElementById("kio-step2").style.display="none";
+      document.getElementById("kio-done").style.display="";
+      document.getElementById("kio-done-txt").textContent=t.nombre+" · "+tipo+" registrada";
+      setTimeout(kioReset,2200);
+    });
+  }
+  (function(){
+    var tf=document.getElementById("trab-form");
+    if(tf) tf.addEventListener("submit",function(ev){ ev.preventDefault(); var sb=sbc(); if(!sb)return;
+      var nombre=tf.tNombre.value.trim(), rut4=tf.tRut4.value.trim();
+      if(!nombre||rut4.length<3){ toast("Completa nombre y 4 dígitos"); return; }
+      sb.from("trabajadores").insert({nombre:nombre,rut4:rut4,activo:true}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 11?)"); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado"); }); });
+    var kb=document.getElementById("asis-kiosco-btn"); if(kb) kb.addEventListener("click",kioOpen);
+    var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
+    var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
+    var pad=document.querySelector(".kio-pad"); if(pad) pad.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b) kioKey(b.dataset.k); });
+  })();
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
     var porCobrar=data.filter(function(e){return !e.cobrado && ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;}).length;
