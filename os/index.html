@@ -225,6 +225,7 @@
   .kcard .ksvc{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
   .kcard .ksvc span{font:600 10px/1 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 6px;color:var(--ink-2);}
   .kcard .ktime{font:600 10.5px/1.4 var(--mono);color:var(--ink-faint);margin:6px 0;}
+  .kcard .kdur{display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--sans);color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:5px 10px;margin:4px 0 2px;}
   .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
   .kcard .kw:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .kcard .kw::placeholder{color:var(--ink-faint);font-weight:500;}
@@ -1007,6 +1008,16 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   })();
 
   // ---------- seguimiento (board) ----------
+  function _fdt(f,h){ if(!f)return null; var hh=(h&&h.length>=4)?h:"00:00"; var d=new Date(f+"T"+hh+":00"); return isNaN(d.getTime())?null:d; }
+  function duracionProceso(e){ // tiempo desde que ingresó el auto hasta que salió (cuánto nos demoramos)
+    var a=_fdt(e.fIngreso,e.hIngreso), b=_fdt(e.fSalida,e.hSalida);
+    if(!a||!b) return "";
+    var min=Math.round((b-a)/60000); if(min<0) return "";
+    var d=Math.floor(min/1440), h=Math.floor((min%1440)/60), m=min%60;
+    if(d>0) return d+(d===1?" día":" días")+(h?" "+h+" h":"");
+    if(h>0) return h+" h"+(m?" "+m+" min":"");
+    return m+" min";
+  }
   function renderBoard(){
     var board=document.getElementById("board");
     board.innerHTML=ESTADOS.map(function(st,ci){
@@ -1025,6 +1036,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         if(e.hInicio) tline+=(tline?" · ":"")+"▶ Inicio "+e.hInicio;
         if(e.hSalida) tline+=(tline?" · ":"")+"■ Salida "+e.hSalida;
         if(+e.tMuerto) tline+=(tline?" · ":"")+"⏸ "+e.tMuerto+" min muerto";
+        var dur=(ci>=3)?duracionProceso(e):"";
         var btns="";
         if(ci>0) btns+='<button class="kbtn back" data-id="'+e.id+'" data-dir="-1">‹ Volver</button>';
         if(ci<4) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Ingresó","Comenzar","Terminar","Entregar"][ci]+' ›</button>';
@@ -1041,6 +1053,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         return '<div class="kcard"><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">🗑</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
+          (dur?'<div class="kdur"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Demoró '+dur+'</div>':'')+
           '<button type="button" class="kmedia-btn" data-id="'+e.id+'">📷 Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
