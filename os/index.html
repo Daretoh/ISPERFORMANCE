@@ -65,6 +65,31 @@
   }
 
   main{max-width:1240px;margin:0 auto;padding:22px 20px 70px;width:100%;}
+  /* ---- Barra naranja de marca + colapsable (calendario full-width) ---- */
+  .sidebar{background:linear-gradient(180deg,#E5501C 0%,#C2400F 100%);border-right:none;}
+  .side-logo{border-bottom:1px solid rgba(255,255,255,.18);}
+  .side-logo img{filter:brightness(0) invert(1);}
+  .side-logo .side-sub{color:rgba(255,255,255,.82);}
+  .nav-group-title{color:rgba(255,255,255,.6);}
+  nav.tabs button{color:rgba(255,255,255,.92);}
+  nav.tabs button:hover:not(.active){background:rgba(255,255,255,.15);color:#fff;}
+  nav.tabs button.active{background:#fff;color:#C2400F;}
+  nav.tabs button .cnt{background:#fff;color:#C2400F;}
+  .side-foot{border-top:1px solid rgba(255,255,255,.18);}
+  .navuser{color:rgba(255,255,255,.9);}
+  .logout{border-color:rgba(255,255,255,.5);color:#fff;}
+  .logout:hover{background:#fff;color:#C2400F;border-color:#fff;}
+  .notif-btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff;}
+  .desk-toggle{display:none;}
+  @media (min-width:861px){
+    .sidebar{transition:width .25s ease;overflow:hidden;}
+    .app.wide .sidebar{width:0;min-width:0;border:0;}
+    .app.wide main{max-width:1700px;}
+    .desk-toggle{display:flex;align-items:center;justify-content:center;position:fixed;top:14px;left:186px;z-index:60;width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.16);color:#fff;font-size:17px;cursor:pointer;transition:left .25s ease,background .2s;}
+    .desk-toggle:hover{background:rgba(255,255,255,.28);}
+    .app.wide .desk-toggle{left:12px;background:var(--accent);border-color:var(--accent);box-shadow:var(--shadow);}
+    .app.wide .desk-toggle:hover{background:var(--accent-ink);}
+  }
   .view{display:none;}
   .view.active{display:block;animation:fade .22s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
@@ -393,13 +418,14 @@
 </div>
 
 <div class="app">
+  <button class="desk-toggle" id="desk-toggle" title="Mostrar/ocultar menú" aria-label="Menú">☰</button>
   <aside class="sidebar" id="sidebar">
     <div class="side-logo"><img src="/assets/images/ISperformanceLogo.svg" alt="IS Performance"><span class="side-sub">Sistema interno</span></div>
     <nav class="tabs" id="tabs">
       <div class="nav-group">
         <div class="nav-group-title">Taller</div>
-        <button data-view="recepcion" class="active">➕ Agendamiento</button>
-        <button data-view="agenda">📅 Agenda</button>
+        <button data-view="recepcion">➕ Agendamiento</button>
+        <button data-view="agenda" class="active">📅 Calendario</button>
         <button data-view="seguimiento">🔧 Seguimiento</button>
         <button data-view="tareas">✅ Tareas</button>
       </div>
@@ -423,7 +449,7 @@
     <main>
 
     <!-- ============ RECEPCIÓN ============ -->
-    <section class="view active" id="view-recepcion">
+    <section class="view" id="view-recepcion">
       <div class="vhead"><div class="eye">Agendamiento</div><h1>Agendar vehículo</h1><p>Registra la cita del auto. Escribe y avanza con <b>Tab</b>. Los costos y el cobro van en su propia pestaña.</p></div>
       <form id="form" class="formgrid" autocomplete="off">
         <div class="panel">
@@ -483,7 +509,7 @@
               <button type="reset" class="btn ghost">Limpiar</button>
             </div>
           </div>
-          <p class="hint" style="padding:10px 4px;display:block">Al guardar, la cita queda en la <b>Agenda</b>. Cuando el auto llegue al taller, en <b>Seguimiento</b> tocas “Ingresó” y la hora de ingreso se registra sola.</p>
+          <p class="hint" style="padding:10px 4px;display:block">Al guardar, la cita queda en el <b>Calendario</b>. Cuando el auto llegue al taller, en <b>Seguimiento</b> tocas “Ingresó” y la hora de ingreso se registra sola.</p>
         </aside>
       </form>
       <datalist id="marcas"></datalist>
@@ -492,7 +518,7 @@
 
     <!-- ============ SEGUIMIENTO ============ -->
     <section class="view" id="view-seguimiento">
-      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Actividad de <b>este mes</b>. Toca <b>“Ingresó”</b> cuando llegue el auto — la hora queda sola. Terminado/Entregado de meses anteriores se ven en 📅 Agenda.</p></div>
+      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Actividad de <b>este mes</b>. Toca <b>“Ingresó”</b> cuando llegue el auto — la hora queda sola. Terminado/Entregado de meses anteriores se ven en 📅 Calendario.</p></div>
       <div class="board" id="board"></div>
       <input type="file" id="kmedia-input" accept="image/*,video/*" multiple hidden>
     </section>
@@ -538,7 +564,7 @@
 
     <!-- ============ TAREAS ============ -->
     <section class="view" id="view-tareas">
-      <div class="vhead"><div class="eye">Recordatorios</div><h1>Tareas</h1><p>Crea tareas y recordatorios del equipo. Las que tienen fecha también aparecen en la 📅 Agenda.</p></div>
+      <div class="vhead"><div class="eye">Recordatorios</div><h1>Tareas</h1><p>Crea tareas y recordatorios del equipo. Las que tienen fecha también aparecen en el 📅 Calendario.</p></div>
       <details class="stock-newwrap" open>
         <summary>➕ Nueva tarea</summary>
         <form id="tarea-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
@@ -596,8 +622,8 @@
     </section>
 
     <!-- ============ AGENDA ============ -->
-    <section class="view" id="view-agenda">
-      <div class="vhead"><div class="eye">Calendario</div><h1>Agenda</h1><p>Todo por fecha — usa ‹ › para navegar los meses y ver qué tuviste (ej: julio). Color según estado. Lo sin fecha aparece en enero.</p></div>
+    <section class="view active" id="view-agenda">
+      <div class="vhead"><div class="eye">Vista general</div><h1>Calendario</h1><p>Todo por fecha — usa ‹ › para navegar los meses y ver qué tuviste (ej: julio). Color según estado. Lo sin fecha aparece en enero.</p></div>
       <div class="cal-head">
         <div class="cal-nav"><button id="cal-prev">‹</button><button id="cal-next">›</button></div>
         <div class="m" id="cal-month"></div>
@@ -734,7 +760,7 @@
   }
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
-    fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view);
+    fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view); setWide(state.view==="agenda");
     if(window.ISP_notifTareas) window.ISP_notifTareas();
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
@@ -756,7 +782,7 @@
     if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
   }
   window.ISP_applyRole=applyRole;
-  var state={ view:"recepcion", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
+  var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
   var productos=[];     // inventario (tabla productos)
@@ -774,6 +800,7 @@
     document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
     document.getElementById("view-"+state.view).classList.add("active");
     renderTab(state.view);
+    setWide(state.view==="agenda");
     updateCounts();
   });
   function renderTab(v){
@@ -1612,6 +1639,10 @@
   var _hamb=document.getElementById("hamb"), _sidebar=document.getElementById("sidebar"), _ovl=document.getElementById("side-overlay");
   function sideOpen(o){ if(_sidebar)_sidebar.classList.toggle("open",o); if(_ovl)_ovl.classList.toggle("show",o); }
   if(_hamb) _hamb.addEventListener("click",function(){ sideOpen(!_sidebar.classList.contains("open")); });
+  // Barra colapsable (desktop): se esconde en Calendario para verlo casi full-width
+  var _appEl=document.querySelector(".app"), _deskT=document.getElementById("desk-toggle");
+  function setWide(on){ if(_appEl) _appEl.classList.toggle("wide", on); }
+  if(_deskT) _deskT.addEventListener("click",function(){ if(_appEl) _appEl.classList.toggle("wide"); });
   if(_ovl) _ovl.addEventListener("click",function(){ sideOpen(false); });
   tabsEl.addEventListener("click",function(ev){ if(ev.target.closest("button")) sideOpen(false); });
 
