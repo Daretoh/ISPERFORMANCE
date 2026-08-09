@@ -4,14 +4,19 @@
 -- Pegar en Supabase > SQL Editor > Run. Seguro de re-ejecutar.
 -- ============================================================
 
--- Trabajadores (nombre + últimos 4 del RUT para marcar)
+-- Trabajadores (ficha: nombre, RUT completo, valor hora; rut4 = últimos 4 para marcar)
 create table if not exists trabajadores (
   id         uuid primary key default gen_random_uuid(),
   nombre     text not null,
-  rut4       text not null,          -- últimos 4 dígitos del RUT
+  rut        text,                   -- RUT completo (lo ve solo admin)
+  rut4       text not null,          -- últimos 4 dígitos (con lo que marca en el kiosco)
+  valor_hora integer default 0,      -- $ por hora
   activo     boolean default true,
   created_at timestamptz default now()
 );
+-- por si la tabla ya existía sin estas columnas:
+alter table trabajadores add column if not exists rut text;
+alter table trabajadores add column if not exists valor_hora integer default 0;
 
 -- Marcajes (cada entrada/salida)
 create table if not exists asistencia (
