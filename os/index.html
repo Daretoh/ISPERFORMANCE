@@ -365,6 +365,13 @@
   .kio-mark.out{background:#111;color:#fff;}
   .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
   .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
+  /* Admin: accesos */
+  .acc-vistas{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;}
+  .acc-vistas label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer;padding:4px 0;}
+  .acc-vistas input{width:16px;height:16px;accent-color:var(--accent);}
+  .acc-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);}
+  .acc-item .em{font-weight:700;font-size:13px;} .acc-item .vs{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
+  .acc-item .acts button{background:none;border:none;color:var(--info);font:700 12px var(--sans);cursor:pointer;margin-left:8px;} .acc-item .acts .del{color:var(--crit);}
   /* grupos del menú */
   .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:12px;}
   .nav-group-title{font:700 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:4px 12px 5px;}
@@ -483,6 +490,7 @@
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
         <button data-view="panel"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Panel</button>
         <button data-view="quimicos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Químicos</button>
+        <button data-view="admin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
       </div>
     </nav>
     <div class="side-foot">
@@ -712,6 +720,25 @@
         </div>
       </div>
     </section>
+
+    <!-- ============ ADMIN (accesos/permisos — solo dueño) ============ -->
+    <section class="view" id="view-admin">
+      <div class="vhead"><div class="eye">Solo dueño</div><h1>Accesos y permisos</h1><p>Define qué pestañas ve cada correo del equipo. Tú (ventas) siempre ves todo.</p></div>
+      <div class="dash-grid">
+        <div class="card">
+          <h3>Agregar / editar acceso</h3>
+          <label class="f" style="margin:10px 0"><span class="lab">Correo</span><input id="acc-email" placeholder="persona@correo.cl" autocomplete="off"></label>
+          <div class="lab" style="margin-bottom:8px">Pestañas que puede ver</div>
+          <div id="acc-vistas" class="acc-vistas"></div>
+          <button class="btn primary" id="acc-save" style="width:100%;margin-top:14px">Guardar acceso</button>
+          <p class="hint" style="display:block;margin-top:8px;font-size:11.5px;color:var(--ink-faint)">Si un correo no está en esta lista, ve <b>todas</b> las pestañas.</p>
+        </div>
+        <div class="card">
+          <h3>Accesos configurados</h3>
+          <div id="acc-list" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
   </main>
   </div>
   <div class="side-overlay" id="side-overlay"></div>
@@ -868,6 +895,7 @@
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
     fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view); setWide(state.view==="agenda");
+    cargarAccesos(function(){ applyRole(window.ISP_EMAIL); }); // aplicar accesos guardados en la BD
     if(window.ISP_notifTareas) window.ISP_notifTareas();
     if(!_rtOn && sbc()){ _rtOn=true;
       try {
@@ -880,15 +908,24 @@
   }).catch(function(){ toast('⚠ No se pudieron cargar los datos. Recarga la página.'); }); }
   window.ISP_onLogin=loadAllData;
 
-  // ---- roles: qué pestañas ve cada correo (vacío/no listado = ve todo) ----
-  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','quimicos','asistencia'] };
+  // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
+  var OWNER_EMAIL='ventas@isperformance.cl';
+  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','quimicos','asistencia'] }; // fallback si no hay nada en la BD
+  var ACCESOS={}; // tabla accesos (email -> [vistas]); pisa a ROLES
+  function accesoDe(email){ email=(email||'').toLowerCase(); if(email===OWNER_EMAIL) return null; return (ACCESOS[email]!==undefined)?ACCESOS[email]:ROLES[email]; }
   function applyRole(email){
-    var allowed=ROLES[(email||'').toLowerCase()];
-    tabsEl.querySelectorAll('button').forEach(function(b){ b.style.display=(!allowed||allowed.indexOf(b.dataset.view)>=0)?'':'none'; });
+    email=(email||'').toLowerCase();
+    var allowed=accesoDe(email); // null = ve todo
+    tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
+      var show=(v==='admin')?(email===OWNER_EMAIL):(!allowed||allowed.indexOf(v)>=0);
+      b.style.display=show?'':'none'; });
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
-    if(allowed && allowed.indexOf(state.view)<0){ var fb=tabsEl.querySelector('button[data-view="'+allowed[0]+'"]'); if(fb) fb.click(); }
+    var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
+    if(curBtn && curBtn.style.display==='none'){ var firstVis=Array.prototype.filter.call(tabsEl.querySelectorAll('button'),function(b){return b.style.display!=='none';})[0]; if(firstVis) firstVis.click(); }
   }
   window.ISP_applyRole=applyRole;
+  function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
+    sb.from('accesos').select('*').then(function(r){ ACCESOS={}; if(r.data){ r.data.forEach(function(row){ ACCESOS[(row.email||'').toLowerCase()]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
   var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
@@ -921,6 +958,7 @@
     else if(v==="agenda") renderCal();
     else if(v==="quimicos") renderQuimicos();
     else if(v==="asistencia") renderAsistencia();
+    else if(v==="admin") renderAdmin();
   }
 var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX","uso":"Limpiar llantas aluminio y carrocería con óxido adherido","dilN":"1:9","dilA":"1:3","apl":"Rociador o espumadora","nota":"No dejar secar sobre pintura. Enjuagar inmediatamente.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"LIMPIADOR MULTI","uso":"Primer prelav de carrocería antes del champú","dilN":"1:133","dilA":"—","apl":"Espumadora o rociador","nota":"Siempre como paso 1 antes del champú.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"WINKLER","uso":"Champú alcalino concentrado para carrocería sucia","dilN":"1:150","dilA":"1:16","apl":"Espumadora","nota":"No dejar sobre vidrios sin enjuagar.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ZIOX","uso":"Champú ácido desincrustante para pintura y llantas","dilN":"1:24","dilA":"1:16","apl":"Espumadora o rociador","nota":"Terminar siempre con champú neutro después.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"THICK","uso":"Champú neutro muy concentrado para lavado estándar","dilN":"1:500","dilA":"1:16","apl":"Espumadora","nota":"Muy concentrado: medir con exactitud.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"EOX","uso":"Champú neutro estándar para carrocería","dilN":"1:4","dilA":"1:4","apl":"Espumadora","nota":"Proporción fija 1:4 siempre.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"VONIX","prod":"V-MOL","uso":"Prelav desengrasante para motor, llantas y pickup","dilN":"1:20","dilA":"1:16","apl":"Espumadora o rociador","nota":"Ideal como paso previo al champú en servicios completos.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"DESENGRASANTE IND.","uso":"Quitar grasa de motor, llantas, pisaderas, pisos y neumáticos","dilN":"1:9","dilA":"1:1 / PURO (extremo)","apl":"Rociador directo, dejar actuar","nota":"PURO solo en motor extremo. Nunca sobre pintura.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ALCANCE BIO-W","uso":"Lavado en seco: limpieza + encerado en un solo paso","dilN":"1:50","dilA":"1:10 / PURO insectos","apl":"Rociador + paño microfibra","nota":"Un solo producto que limpia, encera y protege.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"REVELAX","uso":"Preparar pintura post-pulido antes de sellar","dilN":"70:30 (alc:agua)","dilA":"—","apl":"Paño microfibra","nota":"SIEMPRE antes de cualquier sellado. Reemplazable por IPA 70%.","dur":"—"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"CERA EXPRESS","uso":"Brillo rápido de mantenimiento","dilN":"PURO","dilA":"—","apl":"Microfibra sin bordes, retirar 2 min","nota":"No usar bajo sol directo ni superficie caliente.","dur":"6–8 días"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"CHERRY WAX","prod":"CHERRY WAX","uso":"Cera 4 en 1: alto brillo + repelente agua + protección","dilN":"PURO","dilA":"—","apl":"Pad de finish","nota":"Máximo 50 ml por vehículo.","dur":"2–4 semanas"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"SINERGY PAINT","uso":"Sellado cerámico — brillo intenso y larga duración","dilN":"PURO","dilA":"—","apl":"Paño microfibra, 2 pasadas uniformes, retirar con parte seca","nota":"Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"SENSORY","prod":"SENSORY SIO1-TIO2","uso":"Sellado cerámico máxima protección UV, lluvia ácida y oxidación","dilN":"PURO","dilA":"—","apl":"Esponja grande azul, retirar con paño a los 2 min","nota":"Máxima protección. Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"GLAZOX / CERA","uso":"Mantenimiento cerámico de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra uniforme","nota":"Mantenimiento periódico sobre sellado cerámico.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"MEGUIAR\u0027S","prod":"CERAMIC COATING","uso":"Tratamiento cerámico profesional de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Aplicar en ambiente controlado, sin polvo ni viento.","dur":"6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"KOCH CHEMIE","prod":"SO.03 HIDRO FOAM","uso":"Sellador húmedo de mantenimiento cerámico — se aplica en mojado","dilN":"1:150","dilA":"1:50","apl":"Espumadora sobre carrocería húmeda, enjuagar con agua","nota":"Aplicar con auto mojado. Menor dilución = mayor protección.","dur":"3–6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"BIO-W","prod":"BIO-W CERA","uso":"Sellado cerámico mantenimiento — también actúa como champú","dilN":"1:10","dilA":"—","apl":"Rociador + microfibra","nota":"Combinación limpieza + encerado en uno.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"GLASS PREP","uso":"Limpiar vidrios y quitar restos de pasta de pulimento","dilN":"PURO","dilA":"—","apl":"Paño microfibra, dejar actuar y retirar","nota":"Usar ANTES de sellar vidrios.","dur":"—"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"TAR","uso":"Quitar asfalto, adhesivos e insectos de carrocería y vidrios","dilN":"PURO","dilA":"—","apl":"Aplicar, dejar 2–3 min, retirar con microfibra","nota":"Seguro en pintura, vidrio, plástico y metal.","dur":"—"},{"cat":"VIDRIOS","marca":"VINOX","prod":"PRIZM","uso":"Restaurar vidrios con gotas ácidas / lluvia ácida","dilN":"PURO","dilA":"—","apl":"Pincel rápido uniforme, retirar con agua a presión","nota":"Retirar SIEMPRE con agua a presión.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"—","prod":"SIO03 WATER OFF","uso":"Sellado cerámico para todos los vidrios","dilN":"PURO","dilA":"—","apl":"Esponja + paño microfibra","nota":"Aplicar sobre vidrio limpio y seco.","dur":"6 meses"},{"cat":"VIDRIOS","marca":"GLACO","prod":"GLACO","uso":"Sellado repelente agua y suciedad — mayor duración en vidrios","dilN":"PURO","dilA":"—","apl":"Esponja interna del envase, retirar con paño","nota":"Aplicar sobre vidrio completamente seco.","dur":"12 meses"},{"cat":"NEUMÁTICOS","marca":"VONIX","prod":"SHINY","uso":"Revitalizar y dar brillo a neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha, varias pasadas en la cara del neumático","nota":"Limpiar bien el neumático antes.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"VINTEX","prod":"PNEU PRETINHO","uso":"Brillo intenso + protección para neumáticos","dilN":"PURO","dilA":"—","apl":"Pistola de alta presión, retirar exceso con paño","nota":"Retirar exceso o queda pegajoso.","dur":"1–2 meses"},{"cat":"NEUMÁTICOS","marca":"MOTO CLEAN","prod":"RENOU","uso":"Renovar y sellar neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"WZT","prod":"RENOVADOR WZT","uso":"Renovador y sellador para neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX BLACK","uso":"Restaurar plásticos exteriores quemados o muy grises","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos muy dañados. Limpiar antes con APC.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX","uso":"Renovar y acondicionar plásticos exteriores en buen estado","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos que solo necesitan renovarse.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"EOX","prod":"EOX DRESSING","uso":"Acondicionar motor, guardabarro, pickup y neumáticos","dilN":"1:4","dilA":"—","apl":"Pistola de aire o paño microfibra","nota":"No aplicar sobre pinturas.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"VONIX","prod":"VERSE","uso":"Proteger y renovar plásticos, gomas y compartimiento motor","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"NO usar en volante, pedales ni superficies calientes.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"MOTOR CLEAN","prod":"PLASTIC1","uso":"Acondicionar plásticos exteriores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 2–4 meses.","dur":"2–4 meses"},{"cat":"INTERIOR · LIMPIEZA","marca":"WINTEX","prod":"LIMPIADOR APC","uso":"Limpieza general interior: plásticos, tablero, puertas, gomas","dilN":"1:4","dilA":"1:4","apl":"Rociador + paño microfibra o esponja","nota":"Producto polivalente para todo el interior.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"VONIX","prod":"SINTRA PRO","uso":"Desinfectar plásticos, gomas, telas, alfombras y cuero","dilN":"1:5","dilA":"1:1","apl":"Rociador + microfibra","nota":"1:5 plásticos/cuero · 1:1 tapiz/techo · 1:10 paneles.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"—","prod":"LIMPIA ESTOFADOS","uso":"Lavar asientos y tapicería sucia a fondo","dilN":"1:16","dilA":"—","apl":"Rociar abundante + frotar con escobilla o taladro","nota":"Alta suciedad: mezclar con desengrasante puro.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"KOCH CHEMIE","prod":"POL STAR","uso":"Limpiar y acondicionar cuero y alcántara interior","dilN":"1:20","dilA":"—","apl":"Rociador + paño suave","nota":"Usar SIEMPRE antes de HIDRACURO.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"HIDRACURO","uso":"Nutrir, acondicionar y proteger cuero interior","dilN":"PURO","dilA":"—","apl":"Esponja o paño, repetir si el cuero absorbe","nota":"Solo cuero. SIEMPRE después de POL STAR.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"KOCHCHEMIE","prod":"TOP STAR TS","uso":"Acondicionar plásticos y gomas interiores — acabado mate","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Acabado mate. No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"MOTOR CLEAN","prod":"PLASTICI 2","uso":"Acondicionar y proteger plásticos interiores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 3 meses.","dur":"3 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"RESTAURAX","uso":"Restaurar plásticos degradados (parachoques, paneles, laterales)","dilN":"PURO","dilA":"—","apl":"Esponja, pasada uniforme con poco producto","nota":"Duración 6 meses. No empapar.","dur":"6 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"VERSE (interior)","uso":"Proteger plásticos y gomas interiores","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso","nota":"No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"WINTEX","prod":"NEUTRALIZADOR OLORES","uso":"Eliminar olores y ambientar el interior del vehículo","dilN":"PURO","dilA":"—","apl":"Pistola o rociador","nota":"Último paso del servicio interior.","dur":"—"}];
   function renderQuimicos(){
@@ -1009,6 +1047,30 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
     var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
     var pad=document.querySelector(".kio-pad"); if(pad) pad.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b) kioKey(b.dataset.k); });
+  })();
+  // ---------- Admin: accesos/permisos (solo dueño) ----------
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["stock","Stock"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  function renderAdmin(){ cargarAccesos(pintarAdmin); }
+  function pintarAdmin(){
+    var box=document.getElementById("acc-vistas");
+    if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
+    var lista=document.getElementById("acc-list"); if(!lista)return;
+    var keys=Object.keys(ACCESOS);
+    lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
+    lista.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click",function(){ accCargarEnForm(b.dataset.edit); }); });
+    lista.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ accBorrar(b.dataset.del); }); });
+  }
+  function accCargarEnForm(email){ var vs=ACCESOS[email]||[]; document.getElementById("acc-email").value=email; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); }
+  function accBorrar(email){ var sb=sbc(); if(!sb)return; if(!confirm("¿Quitar la restricción de "+email+"? Volverá a ver todo.")) return;
+    sb.from("accesos").delete().eq("email",email).then(function(){ delete ACCESOS[email]; pintarAdmin(); if((email||"").toLowerCase()===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("Acceso quitado"); }); }
+  (function(){ var save=document.getElementById("acc-save"); if(!save)return;
+    save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
+      var email=(document.getElementById("acc-email").value||"").trim().toLowerCase();
+      if(!email||email.indexOf("@")<0){ toast("Escribe un correo válido"); return; }
+      var vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); });
+      sb.from("accesos").upsert({email:email,vistas:vs,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 12?)"); return; }
+        ACCESOS[email]=vs; document.getElementById("acc-email").value=""; document.querySelectorAll("#acc-vistas input").forEach(function(c){c.checked=false;}); pintarAdmin();
+        if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso guardado"); }); });
   })();
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
