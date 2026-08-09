@@ -372,6 +372,47 @@
   .acc-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);}
   .acc-item .em{font-weight:700;font-size:13px;} .acc-item .vs{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
   .acc-item .acts button{background:none;border:none;color:var(--info);font:700 12px var(--sans);cursor:pointer;margin-left:8px;} .acc-item .acts .del{color:var(--crit);}
+  /* Cotizaciones */
+  .cotiz-items-head,.cotiz-item{display:grid;grid-template-columns:2.4fr .7fr 1fr .7fr 1fr 30px;gap:8px;align-items:center;}
+  .cotiz-items-head{font:700 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);padding:0 2px 6px;border-bottom:1px solid var(--line);}
+  .cotiz-item{padding:6px 0;}
+  .cotiz-item input{font:500 13px/1 var(--sans);padding:8px 9px;border:1px solid var(--line);border-radius:7px;background:var(--ground);color:var(--ink);width:100%;box-sizing:border-box;}
+  .cotiz-item .cot-tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px;}
+  .cotiz-item .cot-del{background:none;border:none;color:var(--crit);font-size:17px;cursor:pointer;}
+  @media (max-width:720px){ .cotiz-items-head{display:none;} .cotiz-item{grid-template-columns:1fr 1fr;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;} .cotiz-item .cot-desc{grid-column:1/-1;} }
+  .cotiz-tot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px;align-items:flex-end;}
+  .cotiz-descadic{max-width:220px;}
+  .cotiz-tot-box{min-width:240px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;}
+  .cotiz-tot-box>div{display:flex;justify-content:space-between;gap:20px;padding:4px 0;font-size:13.5px;color:var(--ink-2);}
+  .cotiz-tot-box .tt{border-top:1px solid var(--line-strong);margin-top:4px;padding-top:8px;font-size:16px;font-weight:800;color:var(--ink);}
+  .cot-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13px;}
+  .cot-row .cn{font:800 12px/1 var(--mono);color:var(--accent-ink);}
+  .cot-row .acts button{background:none;border:none;cursor:pointer;font:700 12px var(--sans);margin-left:10px;} .cot-row .acts .pdf{color:var(--accent-ink);} .cot-row .acts .del{color:var(--crit);}
+  /* Hoja de impresión */
+  #cotiz-print{display:none;}
+  @media print{
+    body>*{display:none!important;}
+    #cotiz-print{display:block!important;}
+    @page{margin:14mm;}
+  }
+  .cp-sheet{max-width:800px;margin:0 auto;color:#111;font-family:var(--sans);}
+  .cp-head{background:#111;color:#fff;border-radius:10px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
+  .cp-head .cp-logo{font:900 30px/1 var(--sans);letter-spacing:-.02em;} .cp-head .cp-logo small{display:block;font:700 11px/1 var(--mono);letter-spacing:.35em;opacity:.85;margin-top:4px;}
+  .cp-head .cp-meta{text-align:right;font-size:13px;} .cp-head .cp-meta b{font-size:17px;}
+  .cp-sec{font:800 13px/1 var(--sans);text-transform:uppercase;letter-spacing:.03em;margin:18px 0 8px;color:#111;}
+  .cp-cliente{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:13.5px;} .cp-cliente b{color:#111;}
+  table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;}
+  table.cp-table th{background:#111;color:#fff;padding:8px 8px;text-align:left;font-weight:700;font-size:11px;}
+  table.cp-table th.r,table.cp-table td.r{text-align:right;}
+  table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;}
+  .cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:16px;flex-wrap:wrap;}
+  .cp-pay{font-size:12.5px;line-height:1.7;} .cp-pay .cp-sec{margin-top:0;}
+  .cp-totbox{min-width:260px;}
+  .cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:7px 12px;font-size:13px;}
+  .cp-totbox .r1.big{background:#111;color:#fff;font-weight:800;font-size:15px;}
+  .cp-firma{margin-top:40px;text-align:center;} .cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px;} .cp-firma b{font-size:14px;} .cp-firma small{color:#555;}
+  .cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-radius:8px;padding:12px 14px;}
+  .cp-footer{margin-top:20px;border-top:2px solid #111;padding-top:10px;display:flex;justify-content:space-between;font-size:11.5px;color:#333;flex-wrap:wrap;gap:8px;}
   /* grupos del menú */
   .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:12px;}
   .nav-group-title{font:700 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:4px 12px 5px;}
@@ -486,6 +527,7 @@
         <div class="nav-group-title">Gestión</div>
         <button data-view="clientes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</button>
         <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro</button>
+        <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
         <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stock</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
         <button data-view="panel"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Panel</button>
@@ -740,6 +782,41 @@
         </div>
       </div>
     </section>
+
+    <!-- ============ COTIZACIONES ============ -->
+    <section class="view" id="view-cotizaciones">
+      <div class="vhead"><div class="eye">Ventas</div><h1>Cotizaciones</h1><p>N° automático y registro real. Genera el PDF para enviar al cliente.</p></div>
+      <div class="card cotiz-form">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <h3 style="margin:0">Nueva cotización <span class="tag" id="cot-num-tag">N° —</span></h3>
+        </div>
+        <div class="row c4" style="margin:12px 0">
+          <label class="f"><span class="lab">Cliente</span><input id="cot-nom" placeholder="Nombre"></label>
+          <label class="f"><span class="lab">Teléfono</span><input id="cot-tel" placeholder="+569…"></label>
+          <label class="f"><span class="lab">Vehículo</span><input id="cot-veh" placeholder="Ej: Amarok"></label>
+          <label class="f"><span class="lab">Año</span><input id="cot-anio" placeholder="2023"></label>
+        </div>
+        <div class="cotiz-items-head"><span>Descripción</span><span>Cant.</span><span>Precio $</span><span>Desc %</span><span>Total</span><span></span></div>
+        <div id="cot-items"></div>
+        <button type="button" class="btn ghost" id="cot-add-row" style="margin:8px 0">+ Agregar línea</button>
+        <div class="cotiz-tot">
+          <label class="f cotiz-descadic"><span class="lab">Descuento adicional %</span><input id="cot-descadic" type="number" min="0" step="0.1" value="0"></label>
+          <div class="cotiz-tot-box">
+            <div><span>Subtotal</span><b id="cot-sub">$0</b></div>
+            <div><span>Descuento adic.</span><b id="cot-descval">$0</b></div>
+            <div class="tt"><span>Total a pagar</span><b id="cot-total">$0</b></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button type="button" class="btn primary" id="cot-save">Guardar y generar PDF</button>
+          <button type="button" class="btn ghost" id="cot-clear">Limpiar</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Registro de cotizaciones</h3>
+        <div id="cot-list" style="margin-top:8px"></div>
+      </div>
+    </section>
   </main>
   </div>
   <div class="side-overlay" id="side-overlay"></div>
@@ -773,6 +850,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Hoja de impresión de la cotización (PDF) -->
+  <div id="cotiz-print"></div>
 
   <div class="media-modal" id="media-modal">
     <div class="media-modal-box">
@@ -959,6 +1039,7 @@
     else if(v==="agenda") renderCal();
     else if(v==="quimicos") renderQuimicos();
     else if(v==="asistencia") renderAsistencia();
+    else if(v==="cotizaciones") renderCotizaciones();
     else if(v==="admin") renderAdmin();
   }
 var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX","uso":"Limpiar llantas aluminio y carrocería con óxido adherido","dilN":"1:9","dilA":"1:3","apl":"Rociador o espumadora","nota":"No dejar secar sobre pintura. Enjuagar inmediatamente.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"LIMPIADOR MULTI","uso":"Primer prelav de carrocería antes del champú","dilN":"1:133","dilA":"—","apl":"Espumadora o rociador","nota":"Siempre como paso 1 antes del champú.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"WINKLER","uso":"Champú alcalino concentrado para carrocería sucia","dilN":"1:150","dilA":"1:16","apl":"Espumadora","nota":"No dejar sobre vidrios sin enjuagar.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ZIOX","uso":"Champú ácido desincrustante para pintura y llantas","dilN":"1:24","dilA":"1:16","apl":"Espumadora o rociador","nota":"Terminar siempre con champú neutro después.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"THICK","uso":"Champú neutro muy concentrado para lavado estándar","dilN":"1:500","dilA":"1:16","apl":"Espumadora","nota":"Muy concentrado: medir con exactitud.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"EOX","uso":"Champú neutro estándar para carrocería","dilN":"1:4","dilA":"1:4","apl":"Espumadora","nota":"Proporción fija 1:4 siempre.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"VONIX","prod":"V-MOL","uso":"Prelav desengrasante para motor, llantas y pickup","dilN":"1:20","dilA":"1:16","apl":"Espumadora o rociador","nota":"Ideal como paso previo al champú en servicios completos.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"DESENGRASANTE IND.","uso":"Quitar grasa de motor, llantas, pisaderas, pisos y neumáticos","dilN":"1:9","dilA":"1:1 / PURO (extremo)","apl":"Rociador directo, dejar actuar","nota":"PURO solo en motor extremo. Nunca sobre pintura.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ALCANCE BIO-W","uso":"Lavado en seco: limpieza + encerado en un solo paso","dilN":"1:50","dilA":"1:10 / PURO insectos","apl":"Rociador + paño microfibra","nota":"Un solo producto que limpia, encera y protege.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"REVELAX","uso":"Preparar pintura post-pulido antes de sellar","dilN":"70:30 (alc:agua)","dilA":"—","apl":"Paño microfibra","nota":"SIEMPRE antes de cualquier sellado. Reemplazable por IPA 70%.","dur":"—"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"CERA EXPRESS","uso":"Brillo rápido de mantenimiento","dilN":"PURO","dilA":"—","apl":"Microfibra sin bordes, retirar 2 min","nota":"No usar bajo sol directo ni superficie caliente.","dur":"6–8 días"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"CHERRY WAX","prod":"CHERRY WAX","uso":"Cera 4 en 1: alto brillo + repelente agua + protección","dilN":"PURO","dilA":"—","apl":"Pad de finish","nota":"Máximo 50 ml por vehículo.","dur":"2–4 semanas"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"SINERGY PAINT","uso":"Sellado cerámico — brillo intenso y larga duración","dilN":"PURO","dilA":"—","apl":"Paño microfibra, 2 pasadas uniformes, retirar con parte seca","nota":"Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"SENSORY","prod":"SENSORY SIO1-TIO2","uso":"Sellado cerámico máxima protección UV, lluvia ácida y oxidación","dilN":"PURO","dilA":"—","apl":"Esponja grande azul, retirar con paño a los 2 min","nota":"Máxima protección. Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"GLAZOX / CERA","uso":"Mantenimiento cerámico de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra uniforme","nota":"Mantenimiento periódico sobre sellado cerámico.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"MEGUIAR\u0027S","prod":"CERAMIC COATING","uso":"Tratamiento cerámico profesional de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Aplicar en ambiente controlado, sin polvo ni viento.","dur":"6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"KOCH CHEMIE","prod":"SO.03 HIDRO FOAM","uso":"Sellador húmedo de mantenimiento cerámico — se aplica en mojado","dilN":"1:150","dilA":"1:50","apl":"Espumadora sobre carrocería húmeda, enjuagar con agua","nota":"Aplicar con auto mojado. Menor dilución = mayor protección.","dur":"3–6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"BIO-W","prod":"BIO-W CERA","uso":"Sellado cerámico mantenimiento — también actúa como champú","dilN":"1:10","dilA":"—","apl":"Rociador + microfibra","nota":"Combinación limpieza + encerado en uno.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"GLASS PREP","uso":"Limpiar vidrios y quitar restos de pasta de pulimento","dilN":"PURO","dilA":"—","apl":"Paño microfibra, dejar actuar y retirar","nota":"Usar ANTES de sellar vidrios.","dur":"—"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"TAR","uso":"Quitar asfalto, adhesivos e insectos de carrocería y vidrios","dilN":"PURO","dilA":"—","apl":"Aplicar, dejar 2–3 min, retirar con microfibra","nota":"Seguro en pintura, vidrio, plástico y metal.","dur":"—"},{"cat":"VIDRIOS","marca":"VINOX","prod":"PRIZM","uso":"Restaurar vidrios con gotas ácidas / lluvia ácida","dilN":"PURO","dilA":"—","apl":"Pincel rápido uniforme, retirar con agua a presión","nota":"Retirar SIEMPRE con agua a presión.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"—","prod":"SIO03 WATER OFF","uso":"Sellado cerámico para todos los vidrios","dilN":"PURO","dilA":"—","apl":"Esponja + paño microfibra","nota":"Aplicar sobre vidrio limpio y seco.","dur":"6 meses"},{"cat":"VIDRIOS","marca":"GLACO","prod":"GLACO","uso":"Sellado repelente agua y suciedad — mayor duración en vidrios","dilN":"PURO","dilA":"—","apl":"Esponja interna del envase, retirar con paño","nota":"Aplicar sobre vidrio completamente seco.","dur":"12 meses"},{"cat":"NEUMÁTICOS","marca":"VONIX","prod":"SHINY","uso":"Revitalizar y dar brillo a neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha, varias pasadas en la cara del neumático","nota":"Limpiar bien el neumático antes.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"VINTEX","prod":"PNEU PRETINHO","uso":"Brillo intenso + protección para neumáticos","dilN":"PURO","dilA":"—","apl":"Pistola de alta presión, retirar exceso con paño","nota":"Retirar exceso o queda pegajoso.","dur":"1–2 meses"},{"cat":"NEUMÁTICOS","marca":"MOTO CLEAN","prod":"RENOU","uso":"Renovar y sellar neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"WZT","prod":"RENOVADOR WZT","uso":"Renovador y sellador para neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX BLACK","uso":"Restaurar plásticos exteriores quemados o muy grises","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos muy dañados. Limpiar antes con APC.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX","uso":"Renovar y acondicionar plásticos exteriores en buen estado","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos que solo necesitan renovarse.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"EOX","prod":"EOX DRESSING","uso":"Acondicionar motor, guardabarro, pickup y neumáticos","dilN":"1:4","dilA":"—","apl":"Pistola de aire o paño microfibra","nota":"No aplicar sobre pinturas.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"VONIX","prod":"VERSE","uso":"Proteger y renovar plásticos, gomas y compartimiento motor","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"NO usar en volante, pedales ni superficies calientes.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"MOTOR CLEAN","prod":"PLASTIC1","uso":"Acondicionar plásticos exteriores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 2–4 meses.","dur":"2–4 meses"},{"cat":"INTERIOR · LIMPIEZA","marca":"WINTEX","prod":"LIMPIADOR APC","uso":"Limpieza general interior: plásticos, tablero, puertas, gomas","dilN":"1:4","dilA":"1:4","apl":"Rociador + paño microfibra o esponja","nota":"Producto polivalente para todo el interior.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"VONIX","prod":"SINTRA PRO","uso":"Desinfectar plásticos, gomas, telas, alfombras y cuero","dilN":"1:5","dilA":"1:1","apl":"Rociador + microfibra","nota":"1:5 plásticos/cuero · 1:1 tapiz/techo · 1:10 paneles.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"—","prod":"LIMPIA ESTOFADOS","uso":"Lavar asientos y tapicería sucia a fondo","dilN":"1:16","dilA":"—","apl":"Rociar abundante + frotar con escobilla o taladro","nota":"Alta suciedad: mezclar con desengrasante puro.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"KOCH CHEMIE","prod":"POL STAR","uso":"Limpiar y acondicionar cuero y alcántara interior","dilN":"1:20","dilA":"—","apl":"Rociador + paño suave","nota":"Usar SIEMPRE antes de HIDRACURO.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"HIDRACURO","uso":"Nutrir, acondicionar y proteger cuero interior","dilN":"PURO","dilA":"—","apl":"Esponja o paño, repetir si el cuero absorbe","nota":"Solo cuero. SIEMPRE después de POL STAR.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"KOCHCHEMIE","prod":"TOP STAR TS","uso":"Acondicionar plásticos y gomas interiores — acabado mate","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Acabado mate. No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"MOTOR CLEAN","prod":"PLASTICI 2","uso":"Acondicionar y proteger plásticos interiores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 3 meses.","dur":"3 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"RESTAURAX","uso":"Restaurar plásticos degradados (parachoques, paneles, laterales)","dilN":"PURO","dilA":"—","apl":"Esponja, pasada uniforme con poco producto","nota":"Duración 6 meses. No empapar.","dur":"6 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"VERSE (interior)","uso":"Proteger plásticos y gomas interiores","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso","nota":"No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"WINTEX","prod":"NEUTRALIZADOR OLORES","uso":"Eliminar olores y ambientar el interior del vehículo","dilN":"PURO","dilA":"—","apl":"Pistola o rociador","nota":"Último paso del servicio interior.","dur":"—"}];
@@ -1050,7 +1131,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var pad=document.querySelector(".kio-pad"); if(pad) pad.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b) kioKey(b.dataset.k); });
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["stock","Stock"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
   function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
@@ -1089,6 +1170,59 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         ACCESOS[email]=vs; var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} accSetChecks([]); pintarAdmin();
         if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso guardado"); }); });
   })();
+  // ---------- Cotizaciones ----------
+  var _cotiz=[], COT_BASE=35; // primer N° si la tabla está vacía (continúa la numeración manual ~34)
+  var PAGO={ razon:"Innovación y Servicios Performance SpA", rut:"78.270.149-5", banco:"Santander · Cuenta corriente", cuenta:"0-000-2757437-8", correo:"Administrativa@innovaservi.com" };
+  function cotRowHTML(it){ it=it||{}; return '<div class="cotiz-item"><input class="cot-desc" placeholder="Descripción" value="'+av(it.desc||"")+'"><input class="cot-cant" type="number" min="0" step="1" value="'+(it.cant!=null?it.cant:1)+'"><input class="cot-precio" type="number" min="0" step="1" value="'+(it.precio||0)+'"><input class="cot-descp" type="number" min="0" max="100" step="0.1" value="'+(it.descPct||0)+'"><span class="cot-tot">$0</span><button type="button" class="cot-del" aria-label="Quitar">×</button></div>'; }
+  function cotAddRow(it){ document.getElementById("cot-items").insertAdjacentHTML("beforeend", cotRowHTML(it)); cotBind(); cotCalc(); }
+  function cotBind(){ document.querySelectorAll("#cot-items input").forEach(function(i){ i.oninput=cotCalc; }); document.querySelectorAll("#cot-items .cot-del").forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; }); }
+  function cotFilas(){ return Array.prototype.map.call(document.querySelectorAll("#cot-items .cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:+r.querySelector(".cot-precio").value||0, descPct:+r.querySelector(".cot-descp").value||0 }; }); }
+  function cotLineaTotal(it){ return Math.round((it.cant||0)*(it.precio||0)*(1-(it.descPct||0)/100)); }
+  function cotCalc(){ var filas=cotFilas(), sub=0;
+    document.querySelectorAll("#cot-items .cotiz-item").forEach(function(r,i){ var t=cotLineaTotal(filas[i]); r.querySelector(".cot-tot").textContent=clp(t); sub+=t; });
+    var da=+document.getElementById("cot-descadic").value||0, dval=Math.round(sub*da/100), total=sub-dval;
+    document.getElementById("cot-sub").textContent=clp(sub); document.getElementById("cot-descval").textContent=clp(dval); document.getElementById("cot-total").textContent=clp(total);
+    return {sub:sub,dval:dval,total:total,da:da,filas:filas}; }
+  function cotProxNum(){ return _cotiz.length?(Math.max.apply(null,_cotiz.map(function(c){return +c.numero||0;}))+1):COT_BASE; }
+  function cotTotalDe(c){ var sub=0; (c.items||[]).forEach(function(it){ sub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); }); return sub-Math.round(sub*(+c.desc_adic_pct||0)/100); }
+  function renderCotizaciones(){ var sb=sbc();
+    if(document.getElementById("cot-items").children.length===0){ cotAddRow(); cotAddRow(); cotAddRow(); }
+    document.getElementById("cot-descadic").oninput=cotCalc;
+    if(sb){ sb.from("cotizaciones").select("*").order("numero",{ascending:false}).then(function(r){ if(r.data)_cotiz=r.data; pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); }); } else { pintarCotList(); }
+  }
+  function pintarCotList(){ var el=document.getElementById("cot-list"); if(!el)return;
+    el.innerHTML=_cotiz.length?_cotiz.map(function(c){ return '<div class="cot-row"><span><span class="cn">N°'+c.numero+'</span> · '+escH(c.cliente_nombre||"—")+(c.vehiculo?" · "+escH(c.vehiculo):"")+' · '+fFecha((c.fecha||"").slice(0,10))+'</span><span><b>'+clp(cotTotalDe(c))+'</b><span class="acts"><button class="pdf" data-pdf="'+c.id+'">PDF</button><button class="del" data-del="'+c.id+'">×</button></span></span></div>'; }).join(""):'<div class="col-empty">Aún no hay cotizaciones</div>';
+    el.querySelectorAll("[data-pdf]").forEach(function(b){ b.onclick=function(){ var c=_cotiz.filter(function(x){return x.id===b.dataset.pdf;})[0]; if(c) cotImprimir(c); }; });
+    el.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ var c=_cotiz.filter(function(x){return x.id===b.dataset.del;})[0]; if(c && confirm("¿Eliminar la cotización N°"+c.numero+"?")){ var sb=sbc(); if(sb) sb.from("cotizaciones").delete().eq("id",c.id).then(function(){}); _cotiz=_cotiz.filter(function(x){return x.id!==c.id;}); pintarCotList(); } }; });
+  }
+  function cotGuardar(){ var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
+    var d=cotCalc(), filas=d.filas.filter(function(f){return f.desc||f.precio;});
+    if(!filas.length){ toast("Agrega al menos una línea con descripción o precio"); return; }
+    var numero=cotProxNum();
+    var row={ numero:numero, fecha:todayISO(), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), vehiculo:document.getElementById("cot-veh").value.trim(), anio:document.getElementById("cot-anio").value.trim(), items:filas, desc_adic_pct:d.da, estado:"ENVIADA", autor:(window.ISP_EMAIL||"") };
+    sb.from("cotizaciones").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 13?)"); return; } _cotiz.unshift(r.data); pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); toast("✓ Cotización N°"+numero+" guardada"); cotImprimir(r.data); });
+  }
+  function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-descadic").value="0"; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
+  function cotImprimir(c){ var items=c.items||[], sub=0, filasHTML="";
+    for(var i=0;i<10;i++){ var it=items[i];
+      if(it){ var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*(+it.descPct||0)/100);
+        filasHTML+='<tr><td>'+(i+1)+'</td><td>'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+((+it.descPct||0)?(+it.descPct+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>';
+      } else { filasHTML+='<tr><td>'+(i+1)+'</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>'; } }
+    var da=+c.desc_adic_pct||0, daval=Math.round(sub*da/100), total=sub-daval;
+    var f=(c.fecha||todayISO()).slice(0,10).split("-"), fechaTxt=f[2]+"/"+f[1]+"/"+f[0];
+    var html='<div class="cp-sheet"><div class="cp-head"><div class="cp-logo">IS<small>PERFORMANCE</small></div><div class="cp-meta">N° Cotización: <b>'+String(c.numero).padStart(6,"0")+'</b><br>Fecha: '+fechaTxt+'</div></div>'
+      +'<div class="cp-sec">Información del cliente</div><div class="cp-cliente"><div><b>Nombre:</b> '+escH(c.cliente_nombre||"")+'</div><div><b>Teléfono:</b> '+escH(c.cliente_tel||"")+'</div><div><b>Vehículo:</b> '+escH(c.vehiculo||"")+'</div><div><b>Año:</b> '+escH(c.anio||"")+'</div></div>'
+      +'<table class="cp-table"><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'
+      +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
+      +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div><div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
+      +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
+      +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
+      +'<div class="cp-footer"><span>+569 8561 5636</span><span>'+escH(PAGO.correo)+'</span><span>isperformance.cl</span></div></div>';
+    document.getElementById("cotiz-print").innerHTML=html; setTimeout(function(){ window.print(); },120);
+  }
+  (function(){ var a=document.getElementById("cot-add-row"); if(a) a.onclick=function(){ cotAddRow(); };
+    var s=document.getElementById("cot-save"); if(s) s.onclick=cotGuardar;
+    var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar; })();
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
     var porCobrar=data.filter(function(e){return !e.cobrado && ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;}).length;
