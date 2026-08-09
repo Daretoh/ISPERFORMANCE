@@ -727,7 +727,8 @@
       <div class="dash-grid">
         <div class="card">
           <h3>Agregar / editar acceso</h3>
-          <label class="f" style="margin:10px 0"><span class="lab">Correo</span><input id="acc-email" placeholder="persona@correo.cl" autocomplete="off"></label>
+          <label class="f" style="margin:10px 0"><span class="lab">Cuenta</span><select id="acc-cuenta"></select></label>
+          <input id="acc-email" placeholder="otro correo@…" autocomplete="off" style="display:none;width:100%;margin:-4px 0 10px;font:500 14px/1 var(--sans);padding:11px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);box-sizing:border-box">
           <div class="lab" style="margin-bottom:8px">Pestañas que puede ver</div>
           <div id="acc-vistas" class="acc-vistas"></div>
           <button class="btn primary" id="acc-save" style="width:100%;margin-top:14px">Guardar acceso</button>
@@ -1051,25 +1052,41 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   // ---------- Admin: accesos/permisos (solo dueño) ----------
   var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["stock","Stock"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
+  function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); }
+  function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
     if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
+    var sel=document.getElementById("acc-cuenta");
+    if(sel && !sel.dataset.done){
+      var ops='<option value="">— Elige una cuenta —</option>';
+      Object.keys(EQUIPO).forEach(function(em){ if(em===OWNER_EMAIL) return; ops+='<option value="'+escH(em)+'">'+escH(EQUIPO[em])+' — '+escH(em)+'</option>'; });
+      ops+='<option value="__otro">Otro correo…</option>';
+      sel.innerHTML=ops; sel.dataset.done="1";
+      sel.addEventListener("change",function(){ var v=sel.value, inp=document.getElementById("acc-email");
+        if(v==="__otro"){ inp.style.display=""; inp.value=""; accSetChecks([]); inp.focus(); }
+        else { inp.style.display="none"; inp.value=""; accSetChecks(v?(ACCESOS[v]||[]):[]); }
+      });
+    }
     var lista=document.getElementById("acc-list"); if(!lista)return;
     var keys=Object.keys(ACCESOS);
     lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
     lista.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click",function(){ accCargarEnForm(b.dataset.edit); }); });
     lista.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ accBorrar(b.dataset.del); }); });
   }
-  function accCargarEnForm(email){ var vs=ACCESOS[email]||[]; document.getElementById("acc-email").value=email; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); }
+  function accCargarEnForm(email){ var sel=document.getElementById("acc-cuenta"), inp=document.getElementById("acc-email"), known=false;
+    if(sel){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===email){ sel.value=email; known=true; break; } } }
+    if(known){ inp.style.display="none"; inp.value=""; } else if(sel){ sel.value="__otro"; inp.style.display=""; inp.value=email; }
+    accSetChecks(ACCESOS[email]||[]); }
   function accBorrar(email){ var sb=sbc(); if(!sb)return; if(!confirm("¿Quitar la restricción de "+email+"? Volverá a ver todo.")) return;
     sb.from("accesos").delete().eq("email",email).then(function(){ delete ACCESOS[email]; pintarAdmin(); if((email||"").toLowerCase()===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("Acceso quitado"); }); }
   (function(){ var save=document.getElementById("acc-save"); if(!save)return;
     save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
-      var email=(document.getElementById("acc-email").value||"").trim().toLowerCase();
-      if(!email||email.indexOf("@")<0){ toast("Escribe un correo válido"); return; }
+      var email=accEmailActual();
+      if(!email||email.indexOf("@")<0){ toast("Elige una cuenta o escribe un correo válido"); return; }
       var vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); });
       sb.from("accesos").upsert({email:email,vistas:vs,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 12?)"); return; }
-        ACCESOS[email]=vs; document.getElementById("acc-email").value=""; document.querySelectorAll("#acc-vistas input").forEach(function(c){c.checked=false;}); pintarAdmin();
+        ACCESOS[email]=vs; var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} accSetChecks([]); pintarAdmin();
         if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso guardado"); }); });
   })();
   function updateCounts(){
