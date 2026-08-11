@@ -1196,7 +1196,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("cot-sub").textContent=clp(sub); document.getElementById("cot-descval").textContent=clp(dval); document.getElementById("cot-total").textContent=clp(total);
     return {sub:sub,dval:dval,total:total,da:da,filas:filas}; }
   function cotProxNum(){ return _cotiz.length?(Math.max.apply(null,_cotiz.map(function(c){return +c.numero||0;}))+1):COT_BASE; }
-  function cotTotalDe(c){ var sub=0; (c.items||[]).forEach(function(it){ sub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); }); return sub-Math.round(sub*(+c.desc_adic_pct||0)/100); }
+  function cotTotalDe(c){ if(c.total!=null && c.total!=="") return +c.total; var sub=0; (c.items||[]).forEach(function(it){ sub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); }); return sub-Math.round(sub*(+c.desc_adic_pct||0)/100); }
   function renderCotizaciones(){ var sb=sbc();
     if(document.getElementById("cot-items").children.length===0){ cotAddRow(); cotAddRow(); cotAddRow(); }
     document.getElementById("cot-descadic").oninput=cotCalc;
