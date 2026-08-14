@@ -548,7 +548,7 @@
 
     <!-- ============ RECEPCIÓN ============ -->
     <section class="view" id="view-recepcion">
-      <div class="vhead"><div class="eye">Agendamiento</div><h1>Agendar vehículo</h1><p>Registra la cita del auto. Escribe y avanza con <b>Tab</b>. Los costos y el cobro van en su propia pestaña.</p></div>
+      <div class="vhead"><div class="eye">Agendamiento</div><h1>Agendar vehículo</h1></div>
       <form id="form" class="formgrid" autocomplete="off">
         <div class="panel">
           <div class="fieldset">
@@ -616,14 +616,14 @@
 
     <!-- ============ SEGUIMIENTO ============ -->
     <section class="view" id="view-seguimiento">
-      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1><p>Actividad de <b>este mes</b>. Toca <b>“Ingresó”</b> cuando llegue el auto — la hora queda sola. Terminado/Entregado de meses anteriores se ven en 📅 Calendario.</p></div>
+      <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1></div>
       <div class="board" id="board"></div>
       <input type="file" id="kmedia-input" accept="image/*,video/*" multiple hidden>
     </section>
 
     <!-- ============ COBRO ============ -->
     <section class="view" id="view-cobro">
-      <div class="vhead"><div class="eye">Facturación</div><h1>Cobro</h1><p>Elige un vehículo y completa el cobro. La utilidad y el IVA se calculan solos.</p></div>
+      <div class="vhead"><div class="eye">Facturación</div><h1>Cobro</h1></div>
       <div class="cobro-grid">
         <div class="panel pick" id="cobro-pick"></div>
         <div id="cobro-form-wrap"></div>
@@ -632,7 +632,7 @@
 
     <!-- ============ COSTOS ============ -->
     <section class="view" id="view-costos">
-      <div class="vhead"><div class="eye">Empresa</div><h1>Horas y gastos</h1><p>Horas del equipo y gastos del taller.</p></div>
+      <div class="vhead"><div class="eye">Empresa</div><h1>Horas y gastos</h1></div>
       <div class="dash-grid">
         <div class="chart">
           <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Horas trabajadas<span class="tag">reloj</span></h3>
@@ -662,7 +662,7 @@
 
     <!-- ============ TAREAS ============ -->
     <section class="view" id="view-tareas">
-      <div class="vhead"><div class="eye">Recordatorios</div><h1>Tareas</h1><p>Crea tareas y recordatorios del equipo. Las que tienen fecha también aparecen en el 📅 Calendario.</p></div>
+      <div class="vhead"><div class="eye">Recordatorios</div><h1>Tareas</h1></div>
       <details class="stock-newwrap" open>
         <summary>Nueva tarea</summary>
         <form id="tarea-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
@@ -680,14 +680,14 @@
 
     <!-- ============ STOCK ============ -->
     <section class="view" id="view-stock">
-      <div class="vhead"><div class="eye">Inventario</div><h1>Stock</h1><p>Equipamiento y productos en un solo lugar. <b>Stock = entradas − salidas</b>. Los productos de detailing (Haulmer) se agregan luego.</p></div>
+      <div class="vhead"><div class="eye">Inventario</div><h1>Stock</h1></div>
       <div id="stock-kpis"></div>
       <div class="stock-bar">
         <div class="pfilter" id="stock-filtro"><button data-f="TODOS" class="on">Todos</button><button data-f="EQUIPAMIENTO">Equipamiento</button><button data-f="DETAILING">Detailing</button></div>
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
       </div>
       <details class="stock-newwrap">
-        <summary>➕ Agregar producto</summary>
+        <summary>＋ Agregar producto</summary>
         <form id="stock-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
           <label class="f"><span class="lab">Tipo</span><select name="tipo"><option>EQUIPAMIENTO</option><option>DETAILING</option></select></label>
           <label class="f"><span class="lab">Producto</span><input name="producto" required placeholder="Barra antivuelco, Shampoo…"></label>
@@ -703,15 +703,15 @@
 
     <!-- ============ PANEL ============ -->
     <section class="view" id="view-panel">
-      <div class="vhead"><div class="eye">Este mes</div><h1>Panel de control</h1><p id="panel-sub">Toca cada indicador para ver el detalle.</p></div>
+      <div class="vhead"><div class="eye">Este mes</div><h1>Panel de control</h1><p id="panel-sub"></p></div>
       <div id="panel-content"></div>
     </section>
 
     <!-- ============ CLIENTES ============ -->
     <section class="view" id="view-clientes">
-      <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1><p>Elige un cliente para ver su ficha.</p></div>
+      <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1></div>
       <input type="search" id="cli-buscar" class="cli-search" placeholder="🔍 Buscar por nombre o teléfono…">
-      <div class="pfilter" id="cli-filtro" style="margin:10px 0 4px"><button data-t="TODOS" class="on">Todos</button><button data-t="NATURAL">👤 Naturales</button><button data-t="EMPRESA">🏢 Empresas</button></div>
+      <div class="pfilter" id="cli-filtro" style="margin:10px 0 4px"><button data-t="TODOS" class="on">Todos</button><button data-t="NATURAL"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Naturales</button><button data-t="EMPRESA"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresas</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="font-size:11px;color:var(--ink-muted)">Ordenar:</span><select id="cli-orden" style="font:600 12px/1 var(--sans);padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer"><option value="reciente">Más recientes</option><option value="antiguo">Más antiguos</option><option value="gasto">Mayor gasto</option></select></div>
       <div class="cobro-grid">
         <div class="panel pick" id="cli-lista"></div>
@@ -721,7 +721,7 @@
 
     <!-- ============ AGENDA ============ -->
     <section class="view active" id="view-agenda">
-      <div class="vhead"><div class="eye">Vista general</div><h1>Calendario</h1><p>Todo por fecha. Color según estado.</p></div>
+      <div class="vhead"><div class="eye">Vista general</div><h1>Calendario</h1></div>
       <div class="cal-head">
         <div class="cal-nav"><button id="cal-prev">‹</button><button id="cal-next">›</button></div>
         <div class="m" id="cal-month"></div>
@@ -736,14 +736,14 @@
 
     <!-- ============ QUÍMICOS / DILUCIONES ============ -->
     <section class="view" id="view-quimicos">
-      <div class="vhead"><div class="eye">Referencia</div><h1>Químicos y diluciones</h1><p>Busca un producto y revisa su dilución y uso.</p></div>
+      <div class="vhead"><div class="eye">Referencia</div><h1>Químicos y diluciones</h1></div>
       <input type="search" id="qui-search" class="cli-search" placeholder="Buscar producto, marca o uso… (ej: champú, WINTEX, cerámico)">
       <div id="qui-list"></div>
     </section>
 
     <!-- ============ ASISTENCIA (reloj entrada/salida por RUT) ============ -->
     <section class="view" id="view-asistencia">
-      <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1><p>Marcaje de entrada y salida con los últimos 4 dígitos del RUT.</p></div>
+      <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
       <div class="dash-grid">
         <div class="card">
@@ -766,7 +766,7 @@
 
     <!-- ============ ADMIN (accesos/permisos — solo dueño) ============ -->
     <section class="view" id="view-admin">
-      <div class="vhead"><div class="eye">Solo dueño</div><h1>Accesos y permisos</h1><p>Define qué pestañas ve cada correo del equipo. Tú (ventas) siempre ves todo.</p></div>
+      <div class="vhead"><div class="eye">Solo dueño</div><h1>Accesos y permisos</h1></div>
       <div class="dash-grid">
         <div class="card">
           <h3>Agregar / editar acceso</h3>
@@ -786,7 +786,7 @@
 
     <!-- ============ COTIZACIONES ============ -->
     <section class="view" id="view-cotizaciones">
-      <div class="vhead"><div class="eye">Ventas</div><h1>Cotizaciones</h1><p>N° automático y registro real. Genera el PDF para enviar al cliente.</p></div>
+      <div class="vhead"><div class="eye">Ventas</div><h1>Cotizaciones</h1></div>
       <div class="card cotiz-form">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <h3 style="margin:0">Nueva cotización <span class="tag" id="cot-num-tag">N° —</span></h3>
@@ -863,7 +863,7 @@
       <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
       <div class="gal-filter" id="media-modal-filter"></div>
       <div class="media-modal-body" id="media-modal-body"></div>
-      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">➕ Agregar archivos</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
+      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">＋ Agregar archivos</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
     </div>
   </div>
   <input type="file" id="media-modal-input" multiple hidden>
@@ -1322,7 +1322,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     _mmProg.classList.add("show"); _mmTxt.classList.add("show"); _mmBar.style.width="0%";
     var total=files.length, ok=0, fail=0, i=0;
     function siguiente(){
-      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="➕ Agregar archivos"; _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); _galCtx.onChange(); galRender();
+      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="＋ Agregar archivos"; _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); _galCtx.onChange(); galRender();
         toast(ok+" archivo(s) guardado(s)"+(fail?" · "+fail+" no subieron (¿muy pesados? máx ~50MB)":"")); return; }
       var f=files[i]; i++;
       _mmTxt.textContent="Subiendo "+i+" de "+total+"  ·  "+f.name.slice(0,24)+"  ("+Math.max(1,Math.round(f.size/1048576))+" MB)";
@@ -1414,7 +1414,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         if(ci>0) btns+='<button class="kbtn back" data-id="'+e.id+'" data-dir="-1">‹ Volver</button>';
         if(ci<4) btns+='<button class="kbtn fwd" data-id="'+e.id+'" data-dir="1">'+["Ingresó","Comenzar","Terminar","Entregar"][ci]+' ›</button>';
         var nm=(e.media||[]).length;
-        var tedit='<details class="ktimes"><summary>⏱ Tiempos y cita</summary>'+
+        var tedit='<details class="ktimes"><summary>Tiempos y cita</summary>'+
           '<div class="trow"><span>Cita fecha</span><input type="date" class="cedit" data-id="'+e.id+'" data-k="fCoord" value="'+(e.fCoord||"")+'"></div>'+
           '<div class="trow"><span>Cita hora</span><input type="time" class="cedit" data-id="'+e.id+'" data-k="hCoord" value="'+(e.hCoord||"")+'"></div>'+
           '<div class="trow"><span>Ingreso</span><input type="time" class="tedit" data-id="'+e.id+'" data-k="hIngreso" value="'+(e.hIngreso||"")+'"></div>'+
@@ -1423,11 +1423,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<div class="trow"><span>T. muerto (min)</span><input type="number" min="0" step="5" class="tmin" data-id="'+e.id+'" value="'+(+e.tMuerto||0)+'"></div>'+
           '<div class="trow"><span>+ Servicio</span><select class="ksvc-add" data-id="'+e.id+'"><option value="">añadir…</option>'+CATALOGO.map(function(s){return '<option>'+s.n+'</option>';}).join("")+'</select></div>'+
           '</details>';
-        return '<div class="kcard"><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">🗑</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
+        return '<div class="kcard"><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           (dur?'<div class="kdur"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Demoró '+dur+'</div>':'')+
-          '<button type="button" class="kmedia-btn" data-id="'+e.id+'">📷 Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
+          '<button type="button" class="kmedia-btn" data-id="'+e.id+'">Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
@@ -1526,7 +1526,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<div class="sline big util'+(utilidad(e)<0?' neg':'')+'"><span class="k">Utilidad</span><span class="v num" id="c-util">'+clp(utilidad(e))+'</span></div>'+
         '<div class="sline"><span class="k">Margen</span><span class="marginpill" id="c-margen">0%</span></div>'+
       '</div>'+
-      '<div class="actions"><button type="button" class="btn primary" id="c-save">'+(e.cobrado?"✓ Actualizar cobro":"💵 Registrar cobro")+'</button></div>'+
+      '<div class="actions"><button type="button" class="btn primary" id="c-save">'+(e.cobrado?"✓ Actualizar cobro":"Registrar cobro")+'</button></div>'+
     '</div></aside></div>';
 
     var f=wrap.querySelector(".formgrid");
@@ -1723,12 +1723,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var venc=tareaVencida(t), hecha=(t.estado==='HECHA'), prio=(t.prioridad||'MEDIA').toLowerCase();
       var meta=[];
       if(t.fecha) meta.push('<span'+(venc?' class="venc"':'')+'>📅 '+fFecha(t.fecha)+(t.hora?(' '+t.hora):'')+(venc?' · VENCIDA':'')+'</span>');
-      if(t.responsable) meta.push('<span>👤 '+t.responsable+'</span>');
+      if(t.responsable) meta.push('<span><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> '+t.responsable+'</span>');
       meta.push('<span>'+(t.prioridad||'MEDIA')+'</span>');
       return '<div class="tarea p-'+prio+(venc?' vencida':'')+(hecha?' hecha':'')+'">'+
         '<button class="t-check" data-id="'+t.id+'" title="Marcar hecha">✓</button>'+
         '<div class="t-body"><div class="t-tit">'+t.titulo+'</div>'+(t.detalle?'<div style="font-size:12px;color:var(--ink-muted)">'+t.detalle+'</div>':'')+'<div class="t-meta">'+meta.join('')+'</div></div>'+
-        '<button class="t-del" data-id="'+t.id+'" title="Eliminar">🗑</button></div>';
+        '<button class="t-del" data-id="'+t.id+'" title="Eliminar">✕</button></div>';
     }).join("");
     cont.querySelectorAll(".t-check").forEach(function(b){ b.addEventListener("click",function(){ var t=tareas.filter(function(x){return x.id===b.dataset.id;})[0]; if(!t)return; t.estado=(t.estado==='HECHA')?'PENDIENTE':'HECHA'; updateTareaDB(t); renderTareas(); updateCounts(); }); });
     cont.querySelectorAll(".t-del").forEach(function(b){ b.addEventListener("click",function(){ var t=tareas.filter(function(x){return x.id===b.dataset.id;})[0]; if(!t)return; if(confirm('¿Eliminar la tarea "'+t.titulo+'"?')){ tareas=tareas.filter(function(x){return x.id!==b.dataset.id;}); delTareaDB(b.dataset.id); renderTareas(); updateCounts(); } }); });
@@ -1766,7 +1766,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       return '<tr><td><b>'+(p.producto||"")+'</b></td><td>'+(p.marca||"—")+'</td><td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>'+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
-        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">+ ent</button> <button class="stk-btn sal" data-id="'+p.id+'">− sal</button> <button class="stk-btn del" data-id="'+p.id+'">🗑</button></td></tr>';
+        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">+ ent</button> <button class="stk-btn sal" data-id="'+p.id+'">− sal</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Mover</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">Sin productos'+(q?' para "'+q+'"':'')+'</td></tr>')+'</tbody></table></div>';
     document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
@@ -1869,10 +1869,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!lista.length){ cont.innerHTML='<div class="empty" style="padding:26px">'+(q?"Sin resultados":"Aún no hay clientes")+'</div>'; document.getElementById("cli-ficha").innerHTML=""; return; }
     cont.innerHTML=lista.map(function(c){
       var dias=diasDesde(c.ultima);
-      var esEmp=(cliTipo(c.clave)==='EMPRESA'); var ico=esEmp?'🏢 ':'👤 ';
+      var esEmp=(cliTipo(c.clave)==='EMPRESA'); var ico=esEmp?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> ':'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> ';
       var i=clientesInfo[c.clave]||{};
       var rep=esEmp ? ((i.representante||'').trim() || (c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '')) : '';
-      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div>'+(rep?'<div class="p2" style="opacity:.72">👤 '+escH(rep)+'</div>':'')+'<div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
+      return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div>'+(rep?'<div class="p2" style="opacity:.72"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> '+escH(rep)+'</div>':'')+'<div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
     }).join("");
     cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
     if(state.clienteSel==null || !lista.some(function(c){return c.clave===state.clienteSel;})) state.clienteSel=lista[0].clave;
@@ -1891,9 +1891,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var info=clientesInfo[c.clave]||{};
     var esEmp=(info.tipo==='EMPRESA');
     var rep=(info.representante||'').trim() || (esEmp && c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '');
-    var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff">🏢 Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4">👤 Natural</span>';
+    var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
-      '<div class="fh"><div><h2>'+(esEmp?'🏢 ':'👤 ')+cliNombre(c)+'</h2>'+(esEmp&&rep?'<div class="fc">👤 Rep.: '+rep+'</div>':'')+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
+      '<div class="fh"><div><h2>'+(esEmp?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> ':'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> ')+cliNombre(c)+'</h2>'+(esEmp&&rep?'<div class="fc"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Rep.: '+rep+'</div>':'')+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
         (dias!=null?'<span class="chip" style="background:'+nivelDias(dias).bg+';color:'+nivelDias(dias).fg+';font-weight:700">'+nivelDias(dias).em+' '+(dias===0?'vino hoy':('hace '+dias+' días'))+'</span>':'')+'</div>'+
       '<div class="fkpis">'+
         '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
@@ -1905,7 +1905,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '<div class="fsec"><h4>Servicios usados</h4><div class="fchips">'+svcs+'</div></div>'+
       '<div class="fsec"><h4>Datos y facturación</h4>'+
         '<div class="row c2">'+
-          '<label class="f"><span class="lab">Tipo de cliente</span><select id="cli-tipo"><option value="NATURAL"'+(esEmp?'':' selected')+'>👤 Natural (persona)</option><option value="EMPRESA"'+(esEmp?' selected':'')+'>🏢 Empresa</option></select></label>'+
+          '<label class="f"><span class="lab">Tipo de cliente</span><select id="cli-tipo"><option value="NATURAL"'+(esEmp?'':' selected')+'><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Natural (persona)</option><option value="EMPRESA"'+(esEmp?' selected':'')+'><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresa</option></select></label>'+
           '<label class="f"><span class="lab">RUT</span><input id="cli-rut" value="'+av(info.rut)+'" placeholder="12.345.678-9"></label>'+
         '</div>'+
         '<div id="cli-emp-row" style="'+(esEmp?'':'display:none')+'">'+
@@ -2049,12 +2049,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       ttl.textContent="📌 Tarea";
       body.innerHTML='<div style="font-weight:750;font-size:1.12rem;margin-bottom:10px">'+t.titulo+'</div><div style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--ink-2)">'+
         (t.fecha?'<span>📅 '+fFecha(t.fecha)+(t.hora?(' '+t.hora):'')+'</span>':'')+
-        (t.responsable?'<span>👤 '+t.responsable+'</span>':'<span>👤 Todos</span>')+
+        (t.responsable?'<span><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> '+t.responsable+'</span>':'<span><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Todos</span>')+
         '<span>⚑ Prioridad: '+(t.prioridad||'MEDIA')+'</span><span>Estado: '+(t.estado||'PENDIENTE')+'</span>'+
         (t.detalle?'<div style="margin-top:4px">'+t.detalle+'</div>':'')+'</div>';
     } else {
       var e=(data||[]).filter(function(x){return x.id===id;})[0]; if(!e)return;
-      ttl.textContent="🚗 "+e.marca+" "+(e.modelo||"");
+      ttl.textContent=""+e.marca+" "+(e.modelo||"");
       body.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;font-size:13.5px;color:var(--ink-2)">'+
         '<span><b>Patente:</b> '+(e.patente||"—")+'  ·  <b>Talla:</b> '+(e.talla||"—")+'</span>'+
         '<span><b>Servicios:</b> '+((e.servicios||[]).join(", ")||"—")+'</span>'+
