@@ -227,6 +227,24 @@
   .ksvc-del{display:none;margin-left:5px;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:13px;line-height:1;padding:0 1px;}
   .ksvc-del:hover{color:var(--crit);}
   .kcard.editing .ksvc-del{display:inline;}
+  /* Cotizar después + checklist de trabajos */
+  .kcotiz{display:flex;align-items:center;gap:7px;margin:9px 0;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer;}
+  .kcotiz-tag{display:inline-block;margin-left:7px;font:700 9px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:#7a2fd0;background:#efe3ff;border:1px solid #d9c2f7;border-radius:999px;padding:3px 6px;vertical-align:middle;}
+  .kcard.cotizar{border-color:#c9a9f2;box-shadow:0 0 0 1px #e6d5fb inset,var(--shadow);}
+  .ktrab{display:flex;flex-direction:column;gap:5px;margin:9px 0;}
+  .ktrab-head{font:700 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
+  .ktrab-count{color:var(--accent-ink);}
+  .ktrab-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);cursor:pointer;margin:0;}
+  .ktrab-row input[type=checkbox]{flex:none;width:15px;height:15px;cursor:pointer;}
+  .ktrab-row span{flex:1;}
+  .ktrab-row span.done{text-decoration:line-through;color:var(--ink-faint);}
+  .ktrab-del{display:none;flex:none;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
+  .ktrab-del:hover{color:var(--crit);}
+  .kcard.editing .ktrab-del{display:inline;}
+  .ktrab-addrow{display:flex;gap:6px;margin-top:2px;}
+  .ktrab-add{flex:1;min-width:0;font:500 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);}
+  .ktrab-add:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .ktrab-addbtn{flex:none;width:34px;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;font-size:17px;font-weight:700;cursor:pointer;}
   .kcard .ktime{font:600 10.5px/1.4 var(--mono);color:var(--ink-faint);margin:6px 0;}
   .kcard .kdur{display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--sans);color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:5px 10px;margin:4px 0 2px;}
   .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
@@ -501,6 +519,7 @@
   .ev.entreg{background:var(--ok-soft);color:var(--ok);border-left-color:var(--ok);}
   .ev.espera{background:var(--accent-soft);color:var(--accent-ink);border-left-color:var(--accent);}
   .ev.agendado{background:var(--surface-3);color:var(--ink-muted);border-left-color:var(--ink-faint);}
+  .ev.cotizar{background:#efe3ff;color:#7a2fd0;border-left-color:#8b3ff0;}
   .cal-more{font:600 10px/1 var(--mono);color:var(--ink-faint);}
 
   .empty{text-align:center;padding:50px 20px;color:var(--ink-faint);}
@@ -1037,8 +1056,12 @@
   var data = [];  // se carga desde Supabase al iniciar sesión
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
-  function vehToDB(e){ return { marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] }; }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]) }; }
+  function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
+    if(_vehExtra){ o.cotizar_despues=!!e.cotizarDespues; o.trabajos=e.trabajos||[]; }
+    return o; }
+  var _vehExtra=true; // columnas cotizar_despues / trabajos (SQL 18). Si faltan, se desactivan solas.
+  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|schema cache|PGRST204/i.test(m); }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
@@ -1046,8 +1069,8 @@
   function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
 
   // ---- escritura en la base (optimista: la cache local ya quedó actualizada) ----
-  function persistVeh(e){ var sb=sbc(); if(!sb)return; sb.from('vehiculos').update(vehToDB(e)).eq('id',e.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar en la nube'); }); }
-  function addVehiculo(e){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.from('vehiculos').insert(vehToDB(e)).select().single().then(function(r){ if(r.error){ toast('⚠ Error al guardar'); return null; } e.id=r.data.id; data.unshift(e);
+  function persistVeh(e){ var sb=sbc(); if(!sb)return; sb.from('vehiculos').update(vehToDB(e)).eq('id',e.id).then(function(r){ if(r.error){ if(_vehExtra && _isColErr(r.error)){ _vehExtra=false; return persistVeh(e); } toast('⚠ No se pudo guardar en la nube'); } }); }
+  function addVehiculo(e){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.from('vehiculos').insert(vehToDB(e)).select().single().then(function(r){ if(r.error){ if(_vehExtra && _isColErr(r.error)){ _vehExtra=false; return addVehiculo(e); } toast('⚠ Error al guardar'); return null; } e.id=r.data.id; data.unshift(e);
     emitirNotif('📅 Nuevo agendamiento', (e.marca+' '+(e.modelo||'')).trim()+(e.patente?(' · '+e.patente):'')+(e.fCoord?(' · '+fFecha(e.fCoord)+' '+(e.hCoord||'')):''), 'ALL','agendamiento');
     return e; }); }
   function deleteVeh(id){ var sb=sbc(); if(sb) sb.from('vehiculos').delete().eq('id',id).then(function(r){ if(r.error) toast('⚠ No se pudo eliminar'); }); }
@@ -1633,8 +1656,19 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<div class="trow"><span>Teléfono</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="contacto" value="'+av(e.contacto||"")+'"></div>'+
           '</details>';
         var editing=!!_kedit[e.id];
-        return '<div class="kcard'+(editing?' editing':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
+        var trarr=e.trabajos||[];
+        var trHTML=trarr.map(function(w,idx){ var done=!!w.ok; return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+idx+'"'+(done?' checked':'')+'><span'+(done?' class="done"':'')+'>'+escH(w.t||"")+'</span><button type="button" class="ktrab-del" data-id="'+e.id+'" data-i="'+idx+'" aria-label="Quitar">×</button></label>'; }).join("");
+        var vtrab=(trarr.length||editing)?('<div class="ktrab">'+
+          (trarr.length?('<div class="ktrab-head">Trabajos <span class="ktrab-count">'+trarr.filter(function(w){return w.ok;}).length+'/'+trarr.length+'</span></div>'):'')+
+          trHTML+
+          (editing?('<div class="ktrab-addrow"><input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Agregar trabajo…"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'">+</button></div>'):'')+
+          '</div>'):'';
+        var vcotiz=editing?('<label class="kcotiz"><input type="checkbox" class="kcotiz-ck" data-id="'+e.id+'"'+(e.cotizarDespues?' checked':'')+'> Cotizar después <span class="hint" style="text-transform:none;letter-spacing:0;font-size:10.5px">(color en agenda)</span></label>'):'';
+        var cotizTag=e.cotizarDespues?'<span class="kcotiz-tag">Por cotizar</span>':'';
+        return '<div class="kcard'+(editing?' editing':'')+(e.cotizarDespues?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
+          vcotiz+
+          vtrab+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           (dur?'<div class="kdur"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Demoró '+dur+'</div>':'')+
           '<button type="button" class="kmedia-btn" data-id="'+e.id+'">Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
@@ -1689,9 +1723,29 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
       var k=inp.dataset.k, val=inp.value; if(k==="patente") val=val.toUpperCase();
       e[k]=val; inp.value=val; persistVeh(e);
-      var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2) v2.textContent=(e.patente||"sin patente"); }
+      var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2){ v2.textContent=(e.patente||"sin patente"); if(e.cotizarDespues) v2.insertAdjacentHTML("beforeend",'<span class="kcotiz-tag">Por cotizar</span>'); } }
       toast("Datos del vehículo actualizados");
     }); });
+    board.querySelectorAll(".kcotiz-ck").forEach(function(ck){ ck.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===ck.dataset.id;})[0]; if(!e)return;
+      e.cotizarDespues=ck.checked; persistVeh(e); renderBoard(); toast(ck.checked?"Marcado: cotizar después":"Ya no es cotizar después");
+    }); });
+    board.querySelectorAll(".ktrab-ck").forEach(function(ck){ ck.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===ck.dataset.id;})[0]; if(!e||!e.trabajos)return;
+      var i=+ck.dataset.i; if(!e.trabajos[i])return; e.trabajos[i].ok=ck.checked; persistVeh(e);
+      var row=ck.closest(".ktrab-row"), sp=row&&row.querySelector("span"); if(sp) sp.className=ck.checked?"done":"";
+      var cont=ck.closest(".ktrab"), cnt=cont&&cont.querySelector(".ktrab-count"); if(cnt) cnt.textContent=e.trabajos.filter(function(w){return w.ok;}).length+"/"+e.trabajos.length;
+    }); });
+    board.querySelectorAll(".ktrab-del").forEach(function(b){ b.addEventListener("click",function(){
+      var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e||!e.trabajos)return;
+      e.trabajos.splice(+b.dataset.i,1); persistVeh(e); renderBoard();
+    }); });
+    function _trabAdd(id){ var e=data.filter(function(x){return x.id===id;})[0]; if(!e)return;
+      var inp=board.querySelector('.ktrab-add[data-id="'+id+'"]'); if(!inp)return; var t=(inp.value||"").trim(); if(!t)return;
+      e.trabajos=e.trabajos||[]; e.trabajos.push({t:t,ok:false}); persistVeh(e); renderBoard();
+    }
+    board.querySelectorAll(".ktrab-addbtn").forEach(function(b){ b.addEventListener("click",function(){ _trabAdd(b.dataset.id); }); });
+    board.querySelectorAll(".ktrab-add").forEach(function(inp){ inp.addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); _trabAdd(inp.dataset.id); } }); });
   }
   function advance(id,dir){
     var e=data.filter(function(x){return x.id===id;})[0]; if(!e)return;
@@ -2313,7 +2367,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
         evs=list.slice(0,4).map(function(e){
           if(e._tarea){ return '<span class="ev tarea-ev" data-tipo="tarea" data-id="'+e.id+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
-          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; return '<span class="ev '+estClass(e.estado)+'" data-tipo="veh" data-id="'+e.id+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
+          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; return '<span class="ev '+estClass(e.estado)+(e.cotizarDespues?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
         }).join("");
         if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
