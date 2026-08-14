@@ -401,6 +401,18 @@
   /* Modo tablet (usuario kiosco): oculta gestión de trabajadores y el botón visible de salir */
   body.kiosco-user #trab-card{display:none!important;}
   body.kiosco-user #kiosco-close{display:none!important;}
+  /* Modo tablet como app: barra inferior, sin menú lateral */
+  .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:300;height:64px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom,0px);}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;color:var(--ink-muted);font:700 10.5px/1 var(--sans);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+  .tabbar button .tbi{font-size:22px;line-height:1;}
+  .tabbar button.active{color:var(--accent-ink);}
+  .tabbar button:active{background:var(--surface-2);}
+  body.kiosco-user .tabbar{display:flex;}
+  body.kiosco-user .sidebar,body.kiosco-user .desk-toggle{display:none!important;}
+  body.kiosco-user .mtop{display:flex!important;justify-content:center;}
+  body.kiosco-user .mtop .hamb{display:none;}
+  body.kiosco-user main{padding-bottom:80px;}
+  body.kiosco-user .kiosco{padding-bottom:92px;}
   #kio-clock{cursor:default;-webkit-user-select:none;user-select:none;}
   /* Admin: accesos */
   .acc-vistas{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;}
@@ -843,7 +855,7 @@
           <input id="acc-email" placeholder="otro correo@…" autocomplete="off" style="display:none;width:100%;margin:-4px 0 10px;font:500 14px/1 var(--sans);padding:11px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);box-sizing:border-box">
           <label style="display:flex;align-items:flex-start;gap:9px;margin:4px 0 14px;padding:11px 13px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);cursor:pointer">
             <input type="checkbox" id="acc-kiosco" style="margin-top:2px">
-            <span><b>🔒 Modo tablet</b> — solo marcar asistencia<br><span class="hint" style="font-size:11.5px;color:var(--ink-faint)">Entra directo al teclado para marcar. No ve el resto ni puede agregar trabajadores.</span></span>
+            <span><b>📱 Modo tablet</b> — app con barra abajo<br><span class="hint" style="font-size:11.5px;color:var(--ink-faint)">Solo Calendario, Seguimiento y Marcar asistencia. Sin el resto del sistema.</span></span>
           </label>
           <div class="lab" id="acc-vistas-lab" style="margin-bottom:8px">Pestañas que puede ver</div>
           <div id="acc-vistas" class="acc-vistas"></div>
@@ -946,6 +958,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Barra inferior tipo app (solo en Modo tablet) -->
+  <nav class="tabbar" id="tabbar" aria-label="Modo tablet">
+    <button type="button" data-tb="agenda"><span class="tbi">📅</span>Calendario</button>
+    <button type="button" data-tb="seguimiento"><span class="tbi">🔧</span>Seguimiento</button>
+    <button type="button" data-tb="marcar"><span class="tbi">🕐</span>Marcar</button>
+  </nav>
 
   <!-- Hoja de impresión de la cotización (PDF) -->
   <div id="cotiz-print"></div>
@@ -1145,8 +1164,9 @@
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
     if(curBtn && curBtn.style.display==='none'){ var firstVis=Array.prototype.filter.call(tabsEl.querySelectorAll('button'),function(b){return b.style.display!=='none';})[0]; if(firstVis) firstVis.click(); }
-    if(kiosco) kioOpen(); // entra directo al teclado de marcaje, pantalla completa
+    if(kiosco){ setTBActive(state.view); } // app con barra inferior (Calendario/Seguimiento/Marcar)
   }
+  function setTBActive(v){ document.querySelectorAll('#tabbar button').forEach(function(b){ b.classList.toggle('active', b.dataset.tb===v); }); }
   window.ISP_applyRole=applyRole;
   function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
     sb.from('accesos').select('*').then(function(r){ ACCESOS={}; if(r.data){ r.data.forEach(function(row){ ACCESOS[(row.email||'').toLowerCase()]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
@@ -1276,17 +1296,34 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     // Salida discreta del modo tablet: mantener presionado el reloj 2s (solo el dueño la conoce)
     var clk=document.getElementById("kio-clock");
     if(clk){ var _t=null;
-      var _start=function(){ clk.style.opacity=".6"; _t=setTimeout(function(){ clk.style.opacity=""; kioClose(); },2000); };
+      var _start=function(){ clk.style.opacity=".6"; _t=setTimeout(function(){ clk.style.opacity=""; kioClose(); setTBActive(state.view); },2000); };
       var _cancel=function(){ clk.style.opacity=""; if(_t){ clearTimeout(_t); _t=null; } };
       clk.addEventListener("touchstart",_start,{passive:true}); clk.addEventListener("touchend",_cancel); clk.addEventListener("touchcancel",_cancel);
       clk.addEventListener("mousedown",_start); clk.addEventListener("mouseup",_cancel); clk.addEventListener("mouseleave",_cancel);
+    }
+    // Barra inferior tipo app (Modo tablet): Calendario / Seguimiento / Marcar
+    var tabbar=document.getElementById("tabbar");
+    if(tabbar) tabbar.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return;
+      var v=b.dataset.tb;
+      if(v==="marcar"){ kioOpen(); setTBActive("marcar"); return; }
+      kioClose();
+      var btn=tabsEl.querySelector('button[data-view="'+v+'"]'); if(btn) btn.click();
+      setTBActive(v);
+    });
+    // Logout discreto en Modo tablet: mantener presionado el logo de arriba 2s
+    var logo=document.querySelector(".mtop-logo");
+    if(logo){ var _lt=null;
+      var _ls=function(){ if(!document.body.classList.contains("kiosco-user"))return; _lt=setTimeout(function(){ if(confirm("¿Cerrar la sesión de la tablet?")) { var lo=document.getElementById("logout-btn"); if(lo) lo.click(); } },2000); };
+      var _lc=function(){ if(_lt){ clearTimeout(_lt); _lt=null; } };
+      logo.addEventListener("touchstart",_ls,{passive:true}); logo.addEventListener("touchend",_lc); logo.addEventListener("touchcancel",_lc);
+      logo.addEventListener("mousedown",_ls); logo.addEventListener("mouseup",_lc); logo.addEventListener("mouseleave",_lc);
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
   var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
   function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
-  function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — solo Asistencia":"Pestañas que puede ver"; }
+  function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
@@ -1305,7 +1342,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var lista=document.getElementById("acc-list"); if(!lista)return;
     var keys=Object.keys(ACCESOS);
     lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres;
-      if(vs.indexOf('kiosco')>=0){ nombres="🔒 Modo tablet (solo marcar asistencia)"; }
+      if(vs.indexOf('kiosco')>=0){ nombres="📱 Modo tablet (Calendario · Seguimiento · Marcar)"; }
       else { nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; }
       return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
     lista.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click",function(){ accCargarEnForm(b.dataset.edit); }); });
@@ -1322,7 +1359,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
       var email=accEmailActual();
       if(!email||email.indexOf("@")<0){ toast("Elige una cuenta o escribe un correo válido"); return; }
-      var vs; if(kio && kio.checked){ vs=['asistencia','kiosco']; }
+      var vs; if(kio && kio.checked){ vs=['agenda','seguimiento','asistencia','kiosco']; }
       else { vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); }); }
       sb.from("accesos").upsert({email:email,vistas:vs,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 12?)"); return; }
         ACCESOS[email]=vs; var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} accSetChecks([]); pintarAdmin();
