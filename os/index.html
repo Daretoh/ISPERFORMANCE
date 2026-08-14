@@ -867,7 +867,8 @@
       <div class="cotiz-modal-bar">
         <span>Vista previa</span>
         <div>
-          <button class="btn primary" id="cotiz-print-btn">Imprimir / Guardar PDF</button>
+          <button class="btn primary" id="cotiz-dl-btn">Descargar PDF</button>
+          <button class="btn ghost" id="cotiz-print-btn">Imprimir</button>
           <button class="btn ghost" id="cotiz-modal-close">Cerrar</button>
         </div>
       </div>
@@ -1241,6 +1242,25 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-vehid").value=""; document.getElementById("cot-descadic").value="0"; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
   var CP_CSS='*{box-sizing:border-box}body{margin:0;padding:22px;font-family:Inter,-apple-system,Segoe UI,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cp-sheet{max-width:800px;margin:0 auto}.cp-head{background:#111;color:#fff;border-radius:10px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}.cp-head .cp-logo{font:900 30px/1 sans-serif;letter-spacing:-.02em}.cp-head .cp-logo small{display:block;font:700 11px/1 monospace;letter-spacing:.35em;opacity:.85;margin-top:4px}.cp-head .cp-meta{text-align:right;font-size:13px}.cp-head .cp-meta b{font-size:17px}.cp-sec{font:800 13px/1 sans-serif;text-transform:uppercase;letter-spacing:.03em;margin:18px 0 8px}.cp-cliente{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:13.5px}table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}table.cp-table th{background:#111;color:#fff;padding:8px;text-align:left;font-weight:700;font-size:11px}table.cp-table th.r,table.cp-table td.r{text-align:right}table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5}.cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:16px;flex-wrap:wrap}.cp-pay{font-size:12.5px;line-height:1.7}.cp-pay .cp-sec{margin-top:0}.cp-totbox{min-width:260px}.cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:7px 12px;font-size:13px}.cp-totbox .r1.big{background:#111;color:#fff;font-weight:800;font-size:15px}.cp-firma{margin-top:40px;text-align:center}.cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px}.cp-firma b{font-size:14px}.cp-firma small{color:#555}.cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-radius:8px;padding:12px 14px}.cp-footer{margin-top:20px;border-top:2px solid #111;padding-top:10px;display:flex;justify-content:space-between;font-size:11.5px;color:#333;flex-wrap:wrap;gap:8px}@page{margin:12mm}';
+  var _cotActual="";
+  function cargarLib(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){rej(new Error("no cargo "+src));}; document.head.appendChild(s); }); }
+  function cotDescargarPDF(){
+    var sheet=document.querySelector("#cotiz-modal-body .cp-sheet"); if(!sheet) return;
+    toast("Generando PDF…");
+    var libs=[];
+    if(!window.html2canvas) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"));
+    if(!(window.jspdf&&window.jspdf.jsPDF)) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"));
+    Promise.all(libs).then(function(){ return html2canvas(sheet,{scale:2,backgroundColor:"#ffffff",useCORS:true}); }).then(function(canvas){
+      var img=canvas.toDataURL("image/jpeg",0.92);
+      var pdf=new window.jspdf.jsPDF("p","mm","a4");
+      var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+      var iw=pw-14, ih=canvas.height*iw/canvas.width;
+      if(ih>ph-14){ ih=ph-14; iw=canvas.width*ih/canvas.height; }
+      pdf.addImage(img,"JPEG",(pw-iw)/2,7,iw,ih);
+      pdf.save("Cotizacion IS Performance N"+_cotActual+".pdf");
+      toast("✓ PDF descargado");
+    }).catch(function(e){ toast("No se pudo generar el PDF (revisa tu conexión)"); });
+  }
   function cotPrintPDF(){
     var html=document.getElementById("cotiz-modal-body").innerHTML; if(!html){ return; }
     var w=window.open("","cotpdf"); if(!w){ toast("Permite las ventanas emergentes para el PDF"); return; }
@@ -1263,6 +1283,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
       +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
       +'<div class="cp-footer"><span>+569 8561 5636</span><span>'+escH(PAGO.correo)+'</span><span>isperformance.cl</span></div></div>';
+    _cotActual=c.numero;
     document.getElementById("cotiz-modal-body").innerHTML=html;
     document.getElementById("cotiz-modal").classList.add("show");
   }
@@ -1271,6 +1292,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar;
     var pc=document.getElementById("cotiz-print-btn"), cc=document.getElementById("cotiz-modal-close"), cm=document.getElementById("cotiz-modal");
     if(pc) pc.onclick=cotPrintPDF;
+    var dl=document.getElementById("cotiz-dl-btn"); if(dl) dl.onclick=cotDescargarPDF;
     if(cc) cc.onclick=function(){ cm.classList.remove("show"); };
     if(cm) cm.addEventListener("click",function(ev){ if(ev.target===cm) cm.classList.remove("show"); }); })();
   function updateCounts(){
