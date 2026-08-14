@@ -831,8 +831,7 @@
           <h3>Trabajadores</h3>
           <form id="trab-form" class="row c2" autocomplete="off" style="margin:6px 0 14px">
             <label class="f" style="grid-column:1/-1"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
-            <label class="f"><span class="lab">RUT completo</span><input name="tRut" required placeholder="12.345.678-9"></label>
-            <label class="f"><span class="lab">Valor hora $</span><input name="tValor" type="number" min="0" step="1" placeholder="3500"></label>
+            <label class="f" style="grid-column:1/-1"><span class="lab">RUT</span><input name="tRut" required inputmode="text" placeholder="16331734-6"></label>
             <div style="grid-column:1/-1"><button type="submit" class="btn primary" style="width:100%">Agregar trabajador</button></div>
           </form>
           <p class="hint" style="display:block;margin:-6px 0 4px;font-size:11.5px;color:var(--ink-faint)">Marca su asistencia con los <b>últimos 4 dígitos</b> del RUT (el sistema los toma solo).</p>
@@ -1242,7 +1241,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function hhmm(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
   function pintarAsistencia(){
     var tl=document.getElementById("trab-list");
-    if(tl){ tl.innerHTML=_trab.length?_trab.map(function(t){ return '<div class="asis-row"><span><b>'+escH(t.nombre)+'</b>'+(+t.valor_hora?' · '+clp(t.valor_hora)+'/h':'')+' <span class="rut">marca ••'+escH(t.rut4)+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
+    if(tl){ tl.innerHTML=_trab.length?_trab.map(function(t){ return '<div class="asis-row"><span><b>'+escH(t.nombre)+'</b> <span class="rut">marca ••'+escH(t.rut4)+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
     var al=document.getElementById("asis-list");
     if(al){ var hoy=_asis.filter(function(a){return esHoy(a.ts);});
       al.innerHTML=hoy.length?hoy.map(function(a){ var cl=(a.tipo==="ENTRADA")?"tin":"tout"; return '<div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+'</span></div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
@@ -1282,13 +1281,22 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       setTimeout(kioReset,2200);
     });
   }
+  // ---- Validación de RUT (dígito verificador módulo 11) ----
+  function computeDV(cuerpo){ var sum=0,mul=2; for(var i=cuerpo.length-1;i>=0;i--){ sum+=parseInt(cuerpo[i],10)*mul; mul=(mul===7)?2:mul+1; } var res=11-(sum%11); return res===11?"0":(res===10?"K":String(res)); }
+  function parseRUT(raw){ var s=(raw||"").toUpperCase().replace(/[^0-9K]/g,""); if(s.length<2) return null;
+    var dv=s.slice(-1), cuerpo=s.slice(0,-1);
+    if(!/^[0-9]+$/.test(cuerpo)||cuerpo.length<6) return null; // cuerpo solo dígitos, RUT plausible
+    if(computeDV(cuerpo)!==dv) return null; // dígito verificador incorrecto
+    return { fmt:cuerpo+"-"+dv, rut4:cuerpo.slice(-4) }; }
   (function(){
     var tf=document.getElementById("trab-form");
     if(tf) tf.addEventListener("submit",function(ev){ ev.preventDefault(); var sb=sbc(); if(!sb)return;
-      var nombre=tf.tNombre.value.trim(), rut=tf.tRut.value.trim(), valor=parseInt(tf.tValor.value,10)||0;
-      var clean=rut.replace(/[^0-9]/g,""), rut4=clean.slice(-4); // solo dígitos (el kiosco es teclado numérico)
-      if(!nombre||rut4.length<4){ toast("Completa nombre y un RUT válido"); return; }
-      sb.from("trabajadores").insert({nombre:nombre,rut:rut,rut4:rut4,valor_hora:valor,activo:true}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 11?)"); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado"); }); });
+      var nombre=tf.tNombre.value.trim();
+      var p=parseRUT(tf.tRut.value);
+      if(!nombre){ toast("Falta el nombre"); return; }
+      if(!p){ toast("RUT inválido. Escríbelo así: 16331734-6"); return; }
+      if(_trab.some(function(x){return String(x.rut4)===p.rut4;})){ toast("⚠ Ya hay alguien con esos últimos 4 dígitos ("+p.rut4+")"); return; }
+      sb.from("trabajadores").insert({nombre:nombre,rut:p.fmt,rut4:p.rut4,valor_hora:0,activo:true}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 11?)"); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado · marca con "+p.rut4); }); });
     var kb=document.getElementById("asis-kiosco-btn"); if(kb) kb.addEventListener("click",kioOpen);
     var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
     var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
