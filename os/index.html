@@ -223,7 +223,10 @@
   .kcard .kv1{font-weight:750;font-size:14px;letter-spacing:-.01em;}
   .kcard .kv2{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
   .kcard .ksvc{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;}
-  .kcard .ksvc span{font:600 10px/1 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 6px;color:var(--ink-2);}
+  .kcard .ksvc span{display:inline-flex;align-items:center;font:600 10px/1 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 6px;color:var(--ink-2);}
+  .ksvc-del{display:none;margin-left:5px;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:13px;line-height:1;padding:0 1px;}
+  .ksvc-del:hover{color:var(--crit);}
+  .kcard.editing .ksvc-del{display:inline;}
   .kcard .ktime{font:600 10.5px/1.4 var(--mono);color:var(--ink-faint);margin:6px 0;}
   .kcard .kdur{display:inline-flex;align-items:center;gap:5px;font:700 11px/1 var(--sans);color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:5px 10px;margin:4px 0 2px;}
   .kcard .kw{width:100%;margin:8px 0 0;font:600 12px/1 var(--sans);padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);}
@@ -1599,7 +1602,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       }
       var cls=["c-agend","c-espera","c-proc","c-term","c-entreg"][ci];
       var cards=items.map(function(e){
-        var svcs=(e.servicios||[]).map(function(s){return '<span>'+s+'</span>';}).join("");
+        var svcs=(e.servicios||[]).map(function(s){return '<span>'+escH(s)+'<button type="button" class="ksvc-del" data-id="'+e.id+'" data-svc="'+av(s)+'" title="Quitar servicio" aria-label="Quitar servicio">×</button></span>';}).join("");
         var tline="";
         if(e.hCoord && ci===0) tline+="📅 Cita "+fFecha(e.fCoord)+" "+e.hCoord;
         if(e.hIngreso) tline+=(tline?" · ":"")+"⏵ Ingreso "+e.hIngreso;
@@ -1628,7 +1631,6 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<div class="trow"><span>Año</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="anioVeh" value="'+av(e.anioVeh||"")+'"></div>'+
           '<div class="trow"><span>Cliente</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="cliente" value="'+av(e.cliente||"")+'"></div>'+
           '<div class="trow"><span>Teléfono</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="contacto" value="'+av(e.contacto||"")+'"></div>'+
-          '<div class="trow"><span>Trabajador</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="trabajador" value="'+av(e.trabajador||"")+'"></div>'+
           '</details>';
         var editing=!!_kedit[e.id];
         return '<div class="kcard'+(editing?' editing':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
@@ -1677,6 +1679,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     board.querySelectorAll(".ksvc-add").forEach(function(sel){ sel.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===sel.dataset.id;})[0]; if(!e||!sel.value)return;
       e.servicios=e.servicios||[]; if(e.servicios.indexOf(sel.value)<0){ e.servicios.push(sel.value); persistVeh(e); renderBoard(); toast("Servicio agregado: "+sel.value); }
+    }); });
+    board.querySelectorAll(".ksvc-del").forEach(function(b){ b.addEventListener("click",function(ev){ ev.stopPropagation();
+      var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e)return;
+      e.servicios=(e.servicios||[]).filter(function(s){return s!==b.dataset.svc;});
+      persistVeh(e); renderBoard(); toast("Servicio quitado: "+b.dataset.svc);
     }); });
     board.querySelectorAll(".vedit").forEach(function(inp){ inp.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
