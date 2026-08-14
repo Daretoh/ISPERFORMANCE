@@ -701,6 +701,7 @@
     <!-- ============ STOCK ============ -->
     <section class="view" id="view-stock">
       <div class="vhead"><div class="eye">Inventario</div><h1>Stock</h1></div>
+      <div class="stock-cat" id="stock-cat"><button data-c="VENTA" class="on">Productos en venta</button><button data-c="INSUMO">Insumos</button></div>
       <div id="stock-kpis"></div>
       <div class="stock-bar">
         <div class="pfilter" id="stock-filtro"><button data-f="TODOS" class="on">Todos</button><button data-f="EQUIPAMIENTO">Equipamiento</button><button data-f="DETAILING">Detailing</button></div>
@@ -1069,7 +1070,7 @@
   window.ISP_applyRole=applyRole;
   function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
     sb.from('accesos').select('*').then(function(r){ ACCESOS={}; if(r.data){ r.data.forEach(function(row){ ACCESOS[(row.email||'').toLowerCase()]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
-  var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", tareaFiltro:"PENDIENTE" };
+  var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", stockCat:"VENTA", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
   var productos=[];     // inventario (tabla productos)
@@ -1876,13 +1877,15 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   // ---------- stock / inventario ----------
   function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
-  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
   function delProductoDB(id){ var sb=sbc(); if(sb) sb.from('productos').delete().eq('id',id).then(function(){}); }
   function kstat(l,v,s){ return '<div class="kpi" style="cursor:default"><div class="kl">'+l+'</div><div class="kv">'+v+'</div><div class="ks">'+s+'</div></div>'; }
   function renderStock(){
     var f=state.stockFiltro, q=(state.stockBuscar||"").trim().toLowerCase();
     document.querySelectorAll("#stock-filtro button").forEach(function(b){ b.classList.toggle("on",b.dataset.f===f); });
+    document.querySelectorAll("#stock-cat button").forEach(function(b){ b.classList.toggle("on",b.dataset.c===state.stockCat); });
     var lista=productos.filter(function(p){
+      if((p.categoria||"VENTA")!==state.stockCat) return false;
       if(f!=="TODOS" && (p.tipo||"EQUIPAMIENTO")!==f) return false;
       if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")).toLowerCase().indexOf(q)>=0;
       return true;
@@ -1897,23 +1900,25 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       return '<tr><td><b>'+(p.producto||"")+'</b></td><td>'+(p.marca||"—")+'</td><td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>'+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
-        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">+ ent</button> <button class="stk-btn sal" data-id="'+p.id+'">− sal</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
+        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">+ ent</button> <button class="stk-btn sal" data-id="'+p.id+'">− sal</button> <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Mover</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">Sin productos'+(q?' para "'+q+'"':'')+'</td></tr>')+'</tbody></table></div>';
     document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ p.entrada=(+p.entrada||0)+1; saveProducto(p); renderStock(); toast("+1 entrada: "+p.producto); }
       else if(b.classList.contains("sal")){ p.salida=(+p.salida||0)+1; saveProducto(p); renderStock(); toast("−1 salida: "+p.producto); }
+      else if(b.classList.contains("mov")){ p.categoria=((p.categoria||"VENTA")==="VENTA")?"INSUMO":"VENTA"; saveProducto(p); renderStock(); toast("Movido a "+(p.categoria==="INSUMO"?"Insumos":"En venta")); }
       else if(b.classList.contains("del")){ if(confirm("¿Eliminar "+p.producto+"?")){ productos=productos.filter(function(x){return x.id!==b.dataset.id;}); delProductoDB(b.dataset.id); renderStock(); toast("Eliminado"); } }
     }); });
   }
   (function(){
+    document.querySelectorAll("#stock-cat button").forEach(function(b){ b.addEventListener("click",function(){ state.stockCat=b.dataset.c; renderStock(); }); });
     document.querySelectorAll("#stock-filtro button").forEach(function(b){ b.addEventListener("click",function(){ state.stockFiltro=b.dataset.f; renderStock(); }); });
     var sBuscar=document.getElementById("stock-buscar"); if(sBuscar) sBuscar.addEventListener("input",function(){ state.stockBuscar=sBuscar.value; renderStock(); });
     var sForm=document.getElementById("stock-form");
     if(sForm) sForm.addEventListener("submit",function(ev){ ev.preventDefault();
-      var o={tipo:sForm.tipo.value,producto:sForm.producto.value.trim(),marca:sForm.marca.value.trim(),compatibilidad:sForm.compatibilidad.value.trim(),medidas:sForm.medidas.value.trim(),entrada:parseInt(sForm.entrada.value)||0,salida:0};
-      addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Producto agregado"); });
+      var o={tipo:sForm.tipo.value,producto:sForm.producto.value.trim(),marca:sForm.marca.value.trim(),compatibilidad:sForm.compatibilidad.value.trim(),medidas:sForm.medidas.value.trim(),entrada:parseInt(sForm.entrada.value)||0,salida:0,categoria:state.stockCat};
+      addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Agregado a "+(state.stockCat==="INSUMO"?"Insumos":"Productos en venta")); });
     });
   })();
 
