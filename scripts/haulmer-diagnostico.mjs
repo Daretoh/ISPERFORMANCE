@@ -3,8 +3,12 @@
 // y ver la estructura real de la respuesta. NO escribe nada, solo consulta y loguea.
 // La API key vive en el secreto de GitHub HAULMER — nunca se imprime.
 
-const API_KEY = process.env.HAULMER;
+const API_KEY = (process.env.HAULMER || '').trim();
 if (!API_KEY) { console.error('Falta el secreto HAULMER.'); process.exit(1); }
+
+// Diagnóstico del FORMATO de la key (sin revelarla nunca)
+const esHex32 = /^[0-9a-fA-F]{32}$/.test(API_KEY);
+console.log(`Key: largo=${API_KEY.length} caracteres | ¿formato 32-hex OpenFactura?=${esHex32 ? 'SÍ' : 'NO'} | prefijo="${API_KEY.slice(0,3)}…"`);
 
 const BASE = 'https://api.haulmer.com';
 
@@ -53,6 +57,7 @@ async function probar(method, path, body) {
     console.log(`\n=== ${method} ${path} ${body ? JSON.stringify(body) : ''} ===`);
     console.log(`HTTP ${r.status}`);
     if (typeof parsed === 'string') console.log('Respuesta (texto):', parsed.slice(0, 600));
+    else if (r.status !== 200) console.log('Respuesta:', JSON.stringify(parsed).slice(0, 600));
     else console.log(resumen(parsed));
     return r.status;
   } catch (e) {
