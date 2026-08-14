@@ -799,6 +799,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <h3 style="margin:0">Nueva cotización <span class="tag" id="cot-num-tag">N° —</span></h3>
         </div>
+        <label class="f" style="margin:12px 0 0"><span class="lab">Vincular a un vehículo del taller (opcional)</span><select id="cot-vehid"><option value="">— Sin vincular —</option></select></label>
         <div class="row c4" style="margin:12px 0">
           <label class="f"><span class="lab">Cliente</span><input id="cot-nom" list="cot-cli-list" placeholder="Nombre (elige o escribe)"></label>
           <label class="f"><span class="lab">Teléfono</span><input id="cot-tel" placeholder="+569…"></label>
@@ -987,7 +988,8 @@
       sb.from('clientes').select('*'),
       sb.from('productos').select('*').order('producto'),
       sb.from('tareas').select('*').order('fecha'),
-      sb.from('seguimientos').select('*').order('fecha',{ascending:false})
+      sb.from('seguimientos').select('*').order('fecha',{ascending:false}),
+      sb.from('cotizaciones').select('*').order('numero',{ascending:false})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -997,6 +999,7 @@
       productos=(res[5].data||[]);
       tareas=(res[6].data||[]);
       seguimientosAll=((res[7]&&res[7].data)||[]);
+      _cotiz=((res[8]&&res[8].data)||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -1208,6 +1211,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var sl=document.getElementById("cot-serv-list"); if(sl && !sl.dataset.done){ sl.innerHTML=CATALOGO.map(function(s){return '<option value="'+av(s.n)+'">';}).join(""); sl.dataset.done="1"; }
     _cotCliMap={}; (data||[]).forEach(function(v){ var nom=(v.cliente||"").trim(); if(!nom)return; var k=nom.toLowerCase(); if(!_cotCliMap[k]) _cotCliMap[k]={nombre:nom, tel:v.contacto||"", veh:((v.marca||"")+" "+(v.modelo||"")).trim(), anio:v.anioVeh||""}; });
     var cl=document.getElementById("cot-cli-list"); if(cl){ cl.innerHTML=Object.keys(_cotCliMap).map(function(k){return '<option value="'+av(_cotCliMap[k].nombre)+'">';}).join(""); }
+    var vs=document.getElementById("cot-vehid"); if(vs){ var cur=vs.value; vs.innerHTML='<option value="">— Sin vincular —</option>'+(data||[]).map(function(v){ return '<option value="'+v.id+'">'+escH(((v.marca||"")+" "+(v.modelo||"")).trim()+(v.patente?(" · "+v.patente):"")+(v.cliente?(" · "+v.cliente):""))+'</option>'; }).join(""); vs.value=cur;
+      if(!vs.dataset.b){ vs.dataset.b="1"; vs.onchange=function(){ var v=(data||[]).filter(function(x){return String(x.id)===vs.value;})[0]; if(v){ document.getElementById("cot-nom").value=v.cliente||""; document.getElementById("cot-tel").value=v.contacto||""; document.getElementById("cot-veh").value=((v.marca||"")+" "+(v.modelo||"")).trim(); document.getElementById("cot-anio").value=v.anioVeh||""; } }; } }
   }
   function cotCliFill(){ var c=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]; if(!c)return; var tel=document.getElementById("cot-tel"),veh=document.getElementById("cot-veh"),an=document.getElementById("cot-anio"); if(!tel.value)tel.value=c.tel; if(!veh.value)veh.value=c.veh; if(!an.value&&c.anio)an.value=c.anio; }
   function cotFilas(){ return Array.prototype.map.call(document.querySelectorAll("#cot-items .cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:+r.querySelector(".cot-precio").value||0, descPct:+r.querySelector(".cot-descp").value||0 }; }); }
@@ -1237,10 +1242,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var d=cotCalc(), filas=d.filas.filter(function(f){return f.desc||f.precio;});
     if(!filas.length){ toast("Agrega al menos una línea con descripción o precio"); return; }
     var numero=cotProxNum();
-    var row={ numero:numero, fecha:todayISO(), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), vehiculo:document.getElementById("cot-veh").value.trim(), anio:document.getElementById("cot-anio").value.trim(), items:filas, desc_adic_pct:d.da, estado:"ENVIADA", autor:(window.ISP_EMAIL||"") };
+    var row={ numero:numero, fecha:todayISO(), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), vehiculo:document.getElementById("cot-veh").value.trim(), anio:document.getElementById("cot-anio").value.trim(), items:filas, desc_adic_pct:d.da, vehiculo_id:(document.getElementById("cot-vehid").value||null), estado:"ENVIADA", autor:(window.ISP_EMAIL||"") };
     sb.from("cotizaciones").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 13?)"); return; } _cotiz.unshift(r.data); pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); toast("✓ Cotización N°"+numero+" guardada"); cotImprimir(r.data); });
   }
-  function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-descadic").value="0"; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
+  function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-vehid").value=""; document.getElementById("cot-descadic").value="0"; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
   function cotImprimir(c){ var items=c.items||[], sub=0, filasHTML="";
     for(var i=0;i<10;i++){ var it=items[i];
       if(it){ var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*(+it.descPct||0)/100);
@@ -1914,7 +1919,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var hist=c.items.slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;}).map(function(e){
       var st=e.cobrado?'<span class="chip cobrado">Cobrado</span>':'<span class="chip '+estClass(e.estado)+'">'+e.estado+'</span>';
       var nm=(e.media||[]).length; var folder='<button class="cli-hist-media" data-id="'+e.id+'" title="Ver adjuntos del auto" style="border:none;background:transparent;cursor:pointer;font-size:16px;line-height:1">📁'+(nm?'<span style="font-size:9px;font-weight:800;vertical-align:top;color:var(--accent-ink)">'+nm+'</span>':'')+'</button>';
-      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td><td style="text-align:center">'+folder+'</td></tr>';
+      var cots=(_cotiz||[]).filter(function(x){return x.vehiculo_id && String(x.vehiculo_id)===String(e.id);});
+      var cotChip=cots.map(function(ct){ return '<button class="cli-cot" data-cotid="'+ct.id+'" title="Ver cotización" style="border:1px solid var(--line-strong);background:var(--surface-2);border-radius:6px;padding:2px 7px;font:700 10px var(--sans);color:var(--accent-ink);cursor:pointer;margin-left:4px">Cot. N°'+ct.numero+'</button>'; }).join("");
+      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td><td style="text-align:center">'+folder+cotChip+'</td></tr>';
     }).join("");
     var info=clientesInfo[c.clave]||{};
     var esEmp=(info.tipo==='EMPRESA');
@@ -2002,6 +2009,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var _segAdd=wrap.querySelector("#cli-seg-add");
     if(_segAdd) _segAdd.addEventListener("click",function(){ var f=wrap.querySelector("#cli-seg-fecha").value||todayISO(); var rr=wrap.querySelector("#cli-seg-res").value; var nn=wrap.querySelector("#cli-seg-nota").value.trim(); addSeguimiento(c.clave, f, rr, nn, function(){ wrap.querySelector("#cli-seg-nota").value=''; toast("✓ Contacto registrado"); }); });
     wrap.querySelectorAll(".cli-hist-media").forEach(function(b){ b.addEventListener("click",function(){ var e=data.filter(function(x){return String(x.id)===String(b.dataset.id);})[0]; if(!e){ toast("No encontrado"); return; } e.media=e.media||[]; abrirGaleria("Adjuntos — "+e.marca+" "+(e.modelo||"")+(e.patente?(" ("+e.patente+")"):""), e.media, "veh/"+e.id, "image/*,video/*,application/pdf", function(){ persistVeh(e); renderClientes(); }, {cats:['Exterior','Interior','Motor','Boleta','Respaldo','Factura','Otro'],defCat:'Exterior'}); }); });
+    wrap.querySelectorAll(".cli-cot").forEach(function(b){ b.addEventListener("click",function(){ var ct=(_cotiz||[]).filter(function(x){return String(x.id)===String(b.dataset.cotid);})[0]; if(ct) cotImprimir(ct); }); });
     var _mergeBtn=wrap.querySelector("#cli-merge-btn");
     if(_mergeBtn) _mergeBtn.addEventListener("click",function(){ var tgt=wrap.querySelector("#cli-merge").value; if(!tgt){ toast("Elige el cliente destino"); return; } if(confirm("¿Fusionar «"+cliNombre(c)+"» dentro del cliente elegido? Se moverán sus vehículos y seguimiento.")){ fusionarCliente(c.clave, tgt); } });
     var _segSortBtn=wrap.querySelector("#cli-seg-sort");
