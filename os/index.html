@@ -1620,12 +1620,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<div class="trow"><span>T. muerto (min)</span><input type="number" min="0" step="5" class="tmin" data-id="'+e.id+'" value="'+(+e.tMuerto||0)+'"></div>'+
           '<div class="trow"><span>+ Servicio</span><select class="ksvc-add" data-id="'+e.id+'"><option value="">añadir…</option>'+CATALOGO.map(function(s){return '<option>'+s.n+'</option>';}).join("")+'</select></div>'+
           '</details>';
+        var vdatos='<details class="ktimes"><summary>Datos del vehículo</summary>'+
+          '<div class="trow"><span>Marca</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="marca" value="'+av(e.marca||"")+'"></div>'+
+          '<div class="trow"><span>Modelo</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="modelo" value="'+av(e.modelo||"")+'"></div>'+
+          '<div class="trow"><span>Patente</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="patente" value="'+av(e.patente||"")+'" style="text-transform:uppercase"></div>'+
+          '<div class="trow"><span>Talla</span><select class="vedit" data-id="'+e.id+'" data-k="talla">'+["S","M","L","XL"].map(function(t){return '<option'+(e.talla===t?' selected':'')+'>'+t+'</option>';}).join("")+'</select></div>'+
+          '<div class="trow"><span>Año</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="anioVeh" value="'+av(e.anioVeh||"")+'"></div>'+
+          '<div class="trow"><span>Cliente</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="cliente" value="'+av(e.cliente||"")+'"></div>'+
+          '<div class="trow"><span>Teléfono</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="contacto" value="'+av(e.contacto||"")+'"></div>'+
+          '<div class="trow"><span>Trabajador</span><input type="text" class="vedit" data-id="'+e.id+'" data-k="trabajador" value="'+av(e.trabajador||"")+'"></div>'+
+          '</details>';
         var editing=!!_kedit[e.id];
         return '<div class="kcard'+(editing?' editing':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           (dur?'<div class="kdur"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Demoró '+dur+'</div>':'')+
           '<button type="button" class="kmedia-btn" data-id="'+e.id+'">Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
+          vdatos+
           tedit+
           '<div class="kbtns">'+btns+'</div></div>';
       }).join("");
@@ -1666,6 +1677,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     board.querySelectorAll(".ksvc-add").forEach(function(sel){ sel.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===sel.dataset.id;})[0]; if(!e||!sel.value)return;
       e.servicios=e.servicios||[]; if(e.servicios.indexOf(sel.value)<0){ e.servicios.push(sel.value); persistVeh(e); renderBoard(); toast("Servicio agregado: "+sel.value); }
+    }); });
+    board.querySelectorAll(".vedit").forEach(function(inp){ inp.addEventListener("change",function(){
+      var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
+      var k=inp.dataset.k, val=inp.value; if(k==="patente") val=val.toUpperCase();
+      e[k]=val; inp.value=val; persistVeh(e);
+      var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2) v2.textContent=(e.patente||"sin patente"); }
+      toast("Datos del vehículo actualizados");
     }); });
   }
   function advance(id,dir){
