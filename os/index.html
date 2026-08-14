@@ -1956,6 +1956,35 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     return '<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas trabajadas</th><th class="r">Valor hora</th><th class="r">Costo mano de obra</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
 
+  // ---- Horas por marcajes de asistencia (entrada→salida del kiosco/tablet) ----
+  function asisHorasPersona(marks){ var total=0, dias={}, open=null;
+    marks.forEach(function(a){ var d=new Date(a.ts); dias[d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate()]=1;
+      if(a.tipo==="ENTRADA"){ open=d; }
+      else if(a.tipo==="SALIDA"){ if(open){ var h=(d-open)/3600000; if(h>0&&h<24) total+=h; open=null; } }
+    });
+    return { horas:total, dias:Object.keys(dias).length };
+  }
+  function asisHorasTabla(marks){
+    var byW={}; (marks||[]).forEach(function(a){ var k=(a.nombre||("••"+a.rut4)); (byW[k]=byW[k]||[]).push(a); });
+    var keys=Object.keys(byW).sort();
+    var head='<div class="chart" style="margin-top:16px"><h3>Marcajes de asistencia<span class="tag">horas del período</span></h3>';
+    if(!keys.length) return head+'<div class="col-empty">Sin marcajes en el período (se registran desde 🕐 Asistencia o la tablet)</div></div>';
+    var rows=keys.map(function(k){ var arr=byW[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}); var r=asisHorasPersona(arr); var vh=+VH[k]||0;
+      return '<tr><td><b>'+escH(k)+'</b></td><td class="r">'+r.dias+'</td><td class="r">'+r.horas.toFixed(1)+' h</td>'+
+        '<td class="r"><input class="vh" data-t="'+av(k)+'" type="number" min="0" step="500" value="'+(vh||"")+'" placeholder="$/hora"></td>'+
+        '<td class="r">'+(vh?clp(r.horas*vh):"—")+'</td></tr>';
+    }).join("");
+    return head+'<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas marcadas</th><th class="r">Valor hora</th><th class="r">Costo estimado</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  }
+  function cargarAsisHoras(){ var sb=sbc(); if(!sb)return; var start=periodoStart(state.periodo);
+    var q=sb.from('asistencia').select('*'); if(start) q=q.gte('ts', start.toISOString());
+    q.order('ts').then(function(r){ var slot=document.getElementById('asis-horas-slot'); if(!slot)return;
+      if(r.error){ slot.innerHTML=''; return; }
+      slot.innerHTML=asisHorasTabla(r.data||[]);
+      slot.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ var val=parseFloat(inp.value)||0; VH[inp.dataset.t]=val; upsertVH(inp.dataset.t,val); renderPanel(); }); });
+    });
+  }
+
   function renderPanel(){
     var box=document.getElementById("panel-content");
     if(data.length===0){ box.innerHTML='<div class="empty"><div class="big">📭</div>Aún no hay vehículos.</div>'; return; }
@@ -1996,7 +2025,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       chartMeses()+
     '</div>';
 
-    box.innerHTML=filtros+kpis+tabla+resumen+charts;
+    box.innerHTML=filtros+kpis+tabla+'<div id="asis-horas-slot"><div class="chart" style="margin-top:16px"><h3>Marcajes de asistencia<span class="tag">horas del período</span></h3><div class="col-empty">Cargando marcajes…</div></div></div>'+resumen+charts;
+    cargarAsisHoras();
     box.querySelectorAll(".pfilter button").forEach(function(b){ b.addEventListener("click",function(){ state.periodo=b.dataset.p; renderPanel(); }); });
     box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ var val=parseFloat(inp.value)||0; VH[inp.dataset.t]=val; upsertVH(inp.dataset.t,val); renderPanel(); }); });
     box.querySelectorAll(".kpi").forEach(function(k){ k.addEventListener("click",function(){ toggleKpi(k.dataset.k, base); }); });
