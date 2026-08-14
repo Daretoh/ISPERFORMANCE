@@ -1,0 +1,16 @@
+name: Haulmer diagnóstico
+
+on:
+  workflow_dispatch: {}   # solo manual
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/haulmer-diagnostico.mjs
+        env:
+          HAULMER: ${{ secrets.HAULMER }}
