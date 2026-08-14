@@ -365,6 +365,10 @@
   .kio-mark.out{background:#111;color:#fff;}
   .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
   .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
+  /* Modo tablet (usuario kiosco): oculta gestión de trabajadores y el botón visible de salir */
+  body.kiosco-user #trab-card{display:none!important;}
+  body.kiosco-user #kiosco-close{display:none!important;}
+  #kio-clock{cursor:default;-webkit-user-select:none;user-select:none;}
   /* Admin: accesos */
   .acc-vistas{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;}
   .acc-vistas label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);cursor:pointer;padding:4px 0;}
@@ -773,7 +777,7 @@
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
       <div class="dash-grid">
-        <div class="card">
+        <div class="card" id="trab-card">
           <h3>Trabajadores</h3>
           <form id="trab-form" class="row c2" autocomplete="off" style="margin:6px 0 14px">
             <label class="f" style="grid-column:1/-1"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
@@ -799,7 +803,11 @@
           <h3>Agregar / editar acceso</h3>
           <label class="f" style="margin:10px 0"><span class="lab">Cuenta</span><select id="acc-cuenta"></select></label>
           <input id="acc-email" placeholder="otro correo@…" autocomplete="off" style="display:none;width:100%;margin:-4px 0 10px;font:500 14px/1 var(--sans);padding:11px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);box-sizing:border-box">
-          <div class="lab" style="margin-bottom:8px">Pestañas que puede ver</div>
+          <label style="display:flex;align-items:flex-start;gap:9px;margin:4px 0 14px;padding:11px 13px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);cursor:pointer">
+            <input type="checkbox" id="acc-kiosco" style="margin-top:2px">
+            <span><b>🔒 Modo tablet</b> — solo marcar asistencia<br><span class="hint" style="font-size:11.5px;color:var(--ink-faint)">Entra directo al teclado para marcar. No ve el resto ni puede agregar trabajadores.</span></span>
+          </label>
+          <div class="lab" id="acc-vistas-lab" style="margin-bottom:8px">Pestañas que puede ver</div>
           <div id="acc-vistas" class="acc-vistas"></div>
           <button class="btn primary" id="acc-save" style="width:100%;margin-top:14px">Guardar acceso</button>
           <p class="hint" style="display:block;margin-top:8px;font-size:11.5px;color:var(--ink-faint)">Si un correo no está en esta lista, ve <b>todas</b> las pestañas.</p>
@@ -1087,12 +1095,15 @@
   function applyRole(email){
     email=(email||'').toLowerCase();
     var allowed=accesoDe(email); // null = ve todo
+    var kiosco=!!(allowed && allowed.indexOf('kiosco')>=0); // "modo tablet": solo marcar asistencia
+    document.body.classList.toggle('kiosco-user',kiosco);
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
       var show=(v==='admin')?(email===OWNER_EMAIL):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
     if(curBtn && curBtn.style.display==='none'){ var firstVis=Array.prototype.filter.call(tabsEl.querySelectorAll('button'),function(b){return b.style.display!=='none';})[0]; if(firstVis) firstVis.click(); }
+    if(kiosco) kioOpen(); // entra directo al teclado de marcaje, pantalla completa
   }
   window.ISP_applyRole=applyRole;
   function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
@@ -1220,11 +1231,20 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
     var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
     var pad=document.querySelector(".kio-pad"); if(pad) pad.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b) kioKey(b.dataset.k); });
+    // Salida discreta del modo tablet: mantener presionado el reloj 2s (solo el dueño la conoce)
+    var clk=document.getElementById("kio-clock");
+    if(clk){ var _t=null;
+      var _start=function(){ clk.style.opacity=".6"; _t=setTimeout(function(){ clk.style.opacity=""; kioClose(); },2000); };
+      var _cancel=function(){ clk.style.opacity=""; if(_t){ clearTimeout(_t); _t=null; } };
+      clk.addEventListener("touchstart",_start,{passive:true}); clk.addEventListener("touchend",_cancel); clk.addEventListener("touchcancel",_cancel);
+      clk.addEventListener("mousedown",_start); clk.addEventListener("mouseup",_cancel); clk.addEventListener("mouseleave",_cancel);
+    }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
   var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
-  function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); }
+  function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
+  function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — solo Asistencia":"Pestañas que puede ver"; }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
@@ -1242,7 +1262,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
     var lista=document.getElementById("acc-list"); if(!lista)return;
     var keys=Object.keys(ACCESOS);
-    lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
+    lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres;
+      if(vs.indexOf('kiosco')>=0){ nombres="🔒 Modo tablet (solo marcar asistencia)"; }
+      else { nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; }
+      return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
     lista.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click",function(){ accCargarEnForm(b.dataset.edit); }); });
     lista.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ accBorrar(b.dataset.del); }); });
   }
@@ -1253,10 +1276,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function accBorrar(email){ var sb=sbc(); if(!sb)return; if(!confirm("¿Quitar la restricción de "+email+"? Volverá a ver todo.")) return;
     sb.from("accesos").delete().eq("email",email).then(function(){ delete ACCESOS[email]; pintarAdmin(); if((email||"").toLowerCase()===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("Acceso quitado"); }); }
   (function(){ var save=document.getElementById("acc-save"); if(!save)return;
+    var kio=document.getElementById("acc-kiosco"); if(kio) kio.addEventListener("change",function(){ accKioscoUI(kio.checked); });
     save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
       var email=accEmailActual();
       if(!email||email.indexOf("@")<0){ toast("Elige una cuenta o escribe un correo válido"); return; }
-      var vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); });
+      var vs; if(kio && kio.checked){ vs=['asistencia','kiosco']; }
+      else { vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); }); }
       sb.from("accesos").upsert({email:email,vistas:vs,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 12?)"); return; }
         ACCESOS[email]=vs; var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} accSetChecks([]); pintarAdmin();
         if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso guardado"); }); });
