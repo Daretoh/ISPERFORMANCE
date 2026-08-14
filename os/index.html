@@ -396,6 +396,14 @@
     @page{margin:12mm;}
   }
   #cotiz-print, #cotiz-print *{ -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  .cotiz-modal{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.5);align-items:flex-start;justify-content:center;padding:20px;overflow:auto;}
+  .cotiz-modal.show{display:flex;}
+  .cotiz-modal-box{background:#fff;border-radius:12px;max-width:860px;width:100%;box-shadow:var(--shadow);margin:auto;}
+  .cotiz-modal-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;border-radius:12px 12px 0 0;flex-wrap:wrap;}
+  .cotiz-modal-bar>span{font-weight:800;}
+  .cotiz-modal-bar>div{display:flex;gap:8px;}
+  .cotiz-modal-body{padding:22px;}
+  @media print{ .cotiz-modal{display:none!important;} }
   .cp-sheet{max-width:800px;margin:0 auto;color:#111;font-family:var(--sans);}
   .cp-head{background:#111;color:#fff;border-radius:10px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
   .cp-head .cp-logo{font:900 30px/1 var(--sans);letter-spacing:-.02em;} .cp-head .cp-logo small{display:block;font:700 11px/1 var(--mono);letter-spacing:.35em;opacity:.85;margin-top:4px;}
@@ -858,6 +866,20 @@
   <!-- Hoja de impresión de la cotización (PDF) -->
   <div id="cotiz-print"></div>
 
+  <!-- Vista previa de la cotización en pantalla -->
+  <div class="cotiz-modal" id="cotiz-modal">
+    <div class="cotiz-modal-box">
+      <div class="cotiz-modal-bar">
+        <span>Vista previa</span>
+        <div>
+          <button class="btn primary" id="cotiz-print-btn">Imprimir / Guardar PDF</button>
+          <button class="btn ghost" id="cotiz-modal-close">Cerrar</button>
+        </div>
+      </div>
+      <div class="cotiz-modal-body" id="cotiz-modal-body"></div>
+    </div>
+  </div>
+
   <div class="media-modal" id="media-modal">
     <div class="media-modal-box">
       <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
@@ -1234,11 +1256,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
       +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
       +'<div class="cp-footer"><span>+569 8561 5636</span><span>'+escH(PAGO.correo)+'</span><span>isperformance.cl</span></div></div>';
-    var cp=document.getElementById("cotiz-print"); if(cp.parentNode!==document.body) document.body.appendChild(cp); cp.innerHTML=html; setTimeout(function(){ window.print(); },150);
+    var cp=document.getElementById("cotiz-print"); if(cp.parentNode!==document.body) document.body.appendChild(cp); cp.innerHTML=html;
+    document.getElementById("cotiz-modal-body").innerHTML=html;
+    document.getElementById("cotiz-modal").classList.add("show");
   }
   (function(){ var a=document.getElementById("cot-add-row"); if(a) a.onclick=function(){ cotAddRow(); };
     var s=document.getElementById("cot-save"); if(s) s.onclick=cotGuardar;
-    var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar; })();
+    var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar;
+    var pc=document.getElementById("cotiz-print-btn"), cc=document.getElementById("cotiz-modal-close"), cm=document.getElementById("cotiz-modal");
+    if(pc) pc.onclick=function(){ window.print(); };
+    if(cc) cc.onclick=function(){ cm.classList.remove("show"); };
+    if(cm) cm.addEventListener("click",function(ev){ if(ev.target===cm) cm.classList.remove("show"); }); })();
   function updateCounts(){
     var proc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
     var porCobrar=data.filter(function(e){return !e.cobrado && ["EN PROCESO","TERMINADO","ENTREGADO"].indexOf(e.estado)>=0;}).length;
