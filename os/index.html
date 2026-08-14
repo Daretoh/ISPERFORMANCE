@@ -1296,7 +1296,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(!nombre){ toast("Falta el nombre"); return; }
       if(!p){ toast("RUT inválido. Escríbelo así: 16331734-6"); return; }
       if(_trab.some(function(x){return String(x.rut4)===p.rut4;})){ toast("⚠ Ya hay alguien con esos últimos 4 dígitos ("+p.rut4+")"); return; }
-      sb.from("trabajadores").insert({nombre:nombre,rut:p.fmt,rut4:p.rut4,valor_hora:0,activo:true}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 11?)"); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado · marca con "+p.rut4); }); });
+      sb.from("trabajadores").insert({nombre:nombre,rut:p.fmt,rut4:p.rut4}).select().single().then(function(r){ if(r.error){ console.error("trabajadores insert:",r.error); toast("⚠ No se pudo guardar: "+(r.error.message||r.error.hint||r.error.details||"error desconocido")); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado · marca con "+p.rut4); }); });
     var kb=document.getElementById("asis-kiosco-btn"); if(kb) kb.addEventListener("click",kioOpen);
     var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
     var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
