@@ -997,6 +997,7 @@
           <label class="f"><span class="lab">N° documento</span><input id="mov-docnum" placeholder="Ej: 12345"></label>
           <label class="f"><span class="lab">Proveedor</span><input id="mov-prov" placeholder="De quién"></label>
           <label class="f"><span class="lab">Costo total $</span><input id="mov-costo" type="number" min="0" placeholder="0"></label>
+          <label class="f" style="grid-column:1/-1"><span class="lab">¿Corresponde a una solicitud (SolPed)?</span><select id="mov-solped"><option value="">— Ninguna —</option></select></label>
         </span>
         <label class="f" id="mov-salida-fields" style="grid-column:1/-1;display:none"><span class="lab">Motivo / uso (opcional)</span><input id="mov-motivo" placeholder="Para qué se usó"></label>
       </div>
@@ -1478,7 +1479,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(cm) cm.addEventListener("click",function(ev){ if(ev.target===cm) cm.classList.remove("show"); }); })();
   // ---------- Solicitudes (SolPed / reabastecimiento) ----------
   var _solped=[];
-  var SOL_ESTADOS=[["PENDIENTE","Pendientes"],["APROBADA","Aprobadas"],["COMPRADA","Compradas"],["RECIBIDA","Recibidas"]];
+  var SOL_ESTADOS=[["PENDIENTE","Pendientes"],["COMPRADA","Compradas"],["RECIBIDA","Recibidas"]];
+  function solProxNum(){ return _solped.length?(Math.max.apply(null,_solped.map(function(s){return +s.numero||0;}))+1):1; }
   function renderSolicitudes(){
     var dl=document.getElementById("sol-item-list");
     if(dl){ var opts={}; (typeof QUIMICOS!=="undefined"?QUIMICOS:[]).forEach(function(q){ if(q.prod)opts[q.prod]=1; }); (productos||[]).forEach(function(p){ if(p.producto)opts[p.producto]=1; });
@@ -1493,9 +1495,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(!items.length && es[0]==="RECIBIDA") return "";
       var cards=items.map(function(s){
         var urg=(s.urgencia==="Urgente");
-        var next={PENDIENTE:"APROBADA",APROBADA:"COMPRADA",COMPRADA:"RECIBIDA"}[s.estado];
-        var nextTxt={APROBADA:"Aprobar",COMPRADA:"Comprada",RECIBIDA:"Recibida"}[next];
-        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div></div><div class="sol-acts">'+(next?'<button class="go" data-go="'+s.id+'" data-next="'+next+'">'+nextTxt+' ›</button>':'')+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
+        var next={PENDIENTE:"COMPRADA",COMPRADA:"RECIBIDA"}[s.estado];
+        var nextTxt={COMPRADA:"Comprada",RECIBIDA:"Recibida"}[next];
+        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+(s.numero?'<span class="cn" style="color:var(--accent-ink);font-family:var(--mono);margin-right:5px">N°'+s.numero+'</span>':'')+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div></div><div class="sol-acts">'+(next?'<button class="go" data-go="'+s.id+'" data-next="'+next+'">'+nextTxt+' ›</button>':'')+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
       }).join("")||'<div class="col-empty" style="font-size:12px">—</div>';
       return '<div class="sol-col"><h4><span>'+es[1]+'</span><span>'+items.length+'</span></h4>'+cards+'</div>';
     }).join("");
@@ -1507,7 +1509,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   (function(){ var b=document.getElementById("sol-add"); if(!b)return;
     b.onclick=function(){ var sb=sbc(); if(!sb)return;
       var item=(document.getElementById("sol-item").value||"").trim(); if(!item){ toast("Escribe qué se necesita"); return; }
-      var row={ item:item, tipo:document.getElementById("sol-tipo").value, cantidad:(document.getElementById("sol-cant").value||"").trim(), urgencia:document.getElementById("sol-urg").value, motivo:(document.getElementById("sol-motivo").value||"").trim(), estado:"PENDIENTE", solicitante:(window.ISP_EMAIL||"") };
+      var row={ numero:solProxNum(), item:item, tipo:document.getElementById("sol-tipo").value, cantidad:(document.getElementById("sol-cant").value||"").trim(), urgencia:document.getElementById("sol-urg").value, motivo:(document.getElementById("sol-motivo").value||"").trim(), estado:"PENDIENTE", solicitante:(window.ISP_EMAIL||"") };
       sb.from("solicitudes").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 15?)"); return; } _solped.unshift(r.data); ["sol-item","sol-cant","sol-motivo"].forEach(function(id){document.getElementById(id).value="";}); pintarSolped(); updateCounts(); toast("✓ Solicitud creada"); });
     };
   })();
@@ -2123,6 +2125,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("mov-entrada-fields").style.display=(tipo==="ENTRADA")?"contents":"none";
     document.getElementById("mov-salida-fields").style.display=(tipo==="SALIDA")?"":"none";
     ["mov-docnum","mov-prov","mov-costo","mov-motivo"].forEach(function(id){document.getElementById(id).value="";});
+    var ss=document.getElementById("mov-solped");
+    if(ss){ var abiertas=(_solped||[]).filter(function(s){return s.estado==="PENDIENTE"||s.estado==="COMPRADA";});
+      ss.innerHTML='<option value="">— Ninguna —</option>'+abiertas.map(function(s){ return '<option value="'+s.id+'">N°'+(s.numero||"?")+' · '+escH(s.item||"")+' ('+(s.estado||"").toLowerCase()+')</option>'; }).join("");
+      var match=abiertas.filter(function(s){return (s.item||"").toLowerCase()===(producto.producto||"").toLowerCase()||String(s.producto_id||"")===String(producto.id);})[0];
+      ss.value=match?match.id:""; }
     document.getElementById("mov-modal").classList.add("show");
   }
   function guardarMov(){
@@ -2130,15 +2137,18 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var p=_movCtx.producto, tipo=_movCtx.tipo, cant=parseInt(document.getElementById("mov-cant").value,10)||0;
     if(cant<1){ toast("Cantidad inválida"); return; }
     var row={ producto_id:p.id, tipo:tipo, cantidad:cant, fecha:document.getElementById("mov-fecha").value||todayISO(), autor:(window.ISP_EMAIL||"") };
-    if(tipo==="ENTRADA"){ row.doc_tipo=document.getElementById("mov-doc").value; row.doc_num=(document.getElementById("mov-docnum").value||"").trim(); row.proveedor=(document.getElementById("mov-prov").value||"").trim(); row.costo=parseInt(document.getElementById("mov-costo").value,10)||0; }
+    var solId="";
+    if(tipo==="ENTRADA"){ row.doc_tipo=document.getElementById("mov-doc").value; row.doc_num=(document.getElementById("mov-docnum").value||"").trim(); row.proveedor=(document.getElementById("mov-prov").value||"").trim(); row.costo=parseInt(document.getElementById("mov-costo").value,10)||0;
+      solId=document.getElementById("mov-solped").value; if(solId){ var sp0=_solped.filter(function(x){return x.id===solId;})[0]; if(sp0){ row.solped_id=sp0.id; row.solped_num=sp0.numero||null; } } }
     else { row.motivo=(document.getElementById("mov-motivo").value||"").trim(); }
     sb.from("movimientos").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
       _movs.unshift(r.data);
       if(tipo==="ENTRADA"){ p.entrada=(+p.entrada||0)+cant; if(row.costo&&cant) p.costo=Math.round(row.costo/cant); }
       else { p.salida=(+p.salida||0)+cant; }
       saveProducto(p);
+      if(solId){ var sp=_solped.filter(function(x){return x.id===solId;})[0]; if(sp){ sp.estado="RECIBIDA"; sb.from("solicitudes").update({estado:"RECIBIDA"}).eq("id",solId).then(function(){}); updateCounts(); } }
       document.getElementById("mov-modal").classList.remove("show"); renderStock();
-      toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado");
+      toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":""));
     });
   }
   (function(){ var s=document.getElementById("mov-save"), c=document.getElementById("mov-cancel"), x=document.getElementById("mov-close"), m=document.getElementById("mov-modal");
@@ -2183,7 +2193,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
       else if(b.classList.contains("sal")){ abrirMov(p,"SALIDA"); }
-      else if(b.classList.contains("solped")){ var sb2=sbc(); if(sb2){ sb2.from("solicitudes").insert({item:p.producto,tipo:(p.categoria==="INSUMO"?"Insumo":"Producto"),cantidad:"",urgencia:"Normal",motivo:"Reposición (bajo el mínimo)",estado:"PENDIENTE",solicitante:(window.ISP_EMAIL||""),producto_id:p.id}).select().single().then(function(r){ if(!r.error){ _solped.unshift(r.data); updateCounts(); toast("✓ Solicitud creada: "+p.producto); } else { toast("⚠ Error"); } }); } }
+      else if(b.classList.contains("solped")){ var sb2=sbc(); if(sb2){ sb2.from("solicitudes").insert({numero:solProxNum(),item:p.producto,tipo:(p.categoria==="INSUMO"?"Insumo":"Producto"),cantidad:"",urgencia:"Normal",motivo:"Reposición (bajo el mínimo)",estado:"PENDIENTE",solicitante:(window.ISP_EMAIL||""),producto_id:p.id}).select().single().then(function(r){ if(!r.error){ _solped.unshift(r.data); updateCounts(); toast("✓ Solicitud creada: "+p.producto); } else { toast("⚠ Error"); } }); } }
       else if(b.classList.contains("mov")){ p.categoria=((p.categoria||"VENTA")==="VENTA")?"INSUMO":"VENTA"; saveProducto(p); renderStock(); toast("Movido a "+(p.categoria==="INSUMO"?"Insumos":"En venta")); }
       else if(b.classList.contains("del")){ if(confirm("¿Eliminar "+p.producto+"?")){ productos=productos.filter(function(x){return x.id!==b.dataset.id;}); delProductoDB(b.dataset.id); renderStock(); toast("Eliminado"); } }
     }); });
