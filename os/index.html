@@ -2171,11 +2171,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")).toLowerCase().indexOf(q)>=0;
       return true;
     }).sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
-    var equip=productos.filter(function(p){return (p.tipo||"EQUIPAMIENTO")==="EQUIPAMIENTO";}).length;
-    var det=productos.filter(function(p){return p.tipo==="DETAILING";}).length;
-    var sinStk=productos.filter(function(p){return stockDe(p)<=0;}).length;
+    var enCat=productos.filter(function(p){return (p.categoria||"VENTA")===state.stockCat;});
+    var equip=enCat.filter(function(p){return (p.tipo||"EQUIPAMIENTO")==="EQUIPAMIENTO";}).length;
+    var det=enCat.filter(function(p){return p.tipo==="DETAILING";}).length;
+    var sinStk=enCat.filter(function(p){var mm=(+p.stock_min||0); return stockDe(p)<=0||(mm&&stockDe(p)<=mm);}).length;
     document.getElementById("stock-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+
-      kstat("Equipamiento",equip,"productos")+kstat("Detailing",det,"productos")+kstat("Sin stock",sinStk,"reponer")+kstat("Total",productos.length,"items")+'</div>';
+      kstat("Equipamiento",equip,"productos")+kstat("Detailing",det,"productos")+kstat("Reponer",sinStk,"bajo mínimo")+kstat("Total",enCat.length,"items")+'</div>';
     var esInsumo=(state.stockCat==="INSUMO");
     var rows=lista.map(function(p){
       var s=stockDe(p); var mn=(+p.stock_min||0); var col=(s<=0||(mn&&s<=mn))?'var(--crit)':(s<=1?'var(--warn)':'var(--ink)');
@@ -2188,7 +2189,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
         '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
-    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Mover</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">Sin productos'+(q?' para "'+q+'"':'')+'</td></tr>')+'</tbody></table></div>';
+    var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
+    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">'+vacio+'</td></tr>')+'</tbody></table></div>';
     document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
