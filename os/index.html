@@ -115,6 +115,7 @@
   .plan-venc{font-size:11.5px;color:var(--ink-muted);}
   .plan-venc.pronto{color:var(--warn);font-weight:700;}
   .plan-venc.venc{color:var(--crit);font-weight:800;}
+  .plan-costo{font-size:11px;font-weight:700;color:var(--accent-ink,#666);background:var(--accent-soft,#f0f0f5);padding:2px 8px;border-radius:20px;}
   .plan-desc{font-size:12px;color:var(--ink-muted);margin-top:5px;}
   .plan-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .plan-estados{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
@@ -840,7 +841,7 @@
         <form id="plan-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
           <label class="f" style="grid-column:span 2"><span class="lab">Tarea</span><input name="titulo" required placeholder="Ej. Optimizar Google Business Profile"></label>
           <label class="f"><span class="lab">Área</span><input name="area" list="plan-area-list" placeholder="Web, Marketing, Clientes…"></label>
-          <datalist id="plan-area-list"><option>WEB INTERNA</option><option>MARKETING</option><option>CLIENTES</option><option>REDES / CONTENIDO</option><option>AUTOMATIZACIÓN</option><option>FOTO / VIDEO</option><option>OPERACIONES</option></datalist>
+          <datalist id="plan-area-list"><option>1. Desarrollo Comercial</option><option>2. Marketing y Posicionamiento</option><option>3. Redes y Comunidad</option><option>4. Experiencia del Cliente</option><option>5. Kit de Entrega</option><option>6. Fidelización</option><option>7. Reseñas y Promociones</option><option>8. Historial y Trazabilidad</option><option>9. Registro de Coatings</option><option>10. Automatización</option><option>11. Productos Corporativos</option><option>12. Administración</option><option>14. Manuales</option><option>15. Expansión</option><option>16. Ideas Futuras</option><option>17. Cultura y Visión</option></datalist>
           <label class="f"><span class="lab">Prioridad</span><select name="prioridad"><option value="ALTA">Alta</option><option value="MEDIA">Media</option><option value="BAJA">Baja</option></select></label>
           <label class="f"><span class="lab">Responsable</span><input name="asignado" list="plan-persona-list" placeholder="Asignar a…"></label>
           <datalist id="plan-persona-list"></datalist>
@@ -1285,48 +1286,136 @@
   var PLAN_PRIOS=[["ALTA","Alta prioridad"],["MEDIA","Media prioridad"],["BAJA","Baja prioridad"]];
   var PLAN_ESTLBL={PENDIENTE:"Sin iniciar",PROCESO:"En proceso",HECHO:"Hecha"};
   var PLAN_SEED=[
-    {titulo:"Brochure corporativo de servicios",prioridad:"ALTA",estado:"PROCESO",vence:"2026-08-16",area:"MARKETING"},
-    {titulo:"Optimizar Google Business Profile",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-08-16",area:"MARKETING"},
-    {titulo:"WhatsApp Business y automatizaciones",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"AUTOMATIZACIÓN"},
-    {titulo:"Fotografía profesional de entrega",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"FOTO / VIDEO"},
-    {titulo:"Ficha digital del cliente",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-06",area:"CLIENTES"},
-    {titulo:"Registro de datos del vehículo",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-06",area:"CLIENTES"},
-    {titulo:"Repositorio fotos antes y después",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"FOTO / VIDEO"},
-    {titulo:"Video de entrega",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"FOTO / VIDEO"},
-    {titulo:"Programa de referidos (cliente final)",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"MARKETING"},
-    {titulo:"Agenda próxima revisión",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"OPERACIONES"},
-    {titulo:"Agenda próxima mantención",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"OPERACIONES"},
-    {titulo:"Potenciar la página web",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-20",area:"WEB INTERNA"},
-    {titulo:"Historial de servicios por cliente",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-20",area:"CLIENTES"},
-    {titulo:"Control de garantías",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-27",area:"CLIENTES"},
-    {titulo:"Recordatorios 30 / 90 / 180 / 365 días",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-10-11",area:"AUTOMATIZACIÓN"},
-    {titulo:"Automatización de mantenciones",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-10-11",area:"AUTOMATIZACIÓN"},
-    {titulo:"Testimonios en video",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-10",area:"FOTO / VIDEO"},
-    {titulo:"Potenciar Instagram y Facebook",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
-    {titulo:"Contenido diario (rutina)",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
-    {titulo:"Antes y después",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
-    {titulo:"Reels",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
-    {titulo:"Declaración de Meta Ads",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-24",area:"MARKETING"},
-    {titulo:"Declaración de Google Ads",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-24",area:"MARKETING"},
-    {titulo:"Brochure para representantes",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-08-30",area:"MARKETING"},
-    {titulo:"Registro de productos utilizados",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-09-27",area:"OPERACIONES"},
-    {titulo:"Impresión de fotografía",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-04",area:"FOTO / VIDEO"},
-    {titulo:"Beneficios por cumpleaños",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-11",area:"CLIENTES"},
-    {titulo:"Automatización de cumpleaños",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-18",area:"AUTOMATIZACIÓN"},
-    {titulo:"Automatización de promociones",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-01",area:"AUTOMATIZACIÓN"},
-    {titulo:"Automatización de encuestas",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-01",area:"AUTOMATIZACIÓN"},
-    {titulo:"Gift Cards",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-29",area:"MARKETING"},
-    {titulo:"SEO local",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-12-06",area:"MARKETING"},
-    {titulo:"Potenciar TikTok",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-10",area:"REDES / CONTENIDO"},
-    {titulo:"Casos de éxito",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-10",area:"REDES / CONTENIDO"},
-    {titulo:"Remarketing",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-17",area:"MARKETING"},
-    {titulo:"Videos de servicios",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-17",area:"FOTO / VIDEO"},
-    {titulo:"Pasaporte del vehículo",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-03",area:"CLIENTES"},
-    {titulo:"Email Marketing",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"MARKETING"},
-    {titulo:"Cliente del mes",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"MARKETING"},
-    {titulo:"Tienda online",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"WEB INTERNA"},
-    {titulo:"App IS Performance",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-17",area:"WEB INTERNA"},
-    {titulo:"Portal del cliente",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-17",area:"WEB INTERNA"}
+    {titulo:"Brochure corporativo de servicios",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-08-16",costo:150000,descripcion:"enviare varias propuestas diseño-contenido"},
+    {titulo:"Potenciar Instagram y Facebook",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Ideal tener control total de redes (Con mi número de telefono) para poder gestionarlas mejor"},
+    {titulo:"Programa de comisiones por referidos",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-23",costo:0,descripcion:""},
+    {titulo:"Capacitación de representantes",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-13",costo:50000,descripcion:""},
+    {titulo:"Visitas comerciales (rutina semanal)",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2027-01-31",costo:80000,descripcion:""},
+    {titulo:"Convenios con empresas y flotas",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-15",costo:0,descripcion:""},
+    {titulo:"Convenios con aseguradoras y automotoras",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-29",costo:0,descripcion:""},
+    {titulo:"Convenios talleres, desabolladura y pintura",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-29",costo:0,descripcion:""},
+    {titulo:"Convenios vulcanizaciones y transporte",area:"1. Desarrollo Comercial",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-12-13",costo:0,descripcion:""},
+    {titulo:"Participación en eventos automotrices",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:400000,descripcion:""},
+    {titulo:"Captación de vehículos de alta gama",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Optimizar Google Business Profile",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-08-16",costo:0,descripcion:"Ideal tener control total de redes (Con mi número de telefono) para poder gestionarlas mejor"},
+    {titulo:"Potenciar la página web",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-20",costo:350000,descripcion:""},
+    {titulo:"WhatsApp Business y automatizaciones",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:50000,descripcion:"Tengo que revisar en conjunto con Jorge de nuevo para actualizar a Meta Bussines; sino contactar a soporte para darle fin al tema"},
+    {titulo:"Contenido diario (rutina)",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Planifiación en proceso"},
+    {titulo:"Antes y después",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Planifiación en proceso"},
+    {titulo:"Campañas Google Ads",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:250000,descripcion:""},
+    {titulo:"Campañas Meta Ads",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:250000,descripcion:""},
+    {titulo:"Reels",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Testimonios en video",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Fotografía profesional de entrega",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:200000,descripcion:""},
+    {titulo:"Video de entrega",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:""},
+    {titulo:"Programa de referidos (cliente final)",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:""},
+    {titulo:"Ficha digital del cliente",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
+    {titulo:"Registro de datos del vehículo",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
+    {titulo:"Repositorio fotos antes y después",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:""},
+    {titulo:"Historial de servicios por cliente",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-20",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
+    {titulo:"Programa de influencers",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:300000,descripcion:""},
+    {titulo:"Programa de embajadores",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-15",costo:150000,descripcion:""},
+    {titulo:"Seguir e interactuar con perfiles relacionados",area:"3. Redes y Comunidad",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Alianzas con clubes 4x4",area:"3. Redes y Comunidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
+    {titulo:"Alianzas con clubes de marcas",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:0,descripcion:""},
+    {titulo:"Alianzas Rent a Car",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:0,descripcion:""},
+    {titulo:"Alianzas empresas automotrices",area:"3. Redes y Comunidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-08",costo:0,descripcion:""},
+    {titulo:"Alianzas empresas de accesorios",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:0,descripcion:""},
+    {titulo:"Protocolo de recepción profesional",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:0,descripcion:""},
+    {titulo:"Protocolo de entrega impecable",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:0,descripcion:""},
+    {titulo:"Explicación del trabajo al cliente",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
+    {titulo:"Control de garantías",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-27",costo:0,descripcion:"Como se llevaria? que abarca?"},
+    {titulo:"Agenda próxima revisión",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:"post/venta - en conjunto con historial y trazabilidad?"},
+    {titulo:"Agenda próxima mantención",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:"post/venta - en conjunto con historial y trazabilidad?"},
+    {titulo:"Sobre personalizado",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:80000,descripcion:""},
+    {titulo:"Certificado de servicio",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:40000,descripcion:""},
+    {titulo:"Certificado de coating",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:40000,descripcion:""},
+    {titulo:"Seguimiento postventa",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Encuesta de satisfacción",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Bolsa corporativa",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-13",costo:250000,descripcion:""},
+    {titulo:"Aromatizante corporativo",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:120000,descripcion:""},
+    {titulo:"Pino personalizado",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:100000,descripcion:""},
+    {titulo:"Stickers",area:"5. Kit de Entrega",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:50000,descripcion:""},
+    {titulo:"Tarjeta de agradecimiento",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:60000,descripcion:""},
+    {titulo:"Cupón de descuento",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:40000,descripcion:""},
+    {titulo:"QR para reseñas",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:20000,descripcion:""},
+    {titulo:"QR para agendar",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:20000,descripcion:""},
+    {titulo:"Recomendaciones de cuidado (impreso)",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:50000,descripcion:""},
+    {titulo:"Microfibra Premium",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-27",costo:180000,descripcion:""},
+    {titulo:"Chocolate o dulce",area:"5. Kit de Entrega",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:40000,descripcion:""},
+    {titulo:"Definir categorías (Nuevo a VIP)",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-30",costo:0,descripcion:""},
+    {titulo:"Diseñar beneficios exclusivos por categoría",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-06",costo:0,descripcion:""},
+    {titulo:"Tarjeta de fidelización",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:120000,descripcion:""},
+    {titulo:"Recordatorios 30 / 90 / 180 / 365 días",area:"10. Automatización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:80000,descripcion:"a que se refiere?"},
+    {titulo:"Automatización de mantenciones",area:"10. Automatización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:0,descripcion:"es lo mismo que  filas 41 y 42?"},
+    {titulo:"Declaración de Meta Ads",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-24",costo:0,descripcion:"Gastos? lo manejaria yo?"},
+    {titulo:"Placas QR en el local",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-30",costo:60000,descripcion:""},
+    {titulo:"QR en recepción, factura y bolsa",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:20000,descripcion:""},
+    {titulo:"Rutina de solicitar reseñas a todo cliente",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Ruleta de premios",area:"7. Reseñas y Promociones",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-11-15",costo:150000,descripcion:""},
+    {titulo:"Cronómetro con premios",area:"7. Reseñas y Promociones",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-11-29",costo:100000,descripcion:""},
+    {titulo:"Declaración de Google Ads",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-24",costo:0,descripcion:"Gastos? lo manejaria yo?"},
+    {titulo:"Email Marketing",area:"2. Marketing y Posicionamiento",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:30000,descripcion:"Se puede automatizar-tambien pedir en ficha cliente correo"},
+    {titulo:"Cliente del mes",area:"6. Fidelización",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:50000,descripcion:"Ficha cliente"},
+    {titulo:"Tienda online",area:"15. Expansión",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:400000,descripcion:"solo equipamento- detailling solo agendamiento(en proceso)"},
+    {titulo:"App IS Performance",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Portal del cliente",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Lo mismo que ficha de cliente?"},
+    {titulo:"Campo de observaciones",area:"8. Historial y Trazabilidad",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:0,descripcion:""},
+    {titulo:"Ficha de coating: marca y producto",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
+    {titulo:"Registro de número de lote",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
+    {titulo:"Registro de fecha y técnico",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
+    {titulo:"Registro de garantía",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:0,descripcion:""},
+    {titulo:"Pasaporte del vehículo",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-03",costo:60000,descripcion:"Lo mismo que ficha de cliente?"},
+    {titulo:"Brochure para representantes",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-08-30",costo:120000,descripcion:"lo mismo al brochure del inicio?"},
+    {titulo:"Potenciar TikTok",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"SEO local",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-12-06",costo:100000,descripcion:""},
+    {titulo:"Remarketing",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:80000,descripcion:""},
+    {titulo:"Videos de servicios",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Casos de éxito",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Aromatizantes",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:120000,descripcion:""},
+    {titulo:"Pinos",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:100000,descripcion:""},
+    {titulo:"Stickers",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:50000,descripcion:""},
+    {titulo:"Lanyards",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:80000,descripcion:""},
+    {titulo:"Llaveros",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:90000,descripcion:""},
+    {titulo:"Gorras",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:200000,descripcion:""},
+    {titulo:"Poleras",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-25",costo:300000,descripcion:""},
+    {titulo:"Tazas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:90000,descripcion:""},
+    {titulo:"Botellas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:120000,descripcion:""},
+    {titulo:"Bolsas",area:"11. Productos Corporativos",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-13",costo:250000,descripcion:""},
+    {titulo:"Tarjetas de presentación",area:"11. Productos Corporativos",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-23",costo:60000,descripcion:""},
+    {titulo:"Carpetas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-08",costo:80000,descripcion:""},
+    {titulo:"Impresión de fotografía",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-04",costo:150000,descripcion:""},
+    {titulo:"Beneficios por cumpleaños",area:"6. Fidelización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:0,descripcion:"podria ir en ficha cliente tambien- o poner en algun lugar de web-redes"},
+    {titulo:"Proceso de compras AliExpress",area:"12. Administración",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Proceso de compras Alibaba",area:"12. Administración",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Control de inventario",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-17",costo:50000,descripcion:""},
+    {titulo:"Manual de atención",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
+    {titulo:"Manual de ventas",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:0,descripcion:""},
+    {titulo:"Manual de detailing",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-04",costo:0,descripcion:""},
+    {titulo:"Manual de PPF",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
+    {titulo:"Manual de coating",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
+    {titulo:"Manual de pulido",area:"14. Manuales",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
+    {titulo:"Manual de garantías",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-04",costo:0,descripcion:""},
+    {titulo:"Manual de entrega",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
+    {titulo:"Manual de recepción",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
+    {titulo:"Manual de WhatsApp",area:"14. Manuales",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
+    {titulo:"Definir nuevos servicios",area:"15. Expansión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
+    {titulo:"Línea de equipamiento 4x4",area:"15. Expansión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-13",costo:0,descripcion:""},
+    {titulo:"Venta de accesorios",area:"15. Expansión",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-27",costo:0,descripcion:""},
+    {titulo:"Evaluar importaciones",area:"15. Expansión",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-27",costo:0,descripcion:""},
+    {titulo:"Registro de productos utilizados",area:"8. Historial y Trazabilidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-27",costo:0,descripcion:"conjunto con app-ideal"},
+    {titulo:"Modelo de distribución",area:"15. Expansión",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Membresía mensual",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:0,descripcion:""},
+    {titulo:"Automatización de promociones",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-01",costo:50000,descripcion:""},
+    {titulo:"Automatización de cumpleaños",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-18",costo:0,descripcion:""},
+    {titulo:"Automatización de encuestas",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-01",costo:0,descripcion:""},
+    {titulo:"Programa de puntos",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-13",costo:0,descripcion:""},
+    {titulo:"Vehículo de cortesía",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:0,descripcion:""},
+    {titulo:"Línea propia de productos",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
+    {titulo:"Impresora fotográfica",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-10-25",costo:250000,descripcion:""},
+    {titulo:"Gift Cards",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-29",costo:80000,descripcion:""},
+    {titulo:"Difundir misión, visión y valores al equipo",area:"17. Cultura y Visión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-08-16",costo:0,descripcion:""},
+    {titulo:"Reunión semanal de seguimiento del plan",area:"17. Cultura y Visión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2027-01-17",costo:0,descripcion:""}
   ];
   function planPersonas(){ var s={}; (reloj||[]).forEach(function(r){ if(r.trab)s[r.trab]=1; }); Object.keys(VH||{}).forEach(function(k){ if(k)s[k]=1; }); _plan.forEach(function(x){ if(x.asignado)s[x.asignado]=1; }); return Object.keys(s).sort(); }
   function planVencClass(v,estado){ if(estado==="HECHO"||!v) return ""; var d=(new Date(v+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/86400000; if(d<0) return "venc"; if(d<=10) return "pronto"; return ""; }
@@ -1339,7 +1428,8 @@
     var pend=_plan.filter(function(x){return (x.estado||"PENDIENTE")==="PENDIENTE";}).length;
     var proc=_plan.filter(function(x){return x.estado==="PROCESO";}).length;
     var venc=_plan.filter(function(x){return x.estado!=="HECHO"&&x.vence&&x.vence<todayISO();}).length;
-    document.getElementById("plan-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+kstat("Total",total,"tareas")+kstat("En proceso",proc,"activas")+kstat("Sin iniciar",pend,"pendientes")+kstat("Vencidas",venc,"atrasadas")+'</div>';
+    var costoTot=_plan.filter(function(x){return x.estado!=="HECHO";}).reduce(function(a,x){return a+(+x.costo||0);},0);
+    document.getElementById("plan-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+kstat("Total",total,"tareas")+kstat("En proceso",proc,"activas")+kstat("Sin iniciar",pend,"pendientes")+kstat("Vencidas",venc,"atrasadas")+kstat("Inversión estim.",clp(costoTot),"CLP pendiente")+'</div>';
     var fPers=fp?fp.value:"";
     var list=_plan.filter(function(x){ var e=x.estado||"PENDIENTE";
       if(_planEstado==="ACTIVAS"){ if(e==="HECHO")return false; } else if(_planEstado!=="TODAS"){ if(e!==_planEstado)return false; }
@@ -1356,7 +1446,8 @@
         +'<div class="plan-main"><div class="plan-tit">'+escH(x.titulo||"")+'</div>'
         +'<div class="plan-meta">'+(x.area?'<span class="plan-tag">'+escH(x.area)+'</span>':'')
         +(x.asignado?'<span class="plan-who">'+escH(x.asignado)+'</span>':'<span class="plan-who none">Sin responsable</span>')
-        +(x.vence?'<span class="plan-venc '+vc+'">'+fFecha(x.vence)+(vc==="venc"?' · vencida':'')+'</span>':'')+'</div>'
+        +(x.vence?'<span class="plan-venc '+vc+'">'+fFecha(x.vence)+(vc==="venc"?' · vencida':'')+'</span>':'')
+        +((+x.costo>0)?'<span class="plan-costo">'+clp(x.costo)+'</span>':'')+'</div>'
         +(x.descripcion?'<div class="plan-desc">'+escH(x.descripcion)+'</div>':'')+'</div>'
         +'<div class="plan-actions"><div class="plan-estados">'+["PENDIENTE","PROCESO","HECHO"].map(function(s){return '<button class="pe'+(e===s?" on":"")+'" data-pe="'+s+'" data-id="'+x.id+'">'+PLAN_ESTLBL[s]+'</button>';}).join("")+'</div>'
         +'<button class="plan-edit" data-id="'+x.id+'" title="Editar">✎</button><button class="plan-del" data-id="'+x.id+'" title="Eliminar">✕</button></div></div>';

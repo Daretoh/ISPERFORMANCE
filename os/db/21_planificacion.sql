@@ -12,12 +12,15 @@ create table if not exists planificacion (
   asignado    text,                         -- responsable (nombre)
   vence       date,
   descripcion text,
+  costo       integer default 0,            -- costo estimado (CLP)
   orden       integer default 0,
   autor       text,
   created_at  timestamptz default now()
 );
 
 create index if not exists planificacion_vence_idx on planificacion(vence);
+-- si ya creaste la tabla antes, esto agrega la columna de costo:
+alter table planificacion add column if not exists costo integer default 0;
 
 alter table planificacion enable row level security;
 drop policy if exists equipo_plan on planificacion;
