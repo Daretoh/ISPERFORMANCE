@@ -2207,25 +2207,36 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       return true;
     }).sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
     var enCat=productos.filter(function(p){return (p.categoria||"VENTA")===state.stockCat;});
-    var equip=enCat.filter(function(p){return (p.tipo||"EQUIPAMIENTO")==="EQUIPAMIENTO";}).length;
-    var det=enCat.filter(function(p){return p.tipo==="DETAILING";}).length;
-    var sinStk=enCat.filter(function(p){var mm=(+p.stock_min||0); return stockDe(p)<=0||(mm&&stockDe(p)<=mm);}).length;
-    document.getElementById("stock-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+
-      kstat("Equipamiento",equip,"productos")+kstat("Detailing",det,"productos")+kstat("Reponer",sinStk,"bajo mínimo")+kstat("Total",enCat.length,"items")+'</div>';
     var esInsumo=(state.stockCat==="INSUMO");
+    var sinStk=enCat.filter(function(p){var mm=(+p.stock_min||0); return stockDe(p)<=0||(mm&&stockDe(p)<=mm);}).length;
+    var kpiHTML;
+    if(esInsumo){
+      var conStk=enCat.filter(function(p){return stockDe(p)>0;}).length;
+      var sinNada=enCat.filter(function(p){return stockDe(p)<=0;}).length;
+      kpiHTML=kstat("Insumos",enCat.length,"items")+kstat("Con stock",conStk,"disponibles")+kstat("Sin stock",sinNada,"agotados")+kstat("Reponer",sinStk,"bajo mínimo");
+    } else {
+      var equip=enCat.filter(function(p){return (p.tipo||"EQUIPAMIENTO")==="EQUIPAMIENTO";}).length;
+      var det=enCat.filter(function(p){return p.tipo==="DETAILING";}).length;
+      kpiHTML=kstat("Equipamiento",equip,"productos")+kstat("Detailing",det,"productos")+kstat("Reponer",sinStk,"bajo mínimo")+kstat("Total",enCat.length,"items");
+    }
+    document.getElementById("stock-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+kpiHTML+'</div>';
     var rows=lista.map(function(p){
       var s=stockDe(p); var mn=(+p.stock_min||0); var col=(s<=0||(mn&&s<=mn))?'var(--crit)':(s<=1?'var(--warn)':'var(--ink)');
       var extra="";
       if(esInsumo){ var rot=movRotacion(p.id); var dias=rot>0?Math.round((s/rot)*30):null; var ult=movUltIngreso(p.id);
         extra='<div style="font-size:10.5px;color:var(--ink-muted);margin-top:2px">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'sin consumo aún')+(dias!=null&&isFinite(dias)?' · ~'+dias+' días':'')+(ult?' · ingreso '+fFecha(ult):'')+' · <button class="stk-min" data-id="'+p.id+'" style="border:none;background:none;color:var(--accent-ink);cursor:pointer;font:inherit;padding:0">mín '+(mn||'—')+' ✎</button></div>'; }
       var solBtn=(esInsumo&&mn&&s<=mn)?' <button class="stk-btn solped" data-id="'+p.id+'" style="color:var(--crit);border-color:var(--crit)">Solicitar</button>':'';
-      return '<tr><td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td><td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>'+
+      var col34=esInsumo
+        ? '<td style="font-weight:600">'+(p.udm||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'—')+'</td>'
+        : '<td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>';
+      return '<tr><td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
         '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
-    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th><th>Compatibilidad</th><th>Medidas</th><th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">'+vacio+'</td></tr>')+'</tbody></table></div>';
+    var th34=esInsumo?'<th>Unidad</th><th>Rotación</th>':'<th>Compatibilidad</th><th>Medidas</th>';
+    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th>'+th34+'<th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">'+vacio+'</td></tr>')+'</tbody></table></div>';
     document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
