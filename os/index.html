@@ -1188,7 +1188,7 @@
       sb.from('cotizaciones').select('*').order('numero',{ascending:false}),
       sb.from('solicitudes').select('*').order('created_at',{ascending:false}),
       sb.from('movimientos').select('*').order('fecha',{ascending:false}),
-      sb.from('planificacion').select('*').order('vence',{ascending:true})
+      sb.from('planificacion').select('*').order('vence',{ascending:true}).then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
