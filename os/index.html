@@ -2354,7 +2354,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
   // rotación: consumo (salidas) por mes en los últimos 60 días
-  function movRotacion(pid){ var desde=new Date(); desde.setDate(desde.getDate()-60); var d=iso(desde);
+  function movRotacion(pid){ var desde=new Date(); desde.setDate(desde.getDate()-60); var d=desde.toISOString().slice(0,10);
     var sal=_movs.filter(function(m){return String(m.producto_id)===String(pid)&&m.tipo==="SALIDA"&&(m.fecha||"")>=d;}).reduce(function(a,m){return a+(+m.cantidad||0);},0);
     return sal/2; // por mes (60 días ~ 2 meses)
   }
