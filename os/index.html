@@ -811,7 +811,7 @@
           <datalist id="present-list"><option>Bidón</option><option>Galón</option><option>Litro</option><option>Spray</option><option>Kg</option><option>Caja</option><option>Unidad</option><option>Rollo</option></datalist>
           <label class="f" id="lbl-conten" style="display:none"><span class="lab">Contenido / tamaño</span><input name="contenido" placeholder="5 L, 1 L, 500 ml…"></label>
           <label class="f" id="lbl-udm" style="display:none"><span class="lab">Unidad de consumo (UdM)</span><input name="udm" list="udm-list" placeholder="litro, unidad, kg…"></label>
-          <datalist id="udm-list"><option>unidad</option><option>litro</option><option>kg</option><option>bidón</option><option>caja</option><option>paño</option><option>rollo</option><option>par</option></datalist>
+          <datalist id="udm-list"><option value="L">L — litro</option><option value="ML">ML — mililitro</option><option value="BD">BD — bidón</option><option value="GL">GL — galón</option><option value="KG">KG — kilo</option><option value="UN">UN — unidad</option><option value="CJ">CJ — caja</option><option value="PÑ">PÑ — paño</option><option value="RL">RL — rollo</option><option value="PAR">PAR</option></datalist>
           <label class="f" id="lbl-ubic" style="display:none"><span class="lab">Ubicación (bodega)</span><input name="ubicacion" list="ubic-list" placeholder="Estante A, Bodega…"></label>
           <datalist id="ubic-list"><option>Bodega</option><option>Estante A</option><option>Estante B</option><option>Estante C</option><option>Box lavado</option><option>Box detailing</option></datalist>
           <label class="f" id="lbl-min" style="display:none"><span class="lab">Stock mínimo (aviso)</span><input name="stock_min" type="number" min="0" value="0"></label>
@@ -2547,7 +2547,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var nuevos=QUIMICOS.filter(function(x){ return !yaN[(x.prod||"").trim().toUpperCase()]; });
     if(!nuevos.length){ toast("Todos los químicos ya están en Insumos ✓"); return; }
     if(!confirm("Se agregarán "+nuevos.length+" químicos a Insumos (en 0, para que hagas el conteo físico). ¿Continuar?")) return;
-    var filas=nuevos.map(function(x){ return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"litro", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0 }; });
+    var filas=nuevos.map(function(x){ return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"L", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0 }; });
     impBtnBusy(true);
     sb.from("productos").insert(filas).select().then(function(r){
       impBtnBusy(false);
