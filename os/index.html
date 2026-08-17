@@ -98,6 +98,31 @@
   .view.active{display:block;animation:fade .22s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
   @media (prefers-reduced-motion:reduce){.view.active{animation:none;}}
+  /* ---- Planificación ---- */
+  .plan-prio{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:20px 0 8px;padding-left:10px;border-left:4px solid var(--line);color:var(--ink-muted);}
+  .plan-prio.p-ALTA{border-left-color:var(--crit);color:var(--crit);}
+  .plan-prio.p-MEDIA{border-left-color:var(--warn);color:var(--warn);}
+  .plan-prio.p-BAJA{border-left-color:var(--ok);color:var(--ok);}
+  .plan-card{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;background:var(--card,#fff);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;flex-wrap:wrap;}
+  .plan-card.done{opacity:.55;}
+  .plan-card.done .plan-tit{text-decoration:line-through;}
+  .plan-main{flex:1 1 260px;min-width:0;}
+  .plan-tit{font-weight:700;font-size:14.5px;}
+  .plan-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:5px;}
+  .plan-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--accent-soft,#f0f0f5);color:var(--accent-ink,#555);padding:2px 8px;border-radius:20px;}
+  .plan-who{font-size:11.5px;font-weight:600;color:var(--ink);}
+  .plan-who.none{color:var(--ink-muted);font-weight:400;font-style:italic;}
+  .plan-venc{font-size:11.5px;color:var(--ink-muted);}
+  .plan-venc.pronto{color:var(--warn);font-weight:700;}
+  .plan-venc.venc{color:var(--crit);font-weight:800;}
+  .plan-desc{font-size:12px;color:var(--ink-muted);margin-top:5px;}
+  .plan-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .plan-estados{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .plan-estados .pe{border:none;background:none;font:inherit;font-size:11px;padding:5px 9px;cursor:pointer;color:var(--ink-muted);border-right:1px solid var(--line);}
+  .plan-estados .pe:last-child{border-right:none;}
+  .plan-estados .pe.on{background:var(--accent-ink,#333);color:#fff;font-weight:700;}
+  .plan-edit,.plan-del{border:1px solid var(--line);background:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--ink-muted);font-size:13px;}
+  .plan-del:hover{color:var(--crit);border-color:var(--crit);}
 
   .vhead{margin:2px 0 18px;}
   .vhead .eye{font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:7px;}
@@ -608,6 +633,7 @@
         <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
         <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stock</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
+        <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
         <button data-view="panel"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Panel</button>
         <button data-view="quimicos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Químicos</button>
@@ -798,6 +824,32 @@
         <div style="margin:12px 0"><div class="pfilter" id="mov-filtro"><button data-m="TODOS" class="on">Todos</button><button data-m="ENTRADA">Ingresos</button><button data-m="SALIDA">Salidas</button></div></div>
         <div id="mov-list"></div>
       </details>
+    </section>
+
+    <!-- ============ PLANIFICACIÓN ============ -->
+    <section class="view" id="view-plan">
+      <div class="vhead"><div class="eye">Gestión</div><h1>Planificación</h1></div>
+      <div id="plan-kpis"></div>
+      <div class="stock-bar">
+        <div class="pfilter" id="plan-festado"><button data-e="ACTIVAS" class="on">Activas</button><button data-e="TODAS">Todas</button><button data-e="PENDIENTE">Sin iniciar</button><button data-e="PROCESO">En proceso</button><button data-e="HECHO">Hechas</button></div>
+        <select id="plan-fpersona" class="cli-search" style="margin:0;max-width:220px"><option value="">Todos los responsables</option></select>
+        <button id="plan-import" class="btn" style="white-space:nowrap">＋ Importar plan maestro</button>
+      </div>
+      <details class="stock-newwrap">
+        <summary>＋ Nueva tarea de planificación</summary>
+        <form id="plan-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
+          <label class="f" style="grid-column:span 2"><span class="lab">Tarea</span><input name="titulo" required placeholder="Ej. Optimizar Google Business Profile"></label>
+          <label class="f"><span class="lab">Área</span><input name="area" list="plan-area-list" placeholder="Web, Marketing, Clientes…"></label>
+          <datalist id="plan-area-list"><option>WEB INTERNA</option><option>MARKETING</option><option>CLIENTES</option><option>REDES / CONTENIDO</option><option>AUTOMATIZACIÓN</option><option>FOTO / VIDEO</option><option>OPERACIONES</option></datalist>
+          <label class="f"><span class="lab">Prioridad</span><select name="prioridad"><option value="ALTA">Alta</option><option value="MEDIA">Media</option><option value="BAJA">Baja</option></select></label>
+          <label class="f"><span class="lab">Responsable</span><input name="asignado" list="plan-persona-list" placeholder="Asignar a…"></label>
+          <datalist id="plan-persona-list"></datalist>
+          <label class="f"><span class="lab">Vence</span><input name="vence" type="date"></label>
+          <label class="f" style="grid-column:1/-1"><span class="lab">Descripción (opcional)</span><input name="descripcion" placeholder="Detalle o notas"></label>
+          <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
+        </form>
+      </details>
+      <div id="plan-list"></div>
     </section>
 
     <!-- ============ PANEL ============ -->
@@ -1135,7 +1187,8 @@
       sb.from('seguimientos').select('*').order('fecha',{ascending:false}),
       sb.from('cotizaciones').select('*').order('numero',{ascending:false}),
       sb.from('solicitudes').select('*').order('created_at',{ascending:false}),
-      sb.from('movimientos').select('*').order('fecha',{ascending:false})
+      sb.from('movimientos').select('*').order('fecha',{ascending:false}),
+      sb.from('planificacion').select('*').order('vence',{ascending:true})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1148,6 +1201,7 @@
       _cotiz=((res[8]&&res[8].data)||[]);
       _solped=((res[9]&&res[9].data)||[]);
       _movs=((res[10]&&res[10].data)||[]);
+      _plan=((res[11]&&res[11].data)||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -1222,8 +1276,127 @@
     else if(v==="asistencia") renderAsistencia();
     else if(v==="cotizaciones") renderCotizaciones();
     else if(v==="solicitudes") renderSolicitudes();
+    else if(v==="plan") renderPlan();
     else if(v==="admin") renderAdmin();
   }
+
+  // ---------- PLANIFICACIÓN (plan maestro) ----------
+  var _plan=[]; var _planEstado="ACTIVAS";
+  var PLAN_PRIOS=[["ALTA","Alta prioridad"],["MEDIA","Media prioridad"],["BAJA","Baja prioridad"]];
+  var PLAN_ESTLBL={PENDIENTE:"Sin iniciar",PROCESO:"En proceso",HECHO:"Hecha"};
+  var PLAN_SEED=[
+    {titulo:"Brochure corporativo de servicios",prioridad:"ALTA",estado:"PROCESO",vence:"2026-08-16",area:"MARKETING"},
+    {titulo:"Optimizar Google Business Profile",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-08-16",area:"MARKETING"},
+    {titulo:"WhatsApp Business y automatizaciones",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"AUTOMATIZACIÓN"},
+    {titulo:"Fotografía profesional de entrega",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"FOTO / VIDEO"},
+    {titulo:"Ficha digital del cliente",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-06",area:"CLIENTES"},
+    {titulo:"Registro de datos del vehículo",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-06",area:"CLIENTES"},
+    {titulo:"Repositorio fotos antes y después",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-06",area:"FOTO / VIDEO"},
+    {titulo:"Video de entrega",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"FOTO / VIDEO"},
+    {titulo:"Programa de referidos (cliente final)",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"MARKETING"},
+    {titulo:"Agenda próxima revisión",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"OPERACIONES"},
+    {titulo:"Agenda próxima mantención",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-13",area:"OPERACIONES"},
+    {titulo:"Potenciar la página web",prioridad:"ALTA",estado:"PROCESO",vence:"2026-09-20",area:"WEB INTERNA"},
+    {titulo:"Historial de servicios por cliente",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-20",area:"CLIENTES"},
+    {titulo:"Control de garantías",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-09-27",area:"CLIENTES"},
+    {titulo:"Recordatorios 30 / 90 / 180 / 365 días",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-10-11",area:"AUTOMATIZACIÓN"},
+    {titulo:"Automatización de mantenciones",prioridad:"ALTA",estado:"PENDIENTE",vence:"2026-10-11",area:"AUTOMATIZACIÓN"},
+    {titulo:"Testimonios en video",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-10",area:"FOTO / VIDEO"},
+    {titulo:"Potenciar Instagram y Facebook",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
+    {titulo:"Contenido diario (rutina)",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
+    {titulo:"Antes y después",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
+    {titulo:"Reels",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-17",area:"REDES / CONTENIDO"},
+    {titulo:"Declaración de Meta Ads",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-24",area:"MARKETING"},
+    {titulo:"Declaración de Google Ads",prioridad:"ALTA",estado:"PENDIENTE",vence:"2027-01-24",area:"MARKETING"},
+    {titulo:"Brochure para representantes",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-08-30",area:"MARKETING"},
+    {titulo:"Registro de productos utilizados",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-09-27",area:"OPERACIONES"},
+    {titulo:"Impresión de fotografía",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-04",area:"FOTO / VIDEO"},
+    {titulo:"Beneficios por cumpleaños",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-11",area:"CLIENTES"},
+    {titulo:"Automatización de cumpleaños",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-10-18",area:"AUTOMATIZACIÓN"},
+    {titulo:"Automatización de promociones",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-01",area:"AUTOMATIZACIÓN"},
+    {titulo:"Automatización de encuestas",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-01",area:"AUTOMATIZACIÓN"},
+    {titulo:"Gift Cards",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-11-29",area:"MARKETING"},
+    {titulo:"SEO local",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2026-12-06",area:"MARKETING"},
+    {titulo:"Potenciar TikTok",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-10",area:"REDES / CONTENIDO"},
+    {titulo:"Casos de éxito",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-10",area:"REDES / CONTENIDO"},
+    {titulo:"Remarketing",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-17",area:"MARKETING"},
+    {titulo:"Videos de servicios",prioridad:"MEDIA",estado:"PENDIENTE",vence:"2027-01-17",area:"FOTO / VIDEO"},
+    {titulo:"Pasaporte del vehículo",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-03",area:"CLIENTES"},
+    {titulo:"Email Marketing",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"MARKETING"},
+    {titulo:"Cliente del mes",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"MARKETING"},
+    {titulo:"Tienda online",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-10",area:"WEB INTERNA"},
+    {titulo:"App IS Performance",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-17",area:"WEB INTERNA"},
+    {titulo:"Portal del cliente",prioridad:"BAJA",estado:"PENDIENTE",vence:"2027-01-17",area:"WEB INTERNA"}
+  ];
+  function planPersonas(){ var s={}; (reloj||[]).forEach(function(r){ if(r.trab)s[r.trab]=1; }); Object.keys(VH||{}).forEach(function(k){ if(k)s[k]=1; }); _plan.forEach(function(x){ if(x.asignado)s[x.asignado]=1; }); return Object.keys(s).sort(); }
+  function planVencClass(v,estado){ if(estado==="HECHO"||!v) return ""; var d=(new Date(v+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/86400000; if(d<0) return "venc"; if(d<=10) return "pronto"; return ""; }
+  function renderPlan(){
+    var per=planPersonas();
+    var dl=document.getElementById("plan-persona-list"); if(dl) dl.innerHTML=per.map(function(p){return '<option>'+av(p)+'</option>';}).join("");
+    var fp=document.getElementById("plan-fpersona"); if(fp){ var cur=fp.value; fp.innerHTML='<option value="">Todos los responsables</option>'+per.map(function(p){return '<option'+(cur===p?' selected':'')+'>'+av(p)+'</option>';}).join(""); }
+    document.querySelectorAll("#plan-festado button").forEach(function(b){ b.classList.toggle("on",b.dataset.e===_planEstado); });
+    var total=_plan.length;
+    var pend=_plan.filter(function(x){return (x.estado||"PENDIENTE")==="PENDIENTE";}).length;
+    var proc=_plan.filter(function(x){return x.estado==="PROCESO";}).length;
+    var venc=_plan.filter(function(x){return x.estado!=="HECHO"&&x.vence&&x.vence<todayISO();}).length;
+    document.getElementById("plan-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+kstat("Total",total,"tareas")+kstat("En proceso",proc,"activas")+kstat("Sin iniciar",pend,"pendientes")+kstat("Vencidas",venc,"atrasadas")+'</div>';
+    var fPers=fp?fp.value:"";
+    var list=_plan.filter(function(x){ var e=x.estado||"PENDIENTE";
+      if(_planEstado==="ACTIVAS"){ if(e==="HECHO")return false; } else if(_planEstado!=="TODAS"){ if(e!==_planEstado)return false; }
+      if(fPers && (x.asignado||"")!==fPers) return false; return true; });
+    var pOrd={ALTA:0,MEDIA:1,BAJA:2};
+    list.sort(function(a,b){ var pa=pOrd[a.prioridad]==null?3:pOrd[a.prioridad], pb=pOrd[b.prioridad]==null?3:pOrd[b.prioridad]; if(pa!==pb)return pa-pb; var va=a.vence||"9999", vb=b.vence||"9999"; return va<vb?-1:(va>vb?1:0); });
+    var el=document.getElementById("plan-list");
+    if(!list.length){ el.innerHTML='<div class="col-empty">Sin tareas. Usa <b>＋ Importar plan maestro</b> para traer el plan de Obsidian, o crea una nueva.</div>'; return; }
+    var html="", lastP="__";
+    list.forEach(function(x){
+      if(x.prioridad!==lastP){ lastP=x.prioridad; var pl=(PLAN_PRIOS.filter(function(p){return p[0]===lastP;})[0]||["","Otras"])[1]; html+='<div class="plan-prio p-'+(lastP||"NA")+'">'+escH(pl)+'</div>'; }
+      var e=x.estado||"PENDIENTE"; var vc=planVencClass(x.vence,e);
+      html+='<div class="plan-card'+(e==="HECHO"?" done":"")+'">'
+        +'<div class="plan-main"><div class="plan-tit">'+escH(x.titulo||"")+'</div>'
+        +'<div class="plan-meta">'+(x.area?'<span class="plan-tag">'+escH(x.area)+'</span>':'')
+        +(x.asignado?'<span class="plan-who">'+escH(x.asignado)+'</span>':'<span class="plan-who none">Sin responsable</span>')
+        +(x.vence?'<span class="plan-venc '+vc+'">'+fFecha(x.vence)+(vc==="venc"?' · vencida':'')+'</span>':'')+'</div>'
+        +(x.descripcion?'<div class="plan-desc">'+escH(x.descripcion)+'</div>':'')+'</div>'
+        +'<div class="plan-actions"><div class="plan-estados">'+["PENDIENTE","PROCESO","HECHO"].map(function(s){return '<button class="pe'+(e===s?" on":"")+'" data-pe="'+s+'" data-id="'+x.id+'">'+PLAN_ESTLBL[s]+'</button>';}).join("")+'</div>'
+        +'<button class="plan-edit" data-id="'+x.id+'" title="Editar">✎</button><button class="plan-del" data-id="'+x.id+'" title="Eliminar">✕</button></div></div>';
+    });
+    el.innerHTML=html;
+    el.querySelectorAll(".pe").forEach(function(b){ b.onclick=function(){ planSetEstado(b.dataset.id,b.dataset.pe); }; });
+    el.querySelectorAll(".plan-del").forEach(function(b){ b.onclick=function(){ var t=_plan.filter(function(x){return x.id===b.dataset.id;})[0]; if(t&&confirm("¿Eliminar “"+t.titulo+"”?")) planDel(b.dataset.id); }; });
+    el.querySelectorAll(".plan-edit").forEach(function(b){ b.onclick=function(){ planEditar(b.dataset.id); }; });
+  }
+  function planSetEstado(id,next){ var t=_plan.filter(function(x){return x.id===id;})[0]; if(!t)return; t.estado=next; var sb=sbc(); if(sb) sb.from("planificacion").update({estado:next}).eq("id",id).then(function(){}); renderPlan(); }
+  function planDel(id){ var sb=sbc(); if(sb) sb.from("planificacion").delete().eq("id",id).then(function(){}); _plan=_plan.filter(function(x){return x.id!==id;}); renderPlan(); }
+  function planEditar(id){ var t=_plan.filter(function(x){return x.id===id;})[0]; if(!t)return;
+    var nt=prompt("Tarea:",t.titulo); if(nt===null)return; if(nt.trim())t.titulo=nt.trim();
+    var na=prompt("Responsable (deja vacío para nadie):",t.asignado||""); if(na!==null)t.asignado=na.trim();
+    var nv=prompt("Vence (AAAA-MM-DD, vacío = sin fecha):",t.vence||""); if(nv!==null)t.vence=nv.trim()||null;
+    var sb=sbc(); if(sb) sb.from("planificacion").update({titulo:t.titulo,asignado:t.asignado,vence:t.vence}).eq("id",id).then(function(r){ if(r&&r.error)toast("⚠ No se pudo guardar"); }); renderPlan();
+  }
+  function importarPlanMaestro(){
+    var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
+    var ya={}; _plan.forEach(function(x){ ya[(x.titulo||"").trim().toUpperCase()]=1; });
+    var nuevos=PLAN_SEED.filter(function(x){ return !ya[(x.titulo||"").trim().toUpperCase()]; });
+    if(!nuevos.length){ toast("El plan maestro ya está importado ✓"); return; }
+    if(!confirm("Se agregarán "+nuevos.length+" tareas del plan maestro (con prioridad y fecha). ¿Continuar?"))return;
+    var imp=document.getElementById("plan-import"); if(imp){imp.disabled=true;imp.textContent="Importando…";}
+    sb.from("planificacion").insert(nuevos).select().then(function(r){ if(imp){imp.disabled=false;imp.textContent="＋ Importar plan maestro";}
+      if(r.error){ toast("⚠ Error (¿corriste el SQL 21?)"); return; }
+      (r.data||[]).forEach(function(row){ _plan.push(row); }); renderPlan(); toast("✓ "+((r.data||[]).length)+" tareas importadas");
+    });
+  }
+  (function(){
+    var f=document.getElementById("plan-form");
+    if(f) f.addEventListener("submit",function(ev){ ev.preventDefault();
+      var row={titulo:f.titulo.value.trim(),area:f.area.value.trim(),prioridad:f.prioridad.value,asignado:f.asignado.value.trim(),vence:f.vence.value||null,descripcion:f.descripcion.value.trim(),estado:"PENDIENTE"};
+      if(!row.titulo)return; var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
+      sb.from("planificacion").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 21?)"); return; } _plan.push(r.data); f.reset(); renderPlan(); toast("✓ Tarea agregada"); });
+    });
+    var fe=document.getElementById("plan-festado"); if(fe) fe.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b){ _planEstado=b.dataset.e; renderPlan(); } });
+    var fp=document.getElementById("plan-fpersona"); if(fp) fp.addEventListener("change",renderPlan);
+    var imp=document.getElementById("plan-import"); if(imp) imp.addEventListener("click",importarPlanMaestro);
+  })();
 var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX","uso":"Limpiar llantas aluminio y carrocería con óxido adherido","dilN":"1:9","dilA":"1:3","apl":"Rociador o espumadora","nota":"No dejar secar sobre pintura. Enjuagar inmediatamente.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"LIMPIADOR MULTI","uso":"Primer prelav de carrocería antes del champú","dilN":"1:133","dilA":"—","apl":"Espumadora o rociador","nota":"Siempre como paso 1 antes del champú.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"WINKLER","uso":"Champú alcalino concentrado para carrocería sucia","dilN":"1:150","dilA":"1:16","apl":"Espumadora","nota":"No dejar sobre vidrios sin enjuagar.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ZIOX","uso":"Champú ácido desincrustante para pintura y llantas","dilN":"1:24","dilA":"1:16","apl":"Espumadora o rociador","nota":"Terminar siempre con champú neutro después.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"THICK","uso":"Champú neutro muy concentrado para lavado estándar","dilN":"1:500","dilA":"1:16","apl":"Espumadora","nota":"Muy concentrado: medir con exactitud.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"EOX","uso":"Champú neutro estándar para carrocería","dilN":"1:4","dilA":"1:4","apl":"Espumadora","nota":"Proporción fija 1:4 siempre.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"VONIX","prod":"V-MOL","uso":"Prelav desengrasante para motor, llantas y pickup","dilN":"1:20","dilA":"1:16","apl":"Espumadora o rociador","nota":"Ideal como paso previo al champú en servicios completos.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"DESENGRASANTE IND.","uso":"Quitar grasa de motor, llantas, pisaderas, pisos y neumáticos","dilN":"1:9","dilA":"1:1 / PURO (extremo)","apl":"Rociador directo, dejar actuar","nota":"PURO solo en motor extremo. Nunca sobre pintura.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ALCANCE BIO-W","uso":"Lavado en seco: limpieza + encerado en un solo paso","dilN":"1:50","dilA":"1:10 / PURO insectos","apl":"Rociador + paño microfibra","nota":"Un solo producto que limpia, encera y protege.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"REVELAX","uso":"Preparar pintura post-pulido antes de sellar","dilN":"70:30 (alc:agua)","dilA":"—","apl":"Paño microfibra","nota":"SIEMPRE antes de cualquier sellado. Reemplazable por IPA 70%.","dur":"—"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"CERA EXPRESS","uso":"Brillo rápido de mantenimiento","dilN":"PURO","dilA":"—","apl":"Microfibra sin bordes, retirar 2 min","nota":"No usar bajo sol directo ni superficie caliente.","dur":"6–8 días"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"CHERRY WAX","prod":"CHERRY WAX","uso":"Cera 4 en 1: alto brillo + repelente agua + protección","dilN":"PURO","dilA":"—","apl":"Pad de finish","nota":"Máximo 50 ml por vehículo.","dur":"2–4 semanas"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"SINERGY PAINT","uso":"Sellado cerámico — brillo intenso y larga duración","dilN":"PURO","dilA":"—","apl":"Paño microfibra, 2 pasadas uniformes, retirar con parte seca","nota":"Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"SENSORY","prod":"SENSORY SIO1-TIO2","uso":"Sellado cerámico máxima protección UV, lluvia ácida y oxidación","dilN":"PURO","dilA":"—","apl":"Esponja grande azul, retirar con paño a los 2 min","nota":"Máxima protección. Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"GLAZOX / CERA","uso":"Mantenimiento cerámico de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra uniforme","nota":"Mantenimiento periódico sobre sellado cerámico.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"MEGUIAR\u0027S","prod":"CERAMIC COATING","uso":"Tratamiento cerámico profesional de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Aplicar en ambiente controlado, sin polvo ni viento.","dur":"6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"KOCH CHEMIE","prod":"SO.03 HIDRO FOAM","uso":"Sellador húmedo de mantenimiento cerámico — se aplica en mojado","dilN":"1:150","dilA":"1:50","apl":"Espumadora sobre carrocería húmeda, enjuagar con agua","nota":"Aplicar con auto mojado. Menor dilución = mayor protección.","dur":"3–6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"BIO-W","prod":"BIO-W CERA","uso":"Sellado cerámico mantenimiento — también actúa como champú","dilN":"1:10","dilA":"—","apl":"Rociador + microfibra","nota":"Combinación limpieza + encerado en uno.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"GLASS PREP","uso":"Limpiar vidrios y quitar restos de pasta de pulimento","dilN":"PURO","dilA":"—","apl":"Paño microfibra, dejar actuar y retirar","nota":"Usar ANTES de sellar vidrios.","dur":"—"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"TAR","uso":"Quitar asfalto, adhesivos e insectos de carrocería y vidrios","dilN":"PURO","dilA":"—","apl":"Aplicar, dejar 2–3 min, retirar con microfibra","nota":"Seguro en pintura, vidrio, plástico y metal.","dur":"—"},{"cat":"VIDRIOS","marca":"VINOX","prod":"PRIZM","uso":"Restaurar vidrios con gotas ácidas / lluvia ácida","dilN":"PURO","dilA":"—","apl":"Pincel rápido uniforme, retirar con agua a presión","nota":"Retirar SIEMPRE con agua a presión.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"—","prod":"SIO03 WATER OFF","uso":"Sellado cerámico para todos los vidrios","dilN":"PURO","dilA":"—","apl":"Esponja + paño microfibra","nota":"Aplicar sobre vidrio limpio y seco.","dur":"6 meses"},{"cat":"VIDRIOS","marca":"GLACO","prod":"GLACO","uso":"Sellado repelente agua y suciedad — mayor duración en vidrios","dilN":"PURO","dilA":"—","apl":"Esponja interna del envase, retirar con paño","nota":"Aplicar sobre vidrio completamente seco.","dur":"12 meses"},{"cat":"NEUMÁTICOS","marca":"VONIX","prod":"SHINY","uso":"Revitalizar y dar brillo a neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha, varias pasadas en la cara del neumático","nota":"Limpiar bien el neumático antes.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"VINTEX","prod":"PNEU PRETINHO","uso":"Brillo intenso + protección para neumáticos","dilN":"PURO","dilA":"—","apl":"Pistola de alta presión, retirar exceso con paño","nota":"Retirar exceso o queda pegajoso.","dur":"1–2 meses"},{"cat":"NEUMÁTICOS","marca":"MOTO CLEAN","prod":"RENOU","uso":"Renovar y sellar neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"WZT","prod":"RENOVADOR WZT","uso":"Renovador y sellador para neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX BLACK","uso":"Restaurar plásticos exteriores quemados o muy grises","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos muy dañados. Limpiar antes con APC.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX","uso":"Renovar y acondicionar plásticos exteriores en buen estado","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos que solo necesitan renovarse.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"EOX","prod":"EOX DRESSING","uso":"Acondicionar motor, guardabarro, pickup y neumáticos","dilN":"1:4","dilA":"—","apl":"Pistola de aire o paño microfibra","nota":"No aplicar sobre pinturas.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"VONIX","prod":"VERSE","uso":"Proteger y renovar plásticos, gomas y compartimiento motor","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"NO usar en volante, pedales ni superficies calientes.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"MOTOR CLEAN","prod":"PLASTIC1","uso":"Acondicionar plásticos exteriores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 2–4 meses.","dur":"2–4 meses"},{"cat":"INTERIOR · LIMPIEZA","marca":"WINTEX","prod":"LIMPIADOR APC","uso":"Limpieza general interior: plásticos, tablero, puertas, gomas","dilN":"1:4","dilA":"1:4","apl":"Rociador + paño microfibra o esponja","nota":"Producto polivalente para todo el interior.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"VONIX","prod":"SINTRA PRO","uso":"Desinfectar plásticos, gomas, telas, alfombras y cuero","dilN":"1:5","dilA":"1:1","apl":"Rociador + microfibra","nota":"1:5 plásticos/cuero · 1:1 tapiz/techo · 1:10 paneles.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"—","prod":"LIMPIA ESTOFADOS","uso":"Lavar asientos y tapicería sucia a fondo","dilN":"1:16","dilA":"—","apl":"Rociar abundante + frotar con escobilla o taladro","nota":"Alta suciedad: mezclar con desengrasante puro.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"KOCH CHEMIE","prod":"POL STAR","uso":"Limpiar y acondicionar cuero y alcántara interior","dilN":"1:20","dilA":"—","apl":"Rociador + paño suave","nota":"Usar SIEMPRE antes de HIDRACURO.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"HIDRACURO","uso":"Nutrir, acondicionar y proteger cuero interior","dilN":"PURO","dilA":"—","apl":"Esponja o paño, repetir si el cuero absorbe","nota":"Solo cuero. SIEMPRE después de POL STAR.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"KOCHCHEMIE","prod":"TOP STAR TS","uso":"Acondicionar plásticos y gomas interiores — acabado mate","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Acabado mate. No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"MOTOR CLEAN","prod":"PLASTICI 2","uso":"Acondicionar y proteger plásticos interiores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 3 meses.","dur":"3 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"RESTAURAX","uso":"Restaurar plásticos degradados (parachoques, paneles, laterales)","dilN":"PURO","dilA":"—","apl":"Esponja, pasada uniforme con poco producto","nota":"Duración 6 meses. No empapar.","dur":"6 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"VERSE (interior)","uso":"Proteger plásticos y gomas interiores","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso","nota":"No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"WINTEX","prod":"NEUTRALIZADOR OLORES","uso":"Eliminar olores y ambientar el interior del vehículo","dilN":"PURO","dilA":"—","apl":"Pistola o rociador","nota":"Último paso del servicio interior.","dur":"—"}];
   function renderQuimicos(){
     var inp=document.getElementById("qui-search"); var q=(inp&&inp.value||"").toLowerCase().trim();
@@ -1347,7 +1520,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
   function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
   function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
