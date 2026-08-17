@@ -768,6 +768,7 @@
       <div class="stock-bar">
         <div class="pfilter" id="stock-filtro"><button data-f="TODOS" class="on">Todos</button><button data-f="EQUIPAMIENTO">Equipamiento</button><button data-f="DETAILING">Detailing</button></div>
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
+        <button id="stock-import-qui" class="btn" style="display:none;white-space:nowrap">＋ Importar de Químicos</button>
       </div>
       <details class="stock-newwrap">
         <summary>＋ Agregar producto</summary>
@@ -777,8 +778,16 @@
           <label class="f"><span class="lab">Marca / modelo</span><input name="marca" placeholder=""></label>
           <label class="f" id="lbl-comp"><span class="lab">Compatibilidad</span><input name="compatibilidad" placeholder="L200, Hilux…"></label>
           <label class="f" id="lbl-med"><span class="lab">Medidas</span><input name="medidas" placeholder=""></label>
-          <label class="f" id="lbl-udm" style="display:none"><span class="lab">Unidad (UdM)</span><input name="udm" list="udm-list" placeholder="unidad, litro, bidón…"></label>
+          <label class="f" id="lbl-familia" style="display:none"><span class="lab">Familia / uso</span><input name="familia" list="familia-list" placeholder="Lavado exterior, Vidrios…"></label>
+          <datalist id="familia-list"><option>PRELAV / LAVADO EXTERIOR</option><option>SELLADO Y PROTECCIÓN DE PINTURA</option><option>VIDRIOS</option><option>NEUMÁTICOS</option><option>PLÁSTICOS Y MOTOR EXTERIOR</option><option>INTERIOR · LIMPIEZA</option><option>INTERIOR · ACONDICIONADO</option><option>HERRAMIENTAS</option><option>EPP / SEGURIDAD</option><option>CONSUMIBLES</option></datalist>
+          <label class="f" id="lbl-present" style="display:none"><span class="lab">Presentación / envase</span><input name="presentacion" list="present-list" placeholder="Bidón, Galón, Spray…"></label>
+          <datalist id="present-list"><option>Bidón</option><option>Galón</option><option>Litro</option><option>Spray</option><option>Kg</option><option>Caja</option><option>Unidad</option><option>Rollo</option></datalist>
+          <label class="f" id="lbl-conten" style="display:none"><span class="lab">Contenido / tamaño</span><input name="contenido" placeholder="5 L, 1 L, 500 ml…"></label>
+          <label class="f" id="lbl-udm" style="display:none"><span class="lab">Unidad de consumo (UdM)</span><input name="udm" list="udm-list" placeholder="litro, unidad, kg…"></label>
           <datalist id="udm-list"><option>unidad</option><option>litro</option><option>kg</option><option>bidón</option><option>caja</option><option>paño</option><option>rollo</option><option>par</option></datalist>
+          <label class="f" id="lbl-ubic" style="display:none"><span class="lab">Ubicación (bodega)</span><input name="ubicacion" list="ubic-list" placeholder="Estante A, Bodega…"></label>
+          <datalist id="ubic-list"><option>Bodega</option><option>Estante A</option><option>Estante B</option><option>Estante C</option><option>Box lavado</option><option>Box detailing</option></datalist>
+          <label class="f" id="lbl-min" style="display:none"><span class="lab">Stock mínimo (aviso)</span><input name="stock_min" type="number" min="0" value="0"></label>
           <label class="f"><span class="lab">Cantidad inicial</span><input name="entrada" type="number" min="0" value="1"></label>
           <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
         </form>
@@ -2122,7 +2131,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   // ---------- stock / inventario ----------
   function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
-  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,stock_min:p.stock_min||0,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,familia:p.familia||null,presentacion:p.presentacion||null,contenido:p.contenido||null,ubicacion:p.ubicacion||null,stock_min:p.stock_min||0,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
   function delProductoDB(id){ var sb=sbc(); if(sb) sb.from('productos').delete().eq('id',id).then(function(){}); }
   function kstat(l,v,s){ return '<div class="kpi" style="cursor:default"><div class="kl">'+l+'</div><div class="kv">'+v+'</div><div class="ks">'+s+'</div></div>'; }
   var _movs=[], _movCtx=null;
@@ -2198,8 +2207,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var TIPOS_CAT=(state.stockCat==="INSUMO")?[["QUIMICO","Químico"],["INSUMO","Insumo"],["HERRAMIENTA","Herramienta"],["REPUESTO","Repuesto"]]:[["EQUIPAMIENTO","Equipamiento"],["DETAILING","Detailing"]];
     var filtroEl=document.getElementById("stock-filtro"); if(filtroEl) filtroEl.innerHTML='<button data-f="TODOS"'+(f==="TODOS"?' class="on"':'')+'>Todos</button>'+TIPOS_CAT.map(function(t){return '<button data-f="'+t[0]+'"'+(f===t[0]?' class="on"':'')+'>'+t[1]+'</button>';}).join('');
     var sfTipo=document.querySelector('#stock-form select[name="tipo"]'); if(sfTipo){ var curT=sfTipo.value; sfTipo.innerHTML=TIPOS_CAT.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join(''); if(TIPOS_CAT.some(function(t){return t[0]===curT;})) sfTipo.value=curT; }
-    var esIns=(state.stockCat==="INSUMO"), lc=document.getElementById("lbl-comp"), lm=document.getElementById("lbl-med"), lu=document.getElementById("lbl-udm");
-    if(lc)lc.style.display=esIns?"none":""; if(lm)lm.style.display=esIns?"none":""; if(lu)lu.style.display=esIns?"":"none";
+    var esIns=(state.stockCat==="INSUMO");
+    ["lbl-comp","lbl-med"].forEach(function(id){ var e=document.getElementById(id); if(e)e.style.display=esIns?"none":""; });
+    ["lbl-familia","lbl-present","lbl-conten","lbl-udm","lbl-ubic","lbl-min"].forEach(function(id){ var e=document.getElementById(id); if(e)e.style.display=esIns?"":"none"; });
+    var impBtn=document.getElementById("stock-import-qui"); if(impBtn) impBtn.style.display=esIns?"":"none";
     var lista=productos.filter(function(p){
       if((p.categoria||"VENTA")!==state.stockCat) return false;
       if(f!=="TODOS" && (p.tipo||"EQUIPAMIENTO")!==f) return false;
@@ -2224,7 +2235,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var s=stockDe(p); var mn=(+p.stock_min||0); var col=(s<=0||(mn&&s<=mn))?'var(--crit)':(s<=1?'var(--warn)':'var(--ink)');
       var extra="";
       if(esInsumo){ var rot=movRotacion(p.id); var dias=rot>0?Math.round((s/rot)*30):null; var ult=movUltIngreso(p.id);
-        extra='<div style="font-size:10.5px;color:var(--ink-muted);margin-top:2px">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'sin consumo aún')+(dias!=null&&isFinite(dias)?' · ~'+dias+' días':'')+(ult?' · ingreso '+fFecha(ult):'')+' · <button class="stk-min" data-id="'+p.id+'" style="border:none;background:none;color:var(--accent-ink);cursor:pointer;font:inherit;padding:0">mín '+(mn||'—')+' ✎</button></div>'; }
+        var tags=[]; if(p.familia)tags.push(p.familia); var pc=((p.presentacion||"")+" "+(p.contenido||"")).trim(); if(pc)tags.push(pc); if(p.ubicacion)tags.push("📍 "+p.ubicacion);
+        var etq=tags.length?'<div style="font-size:10.5px;color:var(--ink-muted);margin-top:3px">'+escH(tags.join(" · "))+'</div>':'';
+        extra=etq+'<div style="font-size:10.5px;color:var(--ink-muted);margin-top:2px">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'sin consumo aún')+(dias!=null&&isFinite(dias)?' · ~'+dias+' días':'')+(ult?' · ingreso '+fFecha(ult):'')+' · <button class="stk-min" data-id="'+p.id+'" style="border:none;background:none;color:var(--accent-ink);cursor:pointer;font:inherit;padding:0">mín '+(mn||'—')+' ✎</button></div>'; }
       var solBtn=(esInsumo&&mn&&s<=mn)?' <button class="stk-btn solped" data-id="'+p.id+'" style="color:var(--crit);border-color:var(--crit)">Solicitar</button>':'';
       var col34=esInsumo
         ? '<td style="font-weight:600">'+(p.udm||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'—')+'</td>'
@@ -2255,10 +2268,31 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var sBuscar=document.getElementById("stock-buscar"); if(sBuscar) sBuscar.addEventListener("input",function(){ state.stockBuscar=sBuscar.value; renderStock(); });
     var sForm=document.getElementById("stock-form");
     if(sForm) sForm.addEventListener("submit",function(ev){ ev.preventDefault();
+      var esIns=(state.stockCat==="INSUMO");
       var o={tipo:sForm.tipo.value,producto:sForm.producto.value.trim(),marca:sForm.marca.value.trim(),compatibilidad:sForm.compatibilidad.value.trim(),medidas:sForm.medidas.value.trim(),udm:(sForm.udm?sForm.udm.value.trim():""),entrada:parseInt(sForm.entrada.value)||0,salida:0,categoria:state.stockCat};
+      if(esIns){ o.familia=(sForm.familia?sForm.familia.value.trim():""); o.presentacion=(sForm.presentacion?sForm.presentacion.value.trim():""); o.contenido=(sForm.contenido?sForm.contenido.value.trim():""); o.ubicacion=(sForm.ubicacion?sForm.ubicacion.value.trim():""); o.stock_min=parseInt(sForm.stock_min&&sForm.stock_min.value,10)||0; }
       addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Agregado a "+(state.stockCat==="INSUMO"?"Insumos":"Productos en venta")); });
     });
+    var impBtn=document.getElementById("stock-import-qui");
+    if(impBtn) impBtn.addEventListener("click",function(){ importarQuimicos(); });
   })();
+  function importarQuimicos(){
+    var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
+    // ya en stock (por nombre, en Insumos) para no duplicar
+    var yaN={}; productos.forEach(function(p){ if((p.categoria||"")==="INSUMO") yaN[(p.producto||"").trim().toUpperCase()]=1; });
+    var nuevos=QUIMICOS.filter(function(x){ return !yaN[(x.prod||"").trim().toUpperCase()]; });
+    if(!nuevos.length){ toast("Todos los químicos ya están en Insumos ✓"); return; }
+    if(!confirm("Se agregarán "+nuevos.length+" químicos a Insumos (en 0, para que hagas el conteo físico). ¿Continuar?")) return;
+    var filas=nuevos.map(function(x){ return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"litro", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0 }; });
+    impBtnBusy(true);
+    sb.from("productos").insert(filas).select().then(function(r){
+      impBtnBusy(false);
+      if(r.error){ toast("⚠ Error al importar"); return; }
+      (r.data||[]).forEach(function(row){ productos.push(row); });
+      renderStock(); toast("✓ "+((r.data||[]).length)+" químicos importados. Ahora haz el conteo (botón Ingreso).");
+    });
+  }
+  function impBtnBusy(b){ var e=document.getElementById("stock-import-qui"); if(!e)return; e.disabled=b; e.textContent=b?"Importando…":"＋ Importar de Químicos"; }
 
   // ---------- clientes (CRM) ----------
   function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
