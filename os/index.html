@@ -1161,6 +1161,10 @@
   function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
   // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
   function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
+  // Automotoras que SIEMPRE van "por cotizar": al elegirlas en agendamiento se autollena el servicio.
+  var SVC_POR_COTIZAR="Pendiente de cotización";
+  var AUTOMOTORAS_COTIZAR=["guillermo morales"];
+  function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
   function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
@@ -1945,12 +1949,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   (function(){
     var inp=document.getElementById("rec-cliente"), drop=document.getElementById("ac-cliente"); if(!inp||!drop) return;
     function hide(){ drop.style.display="none"; drop.innerHTML=""; }
+    function autoCotizar(nombre){
+      if(esAutomotoraCotizar(nombre) && chosenSvcs.indexOf(SVC_POR_COTIZAR)<0){
+        addSvc(SVC_POR_COTIZAR);
+        if(form.docTipo) form.docTipo.value="FACTURA";
+        toast("🏢 "+(nombre||"Automotora")+": va por cotizar — solo completa los datos del vehículo");
+        return true;
+      }
+      return false;
+    }
     function fillFrom(c){
       form.cliente.value=c.nombre||"";
       if(c.contacto) form.contacto.value=c.contacto;
       hide(); recepSummary();
+      if(autoCotizar(c.nombre)) return;
       toast("Cliente: "+(c.nombre||"")+" — completa los datos del vehículo");
     }
+    inp.addEventListener("change",function(){ autoCotizar(inp.value); });
     inp.addEventListener("input",function(){
       var q=inp.value.trim().toLowerCase(); if(q.length<2){ hide(); return; }
       var matches=agruparClientes().filter(function(c){ return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0; }).slice(0,6);
