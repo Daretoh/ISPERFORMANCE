@@ -258,7 +258,7 @@
   .kcotiz-tag{display:inline-block;margin-left:7px;font:700 9px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:#7a2fd0;background:#efe3ff;border:1px solid #d9c2f7;border-radius:999px;padding:3px 6px;vertical-align:middle;}
   .kcard.cotizar{border-color:#c9a9f2;box-shadow:0 0 0 1px #e6d5fb inset,var(--shadow);}
   .ktrab{display:flex;flex-direction:column;gap:5px;margin:9px 0;}
-  .ktrab-head{display:flex;align-items:center;gap:7px;font:700 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
+  .ktrab-head{display:flex;align-items:center;gap:7px;font:800 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ground);background:var(--ink);padding:8px 11px;border-radius:7px;}
   .ktrab-count{font:700 9px/1 var(--sans);letter-spacing:.02em;text-transform:none;border-radius:999px;padding:3px 7px;}
   .ktrab-count.pend{color:var(--warn);background:var(--warn-soft);}
   .ktrab-count.done{color:var(--ok);background:var(--ok-soft);}
@@ -286,9 +286,11 @@
   .ldel{border:none;background:var(--surface-3);color:var(--ink-muted);width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;margin-left:6px;}
   .ldel:hover{background:var(--crit);color:#fff;}
   .ktimes{margin-top:8px;}
-  .ktimes summary{cursor:pointer;font:700 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);list-style:none;padding:4px 0;}
+  .ktimes summary{cursor:pointer;font:800 11px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ground);background:var(--ink);list-style:none;padding:8px 11px;border-radius:7px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;}
   .ktimes summary::-webkit-details-marker{display:none;}
-  .ktimes summary:hover{color:var(--accent-ink);}
+  .ktimes summary::after{content:"⌄";font-size:14px;opacity:.75;margin-left:8px;}
+  .ktimes[open] summary::after{content:"⌃";}
+  .ktimes summary:hover{background:var(--accent-ink);color:#fff;}
   .trow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
   .trow span{font:600 10.5px/1 var(--mono);color:var(--ink-muted);}
   .trow input{width:110px;font:600 12px/1 var(--mono);padding:5px 7px;border:1px solid var(--line);border-radius:5px;background:var(--ground);color:var(--ink);}
