@@ -834,7 +834,7 @@
       <div class="stock-bar">
         <div class="pfilter" id="plan-festado"><button data-e="ACTIVAS" class="on">Activas</button><button data-e="TODAS">Todas</button><button data-e="PENDIENTE">Sin iniciar</button><button data-e="PROCESO">En proceso</button><button data-e="HECHO">Hechas</button></div>
         <select id="plan-fpersona" class="cli-search" style="margin:0;max-width:220px"><option value="">Todos los responsables</option></select>
-        <button id="plan-import" class="btn" style="white-space:nowrap">＋ Importar plan maestro</button>
+        <button id="plan-import" class="btn" style="white-space:nowrap;display:none">＋ Importar plan maestro</button>
       </div>
       <details class="stock-newwrap">
         <summary>＋ Nueva tarea de planificación</summary>
@@ -1424,6 +1424,7 @@
     var dl=document.getElementById("plan-persona-list"); if(dl) dl.innerHTML=per.map(function(p){return '<option>'+av(p)+'</option>';}).join("");
     var fp=document.getElementById("plan-fpersona"); if(fp){ var cur=fp.value; fp.innerHTML='<option value="">Todos los responsables</option>'+per.map(function(p){return '<option'+(cur===p?' selected':'')+'>'+av(p)+'</option>';}).join(""); }
     document.querySelectorAll("#plan-festado button").forEach(function(b){ b.classList.toggle("on",b.dataset.e===_planEstado); });
+    var impB=document.getElementById("plan-import"); if(impB) impB.style.display=_plan.length?"none":"";
     var total=_plan.length;
     var pend=_plan.filter(function(x){return (x.estado||"PENDIENTE")==="PENDIENTE";}).length;
     var proc=_plan.filter(function(x){return x.estado==="PROCESO";}).length;
