@@ -2019,11 +2019,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var trHTML=trarr.map(function(w,idx){ var done=!!w.ok; return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+idx+'"'+(done?' checked':'')+'><span'+(done?' class="done"':'')+'>'+escH(w.t||"")+'</span><button type="button" class="ktrab-del" data-id="'+e.id+'" data-i="'+idx+'" aria-label="Quitar">×</button></label>'; }).join("");
         var trPend=trarr.filter(function(w){return !w.ok;}).length;
         var trChip=trarr.length?(trPend>0?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'<span class="ktrab-count done">✓ Listas</span>'):'';
-        var vtrab=(trarr.length||editing)?('<div class="ktrab">'+
+        var vtrab='<div class="ktrab">'+
           '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
           trHTML+
-          (editing?('<div class="ktrab-addrow"><input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Escribe un trabajo y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'):'')+
-          '</div>'):'';
+          '<div class="ktrab-addrow"><input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Escribe un trabajo y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'+
+          '</div>';
         var vcotiz=editing?('<label class="kcotiz"><input type="checkbox" class="kcotiz-ck" data-id="'+e.id+'"'+(e.cotizarDespues?' checked':'')+'> Cotizar después <span class="hint" style="text-transform:none;letter-spacing:0;font-size:10.5px">(color en agenda)</span></label>'):'';
         var cotizTag=e.cotizarDespues?'<span class="kcotiz-tag">Por cotizar</span>':'';
         return '<div class="kcard'+(editing?' editing':'')+(e.cotizarDespues?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
