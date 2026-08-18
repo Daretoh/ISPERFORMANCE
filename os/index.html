@@ -515,25 +515,35 @@
   .mov-head button{background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-muted);line-height:1;}
   @media print{ .cotiz-modal{display:none!important;} }
   .cp-sheet{max-width:800px;margin:0 auto;color:#111;font-family:var(--sans);}
-  .cp-head{background:#111;color:#fff;border-radius:10px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
-  .cp-head .cp-logo{font:900 30px/1 var(--sans);letter-spacing:-.02em;} .cp-head .cp-logo small{display:block;font:700 11px/1 var(--mono);letter-spacing:.35em;opacity:.85;margin-top:4px;}
+  .cp-head{background:#111;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:4px solid #FF6B00;}
   .cp-head .cp-logo-img{height:56px;width:auto;display:block;}
-  .cp-head .cp-meta{text-align:right;font-size:13px;} .cp-head .cp-meta b{font-size:17px;}
-  .cp-sec{font:800 13px/1 var(--sans);text-transform:uppercase;letter-spacing:.03em;margin:18px 0 8px;color:#111;}
-  .cp-cliente{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:13.5px;} .cp-cliente b{color:#111;}
-  table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;table-layout:fixed;}
-  table.cp-table th{background:#111;color:#fff;padding:8px 8px;text-align:left;font-weight:700;font-size:11px;}
+  .cp-head .cp-meta{text-align:right;font-size:12px;color:#cfc9c2;display:flex;flex-direction:column;gap:2px;} .cp-head .cp-meta b{font-size:20px;color:#fff;letter-spacing:.02em;}
+  .cp-sec{font:800 12px/1 var(--sans);text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;color:#111;border-left:4px solid #FF6B00;padding-left:8px;}
+  .cp-cliente-box{margin-top:16px;border:1px solid #e5e2dd;border-radius:10px;overflow:hidden;}
+  .cp-cli-title{background:#f5f2ee;font:800 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.05em;color:#333;padding:9px 14px;border-left:4px solid #FF6B00;}
+  .cp-cli-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:14px;}
+  .cp-cli-grid>div{display:flex;flex-direction:column;gap:2px;}
+  .cp-cli-grid span{font:700 9.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#948b80;}
+  .cp-cli-grid b{font-size:14px;color:#111;}
+  table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:16px;table-layout:fixed;}
+  table.cp-table th{background:#111;color:#fff;padding:9px 8px;text-align:left;font-weight:700;font-size:11px;}
+  table.cp-table th:first-child{border-left:3px solid #FF6B00;}
   table.cp-table th.r,table.cp-table td.r{text-align:right;}
   table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top;}
+  table.cp-table tbody tr:nth-child(even){background:#faf8f5;}
   table.cp-table td.cp-desc{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35;}
-  .cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:16px;flex-wrap:wrap;}
+  .cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:18px;flex-wrap:wrap;}
   .cp-pay{font-size:12.5px;line-height:1.7;} .cp-pay .cp-sec{margin-top:0;}
   .cp-totbox{min-width:260px;}
-  .cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:7px 12px;font-size:13px;}
-  .cp-totbox .r1.big{background:#111;color:#fff;font-weight:800;font-size:15px;}
-  .cp-firma{margin-top:40px;text-align:center;} .cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px;} .cp-firma b{font-size:14px;} .cp-firma small{color:#555;}
-  .cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-radius:8px;padding:12px 14px;}
-  .cp-footer{margin-top:20px;border-top:2px solid #111;padding-top:10px;display:flex;justify-content:space-between;font-size:11.5px;color:#333;flex-wrap:wrap;gap:8px;}
+  .cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:8px 12px;font-size:13px;}
+  .cp-totbox .r1.big{background:#FF6B00;color:#fff;font-weight:800;font-size:15px;border-radius:0 0 6px 6px;}
+  .cp-firma{margin-top:38px;text-align:center;} .cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px;} .cp-firma b{font-size:14px;} .cp-firma small{color:#555;}
+  .cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-left:3px solid #FF6B00;border-radius:6px;padding:12px 14px;}
+  .cp-foot-brand{margin-top:22px;background:#111;border-radius:16px 16px 8px 8px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+  .cp-foot-items{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#e8e4de;}
+  .cp-foot-items span{display:flex;align-items:center;gap:8px;}
+  .cp-foot-logo{height:38px;width:auto;}
+  #cp-cierre{break-inside:avoid;}
   /* grupos del menú */
   .nav-group{display:flex;flex-direction:column;gap:2px;margin-bottom:12px;}
   .nav-group-title{font:700 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding:4px 12px 5px;}
@@ -1764,7 +1774,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     sb.from("cotizaciones").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 13?)"); return; } _cotiz.unshift(r.data); pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); toast("✓ Cotización N°"+numero+" guardada"); cotImprimir(r.data); });
   }
   function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-vehid").value=""; document.getElementById("cot-descadic").value="0"; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
-  var CP_CSS='*{box-sizing:border-box}body{margin:0;padding:22px;font-family:Inter,-apple-system,Segoe UI,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cp-sheet{max-width:800px;margin:0 auto}.cp-head{background:#111;color:#fff;border-radius:10px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px}.cp-head .cp-logo{font:900 30px/1 sans-serif;letter-spacing:-.02em}.cp-head .cp-logo small{display:block;font:700 11px/1 monospace;letter-spacing:.35em;opacity:.85;margin-top:4px}.cp-head .cp-logo-img{height:56px;width:auto;display:block}.cp-head .cp-meta{text-align:right;font-size:13px}.cp-head .cp-meta b{font-size:17px}.cp-sec{font:800 13px/1 sans-serif;text-transform:uppercase;letter-spacing:.03em;margin:18px 0 8px}.cp-cliente{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;font-size:13.5px}table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;table-layout:fixed}table.cp-table th{background:#111;color:#fff;padding:8px;text-align:left;font-weight:700;font-size:11px}table.cp-table th.r,table.cp-table td.r{text-align:right}table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top}table.cp-table td.cp-desc{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35}.cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:16px;flex-wrap:wrap}.cp-pay{font-size:12.5px;line-height:1.7}.cp-pay .cp-sec{margin-top:0}.cp-totbox{min-width:260px}.cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:7px 12px;font-size:13px}.cp-totbox .r1.big{background:#111;color:#fff;font-weight:800;font-size:15px}.cp-firma{margin-top:40px;text-align:center}.cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px}.cp-firma b{font-size:14px}.cp-firma small{color:#555}.cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-radius:8px;padding:12px 14px}.cp-footer{margin-top:20px;border-top:2px solid #111;padding-top:10px;display:flex;justify-content:space-between;font-size:11.5px;color:#333;flex-wrap:wrap;gap:8px}@page{margin:12mm}';
+  var CP_CSS='*{box-sizing:border-box}body{margin:0;padding:0;font-family:Inter,-apple-system,Segoe UI,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cp-sheet{max-width:800px;margin:0 auto}.cp-head{background:#111;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:4px solid #FF6B00}.cp-head .cp-logo-img{height:56px;width:auto;display:block}.cp-head .cp-meta{text-align:right;font-size:12px;color:#cfc9c2;display:flex;flex-direction:column;gap:2px}.cp-head .cp-meta b{font-size:20px;color:#fff}.cp-sec{font:800 12px/1 sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;color:#111;border-left:4px solid #FF6B00;padding-left:8px}.cp-cliente-box{margin-top:16px;border:1px solid #e5e2dd;border-radius:10px;overflow:hidden}.cp-cli-title{background:#f5f2ee;font:800 11px/1 sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#333;padding:9px 14px;border-left:4px solid #FF6B00}.cp-cli-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:14px}.cp-cli-grid>div{display:flex;flex-direction:column;gap:2px}.cp-cli-grid span{font:700 9.5px/1 monospace;letter-spacing:.06em;text-transform:uppercase;color:#948b80}.cp-cli-grid b{font-size:14px;color:#111}table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:16px;table-layout:fixed}table.cp-table th{background:#111;color:#fff;padding:9px 8px;text-align:left;font-weight:700;font-size:11px}table.cp-table th:first-child{border-left:3px solid #FF6B00}table.cp-table th.r,table.cp-table td.r{text-align:right}table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top}table.cp-table tbody tr:nth-child(even){background:#faf8f5}table.cp-table td.cp-desc{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35}.cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:18px;flex-wrap:wrap}.cp-pay{font-size:12.5px;line-height:1.7}.cp-pay .cp-sec{margin-top:0}.cp-totbox{min-width:260px}.cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:8px 12px;font-size:13px}.cp-totbox .r1.big{background:#FF6B00;color:#fff;font-weight:800;font-size:15px;border-radius:0 0 6px 6px}.cp-firma{margin-top:38px;text-align:center}.cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px}.cp-firma b{font-size:14px}.cp-firma small{color:#555}.cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-left:3px solid #FF6B00;border-radius:6px;padding:12px 14px}.cp-foot-brand{margin-top:22px;background:#111;border-radius:16px 16px 8px 8px;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}.cp-foot-items{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#e8e4de}.cp-foot-items span{display:flex;align-items:center;gap:8px}.cp-foot-logo{height:38px;width:auto}#cp-cierre{page-break-inside:avoid;break-inside:avoid}@page{margin:12mm}';
   var _cotActual="";
   function cargarLib(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){rej(new Error("no cargo "+src));}; document.head.appendChild(s); }); }
   function cotDescargarPDF(){
@@ -1773,13 +1783,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var libs=[];
     if(!window.html2canvas) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"));
     if(!(window.jspdf&&window.jspdf.jsPDF)) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"));
-    Promise.all(libs).then(function(){ return html2canvas(sheet,{scale:2,backgroundColor:"#ffffff",useCORS:true}); }).then(function(canvas){
-      var img=canvas.toDataURL("image/jpeg",0.92);
+    var mainEl=sheet.querySelector("#cp-main")||sheet, cierreEl=sheet.querySelector("#cp-cierre");
+    Promise.all(libs).then(function(){
+      var jobs=[html2canvas(mainEl,{scale:2,backgroundColor:"#ffffff",useCORS:true})];
+      if(cierreEl) jobs.push(html2canvas(cierreEl,{scale:2,backgroundColor:"#ffffff",useCORS:true}));
+      return Promise.all(jobs);
+    }).then(function(cvs){
       var pdf=new window.jspdf.jsPDF("p","mm","a4");
       var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-      var iw=pw-14, ih=canvas.height*iw/canvas.width;
-      if(ih>ph-14){ ih=ph-14; iw=canvas.width*ih/canvas.height; }
-      pdf.addImage(img,"JPEG",(pw-iw)/2,7,iw,ih);
+      var m=10, cw=pw-m*2, pageH=ph-m*2;
+      var cMain=cvs[0], mainH=cMain.height*cw/cMain.width, mainImg=cMain.toDataURL("image/jpeg",0.92);
+      var pages=Math.max(1,Math.ceil((mainH-0.5)/pageH)); // páginas que ocupa el bloque principal
+      for(var k=0;k<pages;k++){ if(k>0) pdf.addPage(); pdf.addImage(mainImg,"JPEG",m,m-k*pageH,cw,mainH); }
+      var usadoUlt=mainH-(pages-1)*pageH; // alto ocupado por main en la última página
+      if(cvs[1]){ var cC=cvs[1], cierreH=cC.height*cw/cC.width, cierreImg=cC.toDataURL("image/jpeg",0.92);
+        if(usadoUlt+6+cierreH<=pageH){ pdf.addImage(cierreImg,"JPEG",m,m+usadoUlt+6,cw,cierreH); }
+        else { pdf.addPage(); pdf.addImage(cierreImg,"JPEG",m,m,cw,cierreH); }
+      }
       pdf.save("Cotizacion IS Performance N"+_cotActual+".pdf");
       toast("✓ PDF descargado");
     }).catch(function(e){ toast("No se pudo generar el PDF (revisa tu conexión)"); });
@@ -1796,14 +1816,28 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       filasHTML+='<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+((+it.descPct||0)?(+it.descPct+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>'; });
     var da=+c.desc_adic_pct||0, daval=Math.round(sub*da/100), total=sub-daval;
     var f=(c.fecha||todayISO()).slice(0,10).split("-"), fechaTxt=f[2]+"/"+f[1]+"/"+f[0];
-    var html='<div class="cp-sheet"><div class="cp-head"><img class="cp-logo-img" src="'+LOGO_ISP_B64+'" alt="IS Performance"><div class="cp-meta">N° Cotización: <b>'+String(c.numero).padStart(6,"0")+'</b><br>Fecha: '+fechaTxt+'</div></div>'
-      +'<div class="cp-sec">Información del cliente</div><div class="cp-cliente"><div><b>Nombre:</b> '+escH(c.cliente_nombre||"")+'</div><div><b>Teléfono:</b> '+escH(c.cliente_tel||"")+'</div><div><b>Vehículo:</b> '+escH(c.vehiculo||"")+'</div><div><b>Año:</b> '+escH(c.anio||"")+'</div></div>'
-      +'<table class="cp-table"><colgroup><col style="width:4%"><col style="width:42%"><col style="width:8%"><col style="width:13%"><col style="width:9%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'
-      +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
-      +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div><div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
-      +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
-      +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
-      +'<div class="cp-footer"><span>+569 8561 5636</span><span>'+escH(PAGO.correo)+'</span><span>isperformance.cl</span></div></div>';
+    var icoTel='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.7 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.06a2 2 0 0 1 2.11-.45c.74.34 1.53.57 2.34.7A2 2 0 0 1 22 16.92z"/></svg>';
+    var icoMail='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>';
+    var icoWeb='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+    var html='<div class="cp-sheet">'
+      +'<div id="cp-main">'
+        +'<div class="cp-head"><img class="cp-logo-img" src="'+LOGO_ISP_B64+'" alt="IS Performance"><div class="cp-meta"><span>N° Cotización</span><b>'+String(c.numero).padStart(6,"0")+'</b><span>Fecha: '+fechaTxt+'</span></div></div>'
+        +'<div class="cp-cliente-box"><div class="cp-cli-title">Información del cliente</div><div class="cp-cli-grid">'
+          +'<div><span>Cliente</span><b>'+escH(c.cliente_nombre||"—")+'</b></div>'
+          +'<div><span>Teléfono</span><b>'+escH(c.cliente_tel||"—")+'</b></div>'
+          +'<div><span>Vehículo</span><b>'+escH(c.vehiculo||"—")+'</b></div>'
+          +'<div><span>Año</span><b>'+escH(c.anio||"—")+'</b></div>'
+        +'</div></div>'
+        +'<table class="cp-table"><colgroup><col style="width:4%"><col style="width:42%"><col style="width:8%"><col style="width:13%"><col style="width:9%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'
+      +'</div>'
+      +'<div id="cp-cierre">'
+        +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
+        +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div><div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
+        +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
+        +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
+        +'<div class="cp-foot-brand"><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoMail+escH(PAGO.correo)+'</span><span>'+icoWeb+'isperformance.cl</span></div><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""></div>'
+      +'</div>'
+    +'</div>';
     _cotActual=c.numero;
     document.getElementById("cotiz-modal-body").innerHTML=html;
     document.getElementById("cotiz-modal").classList.add("show");
