@@ -347,6 +347,13 @@
   .fkpi .l{font:700 9.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;}
   .fkpi .v{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
   .fsec{margin-bottom:16px;} .fsec h4{font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 9px;}
+  details.fsec{margin-bottom:10px;}
+  details.fsec>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;user-select:none;}
+  details.fsec>summary::-webkit-details-marker{display:none;}
+  details.fsec>summary::after{content:"⌄";margin-left:auto;font-size:13px;opacity:.7;}
+  details.fsec[open]>summary{margin-bottom:11px;}
+  details.fsec[open]>summary::after{content:"⌃";}
+  details.fsec>summary:hover{border-color:var(--accent);color:var(--accent-ink);}
   .fchips{display:flex;flex-wrap:wrap;gap:6px;} .fchips span{font:600 11px/1.3 var(--sans);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:5px 9px;color:var(--ink-2);}
   .obs-area{width:100%;min-height:74px;font:500 13px/1.5 var(--sans);padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);resize:vertical;}
   .obs-area:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
@@ -2747,7 +2754,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '</div>'+
       '<div class="fsec"><h4>Vehículos</h4><div class="fchips">'+vehs+'</div></div>'+
       '<div class="fsec"><h4>Servicios usados</h4><div class="fchips">'+svcs+'</div></div>'+
-      '<div class="fsec"><h4>Datos y facturación</h4>'+
+      '<details class="fsec"><summary>Datos y facturación</summary>'+
         '<div class="row c2">'+
           '<label class="f"><span class="lab">Tipo de cliente</span><select id="cli-tipo"><option value="NATURAL"'+(esEmp?'':' selected')+'><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Natural (persona)</option><option value="EMPRESA"'+(esEmp?' selected':'')+'><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresa</option></select></label>'+
           '<label class="f"><span class="lab">RUT</span><input id="cli-rut" value="'+av(info.rut)+'" placeholder="12.345.678-9"></label>'+
@@ -2767,17 +2774,18 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<label class="f"><span class="lab">Dirección</span><input id="cli-dir" value="'+av(info.direccion)+'" placeholder="Calle 123, Puerto Montt"></label>'+
         '</div>'+
         '<button class="btn primary" id="cli-datos-save" style="margin-top:8px">Guardar datos</button>'+
-      '</div>'+
-      '<div class="fsec"><h4>Observaciones</h4><textarea class="obs-area" id="cli-obs" placeholder="Notas: preferencias, acuerdos, recordatorios…">'+(info.observaciones||"")+'</textarea><button class="btn primary" id="cli-obs-save" style="margin-top:8px">Guardar observaciones</button></div>'+
-      '<div class="fsec"><h4>Reactivar por WhatsApp</h4>'+
+      '</details>'+
+      '<details class="fsec"><summary>Observaciones</summary><textarea class="obs-area" id="cli-obs" placeholder="Notas: preferencias, acuerdos, recordatorios…">'+(info.observaciones||"")+'</textarea><button class="btn primary" id="cli-obs-save" style="margin-top:8px">Guardar observaciones</button></details>'+
+      '<details class="fsec"><summary>Reactivar por WhatsApp</summary>'+
         '<textarea class="obs-area" id="cli-wsp" style="min-height:92px">'+msgReactivacion(c)+'</textarea>'+
         '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
           '<button class="btn primary" id="cli-wsp-send"'+(c.contacto?'':' disabled')+'>💬 Abrir WhatsApp</button>'+
           '<button class="btn" id="cli-wsp-copy">Copiar mensaje</button>'+
         '</div>'+
         (c.contacto?'':'<div class="hint" style="margin-top:6px;text-transform:none;letter-spacing:0">Sin teléfono guardado — agrégalo en un ingreso para poder enviar.</div>')+
-      '</div>'+
-      '<div class="fsec"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h4 style="margin:0">Seguimiento de contacto</h4><button type="button" id="cli-seg-sort" class="btn" style="font-size:11px;padding:5px 10px">'+(_segSort==='desc'?'↓ Más reciente':'↑ Más antiguo')+'</button></div>'+
+      '</details>'+
+      '<details class="fsec"><summary>Seguimiento de contacto</summary>'+
+        '<div style="display:flex;justify-content:flex-end;margin-top:4px"><button type="button" id="cli-seg-sort" class="btn" style="font-size:11px;padding:5px 10px">'+(_segSort==='desc'?'↓ Más reciente':'↑ Más antiguo')+'</button></div>'+
         '<div class="row c3" style="align-items:end;margin-top:10px">'+
           '<label class="f"><span class="lab">Fecha</span><input type="date" id="cli-seg-fecha" value="'+todayISO()+'"></label>'+
           '<label class="f"><span class="lab">Resultado</span><select id="cli-seg-res"><option>Contactado</option><option>Contestó</option><option>No contestó</option><option>Agendó</option><option>No interesado</option><option>Volver a contactar</option></select></label>'+
@@ -2785,15 +2793,15 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '</div>'+
         '<button class="btn primary" id="cli-seg-add" style="margin-top:8px">+ Registrar contacto</button>'+
         '<div id="cli-seg-list" style="margin-top:14px">'+segTimelineHTML(c.clave)+'</div>'+
-      '</div>'+
-      '<div class="fsec"><h4>¿Cliente duplicado? Fusionar</h4>'+
+      '</details>'+
+      '<details class="fsec"><summary>¿Cliente duplicado? Fusionar</summary>'+
         '<div class="row c2" style="align-items:end">'+
           '<label class="f"><span class="lab">Fusionar ESTE dentro de…</span><select id="cli-merge"><option value="">— elegir cliente destino —</option>'+otherClientsOptions(c.clave)+'</select></label>'+
           '<button type="button" class="btn" id="cli-merge-btn">Fusionar</button>'+
         '</div>'+
         '<div class="hint" style="text-transform:none;letter-spacing:0;margin-top:6px">Mueve los vehículos, el seguimiento y los datos de este cliente al elegido. No borra el historial.</div>'+
-      '</div>'+
-      '<div class="fsec"><h4>Historial ('+c.items.length+')</h4><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th><th>📁</th></tr></thead><tbody>'+hist+'</tbody></table></div></div>'+
+      '</details>'+
+      '<details class="fsec"><summary>Historial ('+c.items.length+')</summary><div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Servicio</th><th>Estado</th><th class="r">Monto</th><th>📁</th></tr></thead><tbody>'+hist+'</tbody></table></div></details>'+
     '</div>';
     function curInfo(){ var cur=clientesInfo[c.clave]||{}; cur.clave=c.clave; if(!cur.nombre)cur.nombre=c.nombre; if(!cur.contacto)cur.contacto=c.contacto; clientesInfo[c.clave]=cur; return cur; }
     var _tipoSel=wrap.querySelector("#cli-tipo");
