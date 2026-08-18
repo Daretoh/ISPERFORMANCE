@@ -1786,22 +1786,20 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var libs=[];
     if(!window.html2canvas) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"));
     if(!(window.jspdf&&window.jspdf.jsPDF)) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"));
-    var mainEl=sheet.querySelector("#cp-main")||sheet, cierreEl=sheet.querySelector("#cp-cierre");
-    Promise.all(libs).then(function(){
-      var jobs=[html2canvas(mainEl,{scale:2,backgroundColor:"#ffffff",useCORS:true})];
-      if(cierreEl) jobs.push(html2canvas(cierreEl,{scale:2,backgroundColor:"#ffffff",useCORS:true}));
-      return Promise.all(jobs);
-    }).then(function(cvs){
+    Promise.all(libs).then(function(){ return html2canvas(sheet,{scale:2,backgroundColor:"#ffffff",useCORS:true}); }).then(function(canvas){
       var pdf=new window.jspdf.jsPDF("p","mm","a4");
       var pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
-      var m=10, cw=pw-m*2, pageH=ph-m*2;
-      var cMain=cvs[0], mainH=cMain.height*cw/cMain.width, mainImg=cMain.toDataURL("image/jpeg",0.92);
-      var pages=Math.max(1,Math.ceil((mainH-0.5)/pageH)); // páginas que ocupa el bloque principal
-      for(var k=0;k<pages;k++){ if(k>0) pdf.addPage(); pdf.addImage(mainImg,"JPEG",m,m-k*pageH,cw,mainH); }
-      var usadoUlt=mainH-(pages-1)*pageH; // alto ocupado por main en la última página
-      if(cvs[1]){ var cC=cvs[1], cierreH=cC.height*cw/cC.width, cierreImg=cC.toDataURL("image/jpeg",0.92);
-        if(usadoUlt+6+cierreH<=pageH){ pdf.addImage(cierreImg,"JPEG",m,m+usadoUlt+6,cw,cierreH); }
-        else { pdf.addPage(); pdf.addImage(cierreImg,"JPEG",m,m,cw,cierreH); }
+      var m=10, imgW=pw-m*2, pageH=ph-m*2;
+      var pxPerMM=canvas.width/imgW;              // píxeles del canvas por mm de hoja
+      var pagePx=Math.floor(pageH*pxPerMM);        // alto de una página, en píxeles del canvas
+      var nPages=Math.max(1,Math.ceil(canvas.height/pagePx));
+      for(var p=0;p<nPages;p++){
+        var sy=p*pagePx, sh=Math.min(pagePx,canvas.height-sy);
+        var tmp=document.createElement("canvas"); tmp.width=canvas.width; tmp.height=sh;
+        var ctx=tmp.getContext("2d"); ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,tmp.width,tmp.height);
+        ctx.drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+        if(p>0) pdf.addPage();
+        pdf.addImage(tmp.toDataURL("image/jpeg",0.92),"JPEG",m,m,imgW,sh/pxPerMM);
       }
       pdf.save("Cotizacion IS Performance N"+_cotActual+".pdf");
       toast("✓ PDF descargado");
