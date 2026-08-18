@@ -266,6 +266,10 @@
   .ktrab-row input[type=checkbox]{flex:none;width:15px;height:15px;cursor:pointer;}
   .ktrab-row span{flex:1;}
   .ktrab-row span.done{text-decoration:line-through;color:var(--ink-faint);}
+  .ktrab-next{display:flex;align-items:center;gap:8px;margin:9px 0;padding:7px 10px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--warn);}
+  .ktrab-next .ktrab-row{flex:1;margin:0;font-weight:600;color:var(--ink);}
+  .ktrab-next.allok{border-left-color:var(--ok);background:var(--ok-soft);}
+  .ktrab-next .ktrab-count{flex:none;}
   .ktrab-del{display:none;flex:none;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
   .ktrab-del:hover{color:var(--crit);}
   .kcard.editing .ktrab-del{display:inline;}
@@ -697,10 +701,6 @@
               <label class="f"><span class="lab">Tipo</span><select name="tipoVenta"><option>NORMAL</option><option>REGALO</option><option>SORTEO</option><option>CORTESÍA</option><option>GARANTÍA</option></select></label>
               <label class="f"><span class="lab">Abono / anticipo $</span><input name="abono" type="number" min="0" step="1" placeholder="0"></label>
             </div>
-            <label style="display:flex;align-items:center;gap:9px;margin-top:14px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer">
-              <input type="checkbox" name="cotizarDespues" style="width:16px;height:16px">
-              Cotizar después <span class="hint" style="text-transform:none;letter-spacing:0">— se pinta violeta en la Agenda (ej: Guillermo Morales)</span>
-            </label>
           </div>
         </div>
 
@@ -1154,11 +1154,13 @@
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
   function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
-    if(_vehExtra){ o.cotizar_despues=!!e.cotizarDespues; o.trabajos=e.trabajos||[]; }
+    if(_vehExtra){ o.trabajos=e.trabajos||[]; }
     return o; }
   var _vehExtra=true, _vehExtraWarned=false; // columnas cotizar_despues / trabajos (SQL 18_trabajos_cotizar). Si faltan, se desactivan solas.
   function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|schema cache|PGRST204/i.test(m); }
-  function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Trabajos y 'Cotizar después' no se guardarán: falta correr el SQL 18_trabajos_cotizar en Supabase"); } }
+  function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
+  // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
+  function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
   function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
@@ -1927,7 +1929,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord","tipoVenta"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.abono=parseFloat(form.abono.value)||0;
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
-    e.cotizarDespues=!!(form.cotizarDespues&&form.cotizarDespues.checked); e.trabajos=[];
+    e.trabajos=[];
     addVehiculo(e);
     chosenSvcs=[]; renderSvcList();
     form.reset(); form.fCoord.value=todayISO(); recepSummary(); fillMarcas(); fillTrabajadores(); updateCounts();
@@ -2019,14 +2021,25 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var trHTML=trarr.map(function(w,idx){ var done=!!w.ok; return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+idx+'"'+(done?' checked':'')+'><span'+(done?' class="done"':'')+'>'+escH(w.t||"")+'</span><button type="button" class="ktrab-del" data-id="'+e.id+'" data-i="'+idx+'" aria-label="Quitar">×</button></label>'; }).join("");
         var trPend=trarr.filter(function(w){return !w.ok;}).length;
         var trChip=trarr.length?(trPend>0?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'<span class="ktrab-count done">✓ Listas</span>'):'';
-        var vtrab='<div class="ktrab">'+
-          '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
-          trHTML+
-          '<div class="ktrab-addrow"><input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Escribe un trabajo y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'+
-          '</div>';
-        var vcotiz=editing?('<label class="kcotiz"><input type="checkbox" class="kcotiz-ck" data-id="'+e.id+'"'+(e.cotizarDespues?' checked':'')+'> Cotizar después <span class="hint" style="text-transform:none;letter-spacing:0;font-size:10.5px">(color en agenda)</span></label>'):'';
-        var cotizTag=e.cotizarDespues?'<span class="kcotiz-tag">Por cotizar</span>':'';
-        return '<div class="kcard'+(editing?' editing':'')+(e.cotizarDespues?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
+        var vtrab='';
+        if(editing){
+          vtrab='<div class="ktrab">'+
+            '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
+            trHTML+
+            '<div class="ktrab-addrow"><input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Escribe un trabajo y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'+
+            '</div>';
+        } else if(trarr.length){
+          var nextI=-1; for(var _ti=0;_ti<trarr.length;_ti++){ if(!trarr[_ti].ok){ nextI=_ti; break; } }
+          if(nextI>=0){
+            vtrab='<div class="ktrab-next"><label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+nextI+'"><span>'+escH(trarr[nextI].t||"")+'</span></label>'+(trPend>1?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'')+'</div>';
+          } else {
+            vtrab='<div class="ktrab-next allok"><span class="ktrab-count done">✓ Trabajos listos</span></div>';
+          }
+        }
+        var vcotiz='';
+        var porCotiz=esPorCotizar(e);
+        var cotizTag=porCotiz?'<span class="kcotiz-tag">Por cotizar</span>':'';
+        return '<div class="kcard'+(editing?' editing':'')+(porCotiz?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           vcotiz+
           vtrab+
@@ -2084,18 +2097,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
       var k=inp.dataset.k, val=inp.value; if(k==="patente") val=val.toUpperCase();
       e[k]=val; inp.value=val; persistVeh(e);
-      var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2){ v2.textContent=(e.patente||"sin patente"); if(e.cotizarDespues) v2.insertAdjacentHTML("beforeend",'<span class="kcotiz-tag">Por cotizar</span>'); } }
+      var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2){ v2.textContent=(e.patente||"sin patente"); if(esPorCotizar(e)) v2.insertAdjacentHTML("beforeend",'<span class="kcotiz-tag">Por cotizar</span>'); } }
       toast("Datos del vehículo actualizados");
-    }); });
-    board.querySelectorAll(".kcotiz-ck").forEach(function(ck){ ck.addEventListener("change",function(){
-      var e=data.filter(function(x){return x.id===ck.dataset.id;})[0]; if(!e)return;
-      e.cotizarDespues=ck.checked; persistVeh(e); renderBoard(); toast(ck.checked?"Marcado: cotizar después":"Ya no es cotizar después");
     }); });
     board.querySelectorAll(".ktrab-ck").forEach(function(ck){ ck.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===ck.dataset.id;})[0]; if(!e||!e.trabajos)return;
-      var i=+ck.dataset.i; if(!e.trabajos[i])return; e.trabajos[i].ok=ck.checked; persistVeh(e);
-      var row=ck.closest(".ktrab-row"), sp=row&&row.querySelector("span"); if(sp) sp.className=ck.checked?"done":"";
-      var cont=ck.closest(".ktrab"), cnt=cont&&cont.querySelector(".ktrab-count"); if(cnt){ var pend=e.trabajos.filter(function(w){return !w.ok;}).length; cnt.textContent=pend>0?("Faltan "+pend):"✓ Listas"; cnt.className="ktrab-count "+(pend>0?"pend":"done"); }
+      var i=+ck.dataset.i; if(!e.trabajos[i])return; e.trabajos[i].ok=ck.checked; persistVeh(e); renderBoard();
     }); });
     board.querySelectorAll(".ktrab-del").forEach(function(b){ b.addEventListener("click",function(){
       var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e||!e.trabajos)return;
@@ -2834,7 +2841,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
         evs=list.slice(0,4).map(function(e){
           if(e._tarea){ return '<span class="ev tarea-ev" data-tipo="tarea" data-id="'+e.id+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
-          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; return '<span class="ev '+estClass(e.estado)+(e.cotizarDespues?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
+          var corto=(e.servicios||[]).map(svcCorto).join(" + ")||"—"; return '<span class="ev '+estClass(e.estado)+(esPorCotizar(e)?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+corto+'</span> · '+e.marca+'</span>';
         }).join("");
         if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
