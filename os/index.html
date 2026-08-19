@@ -273,6 +273,36 @@
   .kcard .ktrab-full{display:none;}
   .kcard.editing .ktrab-full{display:flex;}
   .kcard.editing .ktrab-next{display:none;}
+  /* ---- prioridad de la card ---- */
+  .kcard.prio-URGENTE{border-left:5px solid var(--crit);}
+  .kcard.prio-PRIORIDAD{border-left:5px solid var(--warn);}
+  .kcard.prio-PROGRAMADO{border-left:5px solid var(--line-strong);}
+  .kprio-row{display:flex;align-items:center;gap:8px;margin:7px 0 2px;}
+  .kprio{flex:none;font:600 11px/1 var(--sans);padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);cursor:pointer;}
+  .kprog{flex:1;display:flex;align-items:center;gap:6px;font:700 10px/1 var(--sans);color:var(--ink-muted);white-space:nowrap;}
+  .kprog-bar{flex:1;height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;}
+  .kprog-bar>span{display:block;height:100%;border-radius:99px;}
+  /* ---- resumen del taller ---- */
+  .seg-resumen-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);margin-bottom:14px;padding:6px 14px 14px;}
+  .seg-resumen-box>summary{cursor:pointer;list-style:none;font:800 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:10px 0;display:flex;align-items:center;gap:10px;}
+  .seg-resumen-box>summary::-webkit-details-marker{display:none;}
+  .seg-resumen-box>summary::after{content:"⌄";margin-left:auto;opacity:.6;}
+  .seg-resumen-box[open]>summary::after{content:"⌃";}
+  .seg-sum-hint{font:600 11px/1 var(--sans);letter-spacing:0;text-transform:none;color:var(--ink-muted);}
+  .seg-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px;}
+  .seg-kpis .kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .seg-prios{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .seg-prio{font:600 11.5px/1 var(--sans);padding:6px 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface-2);}
+  .seg-prio b{margin-left:3px;}
+  .seg-prio.pp-URGENTE{border-color:var(--crit);color:var(--crit);}
+  .seg-prio.pp-PRIORIDAD{border-color:var(--warn);color:var(--warn);}
+  .seg-prio.pp-NORMAL{border-color:var(--ok);color:var(--ok);}
+  .seg-vlist{display:flex;flex-direction:column;gap:7px;}
+  .seg-vrow{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .seg-vdot{flex:none;}
+  .seg-vname{flex:none;min-width:150px;font-weight:600;color:var(--ink);} .seg-vname i{font-style:normal;font-weight:400;color:var(--ink-faint);font-size:11px;}
+  .seg-vbar{flex:1;height:9px;border-radius:99px;background:var(--surface-3);overflow:hidden;} .seg-vbar>span{display:block;height:100%;border-radius:99px;}
+  .seg-vpct{flex:none;width:44px;text-align:right;font-weight:800;font-size:12.5px;color:var(--ink-2);}
   .ktrab-del{display:none;flex:none;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
   .ktrab-del:hover{color:var(--crit);}
   .kcard.editing .ktrab-del{display:inline;}
@@ -753,6 +783,7 @@
     <!-- ============ SEGUIMIENTO ============ -->
     <section class="view" id="view-seguimiento">
       <div class="vhead"><div class="eye">Procesos</div><h1>Seguimiento del taller</h1></div>
+      <div id="seg-resumen"></div>
       <div class="board" id="board"></div>
       <input type="file" id="kmedia-input" accept="image/*,video/*" multiple hidden>
     </section>
@@ -1181,10 +1212,10 @@
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
   function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
-    if(_vehExtra){ o.trabajos=e.trabajos||[]; }
+    if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; }
     return o; }
   var _vehExtra=true, _vehExtraWarned=false; // columnas cotizar_despues / trabajos (SQL 18_trabajos_cotizar). Si faltan, se desactivan solas.
-  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|schema cache|PGRST204/i.test(m); }
+  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|prioridad|schema cache|PGRST204/i.test(m); }
   function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
   // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
   function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
@@ -1192,7 +1223,7 @@
   var SVC_POR_COTIZAR="Pendiente de cotización";
   var AUTOMOTORAS_COTIZAR=["guillermo morales"];
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]) }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||"") }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
@@ -2065,7 +2096,34 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     return m+" min";
   }
   var _kedit={}; // tarjetas de Seguimiento con edición completa abierta (sobrevive re-render)
+  // ---- resumen del taller: prioridad + % de ejecución ----
+  var PRIOS_SEG=[["URGENTE","🔴","URGENTE"],["PRIORIDAD","🟠","PRIORIDAD"],["NORMAL","🟢","NORMAL"],["PROGRAMADO","⚪","PROGRAMADO"]];
+  function prioDeVeh(e){ var p=(e.prioridad||"").toUpperCase(); if(p&&["URGENTE","PRIORIDAD","NORMAL","PROGRAMADO"].indexOf(p)>=0) return p; return (e.estado==="AGENDADO")?"PROGRAMADO":"NORMAL"; }
+  function progresoVeh(e){ var idx=ESTADOS.indexOf(e.estado); if(idx<0)idx=0;
+    if(idx>=4) return 100; if(idx===3) return 90;
+    var tr=e.trabajos||[];
+    if(idx===2){ if(tr.length){ var d=tr.filter(function(w){return w.ok;}).length; return Math.round(40+50*d/tr.length); } return 60; }
+    return idx===1?20:5; }
+  function dotProg(p){ return p>=75?"🟢":(p>=40?"🟡":"🔴"); }
+  function renderResumen(){
+    var el=document.getElementById("seg-resumen"); if(!el)return;
+    var activos=data.filter(function(e){ return ["AGENDADO","EN ESPERA","EN PROCESO"].indexOf(e.estado)>=0; });
+    var enProc=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
+    var hoy=todayISO();
+    var termHoy=data.filter(function(e){return e.estado==="TERMINADO" && (e.fSalida||"").slice(0,10)===hoy;}).length;
+    var entrHoy=data.filter(function(e){return e.estado==="ENTREGADO" && (e.fSalida||"").slice(0,10)===hoy;}).length;
+    var proms=activos.map(progresoVeh), avg=proms.length?Math.round(proms.reduce(function(a,b){return a+b;},0)/proms.length):0;
+    var pc={URGENTE:0,PRIORIDAD:0,NORMAL:0,PROGRAMADO:0}; activos.forEach(function(e){ var p=prioDeVeh(e); if(pc[p]!=null)pc[p]++; });
+    var kpis='<div class="seg-kpis">'+kstat("En proceso",enProc,"activos ahora")+kstat("Avance prom.",avg+"%","de los activos")+kstat("Terminados hoy",termHoy,"listos")+kstat("Entregados hoy",entrHoy,"salieron")+'</div>';
+    var prioBar='<div class="seg-prios">'+PRIOS_SEG.map(function(p){ return '<span class="seg-prio pp-'+p[0]+'">'+p[1]+' '+p[2]+' <b>'+pc[p[0]]+'</b></span>'; }).join("")+'</div>';
+    var pOrd={URGENTE:0,PRIORIDAD:1,NORMAL:2,PROGRAMADO:3};
+    var lista=activos.slice().sort(function(a,b){ var pa=pOrd[prioDeVeh(a)], pb=pOrd[prioDeVeh(b)]; if(pa!==pb)return pa-pb; return progresoVeh(a)-progresoVeh(b); });
+    var filas=lista.map(function(e){ var pr=progresoVeh(e), col=pr>=75?"var(--ok)":(pr>=40?"var(--warn)":"var(--crit)"), nm=(e.marca+" "+(e.modelo||"")).trim()||e.patente||"—";
+      return '<div class="seg-vrow"><span class="seg-vdot">'+dotProg(pr)+'</span><span class="seg-vname">'+escH(nm)+(e.patente?(' <i>'+escH(e.patente)+'</i>'):'')+'</span><span class="seg-vbar"><span style="width:'+pr+'%;background:'+col+'"></span></span><span class="seg-vpct">'+pr+'%</span></div>'; }).join("");
+    el.innerHTML='<details class="seg-resumen-box" open><summary>Resumen del taller <span class="seg-sum-hint">'+activos.length+' activos · '+avg+'% avance</span></summary>'+kpis+prioBar+'<div class="seg-vlist">'+(filas||'<div class="col-empty">Sin vehículos activos</div>')+'</div></details>';
+  }
   function renderBoard(){
+    renderResumen();
     var board=document.getElementById("board");
     board.innerHTML=ESTADOS.map(function(st,ci){
       var items=data.filter(function(e){return e.estado===st;});
@@ -2131,7 +2189,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var vcotiz='';
         var porCotiz=esPorCotizar(e);
         var cotizTag=porCotiz?'<span class="kcotiz-tag">Por cotizar</span>':'';
-        return '<div class="kcard'+(editing?' editing':'')+(porCotiz?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
+        var prio=prioDeVeh(e), pr=progresoVeh(e), prCol=pr>=75?"var(--ok)":(pr>=40?"var(--warn)":"var(--crit)");
+        var prioSel='<div class="kprio-row"><select class="kprio" data-id="'+e.id+'">'+PRIOS_SEG.map(function(p){return '<option value="'+p[0]+'"'+(prio===p[0]?' selected':'')+'>'+p[1]+' '+p[2]+'</option>';}).join("")+'</select><span class="kprog" title="Avance"><span class="kprog-bar"><span style="width:'+pr+'%;background:'+prCol+'"></span></span>'+pr+'%</span></div>';
+        return '<div class="kcard prio-'+prio+(editing?' editing':'')+(porCotiz?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+cotizTag+'</div>'+
+          prioSel+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
           vcotiz+
           vtrab+
@@ -2149,6 +2210,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(_kedit[id]){ delete _kedit[id]; card.classList.remove("editing"); b.textContent="✎ Editar"; }
       else { _kedit[id]=true; card.classList.add("editing"); b.textContent="✓ Listo"; }
     }); });
+    board.querySelectorAll(".kprio").forEach(function(sel){ sel.addEventListener("change",function(){ var e=data.filter(function(x){return x.id===sel.dataset.id;})[0]; if(!e)return; e.prioridad=sel.value; persistVeh(e); renderBoard(); }); });
     board.querySelectorAll(".kbtn").forEach(function(b){ b.addEventListener("click",function(){ advance(b.dataset.id, +b.dataset.dir); }); });
     board.querySelectorAll(".kdel").forEach(function(b){ b.addEventListener("click",function(){
       var e=data.filter(function(x){return x.id===b.dataset.id;})[0]; if(!e)return;

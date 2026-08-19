@@ -10,3 +10,5 @@
 
 alter table vehiculos add column if not exists trabajos         jsonb   default '[]'::jsonb;
 alter table vehiculos add column if not exists cotizar_despues  boolean default false;
+-- prioridad en Seguimiento: URGENTE | PRIORIDAD | NORMAL | PROGRAMADO (para el resumen del taller)
+alter table vehiculos add column if not exists prioridad        text;
