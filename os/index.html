@@ -303,6 +303,11 @@
   .seg-vname{flex:none;min-width:150px;font-weight:600;color:var(--ink);} .seg-vname i{font-style:normal;font-weight:400;color:var(--ink-faint);font-size:11px;}
   .seg-vbar{flex:1;height:9px;border-radius:99px;background:var(--surface-3);overflow:hidden;} .seg-vbar>span{display:block;height:100%;border-radius:99px;}
   .seg-vpct{flex:none;width:44px;text-align:right;font-weight:800;font-size:12.5px;color:var(--ink-2);}
+  details.panel-extra>summary{cursor:pointer;list-style:none;font:800 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:10px;}
+  details.panel-extra>summary::-webkit-details-marker{display:none;}
+  details.panel-extra>summary::after{content:"⌄";margin-left:auto;opacity:.6;}
+  details.panel-extra[open]>summary{margin-bottom:8px;}
+  details.panel-extra[open]>summary::after{content:"⌃";}
   .ktrab-del{display:none;flex:none;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
   .ktrab-del:hover{color:var(--crit);}
   .kcard.editing .ktrab-del{display:inline;}
@@ -2464,9 +2469,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var enPeriodo=data.filter(function(e){ var d=e.fCoord||e.fIngreso; if(!d)return !start; return !start||new Date(d+"T00:00:00")>=start; });
     var base=enPeriodo.filter(function(e){return e.cobrado;});
     var ventas=base.reduce(function(s,e){return s+ingresoReal(e);},0);
-    var util=base.reduce(function(s,e){return s+utilidad(e);},0);
-    var autos=base.length, ticket=autos?ventas/autos:0, margen=ventas?util/ventas:0;
-    var enProceso=data.filter(function(e){return e.estado==="EN PROCESO";}).length;
+    var costosVeh=base.reduce(function(s,e){return s+costoTotal(e);},0);
+    var gastosPeriodo=(gastos||[]).filter(function(g){ return !start||new Date(g.fecha+"T00:00:00")>=start; }).reduce(function(s,g){return s+(+g.monto||0);},0);
+    var moPeriodo=0; (reloj||[]).forEach(function(r){ if(start&&new Date(r.fecha+"T00:00:00")<start)return; moPeriodo+=horasReloj(r)*(+VH[r.trab]||0); });
+    var costos=costosVeh+moPeriodo+gastosPeriodo, resultado=ventas-costos;
+    var autos=base.length, ticket=autos?ventas/autos:0, margen=ventas?resultado/ventas:0;
     var pLabel=""; PERIODOS.forEach(function(p){ if(p[0]===state.periodo)pLabel=p[1]; });
     document.getElementById("panel-sub").textContent=pLabel+" · "+base.length+" servicios cobrados · toca un indicador para el detalle";
 
@@ -2475,19 +2482,16 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }).join("")+'</div>';
 
     var kpis='<div class="kpis">'+
-      kpiCard("ventas","Ventas",clp(ventas),autos+" vehículos","accent")+
-      kpiCard("util","Utilidad",clp(util),(margen*100).toFixed(0)+"% margen","good")+
+      kpiCard("ventas","Ventas",clp(ventas),autos+" vehículos cobrados","accent")+
+      kpiCard("costos","Costos",clp(costos),"insumos + M.O. + gastos","")+
+      kpiCard("resultado","Resultado",clp(resultado),(margen*100).toFixed(0)+"% margen","good")+
       kpiCard("ticket","Ticket promedio",clp(ticket),"por vehículo","")+
-      kpiCard("proceso","En proceso",enProceso,"en el taller ahora","")+
     '</div><div id="kpi-detail-slot"></div>';
 
-    var tabla=trabTable();
-    var gastosPeriodo=(gastos||[]).filter(function(g){ return !start||new Date(g.fecha+"T00:00:00")>=start; }).reduce(function(s,g){return s+(+g.monto||0);},0);
-    var moPeriodo=0; (reloj||[]).forEach(function(r){ if(start&&new Date(r.fecha+"T00:00:00")<start)return; moPeriodo+=horasReloj(r)*(+VH[r.trab]||0); });
-    var resultado=util-moPeriodo-gastosPeriodo;
     var resumen='<div class="chart" style="margin-top:16px"><h3>Resultado del período<span class="tag">estimado</span></h3>'+
-      '<div class="lrow"><span>Utilidad de servicios (cobrados)</span><span class="num">'+clp(util)+'</span></div>'+
-      '<div class="lrow"><span>− Mano de obra registrada (horas × valor)</span><span class="num">'+clp(moPeriodo)+'</span></div>'+
+      '<div class="lrow"><span>Ventas cobradas</span><span class="num">'+clp(ventas)+'</span></div>'+
+      '<div class="lrow"><span>− Insumos / costos por vehículo</span><span class="num">'+clp(costosVeh)+'</span></div>'+
+      '<div class="lrow"><span>− Mano de obra (horas × valor)</span><span class="num">'+clp(moPeriodo)+'</span></div>'+
       '<div class="lrow"><span>− Gastos del taller</span><span class="num">'+clp(gastosPeriodo)+'</span></div>'+
       '<div class="lrow"><span><b>= Resultado</b></span><span class="num" style="font-weight:800;color:'+(resultado>=0?'var(--ok)':'var(--crit)')+'">'+clp(resultado)+'</span></div>'+
     '</div>';
@@ -2496,8 +2500,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       chart("Utilidad por servicio","CLP",porSvc,clp,false)+
       chartMeses()+
     '</div>';
+    var bottom='<details class="panel-extra" style="margin-top:16px"><summary>Trabajadores, valor hora y marcajes de asistencia</summary>'+trabTable()+'<div id="asis-horas-slot"><div class="chart" style="margin-top:14px"><h3>Marcajes de asistencia<span class="tag">horas del período</span></h3><div class="col-empty">Cargando marcajes…</div></div></div></details>';
 
-    box.innerHTML=filtros+kpis+tabla+'<div id="asis-horas-slot"><div class="chart" style="margin-top:16px"><h3>Marcajes de asistencia<span class="tag">horas del período</span></h3><div class="col-empty">Cargando marcajes…</div></div></div>'+resumen+charts;
+    box.innerHTML=filtros+kpis+resumen+charts+bottom;
     cargarAsisHoras();
     box.querySelectorAll(".pfilter button").forEach(function(b){ b.addEventListener("click",function(){ state.periodo=b.dataset.p; renderPanel(); }); });
     box.querySelectorAll(".vh").forEach(function(inp){ inp.addEventListener("change",function(){ var val=parseFloat(inp.value)||0; VH[inp.dataset.t]=val; upsertVH(inp.dataset.t,val); renderPanel(); }); });
@@ -2511,9 +2516,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var slot=box.querySelector("#kpi-detail-slot"); var html="";
     if(k==="ventas"){ var byDay=agrupa(base,"fCoord",function(e){return ingresoReal(e);}).sort(function(a,b){return a.k<b.k?-1:1;});
       html=detailBars("Ventas por día de cita", byDay.map(function(i){return {k:fFecha(i.k),v:i.v};}), clp); }
-    else if(k==="util"){ html=detailBars("Utilidad por servicio", agrupaSvc(base,function(e){return utilidad(e);}), clp); }
+    else if(k==="costos"){ var st=periodoStart(state.periodo); var cv=base.reduce(function(s,e){return s+costoTotal(e);},0); var g=(gastos||[]).filter(function(x){return !st||new Date(x.fecha+"T00:00:00")>=st;}).reduce(function(s,x){return s+(+x.monto||0);},0); var mo=0;(reloj||[]).forEach(function(r){ if(st&&new Date(r.fecha+"T00:00:00")<st)return; mo+=horasReloj(r)*(+VH[r.trab]||0); }); html=detailBars("Desglose de costos",[{k:"Mano de obra",v:mo},{k:"Gastos del taller",v:g},{k:"Insumos por vehículo",v:cv}],clp); }
+    else if(k==="resultado"){ html=detailBars("Utilidad por servicio", agrupaSvc(base,function(e){return utilidad(e);}), clp); }
     else if(k==="ticket"){ html=detailList("Detalle de cada vehículo", base.map(function(e){return {a:e.marca+" "+(e.modelo||""),b:clp(e.precioVenta)};})); }
-    else if(k==="proceso"){ var enP=data.filter(function(e){return e.estado==="EN PROCESO";}); html=detailList("Vehículos en el taller ahora", enP.length?enP.map(function(e){return {a:e.marca+" "+(e.modelo||""),b:(e.trabajador||"sin asignar")};}):[{a:"Ninguno en proceso",b:""}]); }
     slot.innerHTML='<div class="kpi-detail show">'+html+'</div>';
   }
   function detailBars(title,items,fmt){
