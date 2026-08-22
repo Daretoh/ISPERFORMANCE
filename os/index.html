@@ -279,6 +279,14 @@
   .kcard.prio-PROGRAMADO{border-left:5px solid var(--line-strong);}
   .kpc{display:inline-block;font:800 8.5px/1 var(--mono);letter-spacing:.02em;color:#fff;background:#8b3ff0;border-radius:4px;padding:2px 4px;vertical-align:middle;margin-left:5px;}
   .kv-cli{font-size:12px;font-weight:600;color:var(--ink-2);margin-top:2px;}
+  .kv-cli.cli-pc{display:inline-block;background:#efe3ff;color:#7a2fd0;border:1px solid #d9c2f7;border-radius:6px;padding:3px 9px;font-weight:700;font-size:11.5px;margin-top:4px;}
+  .cob-adj-title{font:800 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 8px;}
+  .cob-adj-empty{font-size:12.5px;color:var(--ink-muted);background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;padding:16px;text-align:center;}
+  .cob-adj-grid{display:flex;flex-wrap:wrap;gap:10px;}
+  .cob-adj-img,.cob-adj-file{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;text-decoration:none;color:var(--ink-2);font-size:10.5px;}
+  .cob-adj-img img{width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line);}
+  .cob-adj-file{justify-content:center;height:80px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;}
+  .cob-adj-file .ico{font-size:26px;}
   .kprio-row{display:flex;align-items:center;gap:8px;margin:7px 0 2px;}
   .kprio{flex:none;font:600 11px/1 var(--sans);padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);cursor:pointer;}
   .kprog{flex:1;display:flex;align-items:center;gap:6px;font:700 10px/1 var(--sans);color:var(--ink-muted);white-space:nowrap;}
@@ -2247,7 +2255,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var vcotiz='';
         var porCotiz=esPorCotizar(e);
         var pcTag=porCotiz?'<span class="kpc">P.C</span>':'';
-        var cliLine=e.cliente?'<div class="kv-cli">'+escH(e.cliente)+'</div>':'';
+        var cliLine=e.cliente?'<div class="kv-cli'+(porCotiz?' cli-pc':'')+'">'+escH(e.cliente)+'</div>':'';
         var prio=prioDeVeh(e);
         var prioSel='<div class="kprio-row"><select class="kprio" data-id="'+e.id+'">'+PRIOS_SEG.map(function(p){return '<option value="'+p[0]+'"'+(prio===p[0]?' selected':'')+'>'+p[1]+' '+p[2]+'</option>';}).join("")+'</select></div>';
         return '<div class="kcard prio-'+prio+(editing?' editing':'')+(porCotiz?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+' '+pcTag+'</div>'+cliLine+
@@ -2355,6 +2363,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(state.cobroSel==null || !data.some(function(e){return e.id===state.cobroSel;})) state.cobroSel=lista[0].id;
     renderCobroForm(data.filter(function(e){return e.id===state.cobroSel;})[0]);
   }
+  function cobAdjHTML(e){ var med=e.media||[];
+    if(!med.length) return '<div class="cob-adj-empty">Sin documento adjunto todavía — usa <b>📎 Adjuntar</b> para subir la boleta o voucher.</div>';
+    return '<div class="cob-adj-grid">'+med.map(function(m){ var u=(typeof m==="string")?m:(m&&m.url||""); var cat=(m&&m.cat)||""; var isImg=/\.(jpe?g|png|gif|webp|bmp)(\?|$)/i.test(u)||(m&&/image/i.test(m.tipo||"")); if(!u) return ''; return isImg?('<a href="'+av(u)+'" target="_blank" class="cob-adj-img" title="'+av(cat)+'"><img src="'+av(u)+'" loading="lazy" alt=""><span>'+escH(cat||"foto")+'</span></a>'):('<a href="'+av(u)+'" target="_blank" class="cob-adj-file" title="'+av(cat)+'"><span class="ico">📄</span><span>'+escH(cat||"documento")+'</span></a>'); }).join("")+'</div>'; }
   function renderCobroForm(e){
     var wrap=document.getElementById("cobro-form-wrap"); if(!e){wrap.innerHTML="";return;}
     if(!e.precioVenta){ e.precioVenta=sugerirPrecio(e); } // sugiere precio desde el catálogo según talla
@@ -2369,8 +2380,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<div class="row c3" style="margin-top:12px">'+
           field("Precio venta","precioVenta","number",e.precioVenta)+
           field("Abono / anticipo","abono","number",e.abono)+
-          '<label class="f"><span class="lab">Documento adjunto</span><button type="button" class="mediabtn" id="doc-btn" style="padding:9px">📎 Adjuntar boleta / voucher</button></label>'+
+          '<label class="f"><span class="lab">Documento adjunto</span><button type="button" class="mediabtn" id="doc-btn" style="padding:9px">'+((e.media&&e.media.length)?'📎 Ver / agregar ('+e.media.length+')':'📎 Adjuntar boleta / voucher')+'</button></label>'+
         '</div>'+
+        '<div class="cob-adj-title">Documento / respaldo del cobro</div>'+cobAdjHTML(e)+
       '</div>'+
     '</div>'+
     '<aside class="summary"><div class="panel sum-card"><div class="sum-head"><div class="t">◆ Resumen automático</div></div>'+
@@ -2396,7 +2408,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       wrap.querySelector("#c-iva").textContent=clp(iva(ingresoReal(e)));
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
-    wrap.querySelector("#doc-btn").addEventListener("click",function(){ e.media=e.media||[]; abrirGaleria("Documentos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,application/pdf", function(){ persistVeh(e); }, {cats:['Boleta','Respaldo','Factura','Exterior','Interior','Motor','Otro'],defCat:'Boleta',filter:'Boleta'}); });
+    wrap.querySelector("#doc-btn").addEventListener("click",function(){ e.media=e.media||[]; abrirGaleria("Documentos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,application/pdf", function(){ persistVeh(e); renderCobroForm(e); }, {cats:['Boleta','Respaldo','Factura','Exterior','Interior','Motor','Otro'],defCat:'Boleta',filter:'Boleta'}); });
     wrap.querySelector("#c-save").addEventListener("click",function(){ readForm(); e.cobrado=true; persistVeh(e); renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
   }
   function field(lab,name,type,val,opts){
@@ -2791,6 +2803,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   // ---------- clientes (CRM) ----------
   function clientKey(e){ var c=(e.contacto||"").trim(); if(c) return "t:"+c.toLowerCase(); var n=(e.cliente||"").trim(); return n?"n:"+n.toLowerCase():""; }
   function diasDesde(iso){ if(!iso)return null; var d=new Date(iso+"T00:00:00"); return Math.floor((Date.now()-d)/86400000); }
+  function textoDias(dias){ if(dias==null)return 'sin fecha'; if(dias<0)return 'en '+(-dias)+(dias===-1?' día':' días'); if(dias===0)return 'hoy'; return 'hace '+dias+(dias===1?' día':' días'); }
   function esEsteMes(iso){ if(!iso)return false; var d=new Date(iso+"T00:00:00"), n=new Date(); return d.getFullYear()===n.getFullYear() && d.getMonth()===n.getMonth(); }
   function normPat(p){ return (""+p).toUpperCase().replace(/[^A-Z0-9]/g,""); } // une "SD.HR.52" y "SDHR52"
   function agruparClientes(){
@@ -2829,7 +2842,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   // Niveles de reactivación por días sin venir (ajustables): <=60 al día, 61-120 atención, >120 crítico
   function nivelDias(dias){ if(dias==null) return {bg:'#ececec',fg:'#888',em:'⚪'}; if(dias<=60) return {bg:'#e6f4ea',fg:'#1e7d34',em:'🟢'}; if(dias<=120) return {bg:'#fff4e0',fg:'#b06a00',em:'🟡'}; return {bg:'#fde8e8',fg:'#c0392b',em:'🔴'}; }
-  function chipDiasCorto(dias){ var n=nivelDias(dias); var t=(dias==null?'sin fecha':(dias===0?'hoy':('hace '+dias+(dias===1?' día':' días')))); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+t+'</span>'; }
+  function chipDiasCorto(dias){ var n=nivelDias(dias); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+textoDias(dias)+'</span>'; }
   function telInternacional(t){ var d=(t||'').replace(/[^0-9]/g,''); if(!d)return''; if(d.indexOf('56')===0)return d; if(d.length===9&&d.charAt(0)==='9')return '56'+d; if(d.length===8)return '569'+d; return d; }
   function ultimoServicio(c){
     var its=(c.items||[]).slice().sort(function(a,b){var fa=a.fCoord||a.fIngreso||"",fb=b.fCoord||b.fIngreso||"";return fa<fb?1:-1;});
@@ -2898,7 +2911,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
       '<div class="fh"><div><h2>'+(esEmp?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> ':'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> ')+cliNombre(c)+'</h2>'+(esEmp&&rep?'<div class="fc"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Rep.: '+rep+'</div>':'')+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
-        (dias!=null?'<span class="chip" style="background:'+nivelDias(dias).bg+';color:'+nivelDias(dias).fg+';font-weight:700">'+nivelDias(dias).em+' '+(dias===0?'vino hoy':('hace '+dias+' días'))+'</span>':'')+'</div>'+
+        (dias!=null?'<span class="chip" style="background:'+nivelDias(dias).bg+';color:'+nivelDias(dias).fg+';font-weight:700">'+nivelDias(dias).em+' '+textoDias(dias)+'</span>':'')+'</div>'+
       '<div class="fkpis">'+
         '<div class="fkpi"><div class="l">Total gastado</div><div class="v">'+clp(c.total)+'</div></div>'+
         '<div class="fkpi"><div class="l">Visitas</div><div class="v">'+c.visitas+'</div></div>'+
