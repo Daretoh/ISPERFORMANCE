@@ -308,7 +308,9 @@
   details.panel-extra>summary::after{content:"⌄";margin-left:auto;opacity:.6;}
   details.panel-extra[open]>summary{margin-bottom:8px;}
   details.panel-extra[open]>summary::after{content:"⌃";}
-  .asis-edit-tag{font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:99px;padding:2px 6px;margin:0 4px;cursor:help;}
+  .asis-edit-tag{font-size:9.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:99px;padding:2px 6px;margin:0 4px;}
+  .asis-editdet{font-size:11px;line-height:1.45;color:var(--ink-muted);background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:6px 9px;margin:4px 0 2px;}
+  .asis-editdet b{color:var(--ink-2);}
   .asis-fix{border:none;background:none;cursor:pointer;color:var(--ink-faint);font-size:13px;padding:0 3px;}
   .asis-fix:hover{color:var(--accent-ink);}
   .ktrab-del{display:none;flex:none;border:none;background:transparent;color:var(--ink-faint);cursor:pointer;font-size:14px;line-height:1;padding:0 3px;}
@@ -1625,8 +1627,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var al=document.getElementById("asis-list");
     if(al){ var hoy=_asis.filter(function(a){return esHoy(a.ts);});
       al.innerHTML=hoy.length?hoy.map(function(a){ var cl=(a.tipo==="ENTRADA")?"tin":"tout";
-        var edt=a.motivo_edicion?'<span class="asis-edit-tag" title="Editado por '+escH(a.editado_por||"?")+' · Hora original '+(a.ts_original?hhmm(a.ts_original):"—")+' · Motivo: '+escH(a.motivo_edicion)+'">✎ editado</span>':'';
-        return '<div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button></span></div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
+        var edt=a.motivo_edicion?'<span class="asis-edit-tag">✎ editado</span>':'';
+        var det=a.motivo_edicion?'<div class="asis-editdet"><b>✎ Editado</b> · original '+(a.ts_original?hhmm(a.ts_original):"—")+' · por '+escH(a.editado_por||"?")+(a.editado_at?(' · '+fFecha(a.editado_at.slice(0,10))):'')+'<br><b>Motivo:</b> '+escH(a.motivo_edicion)+'</div>':'';
+        return '<div class="asis-item"><div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button></span></div>'+det+'</div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     document.querySelectorAll("#asis-list .asis-fix").forEach(function(b){ b.addEventListener("click",function(){ asisEditarHora(b.dataset.id); }); });
     cargarAsisResumen();
