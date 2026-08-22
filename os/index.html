@@ -526,7 +526,7 @@
   .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
   .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
   /* Modo tablet (usuario kiosco): oculta gestión de trabajadores y el botón visible de salir */
-  body.kiosco-user #trab-card,body.kiosco-user #asis-resumen-card{display:none!important;}
+  body.kiosco-user #trab-card,body.kiosco-user #asis-resumen-card,body.kiosco-user #asis-abiertos-card{display:none!important;}
   body.kiosco-user #kiosco-close{display:none!important;}
   /* Modo tablet como app: barra inferior, sin menú lateral */
   .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:300;height:64px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -1011,6 +1011,7 @@
     <section class="view" id="view-asistencia">
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
+      <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3>Marcajes sin salida <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— entradas sin su salida (cualquier día)</span></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Resumen de horas <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— por trabajador</span></h3><div id="asis-resumen" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="dash-grid">
         <div class="card" id="trab-card">
@@ -1679,7 +1680,29 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         return '<div class="asis-item"><div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button></span></div>'+det+'</div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     document.querySelectorAll("#asis-list .asis-fix").forEach(function(b){ b.addEventListener("click",function(){ asisEditarHora(b.dataset.id); }); });
-    cargarAsisResumen();
+    cargarAsisResumen(); cargarAsisIncompletos();
+  }
+  function diaKey(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function cargarAsisIncompletos(){ var el=document.getElementById("asis-abiertos"); if(!el)return; var sb=sbc(); if(!sb)return;
+    var desde=new Date(Date.now()-90*86400000);
+    sb.from("asistencia").select("*").gte("ts",desde.toISOString()).order("ts").then(function(r){ if(r.error){ el.innerHTML='<div class="col-empty">No disponible</div>'; return; } pintarIncompletos(r.data||[]); });
+  }
+  function pintarIncompletos(marks){
+    var el=document.getElementById("asis-abiertos"); if(!el)return;
+    var byPD={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre)+"|"+diaKey(a.ts); (byPD[k]=byPD[k]||[]).push(a); });
+    var abiertos=[];
+    Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), openIn=null;
+      arr.forEach(function(a){ if(a.tipo==="ENTRADA"){ if(openIn)abiertos.push(openIn); openIn=a; } else if(a.tipo==="SALIDA"){ openIn=null; } });
+      if(openIn)abiertos.push(openIn);
+    });
+    abiertos.sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+    if(!abiertos.length){ el.innerHTML='<div class="col-empty" style="padding:10px">✓ Todos los marcajes tienen su salida</div>'; return; }
+    var hoy=diaKey(new Date().toISOString());
+    el.innerHTML='<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th>Día</th><th class="r">Entrada</th><th>Estado</th></tr></thead><tbody>'+abiertos.map(function(a){
+      var esHoyDia=(diaKey(a.ts)===hoy);
+      var estado=esHoyDia?'<span class="chip" style="background:var(--ok-soft);color:var(--ok);font-weight:700">🟢 En el taller</span>':'<span class="chip" style="background:var(--crit-soft);color:var(--crit);font-weight:700">⚠ Sin salida</span>';
+      return '<tr><td><b>'+escH(a.nombre||("••"+a.rut4))+'</b></td><td>'+fFecha(diaKey(a.ts))+'</td><td class="r">'+hhmm(a.ts)+'</td><td>'+estado+'</td></tr>';
+    }).join("")+'</tbody></table></div>';
   }
   function sesionesPersona(marks){ var s=marks.slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), out=[], inTs=null;
     s.forEach(function(a){ if(a.tipo==="ENTRADA") inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ out.push({out:new Date(a.ts),ms:new Date(a.ts)-inTs}); inTs=null; } }); return out; }
