@@ -481,7 +481,7 @@
   .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
   .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
   /* Modo tablet (usuario kiosco): oculta gestión de trabajadores y el botón visible de salir */
-  body.kiosco-user #trab-card{display:none!important;}
+  body.kiosco-user #trab-card,body.kiosco-user #asis-resumen-card{display:none!important;}
   body.kiosco-user #kiosco-close{display:none!important;}
   /* Modo tablet como app: barra inferior, sin menú lateral */
   .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:300;height:64px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(0,0,0,.07);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -964,6 +964,7 @@
     <section class="view" id="view-asistencia">
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
+      <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Resumen de horas <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— por trabajador</span></h3><div id="asis-resumen" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="dash-grid">
         <div class="card" id="trab-card">
           <h3>Trabajadores</h3>
@@ -1628,6 +1629,27 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         return '<div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button></span></div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     document.querySelectorAll("#asis-list .asis-fix").forEach(function(b){ b.addEventListener("click",function(){ asisEditarHora(b.dataset.id); }); });
+    cargarAsisResumen();
+  }
+  function sesionesPersona(marks){ var s=marks.slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), out=[], inTs=null;
+    s.forEach(function(a){ if(a.tipo==="ENTRADA") inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ out.push({out:new Date(a.ts),ms:new Date(a.ts)-inTs}); inTs=null; } }); return out; }
+  function hMsRango(ses,desde){ return ses.reduce(function(t,x){ return (!desde||x.out>=desde)?t+x.ms:t; },0); }
+  function cargarAsisResumen(){ var el=document.getElementById("asis-resumen"); if(!el)return; var sb=sbc(); if(!sb)return;
+    var now=new Date(), m0=new Date(now.getFullYear(),now.getMonth(),1);
+    sb.from("asistencia").select("*").gte("ts",m0.toISOString()).order("ts").then(function(r){ if(r.error){ el.innerHTML='<div class="col-empty">No disponible</div>'; return; } pintarAsisResumen(r.data||[]); });
+  }
+  function pintarAsisResumen(marks){
+    var el=document.getElementById("asis-resumen"); if(!el)return;
+    var now=new Date();
+    var d0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var dow=(now.getDay()+6)%7, w0=new Date(d0); w0.setDate(d0.getDate()-dow);   // lunes
+    var m0=new Date(now.getFullYear(),now.getMonth(),1);
+    var byW={}; (marks||[]).forEach(function(a){ var k=a.nombre||("••"+a.rut4); (byW[k]=byW[k]||[]).push(a); });
+    var keys=Object.keys(byW).sort();
+    if(!keys.length){ el.innerHTML='<div class="col-empty">Sin marcajes este mes</div>'; return; }
+    var rows=keys.map(function(k){ var ses=sesionesPersona(byW[k]);
+      return '<tr><td><b>'+escH(k)+'</b></td><td class="r">'+fmtDur(hMsRango(ses,d0))+'</td><td class="r">'+fmtDur(hMsRango(ses,w0))+'</td><td class="r">'+fmtDur(hMsRango(ses,m0))+'</td></tr>'; }).join("");
+    el.innerHTML='<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Hoy</th><th class="r">Semana</th><th class="r">Mes</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   function asisEditarHora(id){
     var a=_asis.filter(function(x){return String(x.id)===String(id);})[0]; if(!a)return;
