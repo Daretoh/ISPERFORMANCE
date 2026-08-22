@@ -294,6 +294,25 @@
   .dup-names{font-size:13px;color:var(--ink-2);}
   .dup-motivo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--warn);background:var(--surface);border-radius:99px;padding:2px 7px;margin-left:4px;}
   .dup-unir{flex:none;border:1px solid var(--warn);background:var(--warn);color:#fff;border-radius:8px;padding:5px 13px;font:700 12px/1 var(--sans);cursor:pointer;}
+  /* ---- Permisos de acción: ocultan controles según el rol/permiso ---- */
+  .acc-permgrp{margin-bottom:10px;}
+  .acc-permgrp-t{font:800 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 4px;}
+  #acc-permisos label{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 2px;cursor:pointer;color:var(--ink-2);}
+  body.perm-no-seg_avanzar .kbtn, body.perm-no-seg_avanzar #vd-back, body.perm-no-seg_avanzar #vd-fwd{display:none!important;}
+  body.perm-no-seg_editar .kedit-toggle, body.perm-no-seg_editar #vd-edit{display:none!important;}
+  body.perm-no-seg_trabajos .ktrab-addrow, body.perm-no-seg_trabajos .ktrab-del{display:none!important;}
+  body.perm-no-seg_borrar .kdel{display:none!important;}
+  body.perm-no-cobro_registrar #c-save{display:none!important;}
+  body.perm-no-cli_editar #cli-datos-save{display:none!important;}
+  body.perm-no-cli_borrar .dup-unir{display:none!important;}
+  body.perm-no-cot_crear #cot-save, body.perm-no-cot_crear #cot-add-row{display:none!important;}
+  body.perm-no-cot_borrar #cot-list [data-del]{display:none!important;}
+  body.perm-no-stock_mover .stk-btn.ent, body.perm-no-stock_mover .stk-btn.sal, body.perm-no-stock_mover .stk-btn.mov{display:none!important;}
+  body.perm-no-stock_agregar #stock-form, body.perm-no-stock_agregar #stock-import-qui{display:none!important;}
+  body.perm-no-stock_borrar .stk-btn.del{display:none!important;}
+  body.perm-no-plan_editar #plan-form, body.perm-no-plan_editar .plan-del, body.perm-no-plan_editar .plan-edit{display:none!important;}
+  body.perm-no-asis_trab #trab-form, body.perm-no-asis_trab #trab-list .ldel{display:none!important;}
+  body.perm-no-asis_editar .asis-fix, body.perm-no-asis_editar .asis-editmark, body.perm-no-asis_editar .asis-addsal{display:none!important;}
   .ketapas{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 2px;}
   .ket{font:700 10px/1 var(--sans);padding:4px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;}
   .ket-espera{background:var(--warn-soft);color:var(--warn);}
@@ -1047,12 +1066,15 @@
           <h3>Agregar / editar acceso</h3>
           <label class="f" style="margin:10px 0"><span class="lab">Cuenta</span><select id="acc-cuenta"></select></label>
           <input id="acc-email" placeholder="otro correo@…" autocomplete="off" style="display:none;width:100%;margin:-4px 0 10px;font:500 14px/1 var(--sans);padding:11px 14px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);color:var(--ink);box-sizing:border-box">
+          <label class="f" style="margin:0 0 12px"><span class="lab">Rol (plantilla) <span class="hint" style="text-transform:none;letter-spacing:0">— rellena permisos de golpe; luego puedes ajustar</span></span><select id="acc-rol"></select></label>
           <label style="display:flex;align-items:flex-start;gap:9px;margin:4px 0 14px;padding:11px 13px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);cursor:pointer">
             <input type="checkbox" id="acc-kiosco" style="margin-top:2px">
             <span><b>📱 Modo tablet</b> — app con barra abajo<br><span class="hint" style="font-size:11.5px;color:var(--ink-faint)">Solo Calendario, Seguimiento y Marcar asistencia. Sin el resto del sistema.</span></span>
           </label>
           <div class="lab" id="acc-vistas-lab" style="margin-bottom:8px">Pestañas que puede ver</div>
           <div id="acc-vistas" class="acc-vistas"></div>
+          <div class="lab" id="acc-perm-lab" style="margin:16px 0 8px">Permisos de acción <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400">— qué puede hacer dentro de cada pestaña</span></div>
+          <div id="acc-permisos"></div>
           <button class="btn primary" id="acc-save" style="width:100%;margin-top:14px">Guardar acceso</button>
           <p class="hint" style="display:block;margin-top:8px;font-size:11.5px;color:var(--ink-faint)">Si un correo no está en esta lista, ve <b>todas</b> las pestañas.</p>
         </div>
@@ -1370,6 +1392,7 @@
     var allowed=accesoDe(email); // null = ve todo
     var kiosco=!!(allowed && allowed.indexOf('kiosco')>=0); // "modo tablet": solo marcar asistencia
     document.body.classList.toggle('kiosco-user',kiosco);
+    permAll().forEach(function(p){ document.body.classList.toggle('perm-no-'+p, !puedeEmail(email,p)); }); // permisos de acción
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
       var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
@@ -1381,7 +1404,8 @@
   function setTBActive(v){ document.querySelectorAll('#tabbar button').forEach(function(b){ b.classList.toggle('active', b.dataset.tb===v); }); }
   window.ISP_applyRole=applyRole;
   function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
-    sb.from('accesos').select('*').then(function(r){ ACCESOS={}; if(r.data){ r.data.forEach(function(row){ ACCESOS[(row.email||'').toLowerCase()]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
+    sb.from('accesos').select('*').then(function(r){ ACCESOS={}; PERMISOS_MAP={}; ROLES_USER={}; if(r.data){ r.data.forEach(function(row){ var em=(row.email||'').toLowerCase(); ACCESOS[em]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); if(row.permisos!==undefined && row.permisos!==null) PERMISOS_MAP[em]=Array.isArray(row.permisos)?row.permisos:[]; if(row.rol) ROLES_USER[em]=row.rol; }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
+  var ROLES_USER={}; // email -> nombre de rol asignado
   var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", stockCat:"VENTA", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
   var seguimientosAll=[]; // bitácora de contacto por cliente (tabla seguimientos)
@@ -1690,7 +1714,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       al.innerHTML=hoy.length?hoy.map(function(a){ var cl=(a.tipo==="ENTRADA")?"tin":"tout";
         var edt=a.motivo_edicion?'<span class="asis-edit-tag">✎ editado</span>':'';
         var det=a.motivo_edicion?'<div class="asis-editdet"><b>✎ Editado</b> · original '+(a.ts_original?hhmm(a.ts_original):"—")+' · por '+escH(a.editado_por||"?")+(a.editado_at?(' · '+fFecha(a.editado_at.slice(0,10))):'')+'<br><b>Motivo:</b> '+escH(a.motivo_edicion)+'</div>':'';
-        var fix=esOwner()?' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button>':'';
+        var fix=puede('asis_editar')?' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button>':'';
         return '<div class="asis-item"><div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+fix+'</span></div>'+det+'</div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     document.querySelectorAll("#asis-list .asis-fix").forEach(function(b){ b.addEventListener("click",function(){ asisEditarHora(b.dataset.id); }); });
@@ -1711,7 +1735,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     });
     abiertos.sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
     if(!abiertos.length){ el.innerHTML='<div class="col-empty" style="padding:10px">✓ Todos los marcajes tienen su salida</div>'; return; }
-    var hoy=diaKey(new Date().toISOString()), owner=esOwner();
+    var hoy=diaKey(new Date().toISOString()), owner=puede('asis_editar');
     el.innerHTML='<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th>Día</th><th class="r">Entrada</th><th>Estado</th>'+(owner?'<th></th>':'')+'</tr></thead><tbody>'+abiertos.map(function(a){
       var dia=diaKey(a.ts), esHoyDia=(dia===hoy);
       var estado=esHoyDia?'<span class="chip" style="background:var(--ok-soft);color:var(--ok);font-weight:700">🟢 En el taller</span>':'<span class="chip" style="background:var(--crit-soft);color:var(--crit);font-weight:700">⚠ Sin salida</span>';
@@ -1858,19 +1882,44 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
   var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
-  // Permisos de acción (tipo ERP): si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO.
-  var PERMISOS_ADMIN=[["borrar","Eliminar registros","Borrar vehículos, clientes, gastos, tareas…"],["cobrar","Registrar cobros","Marcar como cobrado en Cobro"],["gestionar_stock","Mover stock","Ingresos, salidas y mover productos"],["gestionar_asistencia","Editar asistencia","Corregir horas y agregar salidas"]];
+  // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
+  // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
+  var PERM_CAT=[
+    {v:"seguimiento",l:"Seguimiento",a:[["seg_avanzar","Avanzar / Volver estado"],["seg_editar","Editar datos del vehículo"],["seg_trabajos","Gestionar trabajos"],["seg_borrar","Eliminar vehículo"]]},
+    {v:"cobro",l:"Cobro",a:[["cobro_registrar","Registrar cobro"]]},
+    {v:"clientes",l:"Clientes",a:[["cli_editar","Editar datos / facturación"],["cli_borrar","Eliminar / unir duplicados"]]},
+    {v:"cotizaciones",l:"Cotizaciones",a:[["cot_crear","Crear / editar cotización"],["cot_borrar","Eliminar cotización"]]},
+    {v:"stock",l:"Stock",a:[["stock_mover","Ingresos / salidas"],["stock_agregar","Agregar productos"],["stock_borrar","Eliminar productos"]]},
+    {v:"solicitudes",l:"Solicitudes",a:[["sol_gestionar","Aprobar / recibir / eliminar"]]},
+    {v:"plan",l:"Planificación",a:[["plan_editar","Crear / editar / eliminar tareas"]]},
+    {v:"asistencia",l:"Asistencia",a:[["asis_trab","Alta / baja de trabajadores"],["asis_editar","Corregir marcajes"]]}
+  ];
+  function permAll(){ var arr=[]; PERM_CAT.forEach(function(g){ g.a.forEach(function(p){ arr.push(p[0]); }); }); return arr; }
+  var ROLES_PRESET=[
+    {nombre:"Recepcionista",vistas:["recepcion","agenda","seguimiento","clientes","asistencia"],permisos:["seg_avanzar","seg_trabajos","cli_editar"]},
+    {nombre:"Vendedor",vistas:["recepcion","agenda","seguimiento","clientes","cotizaciones","cobro"],permisos:["seg_avanzar","seg_trabajos","cli_editar","cot_crear","cobro_registrar"]},
+    {nombre:"Técnico / Mecánico",vistas:["seguimiento","stock","quimicos","asistencia"],permisos:["seg_avanzar","seg_trabajos","stock_mover"]},
+    {nombre:"Administrativa",vistas:["recepcion","agenda","seguimiento","tareas","clientes","cobro","asistencia","quimicos"],permisos:["seg_avanzar","seg_trabajos","cli_editar","cobro_registrar","asis_editar","asis_trab"]},
+    {nombre:"Solo tablet (marca asistencia)",vistas:["kiosco"],permisos:[]}
+  ];
   var PERMISOS_MAP={}; // email -> array de permisos (undefined = todos)
   function puedeEmail(email,perm){ email=(email||'').toLowerCase(); if(email===OWNER_EMAIL) return true; var p=PERMISOS_MAP[email]; if(p===undefined||p===null) return true; return p.indexOf(perm)>=0; }
   function puede(perm){ return puedeEmail(window.ISP_EMAIL||'', perm); }
   window.ISP_puede=puede;
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
-  function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
-  function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
+  function accSetChecks(vs, ps){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; });
+    var todas=(ps===undefined||ps===null); document.querySelectorAll("#acc-permisos input").forEach(function(c){ c.checked=todas?true:(ps.indexOf(c.value)>=0); });
+    var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
+  function accKioscoUI(on){ ["acc-vistas","acc-permisos"].forEach(function(id){ var b=document.getElementById(id); if(b){ b.style.opacity=on?".4":""; b.style.pointerEvents=on?"none":""; } }); var lab=document.getElementById("acc-vistas-lab"); if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
     if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
+    var pbox=document.getElementById("acc-permisos");
+    if(pbox && !pbox.dataset.done){ pbox.innerHTML=PERM_CAT.map(function(g){ return '<div class="acc-permgrp"><div class="acc-permgrp-t">'+escH(g.l)+'</div>'+g.a.map(function(p){ return '<label><input type="checkbox" value="'+p[0]+'">'+escH(p[1])+'</label>'; }).join("")+'</div>'; }).join(""); pbox.dataset.done="1"; }
+    var rolEl=document.getElementById("acc-rol");
+    if(rolEl && !rolEl.dataset.done){ rolEl.innerHTML='<option value="">— Sin rol / personalizado —</option>'+ROLES_PRESET.map(function(r){ return '<option value="'+av(r.nombre)+'">'+escH(r.nombre)+'</option>'; }).join(""); rolEl.dataset.done="1";
+      rolEl.addEventListener("change",function(){ var r=ROLES_PRESET.filter(function(x){return x.nombre===rolEl.value;})[0]; if(r) accSetChecks(r.vistas, r.permisos); }); }
     var sel=document.getElementById("acc-cuenta");
     if(sel && !sel.dataset.done){
       var ops='<option value="">— Elige una cuenta —</option>';
@@ -1878,8 +1927,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       ops+='<option value="__otro">Otro correo…</option>';
       sel.innerHTML=ops; sel.dataset.done="1";
       sel.addEventListener("change",function(){ var v=sel.value, inp=document.getElementById("acc-email");
-        if(v==="__otro"){ inp.style.display=""; inp.value=""; accSetChecks([]); inp.focus(); }
-        else { inp.style.display="none"; inp.value=""; accSetChecks(v?(ACCESOS[v]||[]):[]); }
+        if(v==="__otro"){ inp.style.display=""; inp.value=""; if(rolEl)rolEl.value=""; accSetChecks([],[]); inp.focus(); }
+        else { inp.style.display="none"; inp.value=""; if(rolEl)rolEl.value=(v?ROLES_USER[v]:"")||""; accSetChecks(v?(ACCESOS[v]||[]):[], v?PERMISOS_MAP[v]:undefined); }
       });
     }
     var lista=document.getElementById("acc-list"); if(!lista)return;
@@ -1887,26 +1936,31 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres;
       if(vs.indexOf('kiosco')>=0){ nombres="📱 Modo tablet (Calendario · Seguimiento · Marcar)"; }
       else { nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; }
-      return '<div class="acc-item"><div><div class="em">'+escH(em)+'</div><div class="vs">Ve: '+escH(nombres)+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven todo.</div>';
+      var ps=PERMISOS_MAP[em]; var permTxt=(ps===undefined)?"todas las acciones":(ps.length+" de "+permAll().length+" acciones");
+      var rolTxt=ROLES_USER[em]?(' <span class="chip" style="background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:10px">'+escH(ROLES_USER[em])+'</span>'):'';
+      return '<div class="acc-item"><div><div class="em">'+escH(em)+rolTxt+'</div><div class="vs">Ve: '+escH(nombres)+' · Puede: '+permTxt+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven y pueden todo.</div>';
     lista.querySelectorAll("[data-edit]").forEach(function(b){ b.addEventListener("click",function(){ accCargarEnForm(b.dataset.edit); }); });
     lista.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click",function(){ accBorrar(b.dataset.del); }); });
   }
-  function accCargarEnForm(email){ var sel=document.getElementById("acc-cuenta"), inp=document.getElementById("acc-email"), known=false;
+  function accCargarEnForm(email){ var sel=document.getElementById("acc-cuenta"), inp=document.getElementById("acc-email"), rolEl=document.getElementById("acc-rol"), known=false;
     if(sel){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===email){ sel.value=email; known=true; break; } } }
     if(known){ inp.style.display="none"; inp.value=""; } else if(sel){ sel.value="__otro"; inp.style.display=""; inp.value=email; }
-    accSetChecks(ACCESOS[email]||[]); }
-  function accBorrar(email){ var sb=sbc(); if(!sb)return; if(!confirm("¿Quitar la restricción de "+email+"? Volverá a ver todo.")) return;
-    sb.from("accesos").delete().eq("email",email).then(function(){ delete ACCESOS[email]; pintarAdmin(); if((email||"").toLowerCase()===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("Acceso quitado"); }); }
+    if(rolEl) rolEl.value=ROLES_USER[email]||"";
+    accSetChecks(ACCESOS[email]||[], PERMISOS_MAP[email]); }
+  function accBorrar(email){ var sb=sbc(); if(!sb)return; if(!confirm("¿Quitar la restricción de "+email+"? Volverá a ver y poder todo.")) return;
+    sb.from("accesos").delete().eq("email",email).then(function(){ delete ACCESOS[email]; delete PERMISOS_MAP[email]; delete ROLES_USER[email]; pintarAdmin(); if((email||"").toLowerCase()===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("Acceso quitado"); }); }
   (function(){ var save=document.getElementById("acc-save"); if(!save)return;
     var kio=document.getElementById("acc-kiosco"); if(kio) kio.addEventListener("change",function(){ accKioscoUI(kio.checked); });
     save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
       var email=accEmailActual();
       if(!email||email.indexOf("@")<0){ toast("Elige una cuenta o escribe un correo válido"); return; }
-      var vs; if(kio && kio.checked){ vs=['agenda','seguimiento','asistencia','kiosco']; }
-      else { vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); }); }
-      sb.from("accesos").upsert({email:email,vistas:vs,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo guardar (¿corriste el SQL 12?)"); return; }
-        ACCESOS[email]=vs; var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} accSetChecks([]); pintarAdmin();
-        if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso guardado"); }); });
+      var vs, ps; if(kio && kio.checked){ vs=['agenda','seguimiento','asistencia','kiosco']; ps=[]; }
+      else { vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); }); ps=[]; document.querySelectorAll("#acc-permisos input:checked").forEach(function(c){ ps.push(c.value); }); }
+      var rolSel=(document.getElementById("acc-rol")||{}).value||null;
+      sb.from("accesos").upsert({email:email,vistas:vs,permisos:ps,rol:rolSel,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 25?)"); return; }
+        ACCESOS[email]=vs; PERMISOS_MAP[email]=ps; if(rolSel)ROLES_USER[email]=rolSel; else delete ROLES_USER[email];
+        var sel=document.getElementById("acc-cuenta"); if(sel)sel.value=""; var inp=document.getElementById("acc-email"); if(inp){inp.style.display="none";inp.value="";} var rEl=document.getElementById("acc-rol"); if(rEl)rEl.value=""; accSetChecks([],[]); pintarAdmin();
+        if(email===(window.ISP_EMAIL||"").toLowerCase()) applyRole(window.ISP_EMAIL); toast("✓ Acceso y permisos guardados"); }); });
   })();
   // ---------- Cotizaciones ----------
   var _cotiz=[], COT_BASE=35; // primer N° si la tabla está vacía (continúa la numeración manual ~34)
