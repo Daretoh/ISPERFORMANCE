@@ -287,6 +287,13 @@
   .cob-adj-img img{width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--line);}
   .cob-adj-file{justify-content:center;height:80px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;}
   .cob-adj-file .ico{font-size:26px;}
+  .dup-box{background:var(--warn-soft);border:1px solid var(--warn);border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+  .dup-h{font:800 11px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--warn);margin-bottom:8px;}
+  .dup-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--warn);flex-wrap:wrap;}
+  .dup-row:first-of-type{border-top:none;}
+  .dup-names{font-size:13px;color:var(--ink-2);}
+  .dup-motivo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--warn);background:var(--surface);border-radius:99px;padding:2px 7px;margin-left:4px;}
+  .dup-unir{flex:none;border:1px solid var(--warn);background:var(--warn);color:#fff;border-radius:8px;padding:5px 13px;font:700 12px/1 var(--sans);cursor:pointer;}
   .kprio-row{display:flex;align-items:center;gap:8px;margin:7px 0 2px;}
   .kprio{flex:none;font:600 11px/1 var(--sans);padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);cursor:pointer;}
   .kprog{flex:1;display:flex;align-items:center;gap:6px;font:700 10px/1 var(--sans);color:var(--ink-muted);white-space:nowrap;}
@@ -943,6 +950,7 @@
     <!-- ============ CLIENTES ============ -->
     <section class="view" id="view-clientes">
       <div class="vhead"><div class="eye">CRM</div><h1>Fichas de cliente</h1></div>
+      <div id="cli-dup-alert" style="display:none"></div>
       <input type="search" id="cli-buscar" class="cli-search" placeholder="🔍 Buscar por nombre o teléfono…">
       <div class="pfilter" id="cli-filtro" style="margin:10px 0 4px"><button data-t="TODOS" class="on">Todos</button><button data-t="NATURAL"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Naturales</button><button data-t="EMPRESA"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresas</button></div>
       <div style="display:flex;align-items:center;gap:8px;margin:2px 0 8px"><span style="font-size:11px;color:var(--ink-muted)">Ordenar:</span><select id="cli-orden" style="font:600 12px/1 var(--sans);padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);cursor:pointer"><option value="reciente">Más recientes</option><option value="antiguo">Más antiguos</option><option value="gasto">Mayor gasto</option></select></div>
@@ -2873,7 +2881,26 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
     return saludo+cuerpo+' ¡Te esperamos! ✨';
   }
+  function normNombre(s){ return (s||"").toLowerCase().replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u").replace(/ñ/g,"n").replace(/[^a-z0-9]+/g," ").trim(); }
+  function soloDigitos(s){ return (s||"").replace(/\D/g,"").slice(-8); }
+  function detectarDuplicados(){
+    var gs=agruparClientes(), byName={}, byTel={}, pares=[], seen={};
+    gs.forEach(function(c){ var n=normNombre(cliNombre(c)); if(n&&n.length>2)(byName[n]=byName[n]||[]).push(c); var t=soloDigitos(c.contacto); if(t&&t.length>=7)(byTel[t]=byTel[t]||[]).push(c); });
+    function addPair(a,b,m){ if(a.clave===b.clave)return; var k=[a.clave,b.clave].sort().join("|"); if(seen[k])return; seen[k]=1; pares.push({a:a,b:b,motivo:m}); }
+    Object.keys(byName).forEach(function(n){ var arr=byName[n]; if(arr.length>1) for(var i=1;i<arr.length;i++) addPair(arr[0],arr[i],"mismo nombre"); });
+    Object.keys(byTel).forEach(function(t){ var arr=byTel[t]; if(arr.length>1) for(var i=1;i<arr.length;i++) addPair(arr[0],arr[i],"mismo teléfono"); });
+    return pares;
+  }
+  function renderDupAlert(){
+    var el=document.getElementById("cli-dup-alert"); if(!el)return;
+    var pares=detectarDuplicados();
+    if(!pares.length){ el.innerHTML=""; el.style.display="none"; return; }
+    el.style.display="";
+    el.innerHTML='<div class="dup-box"><div class="dup-h">⚠ Posibles clientes duplicados ('+pares.length+')</div>'+pares.slice(0,6).map(function(p){ return '<div class="dup-row"><span class="dup-names"><b>'+escH(cliNombre(p.a))+'</b> ↔ <b>'+escH(cliNombre(p.b))+'</b> <span class="dup-motivo">'+p.motivo+'</span></span><button class="dup-unir" data-a="'+av(p.a.clave)+'" data-b="'+av(p.b.clave)+'">Unir</button></div>'; }).join("")+'</div>';
+    el.querySelectorAll(".dup-unir").forEach(function(b){ b.addEventListener("click",function(){ var gs=agruparClientes(), A=gs.filter(function(x){return x.clave===b.dataset.a;})[0], B=gs.filter(function(x){return x.clave===b.dataset.b;})[0]; if(!A||!B)return; var from=((A.visitas||0)<=(B.visitas||0))?A:B, to=(from===A)?B:A; if(confirm("¿Unir «"+cliNombre(from)+"» dentro de «"+cliNombre(to)+"»? Se moverán sus vehículos y seguimiento (no se borra el historial).")) fusionarCliente(from.clave, to.clave); }); });
+  }
   function renderClientes(){
+    renderDupAlert();
     var lista=agruparClientes();
     var q=(state.clienteBuscar||"").trim().toLowerCase();
     if(q) lista=lista.filter(function(c){ var i=clientesInfo[c.clave]||{}; return (c.nombre||"").toLowerCase().indexOf(q)>=0 || (c.contacto||"").toLowerCase().indexOf(q)>=0 || (i.razon_social||"").toLowerCase().indexOf(q)>=0 || (i.representante||"").toLowerCase().indexOf(q)>=0 || (i.rut||"").toLowerCase().indexOf(q)>=0; });
