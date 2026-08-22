@@ -631,6 +631,7 @@
   .ev.espera{background:var(--accent-soft);color:var(--accent-ink);border-left-color:var(--accent);}
   .ev.agendado{background:var(--surface-3);color:var(--ink-muted);border-left-color:var(--ink-faint);}
   .ev.cotizar{background:#efe3ff;color:#7a2fd0;border-left-color:#8b3ff0;}
+  .ev-pc{display:inline-block;font:800 8px/1 var(--mono);letter-spacing:.02em;color:#fff;background:#8b3ff0;border-radius:4px;padding:2px 3px;margin-right:4px;vertical-align:middle;}
   .cal-more{font:600 10px/1 var(--mono);color:var(--ink-faint);}
 
   .empty{text-align:center;padding:50px 20px;color:var(--ink-faint);}
@@ -3049,10 +3050,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
         evs=list.slice(0,4).map(function(e){
           if(e._tarea){ return '<span class="ev tarea-ev" data-tipo="tarea" data-id="'+e.id+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
-          var esCot=esPorCotizar(e); var corto=esCot?'Por cotizar':((e.servicios||[]).map(svcCorto).join(" + ")||"—");
+          var esCot=esPorCotizar(e);
           var veh=(e.marca||"")+(e.modelo?(" "+e.modelo):"")+(e.patente?(" · "+e.patente):"");
           var titulo=veh+" — "+((e.servicios||[]).join(" + ")||"sin servicio")+(e.cliente?(" — "+e.cliente):"");
-          return '<span class="ev '+estClass(e.estado)+(esCot?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'" title="'+av(titulo)+'"><span class="evh">'+(e.hCoord||"--")+'</span> <span class="evs">'+escH(corto)+'</span> · '+escH(veh)+'</span>';
+          var hora=(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'');
+          var cuerpo=esCot ? ('<span class="ev-pc" title="Por cotizar">P.C</span>'+hora+'<span class="evs">'+escH(veh)+'</span>')
+            : (hora+'<span class="evs">'+escH((e.servicios||[]).map(svcCorto).join(" + ")||"—")+'</span> · '+escH(veh));
+          return '<span class="ev '+estClass(e.estado)+(esCot?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'" title="'+av(titulo)+'">'+cuerpo+'</span>';
         }).join("");
         if(list.length>4)evs+='<span class="cal-more">+'+(list.length-4)+' más</span>';
       }
