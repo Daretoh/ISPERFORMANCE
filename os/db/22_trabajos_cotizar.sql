@@ -15,3 +15,5 @@ alter table vehiculos add column if not exists prioridad        text;
 -- momento de entrega (para medir Terminado -> Entregado en las cards de Entregados)
 alter table vehiculos add column if not exists f_entrega        date;
 alter table vehiculos add column if not exists h_entrega        text;
+-- orden manual de prioridad (arrastrar en el resumen del taller; 0 = automatico)
+alter table vehiculos add column if not exists orden            integer default 0;

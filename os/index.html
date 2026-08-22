@@ -325,8 +325,12 @@
   .seg-vname{flex:none;min-width:150px;font-weight:600;color:var(--ink);} .seg-vname i{font-style:normal;font-weight:400;color:var(--ink-faint);font-size:11px;}
   .seg-vbar{flex:1;height:9px;border-radius:99px;background:var(--surface-3);overflow:hidden;} .seg-vbar>span{display:block;height:100%;border-radius:99px;}
   .seg-vpct{flex:none;width:44px;text-align:right;font-weight:800;font-size:12.5px;color:var(--ink-2);}
-  .seg-vrow{cursor:pointer;padding:5px 6px;border-radius:8px;}
+  .seg-vrow{padding:5px 6px;border-radius:8px;}
   .seg-vrow:hover{background:var(--surface-2);}
+  .seg-vrow.dragging{opacity:.5;background:var(--accent-soft);}
+  .seg-vgrip{flex:none;cursor:grab;color:var(--ink-faint);font-size:14px;user-select:none;padding:0 2px;}
+  .seg-vgrip:active{cursor:grabbing;}
+  .seg-vname{cursor:pointer;}
   .seg-vcron{flex:none;font:700 10.5px/1 var(--sans);color:var(--accent-ink);background:var(--accent-soft);border-radius:6px;padding:3px 7px;white-space:nowrap;}
   .seg-vcron.sinrec{color:var(--ink-faint);background:var(--surface-3);font-weight:400;}
   .vd-sub{font-size:12.5px;color:var(--ink-muted);margin-top:-2px;}
@@ -1266,10 +1270,10 @@
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
   function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
-    if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; o.f_entrega=e.fEntrega||null; o.h_entrega=e.hEntrega||null; }
+    if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; o.f_entrega=e.fEntrega||null; o.h_entrega=e.hEntrega||null; o.orden=(+e.orden||0); }
     return o; }
   var _vehExtra=true, _vehExtraWarned=false; // columnas cotizar_despues / trabajos (SQL 18_trabajos_cotizar). Si faltan, se desactivan solas.
-  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|prioridad|entrega|schema cache|PGRST204/i.test(m); }
+  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|prioridad|entrega|orden|schema cache|PGRST204/i.test(m); }
   function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
   // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
   function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
@@ -1277,7 +1281,7 @@
   var SVC_POR_COTIZAR="Pendiente de cotización";
   var AUTOMOTORAS_COTIZAR=["guillermo morales"];
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||"") }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
@@ -2224,14 +2228,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var kpis='<div class="seg-kpis">'+kstat("En proceso",enProc,"activos ahora")+kstat("Avance prom.",avg+"%","de los activos")+kstat("Terminados hoy",termHoy,"listos")+kstat("Entregados hoy",entrHoy,"salieron")+'</div>';
     var prioBar='<div class="seg-prios">'+PRIOS_SEG.map(function(p){ return '<span class="seg-prio pp-'+p[0]+'">'+p[1]+' '+p[2]+' <b>'+pc[p[0]]+'</b></span>'; }).join("")+'</div>';
     var pOrd={URGENTE:0,PRIORIDAD:1,NORMAL:2,PROGRAMADO:3};
-    var lista=activos.slice().sort(function(a,b){ var pa=pOrd[prioDeVeh(a)], pb=pOrd[prioDeVeh(b)]; if(pa!==pb)return pa-pb; return progresoVeh(a)-progresoVeh(b); });
+    var lista=activos.slice().sort(function(a,b){ var oa=+a.orden||0, ob=+b.orden||0; if(oa&&ob)return oa-ob; if(oa||ob)return oa?-1:1; var pa=pOrd[prioDeVeh(a)], pb=pOrd[prioDeVeh(b)]; if(pa!==pb)return pa-pb; return progresoVeh(a)-progresoVeh(b); });
     var filas=lista.map(function(e){ var pr=progresoVeh(e), col=pr>=75?"var(--ok)":(pr>=40?"var(--warn)":"var(--crit)"), nm=(e.marca+" "+(e.modelo||"")).trim()||e.patente||"—";
       var rec=_fdt(e.fIngreso,e.hIngreso); var cron=rec?'<span class="seg-vcron cron" data-cron="'+rec.getTime()+'" title="Desde que se recepcionó">⏱ '+fmtElapsed(Date.now()-rec.getTime())+'</span>':'<span class="seg-vcron sinrec">sin recepción</span>';
-      return '<div class="seg-vrow" data-open="'+e.id+'"><span class="seg-vdot">'+dotProg(pr)+'</span><span class="seg-vname">'+escH(nm)+(e.patente?(' <i>'+escH(e.patente)+'</i>'):'')+'</span>'+cron+'<span class="seg-vbar"><span style="width:'+pr+'%;background:'+col+'"></span></span><span class="seg-vpct">'+pr+'%</span></div>'; }).join("");
-    el.innerHTML='<details class="seg-resumen-box" open><summary>Resumen del taller <span class="seg-sum-hint">'+activos.length+' activos · '+avg+'% avance</span></summary>'+kpis+prioBar+'<div class="seg-vlist">'+(filas||'<div class="col-empty">Sin vehículos activos</div>')+'</div></details>';
-    el.querySelectorAll(".seg-vrow[data-open]").forEach(function(r){ r.addEventListener("click",function(){ abrirVehDetalle(r.dataset.open); }); });
+      return '<div class="seg-vrow" draggable="true" data-id="'+e.id+'"><span class="seg-vgrip" title="Arrastra para priorizar">⠿</span><span class="seg-vdot">'+dotProg(pr)+'</span><span class="seg-vname" data-open="'+e.id+'">'+escH(nm)+(e.patente?(' <i>'+escH(e.patente)+'</i>'):'')+'</span>'+cron+'<span class="seg-vbar"><span style="width:'+pr+'%;background:'+col+'"></span></span><span class="seg-vpct">'+pr+'%</span></div>'; }).join("");
+    el.innerHTML='<details class="seg-resumen-box" open><summary>Resumen del taller <span class="seg-sum-hint">'+activos.length+' activos · '+avg+'% avance · arrastra ⠿ para priorizar</span></summary>'+kpis+prioBar+'<div class="seg-vlist">'+(filas||'<div class="col-empty">Sin vehículos activos</div>')+'</div></details>';
+    el.querySelectorAll(".seg-vname[data-open]").forEach(function(r){ r.addEventListener("click",function(){ abrirVehDetalle(r.dataset.open); }); });
+    var vlist=el.querySelector(".seg-vlist");
+    if(vlist){ vlist.querySelectorAll(".seg-vrow").forEach(function(r){
+        r.addEventListener("dragstart",function(ev){ r.classList.add("dragging"); ev.dataTransfer.effectAllowed="move"; try{ev.dataTransfer.setData("text/plain",r.dataset.id);}catch(_){} });
+        r.addEventListener("dragend",function(){ r.classList.remove("dragging"); guardarOrdenResumen(vlist); });
+      });
+      vlist.addEventListener("dragover",function(ev){ ev.preventDefault(); var dragging=vlist.querySelector(".dragging"); if(!dragging)return; var after=dragAfter(vlist,ev.clientY); if(after==null) vlist.appendChild(dragging); else vlist.insertBefore(dragging,after); });
+    }
     iniciarCron();
   }
+  function dragAfter(container,y){ var rows=[].slice.call(container.querySelectorAll(".seg-vrow:not(.dragging)")); var closest={off:-Infinity,el:null}; rows.forEach(function(r){ var b=r.getBoundingClientRect(); var off=y-b.top-b.height/2; if(off<0&&off>closest.off) closest={off:off,el:r}; }); return closest.el; }
+  function guardarOrdenResumen(list){ var rows=[].slice.call(list.querySelectorAll(".seg-vrow")); var cambio=false; rows.forEach(function(r,i){ var e=data.filter(function(x){return String(x.id)===String(r.dataset.id);})[0]; if(e && (+e.orden||0)!==i+1){ e.orden=i+1; persistVeh(e); cambio=true; } }); if(cambio) toast("✓ Prioridad actualizada"); }
   function cerrarVehDetalle(){ var m=document.getElementById("veh-modal"); if(m)m.classList.remove("show"); }
   function abrirVehDetalle(id){
     var e=data.filter(function(x){return String(x.id)===String(id);})[0]; if(!e)return;
