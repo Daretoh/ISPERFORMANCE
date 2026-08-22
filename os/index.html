@@ -1858,6 +1858,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
   var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  // Permisos de acción (tipo ERP): si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO.
+  var PERMISOS_ADMIN=[["borrar","Eliminar registros","Borrar vehículos, clientes, gastos, tareas…"],["cobrar","Registrar cobros","Marcar como cobrado en Cobro"],["gestionar_stock","Mover stock","Ingresos, salidas y mover productos"],["gestionar_asistencia","Editar asistencia","Corregir horas y agregar salidas"]];
+  var PERMISOS_MAP={}; // email -> array de permisos (undefined = todos)
+  function puedeEmail(email,perm){ email=(email||'').toLowerCase(); if(email===OWNER_EMAIL) return true; var p=PERMISOS_MAP[email]; if(p===undefined||p===null) return true; return p.indexOf(perm)>=0; }
+  function puede(perm){ return puedeEmail(window.ISP_EMAIL||'', perm); }
+  window.ISP_puede=puede;
   function renderAdmin(){ cargarAccesos(pintarAdmin); }
   function accSetChecks(vs){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; }); var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
   function accKioscoUI(on){ var box=document.getElementById("acc-vistas"), lab=document.getElementById("acc-vistas-lab"); if(box){ box.style.opacity=on?".4":""; box.style.pointerEvents=on?"none":""; } if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
@@ -2754,27 +2760,37 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function gfActivo(x){ return x.activo!==false; }
   function renderGerencia(){
     if(!_gerMes) _gerMes=(new Date()).toISOString().slice(0,7);
-    var mesEl=document.getElementById("ger-mes"); if(mesEl) mesEl.innerHTML=gerMeses().map(function(m){ var p=m.split("-"); return '<button data-m="'+m+'"'+(m===_gerMes?' class="on"':'')+'>'+MESLC[+p[1]-1].slice(0,3)+" "+p[0].slice(2)+'</button>'; }).join("");
+    var mesEl=document.getElementById("ger-mes"); if(mesEl){ mesEl.innerHTML=gerMeses().map(function(m){ var p=m.split("-"); return '<button data-m="'+m+'"'+(m===_gerMes?' class="on"':'')+'>'+MESLC[+p[1]-1].slice(0,3)+" "+p[0].slice(2)+'</button>'; }).join(""); mesEl.querySelectorAll("button").forEach(function(b){ b.onclick=function(){ _gerMes=b.dataset.m; renderGerencia(); }; }); }
+    var sb=sbc(), m0=new Date(_gerMes+"-01T00:00:00"), m1=new Date(m0); m1.setMonth(m1.getMonth()+1);
+    if(sb){ sb.from("asistencia").select("*").gte("ts",m0.toISOString()).lt("ts",m1.toISOString()).then(function(r){ pintarGerencia(r.error?[]:(r.data||[])); }); }
+    else pintarGerencia([]);
+  }
+  function horasPersonalMes(marks){ var byW={}; (marks||[]).forEach(function(a){ var k=a.nombre||("••"+a.rut4); (byW[k]=byW[k]||[]).push(a); }); var res={}; Object.keys(byW).forEach(function(k){ res[k]=sesionesPersona(byW[k]).reduce(function(t,x){return t+x.ms;},0)/3600000; }); return res; }
+  function pintarGerencia(marks){
     var enMes=function(f){ return (f||"").slice(0,7)===_gerMes; };
     var ingresos=(data||[]).filter(function(e){ return e.cobrado && enMes(e.fCoord||e.fIngreso); }).reduce(function(s,e){return s+ingresoReal(e);},0);
-    var gVar=(gastos||[]).filter(function(g){ return enMes(g.fecha); });
-    var gVarTot=gVar.reduce(function(s,g){return s+(+g.monto||0);},0);
+    var gVar=(gastos||[]).filter(function(g){ return enMes(g.fecha); }), gVarTot=gVar.reduce(function(s,g){return s+(+g.monto||0);},0);
     var fijos=_gfijos.filter(gfActivo), gFijoTot=fijos.reduce(function(s,x){return s+(+x.monto||0);},0);
-    var mo=0; (reloj||[]).forEach(function(r){ if(enMes(r.fecha)) mo+=horasReloj(r)*(+VH[r.trab]||0); });
+    var hW=horasPersonalMes(marks); var moW=Object.keys(hW).map(function(k){ return {trab:k, horas:hW[k], vh:(+VH[k]||0), costo:hW[k]*(+VH[k]||0)}; }).sort(function(a,b){return b.costo-a.costo;});
+    var mo=moW.reduce(function(s,x){return s+x.costo;},0);
     var costos=gFijoTot+gVarTot+mo, resultado=ingresos-costos;
-    var kpis='<div class="kpis" style="margin-bottom:14px">'+kstat("Ingresos",clp(ingresos),"cobrado del mes")+kstat("Costos",clp(costos),"fijos + var + M.O.")+kstat("Resultado",clp(resultado),resultado>=0?"positivo":"déficit")+'</div>';
+    var kpis='<div class="kpis" style="margin-bottom:14px">'+kstat("Ingresos",clp(ingresos),"cobrado del mes")+kstat("Costos",clp(costos),"fijos + var + personal")+kstat("Resultado",clp(resultado),resultado>=0?"positivo":"déficit")+'</div>';
     var desg='<div class="chart" style="margin-bottom:16px"><h3>Resultado del mes<span class="tag">estimado</span></h3>'+
       '<div class="lrow"><span>Ingresos (cobrado)</span><span class="num">'+clp(ingresos)+'</span></div>'+
       '<div class="lrow"><span>− Gastos fijos ('+fijos.length+')</span><span class="num">'+clp(gFijoTot)+'</span></div>'+
       '<div class="lrow"><span>− Gastos variables ('+gVar.length+')</span><span class="num">'+clp(gVarTot)+'</span></div>'+
-      '<div class="lrow"><span>− Mano de obra (asistencia)</span><span class="num">'+clp(mo)+'</span></div>'+
+      '<div class="lrow"><span>− Personal spot (asistencia × valor/hora)</span><span class="num">'+clp(mo)+'</span></div>'+
       '<div class="lrow"><span><b>= Resultado</b></span><span class="num" style="font-weight:800;color:'+(resultado>=0?'var(--ok)':'var(--crit)')+'">'+clp(resultado)+'</span></div></div>';
+    var persHTML=moW.length?('<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th class="r">Horas mes</th><th class="r">Valor hora</th><th class="r">Costo</th></tr></thead><tbody>'+moW.map(function(x){ return '<tr><td><b>'+escH(x.trab)+'</b></td><td class="r">'+x.horas.toFixed(1)+' h</td><td class="r"><input class="gvh" data-t="'+av(x.trab)+'" type="number" min="0" step="500" value="'+(x.vh||"")+'" placeholder="$/h" style="width:96px;text-align:right"></td><td class="r">'+(x.vh?clp(x.costo):"—")+'</td></tr>'; }).join("")+'<tr><td><b>Total personal spot</b></td><td></td><td></td><td class="r"><b>'+clp(mo)+'</b></td></tr></tbody></table></div>'):'<div class="col-empty">Sin marcajes de asistencia este mes. Los spot marcan en <b>Asistencia</b> y aquí defines su valor/hora.</div>';
     var gfHTML=_gfijos.length?('<div class="tablewrap"><table><thead><tr><th>Concepto</th><th class="r">Monto/mes</th><th class="r">Día</th><th></th></tr></thead><tbody>'+_gfijos.map(function(x){ return '<tr'+(gfActivo(x)?'':' style="opacity:.45"')+'><td>'+escH(x.concepto||"")+'</td><td class="r">'+clp(x.monto||0)+'</td><td class="r">'+(x.dia||"—")+'</td><td class="r" style="white-space:nowrap"><button class="stk-btn gf-edit" data-id="'+x.id+'">✎</button> <button class="stk-btn gf-tog" data-id="'+x.id+'">'+(gfActivo(x)?'On':'Off')+'</button> <button class="stk-btn gf-del" data-id="'+x.id+'">✕</button></td></tr>'; }).join("")+'<tr><td><b>Total fijo activo</b></td><td class="r"><b>'+clp(gFijoTot)+'</b></td><td></td><td></td></tr></tbody></table></div>'):'<div class="col-empty">Sin gastos fijos. <button class="btn" id="gf-seed" style="margin-left:8px">Cargar base sugerida</button></div>';
     var gfForm='<form id="gf-form" class="row c3" autocomplete="off" style="margin:12px 0 0"><label class="f"><span class="lab">Concepto</span><input name="concepto" required placeholder="Arriendo, Internet…"></label><label class="f"><span class="lab">Monto mensual</span><input name="monto" type="number" min="0" required></label><label class="f"><span class="lab">Día de pago</span><input name="dia" type="number" min="1" max="31" placeholder="5"></label><button class="btn primary" style="align-self:end">＋ Agregar fijo</button></form>';
     var gvHTML=gVar.length?('<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="r">Monto</th></tr></thead><tbody>'+gVar.slice().sort(function(a,b){return (a.fecha<b.fecha)?1:-1;}).map(function(g){ return '<tr><td>'+fFecha(g.fecha)+'</td><td>'+escH(g.con||"")+'</td><td>'+escH(g.tipo||"")+'</td><td class="r">'+clp(g.monto||0)+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin gastos variables este mes (se cargan desde la pestaña Gastos/Costos)</div>';
-    document.getElementById("ger-content").innerHTML=kpis+desg+'<div class="chart" style="margin-bottom:16px"><h3>Gastos fijos <span class="tag">se repiten cada mes</span></h3>'+gfHTML+gfForm+'</div>'+'<div class="chart"><h3>Gastos variables del mes <span class="tag">de la pestaña Gastos</span></h3>'+gvHTML+'</div>';
-    if(mesEl) mesEl.querySelectorAll("button").forEach(function(b){ b.onclick=function(){ _gerMes=b.dataset.m; renderGerencia(); }; });
+    document.getElementById("ger-content").innerHTML=kpis+desg+
+      '<div class="chart" style="margin-bottom:16px"><h3>Personal spot — por asistencia <span class="tag">horas × valor/hora</span></h3>'+persHTML+'</div>'+
+      '<div class="chart" style="margin-bottom:16px"><h3>Gastos fijos <span class="tag">se repiten cada mes</span></h3>'+gfHTML+gfForm+'</div>'+
+      '<div class="chart"><h3>Gastos variables del mes <span class="tag">de la pestaña Gastos</span></h3>'+gvHTML+'</div>';
     var seed=document.getElementById("gf-seed"); if(seed) seed.onclick=importarGfBase;
+    document.querySelectorAll("#ger-content .gvh").forEach(function(inp){ inp.addEventListener("change",function(){ var v=parseFloat(inp.value)||0; VH[inp.dataset.t]=v; upsertVH(inp.dataset.t,v); renderGerencia(); }); });
     var f=document.getElementById("gf-form"); if(f) f.onsubmit=function(ev){ ev.preventDefault(); var row={concepto:f.concepto.value.trim(),monto:parseInt(f.monto.value,10)||0,dia:parseInt(f.dia.value,10)||null,activo:true,orden:_gfijos.length}; if(!row.concepto)return; var sb=sbc(); if(!sb)return; sb.from("gastos_fijos").insert(row).select().single().then(function(r){ if(r.error){toast("⚠ No se pudo (¿corriste el SQL 24?)");return;} _gfijos.push(r.data); f.reset(); renderGerencia(); toast("✓ Gasto fijo agregado"); }); };
     var box=document.getElementById("ger-content");
     box.querySelectorAll(".gf-del").forEach(function(b){ b.onclick=function(){ var x=_gfijos.filter(function(y){return String(y.id)===String(b.dataset.id);})[0]; if(x&&confirm("¿Eliminar «"+x.concepto+"»?")){ var sb=sbc(); if(sb)sb.from("gastos_fijos").delete().eq("id",x.id).then(function(){}); _gfijos=_gfijos.filter(function(y){return y.id!==x.id;}); renderGerencia(); } }; });
