@@ -294,6 +294,11 @@
   .dup-names{font-size:13px;color:var(--ink-2);}
   .dup-motivo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--warn);background:var(--surface);border-radius:99px;padding:2px 7px;margin-left:4px;}
   .dup-unir{flex:none;border:1px solid var(--warn);background:var(--warn);color:#fff;border-radius:8px;padding:5px 13px;font:700 12px/1 var(--sans);cursor:pointer;}
+  .ketapas{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 2px;}
+  .ket{font:700 10px/1 var(--sans);padding:4px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;}
+  .ket-espera{background:var(--warn-soft);color:var(--warn);}
+  .ket-proc{background:var(--info-soft);color:var(--info);}
+  .ket-entr{background:var(--ok-soft);color:var(--ok);}
   .kprio-row{display:flex;align-items:center;gap:8px;margin:7px 0 2px;}
   .kprio{flex:none;font:600 11px/1 var(--sans);padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink);cursor:pointer;}
   .kprog{flex:1;display:flex;align-items:center;gap:6px;font:700 10px/1 var(--sans);color:var(--ink-muted);white-space:nowrap;}
@@ -1243,10 +1248,10 @@
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
   function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
-    if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; }
+    if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; o.f_entrega=e.fEntrega||null; o.h_entrega=e.hEntrega||null; }
     return o; }
   var _vehExtra=true, _vehExtraWarned=false; // columnas cotizar_despues / trabajos (SQL 18_trabajos_cotizar). Si faltan, se desactivan solas.
-  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|prioridad|schema cache|PGRST204/i.test(m); }
+  function _isColErr(err){ var m=((err&&(err.message||err.details||err.hint))||'')+''; return /column|trabajos|cotizar_despues|prioridad|entrega|schema cache|PGRST204/i.test(m); }
   function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
   // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
   function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
@@ -1254,7 +1259,7 @@
   var SVC_POR_COTIZAR="Pendiente de cotización";
   var AUTOMOTORAS_COTIZAR=["guillermo morales"];
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||"") }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||"") }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
   function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
@@ -2168,6 +2173,14 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(h>0) return h+" h"+(m?" "+m+" min":"");
     return m+" min";
   }
+  function durTexto(f1,h1,f2,h2){ var a=_fdt(f1,h1), b=_fdt(f2,h2); if(!a||!b)return null; var min=Math.round((b-a)/60000); if(min<0)return null; var d=Math.floor(min/1440), h=Math.floor((min%1440)/60), m=min%60; if(d>0)return d+"d"+(h?" "+h+"h":""); if(h>0)return h+"h"+(m?" "+m+"m":""); return m+"m"; }
+  function etapasHTML(e){
+    var e1=durTexto(e.fIngreso,e.hIngreso,e.fInicio,e.hInicio), e2=durTexto(e.fInicio,e.hInicio,e.fSalida,e.hSalida), e3=durTexto(e.fSalida,e.hSalida,e.fEntrega,e.hEntrega), c='';
+    if(e1)c+='<span class="ket ket-espera" title="En espera → En proceso">⏳ '+e1+'</span>';
+    if(e2)c+='<span class="ket ket-proc" title="En proceso → Terminado">🔧 '+e2+'</span>';
+    if(e3)c+='<span class="ket ket-entr" title="Terminado → Entregado">📦 '+e3+'</span>';
+    return c?'<div class="ketapas">'+c+'</div>':'';
+  }
   var _kedit={}; // tarjetas de Seguimiento con edición completa abierta (sobrevive re-render)
   // ---- resumen del taller: prioridad + % de ejecución ----
   var PRIOS_SEG=[["URGENTE","🔴","URGENTE"],["PRIORIDAD","🟠","PRIORIDAD"],["NORMAL","🟢","NORMAL"],["PROGRAMADO","⚪","PROGRAMADO"]];
@@ -2273,6 +2286,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           vtrab+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
           (dur?'<div class="kdur"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Demoró '+dur+'</div>':'')+
+          (ci>=3?etapasHTML(e):'')+
           '<button type="button" class="kmedia-btn" data-id="'+e.id+'">Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
           vdatos+
           tedit+
@@ -2353,6 +2367,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(e.estado==="EN ESPERA" && dir>0 && !e.hIngreso){ e.fIngreso=todayISO(); e.hIngreso=nowTime(); }
     if(e.estado==="EN PROCESO" && !e.hInicio){ e.fInicio=todayISO(); e.hInicio=nowTime(); }
     if(e.estado==="TERMINADO" && !e.hSalida){ e.fSalida=todayISO(); e.hSalida=nowTime(); }
+    if(e.estado==="ENTREGADO" && !e.hEntrega){ e.fEntrega=todayISO(); e.hEntrega=nowTime(); }
     persistVeh(e); renderBoard(); updateCounts();
     emitirNotif('🔧 '+e.estado, (e.marca+' '+(e.modelo||'')).trim()+(e.patente?(' ('+e.patente+')'):'')+' → '+e.estado, 'ALL','seguimiento');
     toast(e.marca+" "+(e.modelo||"")+" → "+e.estado);
