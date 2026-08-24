@@ -3131,7 +3131,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     for(var i=0;i<its.length;i++){ var s=(its[i].servicios||[]); if(s.length) return {svc:s[s.length-1], veh:(its[i].marca+" "+(its[i].modelo||"")).trim()}; }
     return null;
   }
-  function nombreSaludo(c){ var i=clientesInfo[c.clave]||{}; var base=(i.tipo==='EMPRESA')?((i.representante||'').trim()):((c.nombre||'').trim()); return (base.split(/\s+/)[0]||''); }
+  function nombreSaludo(c){ var i=clientesInfo[c.clave]||{}; var base=(i.tipo==='EMPRESA')?((i.representante||'').trim()||cliNombre(c)):((c.nombre||'').trim()); return (base.split(/\s+/)[0]||''); }
   function msgReactivacion(c){
     var nom=nombreSaludo(c);
     var dias=diasDesde(c.ultima);
@@ -3187,7 +3187,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var dias=diasDesde(c.ultima);
       var esEmp=(cliTipo(c.clave)==='EMPRESA'); var ico=esEmp?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> ':'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> ';
       var i=clientesInfo[c.clave]||{};
-      var rep=esEmp ? ((i.representante||'').trim() || (c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '')) : '';
+      var rep=esEmp ? (i.representante||'').trim() : '';
       return '<div class="pick-item'+(state.clienteSel===c.clave?' sel':'')+'" data-k="'+c.clave+'"><div class="p1">'+ico+cliNombre(c)+'</div>'+(rep?'<div class="p2" style="opacity:.72"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> '+escH(rep)+'</div>':'')+'<div class="p2">'+chipDiasCorto(dias)+' <span style="opacity:.55">'+clp(c.total)+'</span></div></div>';
     }).join("");
     cont.querySelectorAll(".pick-item").forEach(function(it){ it.addEventListener("click",function(){ state.clienteSel=it.dataset.k; renderClientes(); }); });
@@ -3208,7 +3208,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }).join("");
     var info=clientesInfo[c.clave]||{};
     var esEmp=(info.tipo==='EMPRESA');
-    var rep=(info.representante||'').trim() || (esEmp && c.nombre && c.nombre!==cliNombre(c) ? c.nombre : '');
+    var rep=esEmp?(info.representante||'').trim():'';
     var tipoBadge=esEmp?'<span class="chip" style="background:#0d3b66;color:#fff"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> Empresa</span>':'<span class="chip" style="background:#e8eef5;color:#2a4"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Natural</span>';
     wrap.innerHTML='<div class="ficha">'+
       '<div class="fh"><div><h2>'+(esEmp?'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6h4a1 1 0 0 1 1 1v10H4zm3-3v2h2v-2H7zm0-4v2h2v-2H7zm0-4v2h2V10H7zm4 8v2h2v-2h-2zm0-4v2h2v-2h-2zm0-4v2h2V10h-2z"/></svg> ':'<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> ')+cliNombre(c)+'</h2>'+(esEmp&&rep?'<div class="fc"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="vertical-align:-2px;opacity:.7"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg> Rep.: '+rep+'</div>':'')+(c.contacto?'<div class="fc">📞 '+c.contacto+'</div>':'')+' '+tipoBadge+'</div>'+
