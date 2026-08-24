@@ -3078,7 +3078,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   function av(s){ return (s==null?'':(''+s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
   function cliTipo(clave){ var i=clientesInfo[clave]||{}; return (i.tipo==='EMPRESA')?'EMPRESA':'NATURAL'; }
-  function cliNombre(c){ var i=clientesInfo[c.clave]||{}; if(cliTipo(c.clave)==='EMPRESA' && (i.razon_social||"").trim()) return i.razon_social.trim(); return c.nombre||"(sin nombre)"; }
+  function cliNombre(c){ var i=clientesInfo[c.clave]||{}; if(cliTipo(c.clave)==='EMPRESA'){ if((i.razon_social||"").trim()) return i.razon_social.trim(); if((i.representante||"").trim()) return i.representante.trim(); } return c.nombre||"(sin nombre)"; }
   // ---- fusionar clientes duplicados ----
   function otherClientsOptions(exc){ return agruparClientes().filter(function(x){return x.clave!==exc;}).map(function(x){ return '<option value="'+av(x.clave)+'">'+av(cliNombre(x))+(x.contacto?(' · '+x.contacto):'')+'</option>'; }).join(''); }
   function fusionarCliente(cA, cB){ if(!cA||!cB||cA===cB)return;
