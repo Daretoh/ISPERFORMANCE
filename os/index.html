@@ -278,6 +278,7 @@
   .kcard.prio-PRIORIDAD{border-left:5px solid var(--warn);}
   .kcard.prio-PROGRAMADO{border-left:5px solid var(--line-strong);}
   .kpc{display:inline-block;font:800 8.5px/1 var(--mono);letter-spacing:.02em;color:#fff;background:#8b3ff0;border-radius:4px;padding:2px 4px;vertical-align:middle;margin-left:5px;}
+  .kpc.ec-cot,.ev-pc.ec-cot{background:#2f63d6;} .kpc.ec-pago,.ev-pc.ec-pago{background:#1e9e6a;}
   .kv-cli{font-size:12px;font-weight:600;color:var(--ink-2);margin-top:2px;}
   .kv-cli.cli-pc{display:inline-block;background:#efe3ff;color:#7a2fd0;border:1px solid #d9c2f7;border-radius:6px;padding:3px 9px;font-weight:700;font-size:11.5px;margin-top:4px;}
   .cob-adj-title{font:800 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 8px;}
@@ -1308,6 +1309,9 @@
   function _disableVehExtra(){ _vehExtra=false; if(!_vehExtraWarned){ _vehExtraWarned=true; toast("⚠ Los trabajos no se guardarán: falta correr el SQL 22_trabajos_cotizar en Supabase"); } }
   // "Por cotizar" se deduce SOLO del servicio (ej. "Pendiente de cotización"), no de una marca aparte.
   function esPorCotizar(e){ return (e.servicios||[]).some(function(s){ return /cotiz/i.test(s||""); }); }
+  function cotDeVeh(id){ return (_cotiz||[]).some(function(c){ return c.vehiculo_id && String(c.vehiculo_id)===String(id); }); }
+  // Estado del flujo por-cotizar: P.C (por cotizar) → COTIZADO (cotización vinculada) → PAGADO (cobrado)
+  function estadoCot(e){ if(!esPorCotizar(e) && !cotDeVeh(e.id)) return null; if(e.cobrado) return {t:"PAGADO",c:"ec-pago"}; if(cotDeVeh(e.id)) return {t:"COTIZADO",c:"ec-cot"}; return {t:"P.C",c:"ec-pc"}; }
   // Automotoras que SIEMPRE van "por cotizar": al elegirlas en agendamiento se autollena el servicio.
   var SVC_POR_COTIZAR="Pendiente de cotización";
   var AUTOMOTORAS_COTIZAR=["guillermo morales"];
@@ -1988,7 +1992,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var mine=(data||[]).filter(function(v){ var vn=(v.cliente||"").trim().toLowerCase(), vt=(v.contacto||"").trim(); return (nom && vn===nom) || (tel && vt && vt===tel); });
     var conCot={}; (_cotiz||[]).forEach(function(c){ if(c.vehiculo_id) conCot[String(c.vehiculo_id)]=1; });
     mine.sort(function(a,b){ var ca=conCot[String(a.id)]?1:0, cb=conCot[String(b.id)]?1:0; if(ca!==cb)return ca-cb; var fa=a.fCoord||a.fIngreso||"", fb=b.fCoord||b.fIngreso||""; return fa<fb?1:-1; });
-    var top=mine.slice(0,5);
+    var top=mine.slice(0,50);
     if(!top.length){ wrap.style.display="none"; vs.innerHTML='<option value="">— Sin vincular —</option>'; return; }
     var cur=vs.value;
     vs.innerHTML='<option value="">— Sin vincular —</option>'+top.map(function(v){ var lbl=((v.marca||"")+" "+(v.modelo||"")).trim()+(v.patente?(" · "+v.patente):"")+(conCot[String(v.id)]?" · ya cotizado":""); return '<option value="'+v.id+'">'+escH(lbl)+'</option>'; }).join("");
@@ -2461,7 +2465,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var vtrab=vtrabCompact+vtrabFull;
         var vcotiz='';
         var porCotiz=esPorCotizar(e);
-        var pcTag=porCotiz?'<span class="kpc">P.C</span>':'';
+        var ecE=estadoCot(e); var pcTag=ecE?'<span class="kpc '+ecE.c+'">'+ecE.t+'</span>':'';
         var cliLine=e.cliente?'<div class="kv-cli'+(porCotiz?' cli-pc':'')+'">'+escH(e.cliente)+'</div>':'';
         var prio=prioDeVeh(e);
         var prioSel='<div class="kprio-row"><select class="kprio" data-id="'+e.id+'">'+PRIOS_SEG.map(function(p){return '<option value="'+p[0]+'"'+(prio===p[0]?' selected':'')+'>'+p[1]+' '+p[2]+'</option>';}).join("")+'</select></div>';
@@ -3314,11 +3318,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(c.iso&&byDay[c.iso]){ var list=byDay[c.iso].sort(function(a,b){return (a.hCoord||"")<(b.hCoord||"")?-1:1;});
         evs=list.slice(0,4).map(function(e){
           if(e._tarea){ return '<span class="ev tarea-ev" data-tipo="tarea" data-id="'+e.id+'">'+(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'')+'📌 <span class="evs">'+e.titulo+'</span></span>'; }
-          var esCot=esPorCotizar(e);
+          var esCot=esPorCotizar(e), ecE=estadoCot(e);
           var veh=(e.marca||"")+(e.modelo?(" "+e.modelo):"")+(e.patente?(" · "+e.patente):"");
           var titulo=veh+" — "+((e.servicios||[]).join(" + ")||"sin servicio")+(e.cliente?(" — "+e.cliente):"");
           var hora=(e.hCoord?'<span class="evh">'+e.hCoord+'</span> ':'');
-          var cuerpo=esCot ? ('<span class="ev-pc" title="Por cotizar">P.C</span>'+hora+'<span class="evs">'+escH(veh)+'</span>')
+          var cuerpo=ecE ? ('<span class="ev-pc '+ecE.c+'" title="'+ecE.t+'">'+ecE.t+'</span>'+hora+'<span class="evs">'+escH(veh)+'</span>')
             : (hora+'<span class="evs">'+escH((e.servicios||[]).map(svcCorto).join(" + ")||"—")+'</span> · '+escH(veh));
           return '<span class="ev '+estClass(e.estado)+(esCot?' cotizar':'')+'" data-tipo="veh" data-id="'+e.id+'" title="'+av(titulo)+'">'+cuerpo+'</span>';
         }).join("");
