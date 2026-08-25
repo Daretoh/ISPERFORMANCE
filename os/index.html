@@ -408,6 +408,7 @@
   .pfilter button{font:650 12.5px/1 var(--sans);border:none;background:transparent;color:var(--ink-muted);padding:8px 13px;border-radius:999px;cursor:pointer;}
   .pfilter button.on{background:var(--accent);color:#fff;}
   .pfilter button:hover:not(.on){color:var(--ink);background:var(--surface);}
+  .stk-sep{width:1px;align-self:stretch;margin:3px 2px;background:var(--line);}
   input.vh{width:90px;font:600 12.5px/1 var(--mono);padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--ground);color:var(--ink);text-align:right;}
   input.vh:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .kcard .kbtns{display:flex;gap:6px;margin-top:9px;}
@@ -3013,7 +3014,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var f=state.stockFiltro, q=(state.stockBuscar||"").trim().toLowerCase();
     document.querySelectorAll("#stock-cat button").forEach(function(b){ b.classList.toggle("on",b.dataset.c===state.stockCat); });
     var TIPOS_CAT=(state.stockCat==="INSUMO")?[["QUIMICO","Químico"],["INSUMO","Insumo"],["HERRAMIENTA","Herramienta"],["REPUESTO","Repuesto"]]:[["EQUIPAMIENTO","Equipamiento"],["DETAILING","Detailing"]];
-    var filtroEl=document.getElementById("stock-filtro"); if(filtroEl) filtroEl.innerHTML='<button data-f="TODOS"'+(f==="TODOS"?' class="on"':'')+'>Todos</button>'+TIPOS_CAT.map(function(t){return '<button data-f="'+t[0]+'"'+(f===t[0]?' class="on"':'')+'>'+t[1]+'</button>';}).join('');
+    var d=state.stockDisp||"TODOS";
+    var dispBtns='<span class="stk-sep"></span>'+[["TODOS","Todo el stock"],["CON","Con stock"],["SIN","Sin stock"],["BAJO","Reponer"]].map(function(t){return '<button data-disp="'+t[0]+'"'+(d===t[0]?' class="on"':'')+'>'+t[1]+'</button>';}).join('');
+    var filtroEl=document.getElementById("stock-filtro"); if(filtroEl) filtroEl.innerHTML='<button data-f="TODOS"'+(f==="TODOS"?' class="on"':'')+'>Todos</button>'+TIPOS_CAT.map(function(t){return '<button data-f="'+t[0]+'"'+(f===t[0]?' class="on"':'')+'>'+t[1]+'</button>';}).join('')+dispBtns;
     var sfTipo=document.querySelector('#stock-form select[name="tipo"]'); if(sfTipo){ var curT=sfTipo.value; sfTipo.innerHTML=TIPOS_CAT.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join(''); if(TIPOS_CAT.some(function(t){return t[0]===curT;})) sfTipo.value=curT; }
     var esIns=(state.stockCat==="INSUMO");
     ["lbl-comp","lbl-med"].forEach(function(id){ var e=document.getElementById(id); if(e)e.style.display=esIns?"none":""; });
@@ -3023,6 +3026,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var lista=productos.filter(function(p){
       if((p.categoria||"VENTA")!==state.stockCat) return false;
       if(f!=="TODOS" && (p.tipo||"EQUIPAMIENTO")!==f) return false;
+      if(d!=="TODOS"){ var _s=stockDe(p), _mn=(+p.stock_min||0);
+        if(d==="CON" && !(_s>0)) return false;
+        if(d==="SIN" && !(_s<=0)) return false;
+        if(d==="BAJO" && !((_s<=0)||(_mn&&_s<=_mn))) return false; }
       if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")).toLowerCase().indexOf(q)>=0;
       return true;
     }).sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
@@ -3073,7 +3080,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   (function(){
     document.querySelectorAll("#stock-cat button").forEach(function(b){ b.addEventListener("click",function(){ state.stockCat=b.dataset.c; state.stockFiltro="TODOS"; renderStock(); }); });
-    var filtroEl=document.getElementById("stock-filtro"); if(filtroEl) filtroEl.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b){ state.stockFiltro=b.dataset.f; renderStock(); } });
+    var filtroEl=document.getElementById("stock-filtro"); if(filtroEl) filtroEl.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return; if(b.dataset.disp!=null){ state.stockDisp=b.dataset.disp; } else { state.stockFiltro=b.dataset.f; } renderStock(); });
     var movF=document.getElementById("mov-filtro"); if(movF) movF.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b){ _movFiltro=b.dataset.m; renderMovimientos(); } });
     var sBuscar=document.getElementById("stock-buscar"); if(sBuscar) sBuscar.addEventListener("input",function(){ state.stockBuscar=sBuscar.value; renderStock(); });
     var sForm=document.getElementById("stock-form");
