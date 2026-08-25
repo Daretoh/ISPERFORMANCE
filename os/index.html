@@ -2942,25 +2942,30 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
 
   // ---------- stock / inventario ----------
   function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
-  // ---- SKU: 4 dígitos [categoría][subtipo][correlativo] ----
-  //  3xxx = Insumos  ·  4xxx = En venta / Equipamiento
-  //  Insumos:  31xx Químico · 32xx Insumo · 33xx Máquina/Herramienta · 34xx Repuesto · 39xx Otro
-  //  En venta: 41xx Equipamiento · 42xx Detailing · 49xx Otro
-  function skuBase(cat, tipo){ tipo=(tipo||"").toUpperCase();
+  // ═══════════════ ESQUEMA SKU (EDITA AQUÍ) ═══════════════
+  //  Formato: <prefijo><correlativo>   ej. prefijo "31" + 5 dígitos = 3100001
+  //  · SKU_DIGITOS = cuántos dígitos tiene el correlativo (5 → 31xxxxx)
+  //  · skuPrefijo  = el prefijo (2 dígitos) según categoría y subtipo
+  //  Insumos (3x): 31 Químico · 32 Insumo · 33 Máquina/Herramienta · 34 Repuesto · 39 Otro
+  //  En venta (4x): 41 Equipamiento · 42 Detailing · 49 Otro
+  var SKU_DIGITOS=5;
+  function skuPrefijo(cat, tipo){ tipo=(tipo||"").toUpperCase();
     if((cat||"VENTA")==="INSUMO"){
-      if(tipo==="QUIMICO")     return 3100;
-      if(tipo==="INSUMO")      return 3200;
-      if(tipo==="HERRAMIENTA") return 3300;
-      if(tipo==="REPUESTO")    return 3400;
-      return 3900;
+      if(tipo==="QUIMICO")     return "31";
+      if(tipo==="INSUMO")      return "32";
+      if(tipo==="HERRAMIENTA") return "33";
+      if(tipo==="REPUESTO")    return "34";
+      return "39";
     }
-    if(tipo==="EQUIPAMIENTO") return 4100;
-    if(tipo==="DETAILING")    return 4200;
-    return 4900;
+    if(tipo==="EQUIPAMIENTO") return "41";
+    if(tipo==="DETAILING")    return "42";
+    return "49";
   }
-  function nextSku(cat, tipo){ var base=skuBase(cat,tipo), mx=base;
-    productos.forEach(function(p){ var n=parseInt(p.sku,10); if(isFinite(n) && n>=base && n<base+100 && n>mx) mx=n; });
-    return String(mx+1);
+  // ════════════════════════════════════════════════════════
+  function _skuPad(n){ n=""+n; while(n.length<SKU_DIGITOS) n="0"+n; return n; }
+  function nextSku(cat, tipo){ var pref=skuPrefijo(cat,tipo), mx=0;
+    productos.forEach(function(p){ var s=(''+(p.sku||"")); if(s.indexOf(pref)===0 && s.length===pref.length+SKU_DIGITOS){ var n=parseInt(s.slice(pref.length),10); if(isFinite(n) && n>mx) mx=n; } });
+    return pref+_skuPad(mx+1);
   }
   function generarSkusFaltantes(){
     var sinSku=productos.filter(function(p){ return !((''+(p.sku||"")).trim()); });
@@ -3135,8 +3140,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var nuevos=QUIMICOS.filter(function(x){ return !yaN[(x.prod||"").trim().toUpperCase()]; });
     if(!nuevos.length){ toast("Todos los químicos ya están en Insumos ✓"); return; }
     if(!confirm("Se agregarán "+nuevos.length+" químicos a Insumos (en 0, para que hagas el conteo físico). ¿Continuar?")) return;
-    var _skuN=parseInt(nextSku("INSUMO","QUIMICO"),10)-1; // correlativo base; se incrementa por fila
-    var filas=nuevos.map(function(x){ _skuN++; return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"L", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0, sku:String(_skuN) }; });
+    var _skuPref=skuPrefijo("INSUMO","QUIMICO");
+    var _skuN=parseInt(nextSku("INSUMO","QUIMICO").slice(_skuPref.length),10)-1; // correlativo base; se incrementa por fila
+    var filas=nuevos.map(function(x){ _skuN++; return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"L", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0, sku:_skuPref+_skuPad(_skuN) }; });
     impBtnBusy(true);
     sb.from("productos").insert(filas).select().then(function(r){
       impBtnBusy(false);

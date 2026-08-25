@@ -1,10 +1,11 @@
 -- ============================================================
 -- IS Performance OS - Código SKU por producto (Stock)
--- Esquema de 4 dígitos: [categoría][subtipo][correlativo]
---   3xxx = Insumos     · 4xxx = En venta / Equipamiento
---   Insumos:  31xx Químico · 32xx Insumo · 33xx Máquina/Herramienta
---             34xx Repuesto · 39xx Otro
---   En venta: 41xx Equipamiento · 42xx Detailing · 49xx Otro
+-- Esquema: <prefijo 2 díg.><correlativo>  ej. 3100001  (31 + 5 dígitos)
+--   3x = Insumos     · 4x = En venta / Equipamiento
+--   Insumos:  31 Químico · 32 Insumo · 33 Máquina/Herramienta
+--             34 Repuesto · 39 Otro
+--   En venta: 41 Equipamiento · 42 Detailing · 49 Otro
+--   (el formato se edita en la app: SKU_DIGITOS y skuPrefijo en index.html)
 -- Los códigos se generan desde la app (botón "Generar SKU" en Stock, y
 -- automáticamente al agregar un producto nuevo).
 -- Pegar en Supabase > SQL Editor > Run. Seguro de re-ejecutar.
