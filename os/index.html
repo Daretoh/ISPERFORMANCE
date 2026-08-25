@@ -2967,12 +2967,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     productos.forEach(function(p){ var s=(''+(p.sku||"")); if(s.indexOf(pref)===0 && s.length===pref.length+SKU_DIGITOS){ var n=parseInt(s.slice(pref.length),10); if(isFinite(n) && n>mx) mx=n; } });
     return pref+_skuPad(mx+1);
   }
+  function skuValido(p){ var s=(''+(p.sku||"")).trim(); if(!s) return false; var pref=skuPrefijo(p.categoria||"VENTA", p.tipo); return s.indexOf(pref)===0 && s.length===pref.length+SKU_DIGITOS && /^[0-9]+$/.test(s); }
   function generarSkusFaltantes(){
-    var sinSku=productos.filter(function(p){ return !((''+(p.sku||"")).trim()); });
-    if(!sinSku.length){ toast("Todos los productos ya tienen SKU ✓"); return; }
-    if(!confirm("Se generará un código SKU para "+sinSku.length+" producto(s) sin código. ¿Continuar?")) return;
-    sinSku.sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
-    var n=0; sinSku.forEach(function(p){ p.sku=nextSku(p.categoria||"VENTA", p.tipo); saveProducto(p); n++; });
+    var pend=productos.filter(function(p){ return !skuValido(p); });
+    if(!pend.length){ toast("Todos los productos ya tienen SKU con el formato actual ✓"); return; }
+    var conViejo=pend.filter(function(p){ return (''+(p.sku||"")).trim(); }).length;
+    var msg="Se asignará código SKU a "+pend.length+" producto(s)";
+    if(conViejo) msg+=", de los cuales "+conViejo+" tienen un código con formato antiguo que se reemplazará";
+    if(!confirm(msg+". ¿Continuar?")) return;
+    pend.forEach(function(p){ p.sku=""; }); // limpiar viejos para que no cuenten en el correlativo
+    pend.sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
+    var n=0; pend.forEach(function(p){ p.sku=nextSku(p.categoria||"VENTA", p.tipo); saveProducto(p); n++; });
     renderStock(); toast("✓ "+n+" código(s) SKU generados");
   }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
