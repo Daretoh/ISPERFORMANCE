@@ -439,6 +439,13 @@
   .cbtab.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));color:var(--accent-ink);}
   .cbtab-n{background:var(--surface);border-radius:999px;padding:0 7px;font-size:11px;min-width:20px;text-align:center;}
   .cbtab.on .cbtab-n{background:var(--accent);color:#fff;}
+  .gasto-rows.full{max-height:360px;overflow-y:auto;padding-right:2px;}
+  .gasto-resumen{display:flex;gap:8px;margin:0 0 10px;flex-wrap:wrap;}
+  .gasto-resumen>div{flex:1;min-width:96px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;}
+  .gasto-resumen>div span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);font-weight:700;}
+  .gasto-resumen>div b{font-size:15px;font-variant-numeric:tabular-nums;}
+  .gasto-resumen>div.tot{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));}
+  .gasto-resumen>div.tot b{color:var(--accent-ink);}
   .pick-item{padding:11px 12px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;margin-bottom:5px;}
   .pick-item:hover{background:var(--surface-2);}
   .pick-item.sel{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));}
@@ -2672,14 +2679,26 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,fecha:gastoForm.gFecha.value};
     addGastoDB(o).then(function(){ gastoForm.gCon.value=""; gastoForm.gMonto.value=""; renderCostos(); toast("✓ Gasto agregado"); });
   });
+  function gastoRowHTML(g){
+    var nm=(g.media&&g.media.length)?' '+g.media.length:'';
+    return '<div class="lrow"><span><b>'+escH(g.con||"")+'</b> · '+escH(g.tipo||"")+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="gadj" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Respaldo'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
+  }
   function renderCostos(){
     document.getElementById("reloj-list").innerHTML=(reloj.slice(0,15).map(function(r){
       return '<div class="lrow"><span><b>'+r.trab+'</b> · '+fFecha(r.fecha)+' · '+r.hIn+'–'+r.hOut+(+r.desc?' (−'+r.desc+'m)':'')+'</span><span class="num">'+horasReloj(r).toFixed(1)+' h <button class="ldel" data-s="reloj" data-id="'+r.id+'" aria-label="Borrar">×</button></span></div>';
     }).join(""))||'<div class="col-empty">Sin registros aún</div>';
-    document.getElementById("gasto-list").innerHTML=(gastos.slice(0,15).map(function(g){
-      var nm=(g.media&&g.media.length)?' '+g.media.length:'';
-      return '<div class="lrow"><span><b>'+g.con+'</b> · '+g.tipo+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="gadj" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Respaldo'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
-    }).join(""))||'<div class="col-empty">Sin gastos aún</div>';
+    // ---- gastos con pestañas Recientes | Todos ----
+    var gtab=state.costGTab||"recientes";
+    var totFijo=0,totVar=0; gastos.forEach(function(g){ if((g.tipo||"")==="FIJO") totFijo+=(+g.monto||0); else totVar+=(+g.monto||0); });
+    var tabsHTML='<div class="cobro-tabs" style="padding:0 0 8px;top:0">'+
+      '<button type="button" class="cbtab'+(gtab==="recientes"?" on":"")+'" data-gtab="recientes">Recientes</button>'+
+      '<button type="button" class="cbtab'+(gtab==="todos"?" on":"")+'" data-gtab="todos">Todos <span class="cbtab-n">'+gastos.length+'</span></button>'+
+    '</div>';
+    var listaG=(gtab==="todos")?gastos.slice():gastos.slice(0,15);
+    var rowsHTML=listaG.map(gastoRowHTML).join("")||'<div class="col-empty">Sin gastos aún</div>';
+    var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>':'';
+    document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+'<div class="gasto-rows'+(gtab==="todos"?" full":"")+'">'+rowsHTML+'</div>';
+    document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ state.costGTab=b.dataset.gtab; renderCostos(); }); });
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
       else { gastos=gastos.filter(function(x){return x.id!==b.dataset.id;}); delGastoDB(b.dataset.id); }
