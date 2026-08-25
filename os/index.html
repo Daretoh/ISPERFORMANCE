@@ -3047,7 +3047,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var tags=[]; if(p.familia)tags.push(p.familia); var pc=((p.presentacion||"")+" "+(p.contenido||"")).trim(); if(pc)tags.push(pc); if(p.ubicacion)tags.push("📍 "+p.ubicacion);
         var etq=tags.length?'<div style="font-size:10.5px;color:var(--ink-muted);margin-top:3px">'+escH(tags.join(" · "))+'</div>':'';
         extra=etq+'<div style="font-size:10.5px;color:var(--ink-muted);margin-top:2px">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'sin consumo aún')+(dias!=null&&isFinite(dias)?' · ~'+dias+' días':'')+(ult?' · ingreso '+fFecha(ult):'')+' · <button class="stk-min" data-id="'+p.id+'" style="border:none;background:none;color:var(--accent-ink);cursor:pointer;font:inherit;padding:0">mín '+(mn||'—')+' ✎</button></div>'; }
-      var solBtn=(esInsumo&&mn&&s<=mn)?' <button class="stk-btn solped" data-id="'+p.id+'" style="color:var(--crit);border-color:var(--crit)">Solicitar</button>':'';
+      var bajoStk=(s<=0||(mn&&s<=mn));
+      var solBtn=' <button class="stk-btn solped" data-id="'+p.id+'"'+(bajoStk?' style="color:var(--crit);border-color:var(--crit)"':'')+' title="Crear solicitud (SolPed) de este producto">Solicitar</button>';
       var col34=esInsumo
         ? '<td style="font-weight:600">'+(p.udm||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'—')+'</td>'
         : '<td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>';
@@ -3063,7 +3064,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
       else if(b.classList.contains("sal")){ abrirMov(p,"SALIDA"); }
-      else if(b.classList.contains("solped")){ var sb2=sbc(); if(sb2){ sb2.from("solicitudes").insert({numero:solProxNum(),item:p.producto,tipo:(p.categoria==="INSUMO"?"Insumo":"Producto"),cantidad:"",urgencia:"Normal",motivo:"Reposición (bajo el mínimo)",estado:"PENDIENTE",solicitante:(window.ISP_EMAIL||""),producto_id:p.id}).select().single().then(function(r){ if(!r.error){ _solped.unshift(r.data); updateCounts(); toast("✓ Solicitud creada: "+p.producto); } else { toast("⚠ Error"); } }); } }
+      else if(b.classList.contains("solped")){ var _s=stockDe(p), _mn=(+p.stock_min||0); var _mot=(_s<=0?"Reposición (sin stock)":((_mn&&_s<=_mn)?"Reposición (bajo el mínimo)":"Reposición")); var sb2=sbc(); if(sb2){ sb2.from("solicitudes").insert({numero:solProxNum(),item:p.producto,tipo:(p.categoria==="INSUMO"?"Insumo":"Producto"),cantidad:"",urgencia:(_s<=0?"Alta":"Normal"),motivo:_mot,estado:"PENDIENTE",solicitante:(window.ISP_EMAIL||""),producto_id:p.id}).select().single().then(function(r){ if(!r.error){ _solped.unshift(r.data); updateCounts(); toast("✓ Solicitud creada: "+p.producto); } else { toast("⚠ Error"); } }); } }
       else if(b.classList.contains("mov")){ p.categoria=((p.categoria||"VENTA")==="VENTA")?"INSUMO":"VENTA"; saveProducto(p); renderStock(); toast("Movido a "+(p.categoria==="INSUMO"?"Insumos":"En venta")); }
       else if(b.classList.contains("del")){ if(confirm("¿Eliminar "+p.producto+"?")){ productos=productos.filter(function(x){return x.id!==b.dataset.id;}); delProductoDB(b.dataset.id); renderStock(); toast("Eliminado"); } }
     }); });
