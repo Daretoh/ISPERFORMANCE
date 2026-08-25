@@ -409,6 +409,8 @@
   .pfilter button.on{background:var(--accent);color:#fff;}
   .pfilter button:hover:not(.on){color:var(--ink);background:var(--surface);}
   .stk-sep{width:1px;align-self:stretch;margin:3px 2px;background:var(--line);}
+  .sku-code{font:700 12px/1 var(--mono);letter-spacing:.05em;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:3px 7px;color:var(--ink-2);white-space:nowrap;}
+  .sku-code.none{color:var(--ink-faint);font-weight:400;background:none;border-style:dashed;}
   input.vh{width:90px;font:600 12.5px/1 var(--mono);padding:6px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--ground);color:var(--ink);text-align:right;}
   input.vh:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .kcard .kbtns{display:flex;gap:6px;margin-top:9px;}
@@ -943,6 +945,7 @@
         <div class="pfilter" id="stock-filtro"><button data-f="TODOS" class="on">Todos</button><button data-f="EQUIPAMIENTO">Equipamiento</button><button data-f="DETAILING">Detailing</button></div>
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
         <button id="stock-import-qui" class="btn" style="display:none;white-space:nowrap">＋ Importar de Químicos</button>
+        <button id="stock-gen-sku" class="btn" style="white-space:nowrap" title="Asigna un código SKU a los productos que aún no tienen">＃ Generar SKU</button>
       </div>
       <details class="stock-newwrap">
         <summary>＋ Agregar producto</summary>
@@ -2939,8 +2942,36 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
 
   // ---------- stock / inventario ----------
   function stockDe(p){ return (+p.entrada||0)-(+p.salida||0); }
+  // ---- SKU: 4 dígitos [categoría][subtipo][correlativo] ----
+  //  3xxx = Insumos  ·  4xxx = En venta / Equipamiento
+  //  Insumos:  31xx Químico · 32xx Insumo · 33xx Máquina/Herramienta · 34xx Repuesto · 39xx Otro
+  //  En venta: 41xx Equipamiento · 42xx Detailing · 49xx Otro
+  function skuBase(cat, tipo){ tipo=(tipo||"").toUpperCase();
+    if((cat||"VENTA")==="INSUMO"){
+      if(tipo==="QUIMICO")     return 3100;
+      if(tipo==="INSUMO")      return 3200;
+      if(tipo==="HERRAMIENTA") return 3300;
+      if(tipo==="REPUESTO")    return 3400;
+      return 3900;
+    }
+    if(tipo==="EQUIPAMIENTO") return 4100;
+    if(tipo==="DETAILING")    return 4200;
+    return 4900;
+  }
+  function nextSku(cat, tipo){ var base=skuBase(cat,tipo), mx=base;
+    productos.forEach(function(p){ var n=parseInt(p.sku,10); if(isFinite(n) && n>=base && n<base+100 && n>mx) mx=n; });
+    return String(mx+1);
+  }
+  function generarSkusFaltantes(){
+    var sinSku=productos.filter(function(p){ return !((''+(p.sku||"")).trim()); });
+    if(!sinSku.length){ toast("Todos los productos ya tienen SKU ✓"); return; }
+    if(!confirm("Se generará un código SKU para "+sinSku.length+" producto(s) sin código. ¿Continuar?")) return;
+    sinSku.sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
+    var n=0; sinSku.forEach(function(p){ p.sku=nextSku(p.categoria||"VENTA", p.tipo); saveProducto(p); n++; });
+    renderStock(); toast("✓ "+n+" código(s) SKU generados");
+  }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
-  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,familia:p.familia||null,presentacion:p.presentacion||null,contenido:p.contenido||null,ubicacion:p.ubicacion||null,stock_min:p.stock_min||0,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,familia:p.familia||null,presentacion:p.presentacion||null,contenido:p.contenido||null,ubicacion:p.ubicacion||null,stock_min:p.stock_min||0,sku:p.sku||null,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
   function delProductoDB(id){ var sb=sbc(); if(sb) sb.from('productos').delete().eq('id',id).then(function(){}); }
   function kstat(l,v,s){ return '<div class="kpi" style="cursor:default"><div class="kl">'+l+'</div><div class="kv">'+v+'</div><div class="ks">'+s+'</div></div>'; }
   var _movs=[], _movCtx=null;
@@ -3030,7 +3061,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         if(d==="CON" && !(_s>0)) return false;
         if(d==="SIN" && !(_s<=0)) return false;
         if(d==="BAJO" && !((_s<=0)||(_mn&&_s<=_mn))) return false; }
-      if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")).toLowerCase().indexOf(q)>=0;
+      if(q) return ((p.producto||"")+" "+(p.marca||"")+" "+(p.compatibilidad||"")+" "+(p.sku||"")).toLowerCase().indexOf(q)>=0;
       return true;
     }).sort(function(a,b){ return (a.producto||"")<(b.producto||"")?-1:1; });
     var enCat=productos.filter(function(p){return (p.categoria||"VENTA")===state.stockCat;});
@@ -3059,14 +3090,15 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var col34=esInsumo
         ? '<td style="font-weight:600">'+(p.udm||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+(rot>0?('~'+(Math.round(rot*10)/10)+'/mes'):'—')+'</td>'
         : '<td style="white-space:normal;font-size:11px;color:var(--ink-muted);max-width:230px">'+(p.compatibilidad||"—")+'</td><td>'+(p.medidas||"—")+'</td>';
-      return '<tr><td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
+      var skuTd='<td><span class="sku-code'+(p.sku?'':' none')+'">'+(p.sku?escH(p.sku):"—")+'</span></td>';
+      return '<tr>'+skuTd+'<td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
         '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
     var th34=esInsumo?'<th>Unidad</th><th>Rotación</th>':'<th>Compatibilidad</th><th>Medidas</th>';
-    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Marca / modelo</th>'+th34+'<th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="col-empty">'+vacio+'</td></tr>')+'</tbody></table></div>';
+    document.getElementById("stock-table").innerHTML='<div class="tablewrap"><table><thead><tr><th>SKU</th><th>Producto</th><th>Marca / modelo</th>'+th34+'<th class="r">Ent.</th><th class="r">Sal.</th><th class="r">Stock</th><th class="r">Acciones</th></tr></thead><tbody>'+(rows||'<tr><td colspan="9" class="col-empty">'+vacio+'</td></tr>')+'</tbody></table></div>';
     document.querySelectorAll("#stock-table .stk-btn").forEach(function(b){ b.addEventListener("click",function(){
       var p=productos.filter(function(x){return x.id===b.dataset.id;})[0]; if(!p)return;
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
@@ -3088,10 +3120,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var esIns=(state.stockCat==="INSUMO");
       var o={tipo:sForm.tipo.value,producto:sForm.producto.value.trim(),marca:sForm.marca.value.trim(),compatibilidad:sForm.compatibilidad.value.trim(),medidas:sForm.medidas.value.trim(),udm:(sForm.udm?sForm.udm.value.trim():""),entrada:parseInt(sForm.entrada.value)||0,salida:0,categoria:state.stockCat};
       if(esIns){ o.familia=(sForm.familia?sForm.familia.value.trim():""); o.presentacion=(sForm.presentacion?sForm.presentacion.value.trim():""); o.contenido=(sForm.contenido?sForm.contenido.value.trim():""); o.ubicacion=(sForm.ubicacion?sForm.ubicacion.value.trim():""); o.stock_min=parseInt(sForm.stock_min&&sForm.stock_min.value,10)||0; }
-      addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Agregado a "+(state.stockCat==="INSUMO"?"Insumos":"Productos en venta")); });
+      o.sku=nextSku(o.categoria, o.tipo);
+      addProductoDB(o).then(function(){ sForm.reset(); sForm.entrada.value=1; renderStock(); toast("✓ Agregado ("+o.sku+") a "+(state.stockCat==="INSUMO"?"Insumos":"Productos en venta")); });
     });
     var impBtn=document.getElementById("stock-import-qui");
     if(impBtn) impBtn.addEventListener("click",function(){ importarQuimicos(); });
+    var genBtn=document.getElementById("stock-gen-sku");
+    if(genBtn) genBtn.addEventListener("click",function(){ generarSkusFaltantes(); });
   })();
   function importarQuimicos(){
     var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
@@ -3100,7 +3135,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var nuevos=QUIMICOS.filter(function(x){ return !yaN[(x.prod||"").trim().toUpperCase()]; });
     if(!nuevos.length){ toast("Todos los químicos ya están en Insumos ✓"); return; }
     if(!confirm("Se agregarán "+nuevos.length+" químicos a Insumos (en 0, para que hagas el conteo físico). ¿Continuar?")) return;
-    var filas=nuevos.map(function(x){ return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"L", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0 }; });
+    var _skuN=parseInt(nextSku("INSUMO","QUIMICO"),10)-1; // correlativo base; se incrementa por fila
+    var filas=nuevos.map(function(x){ _skuN++; return { producto:(x.prod||"").trim(), marca:(x.marca&&x.marca!=="—"?x.marca.trim():""), tipo:"QUIMICO", categoria:"INSUMO", familia:(x.cat||""), presentacion:"", contenido:"", udm:"L", ubicacion:"", compatibilidad:(x.uso||""), medidas:"", entrada:0, salida:0, stock_min:0, sku:String(_skuN) }; });
     impBtnBusy(true);
     sb.from("productos").insert(filas).select().then(function(r){
       impBtnBusy(false);
