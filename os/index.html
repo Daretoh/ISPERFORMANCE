@@ -602,12 +602,12 @@
   .cot-row .cn{font:800 12px/1 var(--mono);color:var(--accent-ink);}
   .cot-row .acts button{background:none;border:none;cursor:pointer;font:700 12px var(--sans);margin-left:10px;} .cot-row .acts .pdf{color:var(--accent-ink);} .cot-row .acts .del{color:var(--crit);}
   /* Solicitudes (SolPed) */
-  .fact-lhead,.fact-line{display:grid;grid-template-columns:1fr 90px 120px 32px;gap:8px;align-items:center;}
+  .fact-lhead,.fact-line{display:grid;grid-template-columns:1fr 90px 32px;gap:8px;align-items:center;}
   .fact-lhead{font:700 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);margin-bottom:6px;padding:0 2px;}
   .fact-line{margin-bottom:8px;}
   .fact-line select,.fact-line input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);font:inherit;width:100%;}
   .fact-line .fl-del{border:1px solid var(--line);background:var(--surface-2);color:var(--crit);border-radius:var(--radius-sm);cursor:pointer;padding:0;height:36px;}
-  @media (max-width:620px){.fact-lhead{display:none;}.fact-line{grid-template-columns:1fr 1fr;}.fact-line .fl-prod{grid-column:1/-1;}}
+  @media (max-width:620px){.fact-lhead{display:none;}.fact-line{grid-template-columns:1fr 70px 32px;}}
   .sol-col{margin-bottom:18px;}
   .sol-col h4{font:800 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;}
   .sol-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-faint);border-radius:10px;padding:11px 15px;margin-bottom:9px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow);}
@@ -1247,12 +1247,15 @@
         <label class="f"><span class="lab">N° documento</span><input id="fact-num" placeholder="Ej: 12345"></label>
         <label class="f"><span class="lab">Fecha</span><input id="fact-fecha" type="date"></label>
       </div>
-      <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span>Costo línea $</span><span></span></div>
+      <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span></span></div>
       <div id="fact-lines"></div>
       <button class="btn" id="fact-addline" style="margin-top:8px">＋ Agregar material</button>
+      <div class="row c2" style="margin:14px 0 0">
+        <label class="f"><span class="lab">Monto de la factura $</span><input id="fact-monto" type="number" min="0" placeholder="Ej: 119000"></label>
+        <label class="f"><span class="lab">El monto es…</span><select id="fact-ivamode"><option value="total">Con IVA (total)</option><option value="neto">Sin IVA (neto)</option><option value="exento">Exento / sin IVA</option></select></label>
+      </div>
       <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between">
-        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="fact-iva" checked> Afecto a IVA (19%)</label>
+        <div style="font-size:13px">
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="fact-gasto" checked> Registrar también como gasto en Costos</label>
         </div>
         <div style="text-align:right;font-size:13px;line-height:1.8">
@@ -3115,31 +3118,37 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
   function factAddLine(){ var box=document.getElementById("fact-lines"); if(!box)return;
     var div=document.createElement("div"); div.className="fact-line";
-    div.innerHTML='<select class="fl-prod">'+factProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><input class="fl-costo" type="number" min="0" placeholder="0"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
+    div.innerHTML='<select class="fl-prod">'+factProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
     box.appendChild(div);
-    div.querySelector(".fl-del").onclick=function(){ div.remove(); factTotal(); };
-    div.querySelector(".fl-costo").oninput=factTotal; div.querySelector(".fl-cant").oninput=factTotal;
+    div.querySelector(".fl-del").onclick=function(){ div.remove(); };
   }
-  function factCalc(){ var neto=0; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ neto+=parseInt(r.querySelector(".fl-costo").value,10)||0; });
-    var afecto=document.getElementById("fact-iva").checked; var iva=afecto?Math.round(neto*0.19):0; return {neto:neto,iva:iva,total:neto+iva,afecto:afecto}; }
+  // un solo monto para toda la factura; el modo dice si ya incluye IVA
+  function factCalc(){ var monto=parseInt((document.getElementById("fact-monto")||{}).value,10)||0; var mode=(document.getElementById("fact-ivamode")||{}).value||"total";
+    var neto,iva,total;
+    if(mode==="neto"){ neto=monto; iva=Math.round(neto*0.19); total=neto+iva; }
+    else if(mode==="exento"){ neto=monto; iva=0; total=monto; }
+    else { total=monto; neto=Math.round(total/1.19); iva=total-neto; } // total (con IVA)
+    return {neto:neto,iva:iva,total:total,afecto:(mode!=="exento")}; }
   function factTotal(){ var c=factCalc();
     var n=document.getElementById("fact-neto"); if(n)n.textContent=clp(c.neto);
     var iv=document.getElementById("fact-iva-val"); if(iv)iv.textContent=clp(c.iva);
     var ivr=document.getElementById("fact-ivarow"); if(ivr)ivr.style.display=c.afecto?"":"none";
     var t=document.getElementById("fact-total"); if(t)t.textContent=clp(c.total); }
   function abrirFactura(){ document.getElementById("fact-prov").value=""; document.getElementById("fact-num").value=""; document.getElementById("fact-doc").value="Factura"; document.getElementById("fact-fecha").value=todayISO();
-    document.getElementById("fact-iva").checked=true; document.getElementById("fact-gasto").checked=true;
+    document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total"; document.getElementById("fact-gasto").checked=true;
     document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
     document.getElementById("fact-modal").classList.add("show"); }
   function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
     var prov=(document.getElementById("fact-prov").value||"").trim(), doc=document.getElementById("fact-doc").value, num=(document.getElementById("fact-num").value||"").trim(), fecha=document.getElementById("fact-fecha").value||todayISO();
-    var lines=[]; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; var costo=parseInt(r.querySelector(".fl-costo").value,10)||0; if(pid && cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant,costo:costo}); } });
+    var lines=[]; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; if(pid && cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant}); } });
     if(!lines.length){ toast("Agrega al menos un material (con producto y cantidad)"); return; }
     var c=factCalc(); var regGasto=document.getElementById("fact-gasto").checked;
-    var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"ENTRADA", cantidad:l.cant, fecha:fecha, doc_tipo:doc, doc_num:num, proveedor:prov, costo:l.costo, autor:(window.ISP_EMAIL||"") }; });
+    // prorratea el neto entre las líneas por cantidad (solo para trazar el costo del movimiento)
+    var totCant=lines.reduce(function(a,l){return a+l.cant;},0)||1;
+    var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"ENTRADA", cantidad:l.cant, fecha:fecha, doc_tipo:doc, doc_num:num, proveedor:prov, costo:Math.round(c.neto*(l.cant/totCant)), autor:(window.ISP_EMAIL||"") }; });
     sb.from("movimientos").insert(rows).select().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
-      lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; if(l.costo&&l.cant) l.p.costo=Math.round(l.costo/l.cant); saveProducto(l.p); });
+      lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; saveProducto(l.p); }); // solo suma stock; no toca el costo unitario
       if(regGasto && c.total>0){ var con="Materiales"+(prov?(" · "+prov):"")+(num?(" · "+doc+" N°"+num):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha}); }
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
       toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(regGasto&&c.total>0?" · gasto en Costos":""));
@@ -3147,7 +3156,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
     if(o)o.onclick=abrirFactura; if(s)s.onclick=guardarFactura; if(a)a.onclick=factAddLine;
-    var iva=document.getElementById("fact-iva"); if(iva)iva.onchange=factTotal;
+    var mto=document.getElementById("fact-monto"); if(mto)mto.oninput=factTotal;
+    var ivm=document.getElementById("fact-ivamode"); if(ivm)ivm.onchange=factTotal;
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
