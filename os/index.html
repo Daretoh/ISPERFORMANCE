@@ -1742,7 +1742,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var dupBtn=document.getElementById("asis-dedup"); if(dupBtn && !dupBtn.dataset.b){ dupBtn.dataset.b="1"; dupBtn.addEventListener("click",asisLimpiarDuplicados); }
     var byPD={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre)+"|"+diaKey(a.ts); (byPD[k]=byPD[k]||[]).push(a); });
     var abiertos=[];
-    Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), openIn=null;
+    Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
+      // colapsa duplicados exactos (mismo tipo + mismo minuto) para no dejar entradas "abiertas" falsas
+      var seen={}, clean=[]; arr.forEach(function(a){ var mk=(a.tipo||"")+"|"+(''+(a.ts||"")).slice(0,16); if(seen[mk])return; seen[mk]=1; clean.push(a); }); arr=clean;
+      var openIn=null;
       arr.forEach(function(a){ if(a.tipo==="ENTRADA"){ if(openIn)abiertos.push(openIn); openIn=a; } else if(a.tipo==="SALIDA"){ openIn=null; } });
       if(openIn)abiertos.push(openIn);
     });
@@ -1763,8 +1766,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function asisEliminarMark(d){
     if(!confirm("¿Eliminar este marcaje de "+d.nombre+"?\n(úsalo para duplicados o marcajes erróneos)")) return;
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
-    sb.from("asistencia").delete().eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ Marcaje eliminado"); cargarAsisIncompletos(); cargarAsisResumen(); });
+    sb.from("asistencia").delete().eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ Marcaje eliminado"); refrescarAsistencia(); });
   }
+  // refresca los tres paneles (marcajes de hoy, sin salida, resumen) con datos frescos
+  function refrescarAsistencia(){ renderAsistencia(); cargarAsisIncompletos(); cargarAsisResumen(); }
   // dedupe automático: mismo trabajador + tipo + mismo minuto = duplicado; deja uno, borra el resto
   function asisLimpiarDuplicados(){
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
@@ -1773,7 +1778,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!borrar.length){ toast("No hay marcajes duplicados ✓"); return; }
     if(!confirm("Se encontraron "+borrar.length+" marcaje(s) duplicado(s) (misma persona, mismo tipo y minuto).\nSe eliminarán dejando uno de cada uno. ¿Continuar?")) return;
     var ids=borrar.map(function(a){return a.id;});
-    sb.from("asistencia").delete().in("id",ids).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ "+ids.length+" duplicado(s) eliminados"); cargarAsisIncompletos(); cargarAsisResumen(); });
+    sb.from("asistencia").delete().in("id",ids).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ "+ids.length+" duplicado(s) eliminados"); refrescarAsistencia(); });
   }
   function asisEditarMarkData(d){
     var actual=hhmm(d.ts);
@@ -1782,7 +1787,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var motivo=prompt("Observación / motivo (queda registrado):",""); if(motivo===null)return; motivo=(motivo||"").trim(); if(!motivo){ toast("Indica el motivo del cambio"); return; }
     var pz=nueva.split(":"), dt=new Date(d.ts); dt.setHours(+pz[0],+pz[1],0,0);
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
-    sb.from("asistencia").update({ ts:dt.toISOString(), motivo_edicion:motivo, editado_por:(window.ISP_EMAIL||""), editado_at:new Date().toISOString(), ts_original:(d.orig||d.ts) }).eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Marcaje corregido y registrado"); cargarAsisIncompletos(); cargarAsisResumen(); });
+    sb.from("asistencia").update({ ts:dt.toISOString(), motivo_edicion:motivo, editado_por:(window.ISP_EMAIL||""), editado_at:new Date().toISOString(), ts_original:(d.orig||d.ts) }).eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Marcaje corregido y registrado"); refrescarAsistencia(); });
   }
   function asisAgregarSalida(d){
     var hs=prompt("Hora de SALIDA de "+d.nombre+" (día "+d.dia+", entró "+d.ent+") — HH:MM:","18:00"); if(hs===null)return;
@@ -1790,7 +1795,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var pz=hs.split(":"), dt=new Date(d.dia+"T00:00:00"); dt.setHours(+pz[0],+pz[1],0,0);
     var motivo=prompt("Motivo (queda registrado):","Salida agregada por administración"); if(motivo===null)return;
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
-    sb.from("asistencia").insert({nombre:d.nombre,rut4:d.rut4,tipo:"SALIDA",ts:dt.toISOString(),motivo_edicion:(motivo||"Salida agregada por administración"),editado_por:(window.ISP_EMAIL||"")}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Salida agregada"); cargarAsisIncompletos(); cargarAsisResumen(); });
+    sb.from("asistencia").insert({nombre:d.nombre,rut4:d.rut4,tipo:"SALIDA",ts:dt.toISOString(),motivo_edicion:(motivo||"Salida agregada por administración"),editado_por:(window.ISP_EMAIL||"")}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Salida agregada"); refrescarAsistencia(); });
   }
   function sesionesPersona(marks){ var s=marks.slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), out=[], inTs=null;
     s.forEach(function(a){ if(a.tipo==="ENTRADA") inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ out.push({out:new Date(a.ts),ms:new Date(a.ts)-inTs}); inTs=null; } }); return out; }
@@ -1820,7 +1825,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var d=new Date(a.ts), pz=nueva.split(":"); d.setHours(+pz[0],+pz[1],0,0);
     var upd={ ts:d.toISOString(), motivo_edicion:motivo, editado_por:(window.ISP_EMAIL||miNombre()||""), editado_at:new Date().toISOString() };
     if(!a.ts_original) upd.ts_original=a.ts;
-    var sb=sbc(); if(sb) sb.from("asistencia").update(upd).eq("id",id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿corriste el SQL 23 de auditoría?)"); } });
+    var sb=sbc(); if(sb) sb.from("asistencia").update(upd).eq("id",id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿corriste el SQL 23 de auditoría?)"); return; } cargarAsisIncompletos(); cargarAsisResumen(); });
     Object.keys(upd).forEach(function(k){ a[k]=upd[k]; });
     pintarAsistencia(); toast("✓ Hora corregida y registrada");
   }
