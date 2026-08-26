@@ -1056,7 +1056,7 @@
     <section class="view" id="view-asistencia">
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
-      <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3>Marcajes sin salida <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— entradas sin su salida (cualquier día)</span></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
+      <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Marcajes sin salida <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— entradas sin su salida (cualquier día)</span><button id="asis-dedup" class="btn asis-fix" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">🧹 Limpiar duplicados</button></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Resumen de horas <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— por trabajador</span></h3><div id="asis-resumen" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="dash-grid">
         <div class="card" id="trab-card">
@@ -1746,8 +1746,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var desde=new Date(Date.now()-90*86400000);
     sb.from("asistencia").select("*").gte("ts",desde.toISOString()).order("ts").then(function(r){ if(r.error){ el.innerHTML='<div class="col-empty">No disponible</div>'; return; } pintarIncompletos(r.data||[]); });
   }
+  var _asisIncMarks=[];
   function pintarIncompletos(marks){
     var el=document.getElementById("asis-abiertos"); if(!el)return;
+    _asisIncMarks=marks||[];
+    var dupBtn=document.getElementById("asis-dedup"); if(dupBtn && !dupBtn.dataset.b){ dupBtn.dataset.b="1"; dupBtn.addEventListener("click",asisLimpiarDuplicados); }
     var byPD={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre)+"|"+diaKey(a.ts); (byPD[k]=byPD[k]||[]).push(a); });
     var abiertos=[];
     Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), openIn=null;
@@ -1760,12 +1763,28 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     el.innerHTML='<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th>Día</th><th class="r">Entrada</th><th>Estado</th>'+(owner?'<th></th>':'')+'</tr></thead><tbody>'+abiertos.map(function(a){
       var dia=diaKey(a.ts), esHoyDia=(dia===hoy);
       var estado=esHoyDia?'<span class="chip" style="background:var(--ok-soft);color:var(--ok);font-weight:700">🟢 En el taller</span>':'<span class="chip" style="background:var(--crit-soft);color:var(--crit);font-weight:700">⚠ Sin salida</span>';
-      var acc=owner?('<td class="r" style="white-space:nowrap"><button class="stk-btn asis-editmark" data-id="'+a.id+'" data-ts="'+av(a.ts)+'" data-nombre="'+av(a.nombre||"")+'" data-tipo="ENTRADA" data-orig="'+av(a.ts_original||a.ts)+'">✎ Entrada</button> <button class="stk-btn asis-addsal" data-rut4="'+av(a.rut4||"")+'" data-nombre="'+av(a.nombre||"")+'" data-dia="'+dia+'" data-ent="'+hhmm(a.ts)+'">＋ Salida</button></td>'):'';
+      var acc=owner?('<td class="r" style="white-space:nowrap"><button class="stk-btn asis-editmark" data-id="'+a.id+'" data-ts="'+av(a.ts)+'" data-nombre="'+av(a.nombre||"")+'" data-tipo="ENTRADA" data-orig="'+av(a.ts_original||a.ts)+'">✎ Entrada</button> <button class="stk-btn asis-addsal" data-rut4="'+av(a.rut4||"")+'" data-nombre="'+av(a.nombre||"")+'" data-dia="'+dia+'" data-ent="'+hhmm(a.ts)+'">＋ Salida</button> <button class="stk-btn asis-delmark" data-id="'+a.id+'" data-nombre="'+av(a.nombre||"")+'" title="Eliminar este marcaje (duplicado o erróneo)" style="color:var(--crit);border-color:var(--crit)">🗑</button></td>'):'';
       var detEd=a.motivo_edicion?'<tr><td colspan="'+(owner?5:4)+'" style="padding-top:0"><div class="asis-editdet"><b>✎ Editado</b> · por '+escH(a.editado_por||"?")+' · <b>Obs:</b> '+escH(a.motivo_edicion)+'</div></td></tr>':'';
       return '<tr><td><b>'+escH(a.nombre||("••"+a.rut4))+'</b></td><td>'+fFecha(dia)+'</td><td class="r">'+hhmm(a.ts)+'</td><td>'+estado+'</td>'+acc+'</tr>'+detEd;
     }).join("")+'</tbody></table></div>';
     el.querySelectorAll(".asis-addsal").forEach(function(b){ b.addEventListener("click",function(){ asisAgregarSalida(b.dataset); }); });
     el.querySelectorAll(".asis-editmark").forEach(function(b){ b.addEventListener("click",function(){ asisEditarMarkData(b.dataset); }); });
+    el.querySelectorAll(".asis-delmark").forEach(function(b){ b.addEventListener("click",function(){ asisEliminarMark(b.dataset); }); });
+  }
+  function asisEliminarMark(d){
+    if(!confirm("¿Eliminar este marcaje de "+d.nombre+"?\n(úsalo para duplicados o marcajes erróneos)")) return;
+    var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    sb.from("asistencia").delete().eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ Marcaje eliminado"); cargarAsisIncompletos(); cargarAsisResumen(); });
+  }
+  // dedupe automático: mismo trabajador + tipo + mismo minuto = duplicado; deja uno, borra el resto
+  function asisLimpiarDuplicados(){
+    var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var groups={}; (_asisIncMarks||[]).forEach(function(a){ var min=(''+(a.ts||"")).slice(0,16); var k=(a.rut4||a.nombre||"")+"|"+(a.tipo||"")+"|"+min; (groups[k]=groups[k]||[]).push(a); });
+    var borrar=[]; Object.keys(groups).forEach(function(k){ var arr=groups[k]; if(arr.length>1){ arr.sort(function(a,b){ return String(a.id)<String(b.id)?-1:1; }); borrar=borrar.concat(arr.slice(1)); } });
+    if(!borrar.length){ toast("No hay marcajes duplicados ✓"); return; }
+    if(!confirm("Se encontraron "+borrar.length+" marcaje(s) duplicado(s) (misma persona, mismo tipo y minuto).\nSe eliminarán dejando uno de cada uno. ¿Continuar?")) return;
+    var ids=borrar.map(function(a){return a.id;});
+    sb.from("asistencia").delete().in("id",ids).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ "+ids.length+" duplicado(s) eliminados"); cargarAsisIncompletos(); cargarAsisResumen(); });
   }
   function asisEditarMarkData(d){
     var actual=hhmm(d.ts);
@@ -1837,13 +1856,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("kio-step2").style.display="";
     document.getElementById("kio-hola").textContent="Hola, "+t.nombre;
     document.getElementById("kio-sub").textContent=(next==="ENTRADA")?"¿Marcar tu ENTRADA?":"¿Marcar tu SALIDA?";
-    var mk=document.getElementById("kio-mark"); mk.textContent="Marcar "+next; mk.className="kio-mark"+(next==="SALIDA"?" out":"");
+    var mk=document.getElementById("kio-mark"); mk.textContent="Marcar "+next; mk.className="kio-mark"+(next==="SALIDA"?" out":""); mk.removeAttribute("data-busy");
     mk.onclick=function(){ kioMarcar(t,next); };
   }
   function fmtDur(ms){ var min=Math.max(0,Math.round(ms/60000)); var h=Math.floor(min/60), m=min%60; return h+" h"+(m?(" "+m+" min"):""); }
   function horasHoyMs(rut4){ var marks=_asis.filter(function(a){return String(a.rut4)===String(rut4)&&esHoy(a.ts);}).sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}); var total=0,inTs=null; marks.forEach(function(a){ if(a.tipo==="ENTRADA")inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ total+=new Date(a.ts)-inTs; inTs=null; } }); return total; }
   function horaDe(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
   function kioMarcar(t,tipo){ var sb=sbc(); if(!sb)return;
+    // evita duplicados: mismo tipo marcado hace menos de 2 minutos
+    var reciente=(_asis||[]).some(function(a){ return String(a.rut4)===String(t.rut4) && a.tipo===tipo && (Date.now()-new Date(a.ts))<120000; });
+    if(reciente){ document.getElementById("kio-msg").textContent="Ya marcaste tu "+tipo+" recién."; document.getElementById("kio-step1").style.display=""; document.getElementById("kio-step2").style.display="none"; setTimeout(kioReset,2200); return; }
+    var mk=document.getElementById("kio-mark"); if(mk){ if(mk.dataset.busy)return; mk.dataset.busy="1"; }
     sb.from("asistencia").insert({nombre:t.nombre,rut4:t.rut4,tipo:tipo}).select().single().then(function(r){
       if(r.error){ document.getElementById("kio-msg").textContent="Error al marcar. Reintenta."; document.getElementById("kio-step1").style.display=""; document.getElementById("kio-step2").style.display="none"; return; }
       _asis.unshift(r.data);
