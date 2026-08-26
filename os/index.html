@@ -1141,9 +1141,9 @@
 
     <!-- ============ SOLICITUDES (SolPed / reabastecimiento) ============ -->
     <section class="view" id="view-solicitudes">
-      <div class="vhead" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="eye">Reabastecimiento</div><h1>Solicitudes</h1></div><button class="btn primary" id="fact-open" style="white-space:nowrap">🧾 Ingresar factura</button></div>
+      <div class="vhead"><div class="eye">Reabastecimiento</div><h1>Solicitudes</h1></div>
       <div class="card">
-        <h3>Nueva solicitud</h3>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Nueva solicitud <button class="btn primary" id="fact-open" style="white-space:nowrap">📦 Ingreso de materiales</button></h3>
         <div class="row c4" style="margin:10px 0">
           <label class="f" style="grid-column:span 2"><span class="lab">Qué se necesita</span><input id="sol-item" list="sol-item-list" placeholder="Ej: WINTEX Alumax, paños microfibra…"></label>
           <label class="f"><span class="lab">Tipo</span><select id="sol-tipo"><option>Químico</option><option>Insumo</option><option>Herramienta</option><option>Repuesto</option><option>Otro</option></select></label>
@@ -1240,7 +1240,7 @@
   <!-- Modal: ingresar una factura con varios materiales -->
   <div class="mov-modal" id="fact-modal">
     <div class="mov-box" style="max-width:760px">
-      <div class="mov-head"><h3>🧾 Ingresar factura / recepción</h3><button id="fact-close" aria-label="Cerrar">×</button></div>
+      <div class="mov-head"><h3>📦 Ingreso de materiales</h3><button id="fact-close" aria-label="Cerrar">×</button></div>
       <div class="row c4" style="margin:12px 0">
         <label class="f"><span class="lab">Proveedor</span><input id="fact-prov" placeholder="De quién"></label>
         <label class="f"><span class="lab">Documento</span><select id="fact-doc"><option>Factura</option><option>Guía</option><option>Boleta</option><option>Sin documento</option></select></label>
@@ -1250,7 +1250,7 @@
       <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span>Costo línea $</span><span></span></div>
       <div id="fact-lines"></div>
       <button class="btn" id="fact-addline" style="margin-top:8px">＋ Agregar material</button>
-      <div style="text-align:right;margin-top:10px;font-weight:700">Total factura: <span id="fact-total" style="color:var(--accent-ink)">$0</span></div>
+      <div style="text-align:right;margin-top:10px;font-weight:700">Total: <span id="fact-total" style="color:var(--accent-ink)">$0</span></div>
       <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" id="fact-save">Registrar ingreso</button><button class="btn ghost" id="fact-cancel">Cancelar</button></div>
     </div>
   </div>
@@ -3123,7 +3123,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
       lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; if(l.costo&&l.cant) l.p.costo=Math.round(l.costo/l.cant); saveProducto(l.p); });
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
-      toast("✓ Factura ingresada: "+lines.length+" material(es)"+(num?(" · "+doc+" N°"+num):""));
+      toast("✓ Ingreso registrado: "+lines.length+" material(es)"+(num?(" · "+doc+" N°"+num):""));
     });
   }
   (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
