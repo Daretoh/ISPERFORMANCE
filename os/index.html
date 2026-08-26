@@ -602,6 +602,12 @@
   .cot-row .cn{font:800 12px/1 var(--mono);color:var(--accent-ink);}
   .cot-row .acts button{background:none;border:none;cursor:pointer;font:700 12px var(--sans);margin-left:10px;} .cot-row .acts .pdf{color:var(--accent-ink);} .cot-row .acts .del{color:var(--crit);}
   /* Solicitudes (SolPed) */
+  .fact-lhead,.fact-line{display:grid;grid-template-columns:1fr 90px 120px 32px;gap:8px;align-items:center;}
+  .fact-lhead{font:700 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);margin-bottom:6px;padding:0 2px;}
+  .fact-line{margin-bottom:8px;}
+  .fact-line select,.fact-line input{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);font:inherit;width:100%;}
+  .fact-line .fl-del{border:1px solid var(--line);background:var(--surface-2);color:var(--crit);border-radius:var(--radius-sm);cursor:pointer;padding:0;height:36px;}
+  @media (max-width:620px){.fact-lhead{display:none;}.fact-line{grid-template-columns:1fr 1fr;}.fact-line .fl-prod{grid-column:1/-1;}}
   .sol-col{margin-bottom:18px;}
   .sol-col h4{font:800 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;}
   .sol-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-faint);border-radius:10px;padding:11px 15px;margin-bottom:9px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;box-shadow:var(--shadow);}
@@ -1135,7 +1141,7 @@
 
     <!-- ============ SOLICITUDES (SolPed / reabastecimiento) ============ -->
     <section class="view" id="view-solicitudes">
-      <div class="vhead"><div class="eye">Reabastecimiento</div><h1>Solicitudes</h1></div>
+      <div class="vhead" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div class="eye">Reabastecimiento</div><h1>Solicitudes</h1></div><button class="btn primary" id="fact-open" style="white-space:nowrap">🧾 Ingresar factura</button></div>
       <div class="card">
         <h3>Nueva solicitud</h3>
         <div class="row c4" style="margin:10px 0">
@@ -1228,6 +1234,24 @@
         <label class="f" id="mov-salida-fields" style="grid-column:1/-1;display:none"><span class="lab">Motivo / uso (opcional)</span><input id="mov-motivo" placeholder="Para qué se usó"></label>
       </div>
       <div style="display:flex;gap:8px"><button class="btn primary" id="mov-save">Guardar</button><button class="btn ghost" id="mov-cancel">Cancelar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: ingresar una factura con varios materiales -->
+  <div class="mov-modal" id="fact-modal">
+    <div class="mov-box" style="max-width:760px">
+      <div class="mov-head"><h3>🧾 Ingresar factura / recepción</h3><button id="fact-close" aria-label="Cerrar">×</button></div>
+      <div class="row c4" style="margin:12px 0">
+        <label class="f"><span class="lab">Proveedor</span><input id="fact-prov" placeholder="De quién"></label>
+        <label class="f"><span class="lab">Documento</span><select id="fact-doc"><option>Factura</option><option>Guía</option><option>Boleta</option><option>Sin documento</option></select></label>
+        <label class="f"><span class="lab">N° documento</span><input id="fact-num" placeholder="Ej: 12345"></label>
+        <label class="f"><span class="lab">Fecha</span><input id="fact-fecha" type="date"></label>
+      </div>
+      <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span>Costo línea $</span><span></span></div>
+      <div id="fact-lines"></div>
+      <button class="btn" id="fact-addline" style="margin-top:8px">＋ Agregar material</button>
+      <div style="text-align:right;margin-top:10px;font-weight:700">Total factura: <span id="fact-total" style="color:var(--accent-ink)">$0</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" id="fact-save">Registrar ingreso</button><button class="btn ghost" id="fact-cancel">Cancelar</button></div>
     </div>
   </div>
 
@@ -3075,6 +3099,36 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   (function(){ var s=document.getElementById("mov-save"), c=document.getElementById("mov-cancel"), x=document.getElementById("mov-close"), m=document.getElementById("mov-modal");
     if(s)s.onclick=guardarMov; if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
+    if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
+  })();
+  // ---- Ingresar factura con varios materiales ----
+  function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
+  function factAddLine(){ var box=document.getElementById("fact-lines"); if(!box)return;
+    var div=document.createElement("div"); div.className="fact-line";
+    div.innerHTML='<select class="fl-prod">'+factProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><input class="fl-costo" type="number" min="0" placeholder="0"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
+    box.appendChild(div);
+    div.querySelector(".fl-del").onclick=function(){ div.remove(); factTotal(); };
+    div.querySelector(".fl-costo").oninput=factTotal; div.querySelector(".fl-cant").oninput=factTotal;
+  }
+  function factTotal(){ var t=0; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ t+=parseInt(r.querySelector(".fl-costo").value,10)||0; }); var el=document.getElementById("fact-total"); if(el)el.textContent=clp(t); }
+  function abrirFactura(){ document.getElementById("fact-prov").value=""; document.getElementById("fact-num").value=""; document.getElementById("fact-doc").value="Factura"; document.getElementById("fact-fecha").value=todayISO();
+    document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
+    document.getElementById("fact-modal").classList.add("show"); }
+  function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var prov=(document.getElementById("fact-prov").value||"").trim(), doc=document.getElementById("fact-doc").value, num=(document.getElementById("fact-num").value||"").trim(), fecha=document.getElementById("fact-fecha").value||todayISO();
+    var lines=[]; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; var costo=parseInt(r.querySelector(".fl-costo").value,10)||0; if(pid && cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant,costo:costo}); } });
+    if(!lines.length){ toast("Agrega al menos un material (con producto y cantidad)"); return; }
+    var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"ENTRADA", cantidad:l.cant, fecha:fecha, doc_tipo:doc, doc_num:num, proveedor:prov, costo:l.costo, autor:(window.ISP_EMAIL||"") }; });
+    sb.from("movimientos").insert(rows).select().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
+      (r.data||[]).forEach(function(row){ _movs.unshift(row); });
+      lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; if(l.costo&&l.cant) l.p.costo=Math.round(l.costo/l.cant); saveProducto(l.p); });
+      document.getElementById("fact-modal").classList.remove("show"); renderStock();
+      toast("✓ Factura ingresada: "+lines.length+" material(es)"+(num?(" · "+doc+" N°"+num):""));
+    });
+  }
+  (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
+    if(o)o.onclick=abrirFactura; if(s)s.onclick=guardarFactura; if(a)a.onclick=factAddLine;
+    if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
   // rotación: consumo (salidas) por mes en los últimos 60 días
