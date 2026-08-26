@@ -790,7 +790,7 @@
         <button data-view="clientes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</button>
         <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro</button>
         <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
-        <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Stock</button>
+        <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventario</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
         <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
@@ -933,7 +933,7 @@
 
     <!-- ============ STOCK ============ -->
     <section class="view" id="view-stock">
-      <div class="vhead"><div class="eye">Inventario</div><h1>Stock</h1></div>
+      <div class="vhead"><div class="eye">Bodega</div><h1>Inventario</h1></div>
       <div class="stock-cat" id="stock-cat"><button data-c="VENTA" class="on">Productos en venta</button><button data-c="INSUMO">Insumos</button></div>
       <div id="stock-kpis"></div>
       <div class="stock-bar">
@@ -1944,7 +1944,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Stock"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
@@ -1952,7 +1952,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     {v:"cobro",l:"Cobro",a:[["cobro_registrar","Registrar cobro"]]},
     {v:"clientes",l:"Clientes",a:[["cli_editar","Editar datos / facturación"],["cli_borrar","Eliminar / unir duplicados"]]},
     {v:"cotizaciones",l:"Cotizaciones",a:[["cot_crear","Crear / editar cotización"],["cot_borrar","Eliminar cotización"]]},
-    {v:"stock",l:"Stock",a:[["stock_mover","Ingresos / salidas"],["stock_agregar","Agregar productos"],["stock_borrar","Eliminar productos"]]},
+    {v:"stock",l:"Inventario",a:[["stock_mover","Ingresos / salidas"],["stock_agregar","Agregar productos"],["stock_borrar","Eliminar productos"]]},
     {v:"solicitudes",l:"Solicitudes",a:[["sol_gestionar","Aprobar / recibir / eliminar"]]},
     {v:"plan",l:"Planificación",a:[["plan_editar","Crear / editar / eliminar tareas"]]},
     {v:"asistencia",l:"Asistencia",a:[["asis_trab","Alta / baja de trabajadores"],["asis_editar","Corregir marcajes"]]}
