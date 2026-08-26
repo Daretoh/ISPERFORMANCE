@@ -1215,6 +1215,7 @@
     <div class="mov-box">
       <div class="mov-head"><h3 id="mov-title">Movimiento</h3><button id="mov-close" aria-label="Cerrar">×</button></div>
       <label class="f" id="mov-solped-wrap" style="margin:14px 0 0;display:none"><span class="lab">¿Viene de una solicitud (SolPed)? — opcional, rellena solo</span><select id="mov-solped"><option value="">— Ninguna —</option></select></label>
+      <label class="f" id="mov-prod-wrap" style="margin:14px 0 0;display:none"><span class="lab">Producto del stock a ingresar <span class="hint" style="text-transform:none;letter-spacing:0">— opcional; si no está, se registra igual la recepción</span></span><select id="mov-prod"><option value="">— Sin producto (solo registrar recepción) —</option></select></label>
       <div class="row c2" style="margin:12px 0">
         <label class="f"><span class="lab">Cantidad</span><input id="mov-cant" type="number" min="1" value="1"></label>
         <label class="f"><span class="lab">Fecha</span><input id="mov-fecha" type="date"></label>
@@ -2174,7 +2175,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var urg=(s.urgencia==="Urgente");
         var next={PENDIENTE:"COMPRADA",COMPRADA:"RECIBIDA"}[s.estado];
         var nextTxt={COMPRADA:"Comprada",RECIBIDA:"Recibida"}[next];
-        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+(s.numero?'<span class="cn" style="color:var(--accent-ink);font-family:var(--mono);margin-right:5px">N°'+s.numero+'</span>':'')+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div></div><div class="sol-acts">'+((s.producto_id&&s.estado!=="RECIBIDA")?'<button class="go" data-rec="'+s.id+'" style="background:var(--ok);border-color:var(--ok)">Recibir ▸</button>':'')+(next?'<button class="go" data-go="'+s.id+'" data-next="'+next+'">'+nextTxt+' ›</button>':'')+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
+        var recBtn=(s.estado!=="RECIBIDA")?'<button class="go" data-rec="'+s.id+'" style="background:var(--ok);border-color:var(--ok)">Recibir ▸</button>':'';
+        var advBtn=(next&&next!=="RECIBIDA")?'<button class="go" data-go="'+s.id+'" data-next="'+next+'">'+nextTxt+' ›</button>':'';
+        var recDet=(s.estado==="RECIBIDA"&&(s.recep_ref||s.recep_prov||s.recep_doc||s.recep_costo))?'<div class="si-meta" style="margin-top:4px;color:var(--ok)">✓ Recibido'+(s.recep_doc?(' · '+escH(s.recep_doc)):'')+(s.recep_ref?(' N°'+escH(s.recep_ref)):'')+(s.recep_prov?(' · '+escH(s.recep_prov)):'')+(s.recep_costo?(' · '+clp(s.recep_costo)):'')+'</div>':'';
+        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+(s.numero?'<span class="cn" style="color:var(--accent-ink);font-family:var(--mono);margin-right:5px">N°'+s.numero+'</span>':'')+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div>'+recDet+'</div><div class="sol-acts">'+recBtn+advBtn+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
       }).join("")||'<div class="col-empty" style="font-size:12px">—</div>';
       return '<div class="sol-col"><h4><span>'+es[1]+'</span><span>'+items.length+'</span></h4>'+cards+'</div>';
     }).join("");
@@ -3003,29 +3007,56 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   var _movs=[], _movCtx=null;
   function abrirMov(producto,tipo){
     _movCtx={producto:producto,tipo:tipo};
-    document.getElementById("mov-title").textContent=(tipo==="ENTRADA"?"Ingreso — ":"Salida — ")+(producto.producto||"");
+    document.getElementById("mov-title").textContent=(tipo==="ENTRADA"?"Ingreso — ":"Salida — ")+((producto&&producto.producto)||"");
     document.getElementById("mov-cant").value=1; document.getElementById("mov-fecha").value=todayISO();
     document.getElementById("mov-entrada-fields").style.display=(tipo==="ENTRADA")?"contents":"none";
     document.getElementById("mov-salida-fields").style.display=(tipo==="SALIDA")?"":"none";
     document.getElementById("mov-solped-wrap").style.display=(tipo==="ENTRADA")?"":"none";
+    // selector de producto: solo cuando se recibe sin producto ligado
+    var pw=document.getElementById("mov-prod-wrap"), psel=document.getElementById("mov-prod");
+    if(pw && psel){ if(tipo==="ENTRADA" && !producto){ pw.style.display="";
+        psel.innerHTML='<option value="">— Sin producto (solo registrar recepción) —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join("");
+        psel.onchange=function(){ _movCtx.producto=psel.value?productos.filter(function(x){return String(x.id)===psel.value;})[0]:null; };
+      } else { pw.style.display="none"; psel.onchange=null; } }
     ["mov-docnum","mov-prov","mov-costo","mov-motivo"].forEach(function(id){document.getElementById(id).value="";});
     var ss=document.getElementById("mov-solped");
     if(ss){ var abiertas=(_solped||[]).filter(function(s){return s.estado==="PENDIENTE"||s.estado==="COMPRADA";});
       ss.innerHTML='<option value="">— Ninguna —</option>'+abiertas.map(function(s){ return '<option value="'+s.id+'">N°'+(s.numero||"?")+' · '+escH(s.item||"")+' ('+(s.estado||"").toLowerCase()+')</option>'; }).join("");
-      var match=abiertas.filter(function(s){return (s.item||"").toLowerCase()===(producto.producto||"").toLowerCase()||String(s.producto_id||"")===String(producto.id);})[0];
+      var match=producto?abiertas.filter(function(s){return (s.item||"").toLowerCase()===(producto.producto||"").toLowerCase()||String(s.producto_id||"")===String(producto.id);})[0]:null;
       ss.value=match?match.id:""; }
     document.getElementById("mov-modal").classList.add("show");
   }
   function abrirMovDesdeSolped(sp){
     var p=sp.producto_id?productos.filter(function(x){return String(x.id)===String(sp.producto_id);})[0]:null;
-    if(!p){ toast("Esta solicitud no está ligada a un producto del stock. Créalo en Stock y luego haz el Ingreso."); return; }
     abrirMov(p,"ENTRADA");
+    _movCtx.solped=sp;
+    document.getElementById("mov-title").textContent="Recibir SolPed N°"+(sp.numero||"?")+" — "+(sp.item||"");
     var ss=document.getElementById("mov-solped"); if(ss) ss.value=sp.id;
     var cant=parseInt((sp.cantidad||"").replace(/[^\d]/g,""),10); if(cant) document.getElementById("mov-cant").value=cant;
+    // si no hay producto ligado, intenta pre-seleccionar por nombre en el selector
+    if(!p){ var psel=document.getElementById("mov-prod"); if(psel){ var m=productos.filter(function(x){return (x.producto||"").toLowerCase()===(sp.item||"").toLowerCase();})[0]; if(m){ psel.value=m.id; _movCtx.producto=m; } } }
   }
   function guardarMov(){
     var sb=sbc(); if(!sb||!_movCtx)return;
     var p=_movCtx.producto, tipo=_movCtx.tipo, cant=parseInt(document.getElementById("mov-cant").value,10)||0;
+    // recepción de una SolPed sin producto de stock: se registra la referencia en la solicitud
+    if(tipo==="ENTRADA" && !p && _movCtx.solped){
+      var sp=_movCtx.solped;
+      var upd={ estado:"RECIBIDA",
+        recep_doc:document.getElementById("mov-doc").value,
+        recep_ref:(document.getElementById("mov-docnum").value||"").trim(),
+        recep_prov:(document.getElementById("mov-prov").value||"").trim(),
+        recep_costo:parseInt(document.getElementById("mov-costo").value,10)||0,
+        recep_fecha:document.getElementById("mov-fecha").value||todayISO(),
+        recibida_at:new Date().toISOString(), recibida_por:(window.ISP_EMAIL||"") };
+      sb.from("solicitudes").update(upd).eq("id",sp.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿corriste el SQL 29?)"); return; }
+        var s=_solped.filter(function(x){return x.id===sp.id;})[0]; if(s){ Object.keys(upd).forEach(function(k){s[k]=upd[k];}); }
+        document.getElementById("mov-modal").classList.remove("show"); pintarSolped(); updateCounts();
+        toast("✓ Recepción registrada · SolPed N°"+(sp.numero||"?")+" marcada Recibida");
+      });
+      return;
+    }
+    if(!p){ toast("Elige un producto del stock, o créalo primero en Stock"); return; }
     if(cant<1){ toast("Cantidad inválida"); return; }
     var row={ producto_id:p.id, tipo:tipo, cantidad:cant, fecha:document.getElementById("mov-fecha").value||todayISO(), autor:(window.ISP_EMAIL||"") };
     var solId="";
