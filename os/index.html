@@ -2084,19 +2084,22 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     return found?(fl.precios[found][t]||fl.precios[found].M||0):0; }
   // POS: al elegir el vehículo, trae sus trabajos (checklist del taller) como ítems de la cotización
   function cotCargarTrabajosVeh(v){
-    var trabs=(v&&v.trabajos)||[]; if(!trabs.length) return;
+    var trabs=(v&&v.trabajos)||[]; var fl=flotaDe(v);
+    if(!trabs.length && !fl) return; // sin trabajos y sin tarifa de flota: nada que cargar
     var cont=document.getElementById("cot-items"); if(!cont) return;
     // quita filas vacías actuales
     Array.prototype.slice.call(cont.querySelectorAll(".cotiz-item")).forEach(function(r){ if(!((r.querySelector(".cot-desc").value)||"").trim()) r.remove(); });
     var existentes={}; cont.querySelectorAll(".cot-desc").forEach(function(i){ existentes[((i.value)||"").trim().toLowerCase()]=1; });
     var n=0;
-    trabs.forEach(function(w){ var t=((w&&w.t)||"").trim(); if(!t||existentes[t.toLowerCase()]) return; existentes[t.toLowerCase()]=1;
+    function _addLinea(t){ t=(t||"").trim(); if(!t||existentes[t.toLowerCase()])return; existentes[t.toLowerCase()]=1;
       var pr=precioFlota(v,t); // 1º tarifa de flota (por talla) si el cliente la tiene
       if(!pr){ var s=(typeof svcInfo==="function")?svcInfo(t):null; if(s){ pr=precioServicio(s.n,"M")||precioServicio(s.n,"L")||precioServicio(s.n,"S")||precioServicio(s.n,"XL")||0; } }
       cotAddRow({desc:t,cant:1,precio:pr,descPct:0}); n++;
-    });
+    }
+    trabs.forEach(function(w){ _addLinea((w&&w.t)||""); });
+    if(fl) _addLinea("Retiro / entrega"); // flota: Retiro / entrega siempre va en la cotización
     cotAddRow(); cotCalc();
-    if(n) toast("✓ "+n+" trabajo(s) del vehículo cargados a la cotización");
+    if(n) toast("✓ "+n+" ítem(s) del vehículo cargados a la cotización");
   }
   // vehículos del cliente elegido: últimos 5, priorizando los que aún no tienen cotización
   function cotRefreshVehLink(){
@@ -2579,7 +2582,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var trChip=trarr.length?(trPend>0?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'<span class="ktrab-count done">✓ Listas</span>'):'';
         // vista completa (se ve al Editar, vía CSS) — siempre en el DOM
         var flota=flotaDe(e);
-        var flotaSel=flota?('<select class="ktrab-svc" data-id="'+e.id+'"><option value="">＋ Agregar servicio…</option>'+Object.keys(flota.precios).map(function(svc){ return '<option value="'+av(svc)+'">'+escH(svc)+'</option>'; }).join("")+'</select>'):'';
+        var flotaSel=flota?('<select class="ktrab-svc" data-id="'+e.id+'"><option value="">＋ Agregar servicio…</option>'+Object.keys(flota.precios).filter(function(svc){ return svc!=="Retiro / entrega"; }).map(function(svc){ return '<option value="'+av(svc)+'">'+escH(svc)+'</option>'; }).join("")+'</select>'):'';
         var vtrabFull='<div class="ktrab ktrab-full">'+
           '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
           trHTML+
