@@ -2053,8 +2053,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     _cotCliMap={}; agruparClientes().forEach(function(c){ var nom=cliNombre(c); if(!nom||nom==="(sin nombre)")return; var k=nom.toLowerCase(); if(!_cotCliMap[k]) _cotCliMap[k]={nombre:nom, clave:c.clave, tel:c.contacto||"", veh:"", anio:""}; });
     var cl=document.getElementById("cot-cli-list"); if(cl){ cl.innerHTML=Object.keys(_cotCliMap).sort(function(a,b){return _cotCliMap[a].nombre.localeCompare(_cotCliMap[b].nombre);}).map(function(k){return '<option value="'+av(_cotCliMap[k].nombre)+'">';}).join(""); }
     var vs=document.getElementById("cot-vehid");
-    if(vs && !vs.dataset.b){ vs.dataset.b="1"; vs.onchange=function(){ var v=(data||[]).filter(function(x){return String(x.id)===vs.value;})[0]; if(v){ var nomCli=cliNombre({clave:clientKey(v),nombre:v.cliente}); if(!document.getElementById("cot-nom").value) document.getElementById("cot-nom").value=nomCli||v.cliente||""; if(!document.getElementById("cot-tel").value) document.getElementById("cot-tel").value=v.contacto||""; document.getElementById("cot-veh").value=limpiaBasura((v.marca||"")+" "+(v.modelo||"")).trim(); document.getElementById("cot-anio").value=v.anioVeh||""; } }; }
+    if(vs && !vs.dataset.b){ vs.dataset.b="1"; vs.onchange=function(){ var v=(data||[]).filter(function(x){return String(x.id)===vs.value;})[0]; if(v){ var nomCli=cliNombre({clave:clientKey(v),nombre:v.cliente}); if(!document.getElementById("cot-nom").value) document.getElementById("cot-nom").value=nomCli||v.cliente||""; if(!document.getElementById("cot-tel").value) document.getElementById("cot-tel").value=v.contacto||""; document.getElementById("cot-veh").value=limpiaBasura((v.marca||"")+" "+(v.modelo||"")).trim(); document.getElementById("cot-anio").value=v.anioVeh||""; cotCargarTrabajosVeh(v); } }; }
     cotRefreshVehLink();
+  }
+  // POS: al elegir el vehículo, trae sus trabajos (checklist del taller) como ítems de la cotización
+  function cotCargarTrabajosVeh(v){
+    var trabs=(v&&v.trabajos)||[]; if(!trabs.length) return;
+    var cont=document.getElementById("cot-items"); if(!cont) return;
+    // quita filas vacías actuales
+    Array.prototype.slice.call(cont.querySelectorAll(".cotiz-item")).forEach(function(r){ if(!((r.querySelector(".cot-desc").value)||"").trim()) r.remove(); });
+    var existentes={}; cont.querySelectorAll(".cot-desc").forEach(function(i){ existentes[((i.value)||"").trim().toLowerCase()]=1; });
+    var n=0;
+    trabs.forEach(function(w){ var t=((w&&w.t)||"").trim(); if(!t||existentes[t.toLowerCase()]) return; existentes[t.toLowerCase()]=1;
+      var pr=0, s=(typeof svcInfo==="function")?svcInfo(t):null; if(s){ pr=precioServicio(s.n,"M")||precioServicio(s.n,"L")||precioServicio(s.n,"S")||precioServicio(s.n,"XL")||0; }
+      cotAddRow({desc:t,cant:1,precio:pr,descPct:0}); n++;
+    });
+    cotAddRow(); cotCalc();
+    if(n) toast("✓ "+n+" trabajo(s) del vehículo cargados a la cotización");
   }
   // vehículos del cliente elegido: últimos 5, priorizando los que aún no tienen cotización
   function cotRefreshVehLink(){
