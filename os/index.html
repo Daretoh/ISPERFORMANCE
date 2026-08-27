@@ -1116,6 +1116,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <h3 style="margin:0">Nueva cotización <span class="tag" id="cot-num-tag">N° —</span></h3>
         </div>
+        <label class="f" id="cot-pend-wrap" style="margin:12px 0 0;display:none"><span class="lab">Pendientes de cotización <span class="hint" style="text-transform:none;letter-spacing:0">— elige uno y se rellena solo</span></span><select id="cot-pend"><option value="">— Elegir vehículo pendiente… —</option></select></label>
         <div class="row c2" style="margin:12px 0 0">
           <label class="f"><span class="lab">Cliente <span class="hint" style="text-transform:none;letter-spacing:0">— empieza por aquí</span></span><input id="cot-nom" list="cot-cli-list" placeholder="Nombre (elige o escribe)"></label>
           <label class="f"><span class="lab">Teléfono</span><input id="cot-tel" placeholder="+569…"></label>
@@ -2152,6 +2153,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     cotAddRow(); cotCalc();
     if(n) toast("✓ "+n+" ítem(s) del vehículo cargados a la cotización");
   }
+  // desplegable de vehículos pendientes de cotización (P.C, sin cotización aún)
+  function cotRefreshPendientes(){
+    var sel=document.getElementById("cot-pend"), wrap=document.getElementById("cot-pend-wrap"); if(!sel||!wrap)return;
+    var pend=(data||[]).filter(function(e){ var s=estadoCot(e); return s && s.t==="P.C"; })
+      .sort(function(a,b){ var fa=a.fCoord||a.fIngreso||"", fb=b.fCoord||b.fIngreso||""; return fa<fb?1:-1; });
+    if(!pend.length){ wrap.style.display="none"; sel.innerHTML='<option value="">— Elegir vehículo pendiente… —</option>'; return; }
+    wrap.style.display="";
+    sel.innerHTML='<option value="">— Elegir vehículo pendiente ('+pend.length+')… —</option>'+pend.map(function(e){ var lbl=nomCliVeh(e)+' · '+limpiaBasura((e.marca||"")+" "+(e.modelo||"")).trim()+(e.patente?(' · '+limpiaBasura(e.patente)):''); return '<option value="'+e.id+'">'+escH(lbl)+'</option>'; }).join("");
+    if(!sel.dataset.b){ sel.dataset.b="1"; sel.addEventListener("change",function(){ var e=(data||[]).filter(function(x){return String(x.id)===sel.value;})[0]; if(!e)return;
+      document.getElementById("cot-nom").value=nomCliVeh(e)||e.cliente||"";
+      document.getElementById("cot-tel").value=e.contacto||"";
+      document.getElementById("cot-veh").value=limpiaBasura((e.marca||"")+" "+(e.modelo||"")).trim();
+      document.getElementById("cot-anio").value=e.anioVeh||"";
+      cotRefreshVehLink(); var vs=document.getElementById("cot-vehid"); if(vs){ vs.value=String(e.id); }
+      cotCargarTrabajosVeh(e); sel.value="";
+    }); }
+  }
   // vehículos del cliente elegido: últimos 5, priorizando los que aún no tienen cotización
   function cotRefreshVehLink(){
     var vs=document.getElementById("cot-vehid"), wrap=document.getElementById("cot-vehid-wrap"); if(!vs||!wrap)return;
@@ -2192,8 +2210,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("cot-descadic").oninput=cotCalc;
     var _cotIva=document.getElementById("cot-iva"); if(_cotIva)_cotIva.onchange=cotCalc;
     cotFillDatalists(); document.getElementById("cot-nom").onchange=cotCliFill; document.getElementById("cot-nom").oninput=cotRefreshVehLink; document.getElementById("cot-tel").oninput=cotRefreshVehLink;
+    cotRefreshPendientes();
     var bs=document.getElementById("cot-buscar"); if(bs && !bs.dataset.done){ bs.oninput=pintarCotList; bs.dataset.done="1"; }
-    if(sb){ sb.from("cotizaciones").select("*").order("numero",{ascending:false}).then(function(r){ if(r.data)_cotiz=r.data; pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); }); } else { pintarCotList(); }
+    if(sb){ sb.from("cotizaciones").select("*").order("numero",{ascending:false}).then(function(r){ if(r.data)_cotiz=r.data; pintarCotList(); cotRefreshPendientes(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); }); } else { pintarCotList(); }
   }
   function pintarCotList(){ var el=document.getElementById("cot-list"); if(!el)return;
     var bs=document.getElementById("cot-buscar"), q=((bs&&bs.value)||"").toLowerCase().trim();
