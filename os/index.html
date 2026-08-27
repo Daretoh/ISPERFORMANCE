@@ -2579,9 +2579,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var trChip=trarr.length?(trPend>0?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'<span class="ktrab-count done">✓ Listas</span>'):'';
         // vista completa (se ve al Editar, vía CSS) — siempre en el DOM
         var flota=flotaDe(e);
-        var flotaSel=flota?('<select class="ktrab-svc" data-id="'+e.id+'"><option value="">＋ Servicio '+escH(flota.nombre)+'…</option>'+Object.keys(flota.precios).map(function(svc){ var pr=flota.precios[svc][((e.talla||"M").toUpperCase())]||flota.precios[svc].M; return '<option value="'+av(svc)+'">'+escH(svc)+' — '+clp(pr)+'</option>'; }).join("")+'</select>'):'';
+        var flotaSel=flota?('<select class="ktrab-svc" data-id="'+e.id+'"><option value="">＋ Agregar servicio…</option>'+Object.keys(flota.precios).map(function(svc){ return '<option value="'+av(svc)+'">'+escH(svc)+'</option>'; }).join("")+'</select>'):'';
         var vtrabFull='<div class="ktrab ktrab-full">'+
-          '<div class="ktrab-head">Trabajos a realizar'+trChip+(flota?' <span class="ktrab-flota">'+escH(flota.nombre)+'</span>':'')+'</div>'+
+          '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
           trHTML+
           '<div class="ktrab-addrow">'+flotaSel+'<input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Otro trabajo (fuera de tarifa) y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'+
           '</div>';
