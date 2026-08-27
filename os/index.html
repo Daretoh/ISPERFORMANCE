@@ -1141,11 +1141,32 @@
         </div>
       </div>
       <div class="card" style="margin-top:16px">
-        <h3>Registro de cotizaciones</h3>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Registro de cotizaciones <button type="button" class="btn primary" id="cons-open" style="white-space:nowrap">📑 Cierre / consolidar</button></h3>
         <input type="search" id="cot-buscar" class="cli-search" placeholder="Buscar por N°, cliente o vehículo…" style="margin:8px 0">
         <div id="cot-list" style="margin-top:8px"></div>
       </div>
     </section>
+
+    <!-- Modal: cierre / cotización consolidada por cliente y rango de fechas -->
+    <div class="cotiz-modal" id="cons-modal">
+      <div class="cotiz-modal-box" style="max-width:900px">
+        <div class="cotiz-modal-bar"><span>📑 Cierre / cotización consolidada</span><div><button class="btn ghost" id="cons-close">Cerrar</button></div></div>
+        <div class="cotiz-modal-body">
+          <div class="row c4" style="margin-bottom:6px">
+            <label class="f" style="grid-column:span 2"><span class="lab">Cliente</span><input id="cons-cli" list="cons-cli-list" placeholder="Ej: Guillermo Morales"><datalist id="cons-cli-list"></datalist></label>
+            <label class="f"><span class="lab">Desde</span><input id="cons-desde" type="date"></label>
+            <label class="f"><span class="lab">Hasta</span><input id="cons-hasta" type="date"></label>
+          </div>
+          <div class="row c4" style="margin-bottom:10px;align-items:end">
+            <label class="f"><span class="lab">Descuento adicional %</span><input id="cons-desc" type="number" min="0" step="0.1" value="0"></label>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600;padding-bottom:10px"><input type="checkbox" id="cons-iva"> Aplicar IVA (19%)</label>
+            <button type="button" class="btn" id="cons-buscar" style="align-self:end">Buscar</button>
+            <button type="button" class="btn primary" id="cons-pdf" style="align-self:end">Generar PDF</button>
+          </div>
+          <div id="cons-prev"><div class="col-empty">Elige cliente y rango de fechas, luego <b>Buscar</b>.</div></div>
+        </div>
+      </div>
+    </div>
 
     <!-- ============ SOLICITUDES (SolPed / reabastecimiento) ============ -->
     <section class="view" id="view-solicitudes">
@@ -2241,6 +2262,68 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("cotiz-modal-body").innerHTML=html;
     document.getElementById("cotiz-modal").classList.add("show");
   }
+  // ---------- Cierre / cotización consolidada ----------
+  var _consList=[];
+  function consNeto(c){ var sub=0; (c.items||[]).forEach(function(it){ sub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); }); return sub-Math.round(sub*(+c.desc_adic_pct||0)/100); }
+  function consAbrir(){
+    var dl=document.getElementById("cons-cli-list"); if(dl){ var nombres={}; (_cotiz||[]).forEach(function(c){ var n=(c.cliente_nombre||"").trim(); if(n)nombres[n]=1; }); dl.innerHTML=Object.keys(nombres).sort().map(function(n){return '<option value="'+av(n)+'">';}).join(""); }
+    var now=new Date(), m0=new Date(now.getFullYear(),now.getMonth(),1);
+    document.getElementById("cons-desde").value=m0.toISOString().slice(0,10);
+    document.getElementById("cons-hasta").value=todayISO();
+    document.getElementById("cons-desc").value="0"; document.getElementById("cons-iva").checked=false;
+    document.getElementById("cons-prev").innerHTML='<div class="col-empty">Elige cliente y rango de fechas, luego <b>Buscar</b>.</div>';
+    _consList=[]; document.getElementById("cons-modal").classList.add("show");
+  }
+  function consFiltrar(){ var cli=(document.getElementById("cons-cli").value||"").trim().toLowerCase(); var d0=document.getElementById("cons-desde").value, d1=document.getElementById("cons-hasta").value;
+    return (_cotiz||[]).filter(function(c){ var f=(c.fecha||"").slice(0,10); if(cli && (c.cliente_nombre||"").toLowerCase().indexOf(cli)<0) return false; if(d0 && f<d0) return false; if(d1 && f>d1) return false; return true; }).sort(function(a,b){ return (a.fecha||"")<(b.fecha||"")?-1:1; }); }
+  function consBuscar(){ _consList=consFiltrar(); var el=document.getElementById("cons-prev");
+    if(!_consList.length){ el.innerHTML='<div class="col-empty">Sin cotizaciones para ese cliente y periodo.</div>'; return; }
+    var da=+document.getElementById("cons-desc").value||0, conIva=document.getElementById("cons-iva").checked, sub=0;
+    var rows=_consList.map(function(c,i){ var nt=consNeto(c); sub+=nt; return '<div class="cot-row"><span><span class="cn">'+(i+1)+'</span> · '+escH(c.vehiculo||"—")+(c.anio?(" "+escH(c.anio)):"")+' · <span style="opacity:.6">N°'+c.numero+' · '+fFecha((c.fecha||"").slice(0,10))+'</span></span><b>'+clp(nt)+'</b></div>'; }).join("");
+    var dval=Math.round(sub*da/100), neto=sub-dval, iva=conIva?Math.round(neto*0.19):0, total=neto+iva;
+    el.innerHTML=rows+'<div class="cotiz-tot-box" style="margin-top:14px;margin-left:auto;max-width:300px">'+
+      '<div><span>Subtotal ('+_consList.length+' veh.)</span><b>'+clp(sub)+'</b></div>'+
+      '<div><span>Descuento'+(da?" "+da+"%":"")+'</span><b>'+clp(dval)+'</b></div>'+
+      (conIva?'<div><span>Neto</span><b>'+clp(neto)+'</b></div><div><span>IVA 19%</span><b>'+clp(iva)+'</b></div>':'')+
+      '<div class="tt"><span>Total</span><b>'+clp(total)+'</b></div></div>';
+  }
+  function consPDF(){ if(!_consList.length){ consBuscar(); } if(!_consList.length){ toast("No hay cotizaciones para consolidar"); return; }
+    var cli=(document.getElementById("cons-cli").value||"").trim()||(_consList[0].cliente_nombre||"—");
+    var d0=document.getElementById("cons-desde").value, d1=document.getElementById("cons-hasta").value;
+    var da=+document.getElementById("cons-desc").value||0, conIva=document.getElementById("cons-iva").checked, sub=0, filas="";
+    _consList.forEach(function(c,i){ var nt=consNeto(c); sub+=nt; var det=(c.items||[]).map(function(it){return (it.desc||"").trim();}).filter(Boolean).join(", ");
+      filas+='<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(c.vehiculo||"—")+(c.anio?(" "+escH(c.anio)):"")+'</td><td class="cp-desc">'+escH(det)+'</td><td class="r">N°'+c.numero+'</td><td class="r">'+clp(nt)+'</td></tr>'; });
+    var dval=Math.round(sub*da/100), neto=sub-dval, iva=conIva?Math.round(neto*0.19):0, total=neto+iva;
+    var per=(d0?fFecha(d0):"—")+" al "+(d1?fFecha(d1):"—");
+    var icoTel='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.7 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.06a2 2 0 0 1 2.11-.45c.74.34 1.53.57 2.34.7A2 2 0 0 1 22 16.92z"/></svg>';
+    var icoMail='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>';
+    var icoWeb='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+    var html='<div class="cp-sheet"><div id="cp-main">'
+      +'<div class="cp-head"><img class="cp-logo-img" src="'+LOGO_ISP_B64+'" alt="IS Performance"><div class="cp-meta"><span>Cierre de servicios</span><b>'+escH(cli)+'</b><span>Periodo: '+per+'</span></div></div>'
+      +'<div class="cp-cliente-box"><div class="cp-cli-title">Resumen del periodo</div><div class="cp-cli-grid">'
+        +'<div><span>Cliente</span><b>'+escH(cli)+'</b></div><div><span>Periodo</span><b>'+per+'</b></div>'
+        +'<div><span>Vehículos</span><b>'+_consList.length+'</b></div><div><span>Emitido</span><b>'+fFecha(todayISO())+'</b></div>'
+      +'</div></div>'
+      +'<table class="cp-table"><colgroup><col style="width:5%"><col style="width:34%"><col style="width:38%"><col style="width:11%"><col style="width:12%"></colgroup><thead><tr><th>#</th><th>Vehículo</th><th>Servicios</th><th class="r">Cotiz.</th><th class="r">Total</th></tr></thead><tbody>'+filas+'</tbody></table>'
+      +'</div><div id="cp-cierre">'
+      +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
+      +'<div class="cp-totbox"><div class="r1"><span>Subtotal ('+_consList.length+' veh.)</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento '+(da?da+"%":"")+'</span><span>'+clp(dval)+'</span></div>'+(conIva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(iva)+'</span></div>'):'')+'<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
+      +'<div class="cp-firma"><div class="ln"></div><b>'+escH(miNombre())+'</b><br><small>Ventas · IS Performance</small></div>'
+      +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
+      +'</div></div>';
+    _cotActual="Cierre "+cli;
+    document.getElementById("cotiz-modal-body").innerHTML=html;
+    document.getElementById("cons-modal").classList.remove("show");
+    document.getElementById("cotiz-modal").classList.add("show");
+  }
+  (function(){ var o=document.getElementById("cons-open"); if(o)o.onclick=consAbrir;
+    var b=document.getElementById("cons-buscar"); if(b)b.onclick=consBuscar;
+    var p=document.getElementById("cons-pdf"); if(p)p.onclick=consPDF;
+    var c=document.getElementById("cons-close"), m=document.getElementById("cons-modal");
+    if(c)c.onclick=function(){m.classList.remove("show");};
+    if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
+    ["cons-cli","cons-desde","cons-hasta"].forEach(function(id){ var e=document.getElementById(id); if(e)e.addEventListener("change",function(){ if((document.getElementById("cons-cli").value||"").trim()) consBuscar(); }); });
+  })();
   (function(){ var a=document.getElementById("cot-add-row"); if(a) a.onclick=function(){ cotAddRow(); };
     var s=document.getElementById("cot-save"); if(s) s.onclick=cotGuardar;
     var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar;
