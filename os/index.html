@@ -747,6 +747,10 @@
   #login .lsub{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:24px;text-align:center;}
   #login label{display:block;font:600 11px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
   #login input{margin-bottom:16px;}
+  #login .lp-wrap{position:relative;}
+  #login .lp-wrap input{margin-bottom:16px;padding-right:44px;width:100%;}
+  #login .lp-eye{position:absolute;top:0;right:0;height:calc(100% - 16px);width:42px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:var(--ink-muted);padding:0;}
+  #login .lp-eye:hover{color:var(--ink);}
   #login .lbtn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;font:700 14px/1 var(--sans);cursor:pointer;}
   #login .lbtn:hover{filter:brightness(1.06);}
   #login .lerr{color:var(--crit);font-size:12.5px;font-weight:600;margin:-6px 0 14px;display:none;}
@@ -775,7 +779,12 @@
       <label for="lu">Correo</label>
       <input id="lu" type="email" autocomplete="username" placeholder="correo@ejemplo.com" required>
       <label for="lp">Contraseña</label>
-      <input id="lp" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      <div class="lp-wrap">
+        <input id="lp" type="password" autocomplete="current-password" placeholder="••••••••" required>
+        <button type="button" class="lp-eye" id="lp-eye" tabindex="-1" aria-label="Mostrar u ocultar contraseña" title="Mostrar/ocultar">
+          <svg id="lp-eye-ico" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
       <div class="lerr" id="lerr">Correo o contraseña incorrectos.</div>
       <button type="submit" class="lbtn">Ingresar</button>
     </form>
@@ -3889,6 +3898,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   });
   sb.auth.onAuthStateChange(function(evt,session){ if(session && evt==='SIGNED_IN'){ entrar(session.user && session.user.email); } });
 
+  (function(){ var eye=document.getElementById('lp-eye'), lp=document.getElementById('lp'), ico=document.getElementById('lp-eye-ico');
+    if(eye&&lp) eye.addEventListener('click',function(){ var show=lp.type==='password'; lp.type=show?'text':'password';
+      if(ico) ico.innerHTML=show?'<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>':'<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>';
+      lp.focus(); }); })();
   form.addEventListener('submit',function(e){
     e.preventDefault();
     err.classList.remove('show');
