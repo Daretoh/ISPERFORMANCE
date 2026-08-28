@@ -966,6 +966,7 @@
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
         <button id="stock-import-qui" class="btn" style="display:none;white-space:nowrap">＋ Importar de Químicos</button>
         <button id="stock-gen-sku" class="btn" style="white-space:nowrap" title="Asigna un código SKU a los productos que aún no tienen">＃ Generar SKU</button>
+        <button id="stock-ingreso" class="btn primary" style="white-space:nowrap" title="Ingresar varios productos de una factura/guía a la vez">＋ Ingreso</button>
         <button id="stock-trasm" class="btn" style="white-space:nowrap" title="Mover varios productos entre almacenes de una vez">⇄ Traslado múltiple</button>
       </div>
       <details class="stock-newwrap">
@@ -1351,6 +1352,7 @@
         <label class="f"><span class="lab">Documento</span><select id="fact-doc"><option>Factura</option><option>Guía</option><option>Boleta</option><option>Sin documento</option></select></label>
         <label class="f"><span class="lab">N° documento</span><input id="fact-num" placeholder="Ej: 12345"></label>
         <label class="f"><span class="lab">Fecha</span><input id="fact-fecha" type="date"></label>
+        <label class="f"><span class="lab">Almacén (entra a)</span><select id="fact-alm"></select></label>
       </div>
       <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span></span></div>
       <div id="fact-lines"></div>
@@ -3837,6 +3839,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var t=document.getElementById("fact-total"); if(t)t.textContent=clp(c.total); }
   function abrirFactura(){ document.getElementById("fact-prov").value=""; document.getElementById("fact-num").value=""; document.getElementById("fact-doc").value="Factura"; document.getElementById("fact-fecha").value=todayISO();
     document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total"; document.getElementById("fact-gasto").checked=true;
+    var fa=document.getElementById("fact-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
     document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
     document.getElementById("fact-modal").classList.add("show"); }
   function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
@@ -3847,17 +3850,18 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     // prorratea el neto entre las líneas por cantidad (solo para trazar el costo del movimiento)
     var totCant=lines.reduce(function(a,l){return a+l.cant;},0)||1;
     var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"ENTRADA", cantidad:l.cant, fecha:fecha, doc_tipo:doc, doc_num:num, proveedor:prov, costo:Math.round(c.neto*(l.cant/totCant)), autor:(window.ISP_EMAIL||"") }; });
+    var alm=(document.getElementById("fact-alm")||{}).value||ALM_DEFAULT;
     sb.from("movimientos").insert(rows).select().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
-      lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; saveProducto(l.p); }); // solo suma stock; no toca el costo unitario
+      lines.forEach(function(l){ almInit(l.p); l.p.entrada=(+l.p.entrada||0)+l.cant; l.p.stock_alm[alm]=(+l.p.stock_alm[alm]||0)+l.cant; saveProducto(l.p);
+        registrarAccion({ tipo:"INGRESO", fecha:fecha, cantidad:l.cant, descripcion:"Ingreso · "+(l.p.producto||""), monto:Math.round(c.neto*(l.cant/totCant)), ref_tipo:doc, ref_num:num, proveedor:prov, producto_id:l.p.id, almacen:alm }); });
       if(regGasto && c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):"")}); }
-      registrarAccion({ tipo:"INGRESO", fecha:fecha, descripcion:"Ingreso factura · "+lines.length+" material(es)"+(prov?(" · "+prov):""), monto:c.total, cantidad:totCant, ref_tipo:doc, ref_num:num, proveedor:prov });
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
       toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(regGasto&&c.total>0?" · gasto en Costos":""));
     });
   }
   (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
-    if(o)o.onclick=abrirFactura; if(s)s.onclick=guardarFactura; if(a)a.onclick=factAddLine;
+    if(o)o.onclick=abrirFactura; var oi=document.getElementById("stock-ingreso"); if(oi)oi.onclick=abrirFactura; if(s)s.onclick=guardarFactura; if(a)a.onclick=factAddLine;
     var mto=document.getElementById("fact-monto"); if(mto)mto.oninput=factTotal;
     var ivm=document.getElementById("fact-ivamode"); if(ivm)ivm.onchange=factTotal;
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
@@ -3937,7 +3941,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       return '<tr>'+skuTd+'<td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'<div style="font-size:9.5px;color:var(--ink-muted);font-weight:400">'+Object.keys(almMap(p)).map(function(cod){return escH(cod)+' '+(+almMap(p)[cod]||0);}).join(' · ')+'</div></td>'+
-        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button> <button class="stk-btn tras" data-id="'+p.id+'" title="Traslado entre almacenes">⇄</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
+        '<td class="r" style="white-space:nowrap"><button class="stk-btn sal" data-id="'+p.id+'">Salida</button> <button class="stk-btn tras" data-id="'+p.id+'" title="Traslado entre almacenes">⇄</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
     var th34=esInsumo?'<th>Unidad</th><th>Rotación</th>':'<th>Compatibilidad</th><th>Medidas</th>';
