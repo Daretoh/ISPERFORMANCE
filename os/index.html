@@ -1332,10 +1332,11 @@
       <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
       <div class="gal-filter" id="media-modal-filter"></div>
       <div class="media-modal-body" id="media-modal-body"></div>
-      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">＋ Agregar archivos</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
+      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">＋ Agregar archivos</button><button type="button" class="btn" id="media-modal-scan">📷 Escanear / foto</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
     </div>
   </div>
   <input type="file" id="media-modal-input" multiple hidden>
+  <input type="file" id="media-modal-cam" accept="image/*" capture="environment" hidden>
 
   <div class="media-modal" id="evento-modal">
     <div class="media-modal-box" style="max-width:440px">
@@ -2551,22 +2552,26 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   document.getElementById("media-modal-close").addEventListener("click",function(){ _mm.classList.remove("show"); });
   _mm.addEventListener("click",function(ev){ if(ev.target===_mm) _mm.classList.remove("show"); });
+  var _mmCam=document.getElementById("media-modal-cam");
   _mmAdd.addEventListener("click",function(){ _mmInput.click(); });
+  var _mmScan=document.getElementById("media-modal-scan");
+  if(_mmScan) _mmScan.addEventListener("click",function(){ _mmCam.click(); }); // en el celular abre la cámara directo
   var _mmProg=document.getElementById("media-modal-prog"), _mmBar=document.getElementById("media-modal-progbar"), _mmTxt=document.getElementById("media-modal-progtxt");
-  _mmInput.addEventListener("change",function(){
-    if(!_galCtx)return; var files=Array.prototype.slice.call(_mmInput.files); if(!files.length)return;
-    _mmInput.value=""; _mmAdd.disabled=true;
+  function _mmProcesar(files){
+    if(!_galCtx||!files.length)return; _mmAdd.disabled=true; if(_mmScan)_mmScan.disabled=true;
     _mmProg.classList.add("show"); _mmTxt.classList.add("show"); _mmBar.style.width="0%";
     var total=files.length, ok=0, fail=0, i=0;
     function siguiente(){
-      if(i>=total){ _mmAdd.disabled=false; _mmAdd.textContent="＋ Agregar archivos"; _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); _galCtx.onChange(); galRender();
+      if(i>=total){ _mmAdd.disabled=false; if(_mmScan)_mmScan.disabled=false; _mmAdd.textContent="＋ Agregar archivos"; _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); _galCtx.onChange(); galRender();
         toast(ok+" archivo(s) guardado(s)"+(fail?" · "+fail+" no subieron (¿muy pesados? máx ~50MB)":"")); return; }
       var f=files[i]; i++;
       _mmTxt.textContent="Subiendo "+i+" de "+total+"  ·  "+f.name.slice(0,24)+"  ("+Math.max(1,Math.round(f.size/1048576))+" MB)";
       subirArchivo(f,_galCtx.carpeta).then(function(d){ if(d){ d.cat=(_galCtx.filter&&_galCtx.filter!=="TODOS")?_galCtx.filter:(_galCtx.defCat||""); ok++; _galCtx.media.push(d); galFilterRender(); galRender(); } else { fail++; } _mmBar.style.width=Math.round(i/total*100)+"%"; siguiente(); });
     }
     siguiente();
-  });
+  }
+  _mmInput.addEventListener("change",function(){ var files=Array.prototype.slice.call(_mmInput.files); _mmInput.value=""; _mmProcesar(files); });
+  _mmCam.addEventListener("change",function(){ var files=Array.prototype.slice.call(_mmCam.files); _mmCam.value=""; _mmProcesar(files); });
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
     document.getElementById("r-svc").textContent=chosenSvcs.length;
