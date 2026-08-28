@@ -1116,6 +1116,16 @@
           <div id="acc-list" style="margin-top:8px"></div>
         </div>
       </div>
+      <div class="card" style="margin-top:16px">
+        <h3>🧾 OpenFactura — prueba de conexión</h3>
+        <p class="hint" style="display:block;margin:6px 0 12px;font-size:12px;color:var(--ink-muted)">Prueba que el puente a OpenFactura responde. Elige un endpoint y toca Probar.</p>
+        <div class="row c3" style="align-items:end;gap:10px">
+          <label class="f"><span class="lab">Método</span><select id="of-method"><option>GET</option><option>POST</option></select></label>
+          <label class="f" style="grid-column:span 2"><span class="lab">Ruta (empieza con /v2/)</span><input id="of-path" value="/v2/dte/document/received" placeholder="/v2/dte/document/received"></label>
+        </div>
+        <button class="btn primary" id="of-test" style="margin-top:12px">Probar conexión</button>
+        <pre id="of-out" style="margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;color:var(--ink-2)">(sin resultado aún)</pre>
+      </div>
     </section>
 
     <!-- ============ COTIZACIONES ============ -->
@@ -2059,6 +2069,19 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
     var pbox=document.getElementById("acc-permisos");
     if(pbox && !pbox.dataset.done){ pbox.innerHTML=PERM_CAT.map(function(g){ return '<div class="acc-permgrp"><div class="acc-permgrp-t">'+escH(g.l)+'</div>'+g.a.map(function(p){ return '<label><input type="checkbox" value="'+p[0]+'">'+escH(p[1])+'</label>'; }).join("")+'</div>'; }).join(""); pbox.dataset.done="1"; }
+    var oft=document.getElementById("of-test");
+    if(oft && !oft.dataset.done){ oft.dataset.done="1"; oft.addEventListener("click",function(){
+      var out=document.getElementById("of-out"); var sb=sbc();
+      if(!sb||!sb.functions){ out.textContent="Sin conexión a Supabase."; return; }
+      var method=document.getElementById("of-method").value, path=document.getElementById("of-path").value.trim();
+      out.textContent="Probando "+method+" "+path+" …"; oft.disabled=true;
+      sb.functions.invoke("openfactura",{ body:{ method:method, path:path } }).then(function(r){
+        oft.disabled=false;
+        if(r.error){ out.textContent="⚠ Error del puente:\n"+JSON.stringify(r.error,null,2)+"\n\n(¿desplegaste la función 'openfactura' y pusiste los secretos?)"; return; }
+        var d=r.data||{};
+        out.textContent="Respuesta del puente (status "+(d.status||"?")+", ok="+d.ok+"):\n\n"+(d.pdf_base64?("[PDF recibido, "+d.pdf_base64.length+" bytes base64]"):JSON.stringify(d.json!=null?d.json:d,null,2)).slice(0,4000);
+      },function(e){ oft.disabled=false; out.textContent="⚠ No se pudo llamar al puente:\n"+String(e&&e.message||e); });
+    }); }
     var rolEl=document.getElementById("acc-rol");
     if(rolEl && !rolEl.dataset.done){ rolEl.innerHTML='<option value="">— Sin rol / personalizado —</option>'+ROLES_PRESET.map(function(r){ return '<option value="'+av(r.nombre)+'">'+escH(r.nombre)+'</option>'; }).join(""); rolEl.dataset.done="1";
       rolEl.addEventListener("change",function(){ var r=ROLES_PRESET.filter(function(x){return x.nombre===rolEl.value;})[0]; if(r) accSetChecks(r.vistas, r.permisos); }); }
