@@ -2734,12 +2734,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '</div>';
         // tareas del servicio: visibles siempre (no solo al editar)
         var vsvcInc=svcIncHTML?('<div class="svc-inc-wrap">'+svcIncHTML+'</div>'):'';
-        // vista compacta (card cerrada): solo el próximo paso pendiente
+        // vista compacta (card cerrada): TODAS las tareas pendientes (marcables)
         var vtrabCompact='';
         if(trarr.length){
-          var nextI=-1; for(var _ti=0;_ti<trarr.length;_ti++){ if(!trarr[_ti].ok){ nextI=_ti; break; } }
-          if(nextI>=0){
-            vtrabCompact='<div class="ktrab-next"><label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+nextI+'"><span>'+escH(trarr[nextI].t||"")+'</span></label>'+(trPend>1?'<span class="ktrab-count pend">Faltan '+trPend+'</span>':'')+'</div>';
+          var pend=[]; for(var _ti=0;_ti<trarr.length;_ti++){ if(!trarr[_ti].ok) pend.push(_ti); }
+          if(pend.length){
+            vtrabCompact='<div class="ktrab-next">'+pend.map(function(idx){ return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+idx+'"><span>'+escH(trarr[idx].t||"")+'</span></label>'; }).join("")+'</div>';
           } else {
             vtrabCompact='<div class="ktrab-next allok"><span class="ktrab-count done">✓ Trabajos listos</span></div>';
           }
