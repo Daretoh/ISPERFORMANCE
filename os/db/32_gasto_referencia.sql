@@ -5,3 +5,5 @@
 -- Pegar en Supabase > SQL Editor > Run. Seguro de re-ejecutar.
 -- ============================================================
 alter table gastos add column if not exists referencia text;
+-- vincula el costo al movimiento de inventario que lo origino (evita duplicar al recargar)
+alter table gastos add column if not exists mov_id text;

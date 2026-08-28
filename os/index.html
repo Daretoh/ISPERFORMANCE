@@ -920,7 +920,7 @@
       <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1></div>
       <div class="dash-grid one">
         <div class="chart">
-          <h3><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Gastos del taller<span class="tag">comunes</span></h3>
+          <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Gastos del taller</span><button type="button" class="btn" id="costos-import-mov" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">↺ Cargar ingresos con precio</button></h3>
           <form id="gasto-form" class="row c3" autocomplete="off" style="margin-bottom:16px">
             <label class="f"><span class="lab">Concepto</span><input name="gCon" required placeholder="Arriendo, luz, insumos…"></label>
             <label class="f"><span class="lab">Tipo</span><select name="gTipo"><option>FIJO</option><option>VARIABLE</option></select></label>
@@ -1440,7 +1440,7 @@
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
   function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
-  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", media:(r.media||[])}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", mov_id:r.mov_id||null, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
   // Bandeja de avisos: cada accion deja un aviso para el equipo (lo reparte el robot + apps abiertas)
   function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
@@ -1454,11 +1454,28 @@
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),media:[]};
+    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),media:[]};
     function ins(rw,retry){ return sb.from('gastos').insert(rw).select().single().then(function(r){
-      if(r.error){ if(retry && /referencia|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="referencia")rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
+      if(r.error){ if(retry && /referencia|mov_id|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="referencia"&&k!=="mov_id")rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
       gastos.unshift(gastoFromDB(r.data)); }); }
     return ins(row,true);
+  }
+  // Carga a Costos los ingresos de Inventario (movimientos ENTRADA con costo) que aún no estén, sin duplicar
+  function costosDesdeMovimientos(){
+    var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var hechos={}; (gastos||[]).forEach(function(g){ if(g.mov_id) hechos[String(g.mov_id)]=1; });
+    sb.from("movimientos").select("*").eq("tipo","ENTRADA").then(function(r){
+      if(r.error){ toast("⚠ No se pudieron leer los movimientos"); return; }
+      var pend=(r.data||[]).filter(function(m){ return (+m.costo)>0 && !hechos[String(m.id)]; });
+      if(!pend.length){ toast("No hay ingresos con precio pendientes de cargar ✓"); return; }
+      if(!confirm("Se cargarán "+pend.length+" ingreso(s) con precio a Costos (sin duplicar). ¿Continuar?")) return;
+      var total=pend.length, done=0;
+      pend.forEach(function(m){
+        var prod=(productos.filter(function(x){return String(x.id)===String(m.producto_id);})[0]||{}).producto||"Materiales";
+        var con="Materiales · "+prod+(m.proveedor?(" · "+m.proveedor):"");
+        addGastoDB({con:con, tipo:"VARIABLE", monto:+m.costo, fecha:m.fecha||todayISO(), ref:(m.doc_num?((m.doc_tipo||"")+" "+m.doc_num):""), mov_id:m.id}).then(function(){ done++; if(done>=total){ renderCostos(); toast("✓ "+total+" ingreso(s) cargados a Costos"); } });
+      });
+    });
   }
   function updateGastoDB(g){ var sb=sbc(); if(sb) sb.from('gastos').update({media:g.media}).eq('id',g.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
   function delGastoDB(id){ var sb=sbc(); if(sb) sb.from('gastos').delete().eq('id',id).then(function(){}); }
@@ -2995,6 +3012,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var rowsHTML=listaG.map(gastoRowHTML).join("")||'<div class="col-empty">Sin gastos aún</div>';
     var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>':'';
     document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+'<div class="gasto-rows'+(gtab==="todos"?" full":"")+'">'+rowsHTML+'</div>';
+    var imb=document.getElementById("costos-import-mov"); if(imb && !imb.dataset.b){ imb.dataset.b="1"; imb.addEventListener("click",costosDesdeMovimientos); }
     document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ state.costGTab=b.dataset.gtab; renderCostos(); }); });
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
@@ -3347,7 +3365,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var gOk=false; var mg=document.getElementById("mov-gasto");
       if(tipo==="ENTRADA" && mg && mg.checked && (+row.costo)>0){
         var con="Materiales · "+(p.producto||"")+(row.proveedor?(" · "+row.proveedor):"");
-        addGastoDB({con:con, tipo:"VARIABLE", monto:+row.costo, fecha:row.fecha, ref:(row.doc_num?(row.doc_tipo+" "+row.doc_num):"")}); gOk=true;
+        addGastoDB({con:con, tipo:"VARIABLE", monto:+row.costo, fecha:row.fecha, ref:(row.doc_num?(row.doc_tipo+" "+row.doc_num):""), mov_id:(r.data&&r.data.id)}); gOk=true;
       }
       document.getElementById("mov-modal").classList.remove("show"); renderStock();
       toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":"")+(gOk?" · gasto en Costos":""));
