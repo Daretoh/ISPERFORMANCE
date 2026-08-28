@@ -1290,6 +1290,7 @@
         </span>
         <label class="f" id="mov-salida-fields" style="grid-column:1/-1;display:none"><span class="lab">Motivo / uso (opcional)</span><input id="mov-motivo" placeholder="Para qué se usó"></label>
       </div>
+      <label id="mov-gasto-wrap" style="display:flex;align-items:center;gap:8px;margin:0 0 12px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="mov-gasto" checked> Registrar también como gasto en Costos</label>
       <div style="display:flex;gap:8px"><button class="btn primary" id="mov-save">Guardar</button><button class="btn ghost" id="mov-cancel">Cancelar</button></div>
     </div>
   </div>
@@ -3277,6 +3278,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("mov-entrada-fields").style.display=(tipo==="ENTRADA")?"contents":"none";
     document.getElementById("mov-salida-fields").style.display=(tipo==="SALIDA")?"":"none";
     document.getElementById("mov-solped-wrap").style.display=(tipo==="ENTRADA")?"":"none";
+    var mgw=document.getElementById("mov-gasto-wrap"); if(mgw){ mgw.style.display=(tipo==="ENTRADA")?"flex":"none"; var mg=document.getElementById("mov-gasto"); if(mg)mg.checked=true; }
     // selector de producto: solo cuando se recibe sin producto ligado
     var pw=document.getElementById("mov-prod-wrap"), psel=document.getElementById("mov-prod");
     if(pw && psel){ if(tipo==="ENTRADA" && !producto){ pw.style.display="";
@@ -3334,8 +3336,14 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       else { p.salida=(+p.salida||0)+cant; }
       saveProducto(p);
       if(solId){ var sp=_solped.filter(function(x){return x.id===solId;})[0]; if(sp){ sp.estado="RECIBIDA"; sb.from("solicitudes").update({estado:"RECIBIDA"}).eq("id",solId).then(function(){}); updateCounts(); } }
+      // registra el ingreso como gasto en Costos (si el usuario lo dejó marcado y hay costo)
+      var gOk=false; var mg=document.getElementById("mov-gasto");
+      if(tipo==="ENTRADA" && mg && mg.checked && (+row.costo)>0){
+        var con="Materiales · "+(p.producto||"")+(row.proveedor?(" · "+row.proveedor):"")+(row.doc_num?(" · "+row.doc_tipo+" N°"+row.doc_num):"");
+        addGastoDB({con:con, tipo:"VARIABLE", monto:+row.costo, fecha:row.fecha}); gOk=true;
+      }
       document.getElementById("mov-modal").classList.remove("show"); renderStock();
-      toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":""));
+      toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":"")+(gOk?" · gasto en Costos":""));
     });
   }
   (function(){ var s=document.getElementById("mov-save"), c=document.getElementById("mov-cancel"), x=document.getElementById("mov-close"), m=document.getElementById("mov-modal");
