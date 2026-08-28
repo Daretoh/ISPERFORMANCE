@@ -208,7 +208,7 @@
   .kpi-detail h4{margin:0 0 12px;font:700 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);}
 
   .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
-  .dash-grid.one{grid-template-columns:1fr;max-width:680px;}
+  .dash-grid.one{grid-template-columns:1fr;}
   @media (max-width:880px){.dash-grid{grid-template-columns:1fr;}}
   .chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;}
   .chart h3{margin:0 0 15px;font-size:.95rem;font-weight:750;letter-spacing:-.01em;display:flex;align-items:center;justify-content:space-between;}
@@ -297,9 +297,12 @@
   .dup-motivo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--warn);background:var(--surface);border-radius:99px;padding:2px 7px;margin-left:4px;}
   .dup-unir{flex:none;border:1px solid var(--warn);background:var(--warn);color:#fff;border-radius:8px;padding:5px 13px;font:700 12px/1 var(--sans);cursor:pointer;}
   /* ---- Permisos de acción: ocultan controles según el rol/permiso ---- */
-  .acc-permgrp{margin-bottom:10px;}
-  .acc-permgrp-t{font:800 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 4px;}
-  #acc-permisos label{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 2px;cursor:pointer;color:var(--ink-2);}
+  .acc-permgrp{margin-bottom:14px;}
+  .acc-permgrp-t{font:800 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--accent-ink);margin:0 0 6px;}
+  .acc-permgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;}
+  @media (max-width:560px){.acc-permgrid{grid-template-columns:1fr;}}
+  #acc-permisos label{display:flex;align-items:center;justify-content:flex-start;text-align:left;gap:8px;font-size:12.5px;line-height:1.25;padding:6px 2px;cursor:pointer;color:var(--ink-2);}
+  #acc-permisos label input{flex:0 0 auto;width:16px;height:16px;margin:0;accent-color:var(--accent);}
   body.perm-no-seg_avanzar .kbtn, body.perm-no-seg_avanzar #vd-back, body.perm-no-seg_avanzar #vd-fwd{display:none!important;}
   body.perm-no-seg_editar .kedit-toggle, body.perm-no-seg_editar #vd-edit{display:none!important;}
   body.perm-no-seg_trabajos .ktrab-addrow, body.perm-no-seg_trabajos .ktrab-del, body.perm-no-seg_trabajos .svc-inc-add{display:none!important;}
@@ -2122,7 +2125,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var box=document.getElementById("acc-vistas");
     if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
     var pbox=document.getElementById("acc-permisos");
-    if(pbox && !pbox.dataset.done){ pbox.innerHTML=PERM_CAT.map(function(g){ return '<div class="acc-permgrp"><div class="acc-permgrp-t">'+escH(g.l)+'</div>'+g.a.map(function(p){ return '<label><input type="checkbox" value="'+p[0]+'">'+escH(p[1])+'</label>'; }).join("")+'</div>'; }).join(""); pbox.dataset.done="1"; }
+    if(pbox && !pbox.dataset.done){ pbox.innerHTML=PERM_CAT.map(function(g){ return '<div class="acc-permgrp"><div class="acc-permgrp-t">'+escH(g.l)+'</div><div class="acc-permgrid">'+g.a.map(function(p){ return '<label><input type="checkbox" value="'+p[0]+'">'+escH(p[1])+'</label>'; }).join("")+'</div></div>'; }).join(""); pbox.dataset.done="1"; }
     var oft=document.getElementById("of-test");
     if(oft && !oft.dataset.done){ oft.dataset.done="1"; oft.addEventListener("click",function(){
       var out=document.getElementById("of-out"); var sb=sbc();
