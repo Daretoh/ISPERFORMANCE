@@ -1034,7 +1034,7 @@
     <section class="view" id="view-movimientos">
       <div class="vhead"><div class="eye">Trazabilidad</div><h1>Movimientos</h1></div>
       <div class="card">
-        <div class="pfilter" id="mv-filtro" style="margin-bottom:12px"><button data-t="TODOS" class="on">Todos</button><button data-t="COBRO">Cobros</button><button data-t="INGRESO">Ingresos</button><button data-t="SALIDA">Salidas</button><button data-t="GASTO">Gastos</button></div>
+        <div class="pfilter" id="mv-filtro" style="margin-bottom:12px"><button data-t="TODOS" class="on">Todos</button><button data-t="COBRO">Cobros</button><button data-t="INGRESO">Ingresos</button><button data-t="SALIDA">Salidas</button><button data-t="TRASLADO">Traslados</button><button data-t="GASTO">Gastos</button></div>
         <input type="search" id="mv-buscar" class="cli-search" placeholder="🔍 Buscar por N°, descripción, proveedor, documento, monto…" style="margin:0 0 12px">
         <div id="mv-resumen" style="margin-bottom:12px"></div>
         <div id="mv-list"></div>
@@ -1306,8 +1306,23 @@
         </span>
         <label class="f" id="mov-salida-fields" style="grid-column:1/-1;display:none"><span class="lab">Motivo / uso (opcional)</span><input id="mov-motivo" placeholder="Para qué se usó"></label>
       </div>
+      <label class="f" id="mov-alm-wrap" style="margin:0 0 12px;display:none"><span class="lab" id="mov-alm-lab">Almacén</span><select id="mov-alm"></select></label>
       <label id="mov-gasto-wrap" style="display:flex;align-items:center;gap:8px;margin:0 0 12px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="mov-gasto" checked> Registrar también como gasto en Costos</label>
       <div style="display:flex;gap:8px"><button class="btn primary" id="mov-save">Guardar</button><button class="btn ghost" id="mov-cancel">Cancelar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal de traslado entre almacenes -->
+  <div class="mov-modal" id="tras-modal">
+    <div class="mov-box">
+      <div class="mov-head"><h3 id="tras-title">Traslado entre almacenes</h3><button id="tras-close" aria-label="Cerrar">×</button></div>
+      <div id="tras-info" style="font-size:13px;color:var(--ink-muted);margin:12px 0"></div>
+      <div class="row c3" style="margin:12px 0">
+        <label class="f"><span class="lab">Desde</span><select id="tras-from"></select></label>
+        <label class="f"><span class="lab">Hacia</span><select id="tras-to"></select></label>
+        <label class="f"><span class="lab">Cantidad</span><input id="tras-cant" type="number" min="1" value="1"></label>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn primary" id="tras-save">Trasladar</button><button class="btn ghost" id="tras-cancel">Cancelar</button></div>
     </div>
   </div>
 
@@ -1564,7 +1579,9 @@
     return sb.from("acciones").insert(row).select().single().then(function(r){ if(!r.error && r.data){ _acciones.unshift(r.data); } return r&&r.data; }, function(){ return null; });
   }
   var _mvFiltro="TODOS";
-  function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],GASTO:['#7c3aed','Gasto'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
+  function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],TRASLADO:['#0891b2','Traslado'],GASTO:['#7c3aed','Gasto'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
+  function accProdTxt(a){ if(!a.producto_id)return ""; var p=(productos||[]).filter(function(x){return String(x.id)===String(a.producto_id);})[0]; if(!p)return ""; return (p.sku?(p.sku+" · "):"")+(p.producto||""); }
+  function accAlmTxt(a){ var al=a.almacen||""; if(!al)return ""; if(al.indexOf("→")>=0){ var pz=al.split("→"); return almNombre(pz[0])+" → "+almNombre(pz[1]); } return almNombre(al); }
   function renderMovimientosLibro(){ var sb=sbc();
     if(sb){ sb.from("acciones").select("*").order("num",{ascending:false}).then(function(r){ if(!r.error && r.data) _acciones=r.data; pintarMovimientos(); }, function(){ pintarMovimientos(); }); } else pintarMovimientos();
     var bs=document.getElementById("mv-buscar"); if(bs && !bs.dataset.b){ bs.dataset.b="1"; bs.oninput=pintarMovimientos; }
@@ -1573,11 +1590,11 @@
   function pintarMovimientos(){ var el=document.getElementById("mv-list"); if(!el)return;
     var q=((document.getElementById("mv-buscar")||{}).value||"").toLowerCase().trim();
     var list=(_acciones||[]).filter(function(a){ if(_mvFiltro!=="TODOS" && (a.tipo||"")!==_mvFiltro) return false; if(!q) return true;
-      return ((accFmt(a.num)+" "+(a.descripcion||"")+" "+(a.proveedor||"")+" "+(a.ref_tipo||"")+" "+(a.ref_num||"")+" "+(a.monto||"")+" "+(a.tipo||"")).toLowerCase().indexOf(q)>=0); });
+      return ((accFmt(a.num)+" "+(a.descripcion||"")+" "+(a.proveedor||"")+" "+(a.ref_tipo||"")+" "+(a.ref_num||"")+" "+(a.monto||"")+" "+(a.tipo||"")+" "+accProdTxt(a)+" "+accAlmTxt(a)+" "+(a.autor||"")).toLowerCase().indexOf(q)>=0); });
     var tot={}; list.forEach(function(a){ tot[a.tipo]=(tot[a.tipo]||0)+(+a.monto||0); });
     var res=document.getElementById("mv-resumen"); if(res){ res.innerHTML='<div class="gasto-resumen">'+["COBRO","INGRESO","GASTO"].map(function(t){ return '<div><span>'+accTipoChip(t)+'</span><b>'+clp(tot[t]||0)+'</b></div>'; }).join("")+'<div class="tot"><span>Acciones</span><b>'+list.length+'</b></div></div>'; }
-    el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Documento</th><th class="r">Monto</th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):"");
-      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+escH(a.descripcion||"")+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td>'+escH(ref||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
+    el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Producto / detalle</th><th class="r">Cant</th><th>Almacén</th><th>Documento</th><th>Quién</th><th class="r">Monto</th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):""); var prod=accProdTxt(a);
+      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+(prod?('<b>'+escH(prod)+'</b>'):escH(a.descripcion||"—"))+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td class="r">'+(a.cantidad!=null?a.cantidad:"—")+'</td><td>'+escH(accAlmTxt(a)||"—")+'</td><td>'+escH(ref||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+escH((a.autor||"").split("@")[0]||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
   }
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
@@ -3620,7 +3637,18 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     renderStock(); toast("✓ "+n+" código(s) SKU generados");
   }
   function addProductoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('productos').insert(o).select().single().then(function(r){ if(!r.error) productos.push(r.data); else toast('⚠ Error'); }); }
-  function saveProducto(p){ var sb=sbc(); if(sb) sb.from('productos').update({entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,familia:p.familia||null,presentacion:p.presentacion||null,contenido:p.contenido||null,ubicacion:p.ubicacion||null,stock_min:p.stock_min||0,sku:p.sku||null,costo:p.costo,precio:p.precio}).eq('id',p.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  function saveProducto(p){ var sb=sbc(); if(!sb)return;
+    var upd={entrada:p.entrada,salida:p.salida,producto:p.producto,marca:p.marca,compatibilidad:p.compatibilidad,medidas:p.medidas,tipo:p.tipo,categoria:p.categoria||'VENTA',udm:p.udm||null,familia:p.familia||null,presentacion:p.presentacion||null,contenido:p.contenido||null,ubicacion:p.ubicacion||null,stock_min:p.stock_min||0,sku:p.sku||null,stock_alm:(p.stock_alm||null),costo:p.costo,precio:p.precio};
+    function up(u,retry){ sb.from('productos').update(u).eq('id',p.id).then(function(r){ if(r.error){ if(retry && /stock_alm|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var u2={}; Object.keys(u).forEach(function(k){ if(k!=="stock_alm")u2[k]=u[k]; }); up(u2,false); return; } toast('⚠ No se pudo guardar'); } }); }
+    up(upd,true);
+  }
+  // ---- Almacenes codificados (ubicaciones de stock) ----
+  var ALMACENES=[{cod:'BOD',nombre:'Bodega'},{cod:'POS',nombre:'POS / Mesón'}];
+  var ALM_DEFAULT='BOD';
+  function almNombre(cod){ var a=ALMACENES.filter(function(x){return x.cod===cod;})[0]; return a?a.nombre:(cod||'—'); }
+  function almMap(p){ if(p.stock_alm && typeof p.stock_alm==='object' && Object.keys(p.stock_alm).length) return p.stock_alm; var o={}; o[ALM_DEFAULT]=stockDe(p); return o; }
+  function almStock(p,cod){ var m=almMap(p); return +m[cod]||0; }
+  function almInit(p){ if(!(p.stock_alm && Object.keys(p.stock_alm).length)){ p.stock_alm={}; p.stock_alm[ALM_DEFAULT]=stockDe(p); } return p.stock_alm; }
   function delProductoDB(id){ var sb=sbc(); if(sb) sb.from('productos').delete().eq('id',id).then(function(){}); }
   function kstat(l,v,s){ return '<div class="kpi" style="cursor:default"><div class="kl">'+l+'</div><div class="kv">'+v+'</div><div class="ks">'+s+'</div></div>'; }
   var _movs=[], _movCtx=null;
@@ -3632,6 +3660,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("mov-salida-fields").style.display=(tipo==="SALIDA")?"":"none";
     document.getElementById("mov-solped-wrap").style.display=(tipo==="ENTRADA")?"":"none";
     var mgw=document.getElementById("mov-gasto-wrap"); if(mgw){ mgw.style.display=(tipo==="ENTRADA")?"flex":"none"; var mg=document.getElementById("mov-gasto"); if(mg)mg.checked=true; }
+    var amw=document.getElementById("mov-alm-wrap"), asel=document.getElementById("mov-alm"), alab=document.getElementById("mov-alm-lab");
+    if(amw && asel){ amw.style.display=""; alab.textContent=(tipo==="ENTRADA")?"Almacén (entra a)":"Almacén (sale de)";
+      asel.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+(producto?(" · "+almStock(producto,a.cod)):"")+'</option>'; }).join(""); asel.value=ALM_DEFAULT; }
     // selector de producto: solo cuando se recibe sin producto ligado
     var pw=document.getElementById("mov-prod-wrap"), psel=document.getElementById("mov-prod");
     if(pw && psel){ if(tipo==="ENTRADA" && !producto){ pw.style.display="";
@@ -3683,10 +3714,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(tipo==="ENTRADA"){ row.doc_tipo=document.getElementById("mov-doc").value; row.doc_num=(document.getElementById("mov-docnum").value||"").trim(); row.proveedor=(document.getElementById("mov-prov").value||"").trim(); row.costo=parseInt(document.getElementById("mov-costo").value,10)||0;
       solId=document.getElementById("mov-solped").value; if(solId){ var sp0=_solped.filter(function(x){return x.id===solId;})[0]; if(sp0){ row.solped_id=sp0.id; row.solped_num=sp0.numero||null; } } }
     else { row.motivo=(document.getElementById("mov-motivo").value||"").trim(); }
+    var _almSel=(document.getElementById("mov-alm")||{}).value||ALM_DEFAULT;
     sb.from("movimientos").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
       _movs.unshift(r.data);
-      if(tipo==="ENTRADA"){ p.entrada=(+p.entrada||0)+cant; if(row.costo&&cant) p.costo=Math.round(row.costo/cant); }
-      else { p.salida=(+p.salida||0)+cant; }
+      almInit(p); // asegura desglose por almacén
+      if(tipo==="ENTRADA"){ p.entrada=(+p.entrada||0)+cant; if(row.costo&&cant) p.costo=Math.round(row.costo/cant); p.stock_alm[_almSel]=(+p.stock_alm[_almSel]||0)+cant; }
+      else { p.salida=(+p.salida||0)+cant; p.stock_alm[_almSel]=Math.max(0,(+p.stock_alm[_almSel]||0)-cant); }
       saveProducto(p);
       if(solId){ var sp=_solped.filter(function(x){return x.id===solId;})[0]; if(sp){ sp.estado="RECIBIDA"; sb.from("solicitudes").update({estado:"RECIBIDA"}).eq("id",solId).then(function(){}); updateCounts(); } }
       // registra el ingreso como gasto en Costos (si el usuario lo dejó marcado y hay costo)
@@ -3699,13 +3732,40 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       registrarAccion({ tipo:(tipo==="ENTRADA"?"INGRESO":"SALIDA"), fecha:row.fecha, cantidad:cant,
         descripcion:(tipo==="ENTRADA"?"Ingreso":"Salida")+" · "+(p.producto||"")+(tipo==="SALIDA"&&row.motivo?(" · "+row.motivo):""),
         monto:(tipo==="ENTRADA"?(+row.costo||0):0), ref_tipo:(tipo==="ENTRADA"?row.doc_tipo:null), ref_num:(tipo==="ENTRADA"?row.doc_num:null),
-        proveedor:(tipo==="ENTRADA"?row.proveedor:null), producto_id:p.id, almacen:(p.ubicacion||null) });
+        proveedor:(tipo==="ENTRADA"?row.proveedor:null), producto_id:p.id, almacen:_almSel });
       document.getElementById("mov-modal").classList.remove("show"); renderStock();
       toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":"")+(gOk?" · gasto en Costos":""));
     });
   }
   (function(){ var s=document.getElementById("mov-save"), c=document.getElementById("mov-cancel"), x=document.getElementById("mov-close"), m=document.getElementById("mov-modal");
     if(s)s.onclick=guardarMov; if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
+    if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
+  })();
+  // ---- Traslado entre almacenes ----
+  var _trasP=null;
+  function abrirTraslado(p){ if(!p)return; _trasP=p; almInit(p);
+    document.getElementById("tras-title").textContent="Traslado — "+(p.producto||"");
+    var opts=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+' · '+almStock(p,a.cod)+'</option>'; }).join("");
+    var fr=document.getElementById("tras-from"), to=document.getElementById("tras-to");
+    fr.innerHTML=opts; to.innerHTML=opts; fr.value=ALM_DEFAULT; to.value=(ALMACENES[1]?ALMACENES[1].cod:ALM_DEFAULT);
+    document.getElementById("tras-cant").value=1;
+    var info=document.getElementById("tras-info"); info.innerHTML="Existencias: "+ALMACENES.map(function(a){ return '<b>'+escH(a.nombre)+'</b> '+almStock(p,a.cod); }).join(" · ");
+    document.getElementById("tras-modal").classList.add("show");
+  }
+  function guardarTraslado(){ var p=_trasP; if(!p)return;
+    var from=document.getElementById("tras-from").value, to=document.getElementById("tras-to").value, cant=parseInt(document.getElementById("tras-cant").value,10)||0;
+    if(from===to){ toast("Elige almacenes distintos"); return; }
+    if(cant<1){ toast("Cantidad inválida"); return; }
+    almInit(p); if(cant>almStock(p,from)){ toast("No hay tanto en "+almNombre(from)+" (hay "+almStock(p,from)+")"); return; }
+    p.stock_alm[from]=(+p.stock_alm[from]||0)-cant; p.stock_alm[to]=(+p.stock_alm[to]||0)+cant;
+    saveProducto(p);
+    registrarAccion({ tipo:"TRASLADO", fecha:todayISO(), cantidad:cant, descripcion:"Traslado · "+(p.producto||""), producto_id:p.id, almacen:from+"→"+to });
+    document.getElementById("tras-modal").classList.remove("show"); renderStock();
+    toast("✓ Traslado: "+cant+" de "+almNombre(from)+" → "+almNombre(to));
+  }
+  (function(){ var m=document.getElementById("tras-modal");
+    var s=document.getElementById("tras-save"), c=document.getElementById("tras-cancel"), x=document.getElementById("tras-close");
+    if(s)s.onclick=guardarTraslado; if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
   // ---- Ingresar factura con varios materiales ----
@@ -3829,8 +3889,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var skuTd='<td><span class="sku-code'+(p.sku?'':' none')+'">'+(p.sku?escH(p.sku):"—")+'</span></td>';
       return '<tr>'+skuTd+'<td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
-        '<td class="r" style="font-weight:800;color:'+col+'">'+s+'</td>'+
-        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
+        '<td class="r" style="font-weight:800;color:'+col+'">'+s+'<div style="font-size:9.5px;color:var(--ink-muted);font-weight:400">'+Object.keys(almMap(p)).map(function(cod){return escH(cod)+' '+(+almMap(p)[cod]||0);}).join(' · ')+'</div></td>'+
+        '<td class="r" style="white-space:nowrap"><button class="stk-btn ent" data-id="'+p.id+'">Ingreso</button> <button class="stk-btn sal" data-id="'+p.id+'">Salida</button> <button class="stk-btn tras" data-id="'+p.id+'" title="Traslado entre almacenes">⇄</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
     var th34=esInsumo?'<th>Unidad</th><th>Rotación</th>':'<th>Compatibilidad</th><th>Medidas</th>';
@@ -3840,6 +3900,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(b.classList.contains("ent")){ abrirMov(p,"ENTRADA"); }
       else if(b.classList.contains("sal")){ abrirMov(p,"SALIDA"); }
       else if(b.classList.contains("solped")){ var _s=stockDe(p), _mn=(+p.stock_min||0); var _mot=(_s<=0?"Reposición (sin stock)":((_mn&&_s<=_mn)?"Reposición (bajo el mínimo)":"Reposición")); var sb2=sbc(); if(sb2){ sb2.from("solicitudes").insert({numero:solProxNum(),item:p.producto,tipo:(p.categoria==="INSUMO"?"Insumo":"Producto"),cantidad:"",urgencia:(_s<=0?"Alta":"Normal"),motivo:_mot,estado:"PENDIENTE",solicitante:(window.ISP_EMAIL||""),producto_id:p.id}).select().single().then(function(r){ if(!r.error){ _solped.unshift(r.data); updateCounts(); toast("✓ Solicitud creada: "+p.producto); } else { toast("⚠ Error"); } }); } }
+      else if(b.classList.contains("tras")){ abrirTraslado(p); }
       else if(b.classList.contains("mov")){ p.categoria=((p.categoria||"VENTA")==="VENTA")?"INSUMO":"VENTA"; saveProducto(p); renderStock(); toast("Movido a "+(p.categoria==="INSUMO"?"Insumos":"En venta")); }
       else if(b.classList.contains("del")){ if(confirm("¿Eliminar "+p.producto+"?")){ productos=productos.filter(function(x){return x.id!==b.dataset.id;}); delProductoDB(b.dataset.id); renderStock(); toast("Eliminado"); } }
     }); });
