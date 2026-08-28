@@ -1571,8 +1571,16 @@
   }
   function setTBActive(v){ document.querySelectorAll('#tabbar button').forEach(function(b){ b.classList.toggle('active', b.dataset.tb===v); }); }
   window.ISP_applyRole=applyRole;
+  var USUARIOS={}; // email -> nombre (correos que han iniciado sesión, tabla usuarios)
   function cargarAccesos(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
-    sb.from('accesos').select('*').then(function(r){ ACCESOS={}; PERMISOS_MAP={}; ROLES_USER={}; if(r.data){ r.data.forEach(function(row){ var em=(row.email||'').toLowerCase(); ACCESOS[em]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); if(row.permisos!==undefined && row.permisos!==null) PERMISOS_MAP[em]=Array.isArray(row.permisos)?row.permisos:[]; if(row.rol) ROLES_USER[em]=row.rol; }); } if(cb)cb(); }, function(){ if(cb)cb(); }); }
+    Promise.all([
+      sb.from('accesos').select('*').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('usuarios').select('*').then(function(r){return r;},function(){return {data:[]};})
+    ]).then(function(res){
+      var r=res[0]; ACCESOS={}; PERMISOS_MAP={}; ROLES_USER={}; if(r.data){ r.data.forEach(function(row){ var em=(row.email||'').toLowerCase(); ACCESOS[em]=Array.isArray(row.vistas)?row.vistas:(row.vistas||[]); if(row.permisos!==undefined && row.permisos!==null) PERMISOS_MAP[em]=Array.isArray(row.permisos)?row.permisos:[]; if(row.rol) ROLES_USER[em]=row.rol; }); }
+      USUARIOS={}; if(res[1].data){ res[1].data.forEach(function(u){ var em=(u.email||'').toLowerCase(); if(em) USUARIOS[em]=(u.nombre||'').trim(); }); }
+      if(cb)cb();
+    }, function(){ if(cb)cb(); }); }
   var ROLES_USER={}; // email -> nombre de rol asignado
   var state={ view:"agenda", cobroSel:null, kpiOpen:null, calRef:new Date(), periodo:"mes", clienteSel:null, clienteBuscar:"", clienteTipo:"TODOS", clienteOrden:"reciente", stockFiltro:"TODOS", stockBuscar:"", stockCat:"VENTA", tareaFiltro:"PENDIENTE" };
   var clientesInfo={};  // observaciones por cliente (tabla clientes)
@@ -2130,11 +2138,18 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(rolEl && !rolEl.dataset.done){ rolEl.innerHTML='<option value="">— Sin rol / personalizado —</option>'+ROLES_PRESET.map(function(r){ return '<option value="'+av(r.nombre)+'">'+escH(r.nombre)+'</option>'; }).join(""); rolEl.dataset.done="1";
       rolEl.addEventListener("change",function(){ var r=ROLES_PRESET.filter(function(x){return x.nombre===rolEl.value;})[0]; if(r) accSetChecks(r.vistas, r.permisos); }); }
     var sel=document.getElementById("acc-cuenta");
-    if(sel && !sel.dataset.done){
-      var ops='<option value="">— Elige una cuenta —</option>';
-      Object.keys(EQUIPO).forEach(function(em){ if(em===OWNER_EMAIL) return; ops+='<option value="'+escH(em)+'">'+escH(EQUIPO[em])+' — '+escH(em)+'</option>'; });
-      ops+='<option value="__otro">Otro correo…</option>';
-      sel.innerHTML=ops; sel.dataset.done="1";
+    if(sel){
+      var vistos={}, lista=[]; // unión: equipo fijo + registrados (usuarios) + con acceso configurado
+      function _push(em,nom){ em=(em||'').toLowerCase(); if(!em||em===OWNER_EMAIL||vistos[em])return; vistos[em]=1; lista.push({em:em,nom:nom||''}); }
+      Object.keys(EQUIPO).forEach(function(em){ _push(em,EQUIPO[em]); });
+      Object.keys(USUARIOS).forEach(function(em){ _push(em,USUARIOS[em]); });
+      Object.keys(ACCESOS).forEach(function(em){ _push(em,''); });
+      lista.sort(function(a,b){ return (a.nom||a.em)<(b.nom||b.em)?-1:1; });
+      var cur=sel.value;
+      var ops='<option value="">— Elige una cuenta —</option>'+lista.map(function(u){ return '<option value="'+escH(u.em)+'">'+(u.nom?escH(u.nom)+' — ':'')+escH(u.em)+'</option>'; }).join("")+'<option value="__otro">Otro correo…</option>';
+      sel.innerHTML=ops; if(cur)sel.value=cur;
+    }
+    if(sel && !sel.dataset.done){ sel.dataset.done="1";
       sel.addEventListener("change",function(){ var v=sel.value, inp=document.getElementById("acc-email");
         if(v==="__otro"){ inp.style.display=""; inp.value=""; if(rolEl)rolEl.value=""; accSetChecks([],[]); inp.focus(); }
         else { inp.style.display="none"; inp.value=""; if(rolEl)rolEl.value=(v?ROLES_USER[v]:"")||""; accSetChecks(v?(ACCESOS[v]||[]):[], v?PERMISOS_MAP[v]:undefined); }
@@ -4048,7 +4063,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   );
   window.ISP_SB=sb; // disponible para la capa de datos
 
-  function entrar(email){ abrir(email); if(window.ISP_applyRole) window.ISP_applyRole(email); }
+  function entrar(email){ abrir(email); if(window.ISP_applyRole) window.ISP_applyRole(email);
+    if(email){ try{ sb.from('usuarios').upsert({email:(''+email).toLowerCase(), last_login:new Date().toISOString()},{onConflict:'email'}).then(function(){},function(){}); }catch(_){} } }
 
   sb.auth.getSession().then(function(res){
     var s=res && res.data && res.data.session;
