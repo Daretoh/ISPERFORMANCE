@@ -1572,7 +1572,12 @@
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
     if(curBtn && curBtn.style.display==='none'){ var firstVis=Array.prototype.filter.call(tabsEl.querySelectorAll('button'),function(b){return b.style.display!=='none';})[0]; if(firstVis) firstVis.click(); }
-    if(kiosco){ setTBActive(state.view); } // app con barra inferior (Calendario/Seguimiento/Marcar)
+    if(kiosco){ // app con barra inferior; muestra solo las pestañas permitidas
+      var tb=document.getElementById('tabbar');
+      if(tb){ var tbmap={agenda:'agenda',seguimiento:'seguimiento',marcar:'asistencia'};
+        tb.querySelectorAll('button').forEach(function(b){ var need=tbmap[b.dataset.tb]; b.style.display=(!allowed||allowed.indexOf(need)>=0)?'':'none'; }); }
+      setTBActive(state.view);
+    }
   }
   function setTBActive(v){ document.querySelectorAll('#tabbar button').forEach(function(b){ b.classList.toggle('active', b.dataset.tb===v); }); }
   window.ISP_applyRole=applyRole;
@@ -2119,7 +2124,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function accSetChecks(vs, ps){ vs=vs||[]; document.querySelectorAll("#acc-vistas input").forEach(function(c){ c.checked=vs.indexOf(c.value)>=0; });
     var todas=(ps===undefined||ps===null); document.querySelectorAll("#acc-permisos input").forEach(function(c){ c.checked=todas?true:(ps.indexOf(c.value)>=0); });
     var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
-  function accKioscoUI(on){ ["acc-vistas","acc-permisos"].forEach(function(id){ var b=document.getElementById(id); if(b){ b.style.opacity=on?".4":""; b.style.pointerEvents=on?"none":""; } }); var lab=document.getElementById("acc-vistas-lab"); if(lab) lab.textContent=on?"Modo tablet activo — Calendario · Seguimiento · Marcar":"Pestañas que puede ver"; }
+  function accKioscoUI(on){ var lab=document.getElementById("acc-vistas-lab"); if(lab) lab.textContent=on?"Modo tablet — elige qué pestañas ve (barra inferior en el celular)":"Pestañas que puede ver"; }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
@@ -2163,8 +2168,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var lista=document.getElementById("acc-list"); if(!lista)return;
     var keys=Object.keys(ACCESOS);
     lista.innerHTML=keys.length?keys.map(function(em){ var vs=ACCESOS[em]||[]; var nombres;
-      if(vs.indexOf('kiosco')>=0){ nombres="📱 Modo tablet (Calendario · Seguimiento · Marcar)"; }
-      else { nombres=vs.map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)"; }
+      var esTab=vs.indexOf('kiosco')>=0;
+      nombres=vs.filter(function(k){return k!=='kiosco';}).map(function(k){ var f=VISTAS_ADMIN.filter(function(x){return x[0]===k;})[0]; return f?f[1]:k; }).join(", ")||"(ninguna)";
+      if(esTab) nombres="📱 Tablet · "+nombres;
       var ps=PERMISOS_MAP[em]; var permTxt=(ps===undefined)?"todas las acciones":(ps.length+" de "+permAll().length+" acciones");
       var rolTxt=ROLES_USER[em]?(' <span class="chip" style="background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:10px">'+escH(ROLES_USER[em])+'</span>'):'';
       return '<div class="acc-item"><div><div class="em">'+escH(em)+rolTxt+'</div><div class="vs">Ve: '+escH(nombres)+' · Puede: '+permTxt+'</div></div><div class="acts"><button data-edit="'+escH(em)+'">Editar</button><button class="del" data-del="'+escH(em)+'">Quitar</button></div></div>'; }).join(""):'<div class="col-empty">Nadie restringido — todos ven y pueden todo.</div>';
@@ -2183,8 +2189,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     save.addEventListener("click",function(){ var sb=sbc(); if(!sb)return;
       var email=accEmailActual();
       if(!email||email.indexOf("@")<0){ toast("Elige una cuenta o escribe un correo válido"); return; }
-      var vs, ps; if(kio && kio.checked){ vs=['agenda','seguimiento','asistencia','kiosco']; ps=[]; }
-      else { vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); }); ps=[]; document.querySelectorAll("#acc-permisos input:checked").forEach(function(c){ ps.push(c.value); }); }
+      var vs=[]; document.querySelectorAll("#acc-vistas input:checked").forEach(function(c){ vs.push(c.value); });
+      var ps=[]; document.querySelectorAll("#acc-permisos input:checked").forEach(function(c){ ps.push(c.value); });
+      if(kio && kio.checked){ // modo tablet: barra inferior + SOLO las pestañas elegidas
+        if(!vs.length) vs=['agenda','seguimiento']; // por defecto si no marcó nada
+        if(vs.indexOf('kiosco')<0) vs.push('kiosco');
+      }
       var rolSel=(document.getElementById("acc-rol")||{}).value||null;
       sb.from("accesos").upsert({email:email,vistas:vs,permisos:ps,rol:rolSel,updated_at:new Date().toISOString()},{onConflict:"email"}).then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 25?)"); return; }
         ACCESOS[email]=vs; PERMISOS_MAP[email]=ps; if(rolSel)ROLES_USER[email]=rolSel; else delete ROLES_USER[email];
