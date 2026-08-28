@@ -966,6 +966,7 @@
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
         <button id="stock-import-qui" class="btn" style="display:none;white-space:nowrap">＋ Importar de Químicos</button>
         <button id="stock-gen-sku" class="btn" style="white-space:nowrap" title="Asigna un código SKU a los productos que aún no tienen">＃ Generar SKU</button>
+        <button id="stock-trasm" class="btn" style="white-space:nowrap" title="Mover varios productos entre almacenes de una vez">⇄ Traslado múltiple</button>
       </div>
       <details class="stock-newwrap">
         <summary>＋ Agregar producto</summary>
@@ -1323,6 +1324,21 @@
         <label class="f"><span class="lab">Cantidad</span><input id="tras-cant" type="number" min="1" value="1"></label>
       </div>
       <div style="display:flex;gap:8px"><button class="btn primary" id="tras-save">Trasladar</button><button class="btn ghost" id="tras-cancel">Cancelar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal de traslado múltiple (varias líneas) -->
+  <div class="mov-modal" id="trasm-modal">
+    <div class="mov-box" style="max-width:760px">
+      <div class="mov-head"><h3>⇄ Traslado múltiple entre almacenes</h3><button id="trasm-close" aria-label="Cerrar">×</button></div>
+      <div class="row c2" style="margin:12px 0">
+        <label class="f"><span class="lab">Desde</span><select id="trasm-from"></select></label>
+        <label class="f"><span class="lab">Hacia</span><select id="trasm-to"></select></label>
+      </div>
+      <div class="fact-lhead"><span>Producto</span><span>Cantidad</span><span></span></div>
+      <div id="trasm-lines"></div>
+      <button class="btn" id="trasm-addline" style="margin-top:8px">＋ Agregar producto</button>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="trasm-save">Trasladar todo</button><button class="btn ghost" id="trasm-cancel">Cancelar</button></div>
     </div>
   </div>
 
@@ -3766,6 +3782,37 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   (function(){ var m=document.getElementById("tras-modal");
     var s=document.getElementById("tras-save"), c=document.getElementById("tras-cancel"), x=document.getElementById("tras-close");
     if(s)s.onclick=guardarTraslado; if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
+    if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
+  })();
+  // ---- Traslado múltiple (varias líneas) ----
+  function trasmProdOptions(){ return '<option value="">— Producto —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
+  function trasmAddLine(){ var box=document.getElementById("trasm-lines"); if(!box)return;
+    var div=document.createElement("div"); div.className="fact-line";
+    div.innerHTML='<select class="fl-prod">'+trasmProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
+    box.appendChild(div); div.querySelector(".fl-del").onclick=function(){ div.remove(); };
+  }
+  function abrirTrasladoMulti(){ var opts=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join("");
+    var fr=document.getElementById("trasm-from"), to=document.getElementById("trasm-to");
+    fr.innerHTML=opts; to.innerHTML=opts; fr.value=ALM_DEFAULT; to.value=(ALMACENES[1]?ALMACENES[1].cod:ALM_DEFAULT);
+    document.getElementById("trasm-lines").innerHTML=""; trasmAddLine(); trasmAddLine();
+    document.getElementById("trasm-modal").classList.add("show");
+  }
+  function guardarTrasladoMulti(){ var from=document.getElementById("trasm-from").value, to=document.getElementById("trasm-to").value;
+    if(from===to){ toast("Elige almacenes distintos"); return; }
+    var lines=[]; document.querySelectorAll("#trasm-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; if(pid&&cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant}); } });
+    if(!lines.length){ toast("Agrega al menos un producto"); return; }
+    // valida stock en el almacén de origen
+    var falla=lines.filter(function(l){ return l.cant>almStock(l.p,from); });
+    if(falla.length){ toast("No hay suficiente en "+almNombre(from)+": "+falla[0].p.producto+" (hay "+almStock(falla[0].p,from)+")"); return; }
+    lines.forEach(function(l){ almInit(l.p); l.p.stock_alm[from]=(+l.p.stock_alm[from]||0)-l.cant; l.p.stock_alm[to]=(+l.p.stock_alm[to]||0)+l.cant; saveProducto(l.p);
+      registrarAccion({ tipo:"TRASLADO", fecha:todayISO(), cantidad:l.cant, descripcion:"Traslado · "+(l.p.producto||""), producto_id:l.p.id, almacen:from+"→"+to }); });
+    document.getElementById("trasm-modal").classList.remove("show"); renderStock();
+    toast("✓ Traslado de "+lines.length+" producto(s): "+almNombre(from)+" → "+almNombre(to));
+  }
+  (function(){ var m=document.getElementById("trasm-modal");
+    var o=document.getElementById("stock-trasm"), s=document.getElementById("trasm-save"), c=document.getElementById("trasm-cancel"), x=document.getElementById("trasm-close"), a=document.getElementById("trasm-addline");
+    if(o)o.onclick=abrirTrasladoMulti; if(s)s.onclick=guardarTrasladoMulti; if(a)a.onclick=trasmAddLine;
+    if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
   // ---- Ingresar factura con varios materiales ----
