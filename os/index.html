@@ -966,8 +966,6 @@
         <input type="search" id="stock-buscar" class="cli-search" style="margin:0;max-width:340px" placeholder="🔍 Buscar producto, marca o compatibilidad…">
         <button id="stock-import-qui" class="btn" style="display:none;white-space:nowrap">＋ Importar de Químicos</button>
         <button id="stock-gen-sku" class="btn" style="white-space:nowrap" title="Asigna un código SKU a los productos que aún no tienen">＃ Generar SKU</button>
-        <button id="stock-ingreso" class="btn primary" style="white-space:nowrap" title="Ingresar varios productos de una factura/guía a la vez">＋ Ingreso</button>
-        <button id="stock-trasm" class="btn" style="white-space:nowrap" title="Mover varios productos entre almacenes de una vez">⇄ Traslado múltiple</button>
       </div>
       <details class="stock-newwrap">
         <summary>＋ Agregar producto</summary>
@@ -1035,6 +1033,14 @@
     <!-- ============ MOVIMIENTOS (libro / trazabilidad) ============ -->
     <section class="view" id="view-movimientos">
       <div class="vhead"><div class="eye">Trazabilidad</div><h1>Movimientos</h1></div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="lab" style="margin-bottom:10px">Registrar movimiento</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="stock-ingreso" class="btn primary" style="white-space:nowrap" title="Ingresar varios productos de una factura/guía a la vez">＋ Ingreso</button>
+          <button id="stock-salida" class="btn" style="white-space:nowrap" title="Dar salida a varios productos de una vez">－ Salida</button>
+          <button id="stock-trasm" class="btn" style="white-space:nowrap" title="Mover varios productos entre almacenes de una vez">⇄ Traslado</button>
+        </div>
+      </div>
       <div class="card">
         <div class="pfilter" id="mv-filtro" style="margin-bottom:12px"><button data-t="TODOS" class="on">Todos</button><button data-t="COBRO">Cobros</button><button data-t="INGRESO">Ingresos</button><button data-t="SALIDA">Salidas</button><button data-t="TRASLADO">Traslados</button><button data-t="GASTO">Gastos</button></div>
         <input type="search" id="mv-buscar" class="cli-search" placeholder="🔍 Buscar por N°, descripción, proveedor, documento, monto…" style="margin:0 0 12px">
@@ -1340,6 +1346,22 @@
       <div id="trasm-lines"></div>
       <button class="btn" id="trasm-addline" style="margin-top:8px">＋ Agregar producto</button>
       <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="trasm-save">Trasladar todo</button><button class="btn ghost" id="trasm-cancel">Cancelar</button></div>
+    </div>
+  </div>
+
+  <!-- Modal de salida múltiple (varias líneas) -->
+  <div class="mov-modal" id="salm-modal">
+    <div class="mov-box" style="max-width:760px">
+      <div class="mov-head"><h3>－ Salida de materiales</h3><button id="salm-close" aria-label="Cerrar">×</button></div>
+      <div class="row c3" style="margin:12px 0">
+        <label class="f"><span class="lab">Almacén (sale de)</span><select id="salm-alm"></select></label>
+        <label class="f"><span class="lab">Fecha</span><input id="salm-fecha" type="date"></label>
+        <label class="f"><span class="lab">Motivo / uso</span><input id="salm-motivo" placeholder="Para qué se usó"></label>
+      </div>
+      <div class="fact-lhead"><span>Producto</span><span>Cantidad</span><span></span></div>
+      <div id="salm-lines"></div>
+      <button class="btn" id="salm-addline" style="margin-top:8px">＋ Agregar producto</button>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="salm-save">Registrar salida</button><button class="btn ghost" id="salm-cancel">Cancelar</button></div>
     </div>
   </div>
 
@@ -3817,6 +3839,38 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
+  // ---- Salida múltiple (varias líneas) ----
+  function salmAddLine(){ var box=document.getElementById("salm-lines"); if(!box)return;
+    var div=document.createElement("div"); div.className="fact-line";
+    div.innerHTML='<select class="fl-prod">'+trasmProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
+    box.appendChild(div); div.querySelector(".fl-del").onclick=function(){ div.remove(); };
+  }
+  function abrirSalidaMulti(){ var fa=document.getElementById("salm-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
+    document.getElementById("salm-fecha").value=todayISO(); document.getElementById("salm-motivo").value="";
+    document.getElementById("salm-lines").innerHTML=""; salmAddLine(); salmAddLine();
+    document.getElementById("salm-modal").classList.add("show");
+  }
+  function guardarSalidaMulti(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var alm=document.getElementById("salm-alm").value||ALM_DEFAULT, fecha=document.getElementById("salm-fecha").value||todayISO(), motivo=(document.getElementById("salm-motivo").value||"").trim();
+    var lines=[]; document.querySelectorAll("#salm-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; if(pid&&cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant}); } });
+    if(!lines.length){ toast("Agrega al menos un producto"); return; }
+    var falla=lines.filter(function(l){ return l.cant>almStock(l.p,alm); });
+    if(falla.length){ toast("No hay suficiente en "+almNombre(alm)+": "+falla[0].p.producto+" (hay "+almStock(falla[0].p,alm)+")"); return; }
+    var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"SALIDA", cantidad:l.cant, fecha:fecha, motivo:motivo, autor:(window.ISP_EMAIL||"") }; });
+    sb.from("movimientos").insert(rows).select().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 17?)"); return; }
+      (r.data||[]).forEach(function(row){ _movs.unshift(row); });
+      lines.forEach(function(l){ almInit(l.p); l.p.salida=(+l.p.salida||0)+l.cant; l.p.stock_alm[alm]=Math.max(0,(+l.p.stock_alm[alm]||0)-l.cant); saveProducto(l.p);
+        registrarAccion({ tipo:"SALIDA", fecha:fecha, cantidad:l.cant, descripcion:"Salida · "+(l.p.producto||"")+(motivo?(" · "+motivo):""), producto_id:l.p.id, almacen:alm }); });
+      document.getElementById("salm-modal").classList.remove("show"); renderStock();
+      toast("✓ Salida de "+lines.length+" producto(s) · "+almNombre(alm));
+    });
+  }
+  (function(){ var m=document.getElementById("salm-modal");
+    var o=document.getElementById("stock-salida"), s=document.getElementById("salm-save"), c=document.getElementById("salm-cancel"), x=document.getElementById("salm-close"), a=document.getElementById("salm-addline");
+    if(o)o.onclick=abrirSalidaMulti; if(s)s.onclick=guardarSalidaMulti; if(a)a.onclick=salmAddLine;
+    if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
+    if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
+  })();
   // ---- Ingresar factura con varios materiales ----
   function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
   function factAddLine(){ var box=document.getElementById("fact-lines"); if(!box)return;
@@ -3941,7 +3995,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       return '<tr>'+skuTd+'<td><b>'+(p.producto||"")+'</b>'+extra+'</td><td>'+(p.marca||"—")+'</td>'+col34+
         '<td class="r">'+(+p.entrada||0)+'</td><td class="r">'+(+p.salida||0)+'</td>'+
         '<td class="r" style="font-weight:800;color:'+col+'">'+s+'<div style="font-size:9.5px;color:var(--ink-muted);font-weight:400">'+Object.keys(almMap(p)).map(function(cod){return escH(cod)+' '+(+almMap(p)[cod]||0);}).join(' · ')+'</div></td>'+
-        '<td class="r" style="white-space:nowrap"><button class="stk-btn sal" data-id="'+p.id+'">Salida</button> <button class="stk-btn tras" data-id="'+p.id+'" title="Traslado entre almacenes">⇄</button>'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
+        '<td class="r" style="white-space:nowrap">'+solBtn+' <button class="stk-btn mov" data-id="'+p.id+'" title="Mover a '+((p.categoria||"VENTA")==="VENTA"?"Insumos":"En venta")+'">'+((p.categoria||"VENTA")==="VENTA"?"→ Insumo":"→ Venta")+'</button> <button class="stk-btn del" data-id="'+p.id+'">✕</button></td></tr>';
     }).join("");
     var vacio=(state.stockCat==="INSUMO" && !q)?'Aún no hay insumos aquí. Ve a "Productos en venta" y mueve los consumibles con el botón <b>→ Insumo</b>.':('Sin productos'+(q?' para "'+q+'"':''));
     var th34=esInsumo?'<th>Unidad</th><th>Rotación</th>':'<th>Compatibilidad</th><th>Medidas</th>';
