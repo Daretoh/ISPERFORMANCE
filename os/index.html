@@ -302,7 +302,7 @@
   #acc-permisos label{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 2px;cursor:pointer;color:var(--ink-2);}
   body.perm-no-seg_avanzar .kbtn, body.perm-no-seg_avanzar #vd-back, body.perm-no-seg_avanzar #vd-fwd{display:none!important;}
   body.perm-no-seg_editar .kedit-toggle, body.perm-no-seg_editar #vd-edit{display:none!important;}
-  body.perm-no-seg_trabajos .ktrab-addrow, body.perm-no-seg_trabajos .ktrab-del{display:none!important;}
+  body.perm-no-seg_trabajos .ktrab-addrow, body.perm-no-seg_trabajos .ktrab-del, body.perm-no-seg_trabajos .svc-inc-add{display:none!important;}
   body.perm-no-seg_borrar .kdel{display:none!important;}
   body.perm-no-cobro_registrar #c-save{display:none!important;}
   body.perm-no-cli_editar #cli-datos-save{display:none!important;}
@@ -2731,8 +2731,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '<div class="ktrab-head">Trabajos a realizar'+trChip+'</div>'+
           trHTML+
           '<div class="ktrab-addrow">'+flotaSel+'<input type="text" class="ktrab-add" data-id="'+e.id+'" placeholder="Otro trabajo (fuera de tarifa) y toca +"><button type="button" class="ktrab-addbtn" data-id="'+e.id+'" title="Agregar trabajo">+</button></div>'+
-          (svcIncHTML?('<div class="svc-inc-wrap">'+svcIncHTML+'</div>'):'')+
           '</div>';
+        // tareas del servicio: visibles siempre (no solo al editar)
+        var vsvcInc=svcIncHTML?('<div class="svc-inc-wrap">'+svcIncHTML+'</div>'):'';
         // vista compacta (card cerrada): solo el próximo paso pendiente
         var vtrabCompact='';
         if(trarr.length){
@@ -2753,6 +2754,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         return '<div class="kcard prio-'+prio+(editing?' editing':'')+(porCotiz?' cotizar':'')+'"><button type="button" class="kedit-toggle" data-id="'+e.id+'">'+(editing?'✓ Listo':'✎ Editar')+'</button><button class="kdel" data-id="'+e.id+'" title="Eliminar vehículo" aria-label="Eliminar">✕</button><div class="kv1">'+e.marca+' '+(e.modelo||"")+'</div><div class="kv2">'+(e.patente||"sin patente")+' '+pcTag+'</div>'+cliLine+
           prioSel+
           (svcs?'<div class="ksvc">'+svcs+'</div>':'')+
+          vsvcInc+
           vcotiz+
           vtrab+
           (tline?'<div class="ktime">'+tline+'</div>':'')+
