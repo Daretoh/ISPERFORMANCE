@@ -819,6 +819,7 @@
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
         <button data-view="panel"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Panel</button>
         <button data-view="quimicos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Químicos</button>
+        <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
         <button data-view="admin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
       </div>
@@ -1027,6 +1028,17 @@
     <section class="view" id="view-panel">
       <div class="vhead"><div class="eye">Este mes</div><h1>Panel de control</h1><p id="panel-sub"></p></div>
       <div id="panel-content"></div>
+    </section>
+
+    <!-- ============ MOVIMIENTOS (libro / trazabilidad) ============ -->
+    <section class="view" id="view-movimientos">
+      <div class="vhead"><div class="eye">Trazabilidad</div><h1>Movimientos</h1></div>
+      <div class="card">
+        <div class="pfilter" id="mv-filtro" style="margin-bottom:12px"><button data-t="TODOS" class="on">Todos</button><button data-t="COBRO">Cobros</button><button data-t="INGRESO">Ingresos</button><button data-t="SALIDA">Salidas</button><button data-t="GASTO">Gastos</button></div>
+        <input type="search" id="mv-buscar" class="cli-search" placeholder="🔍 Buscar por N°, descripción, proveedor, documento, monto…" style="margin:0 0 12px">
+        <div id="mv-resumen" style="margin-bottom:12px"></div>
+        <div id="mv-list"></div>
+      </div>
     </section>
 
     <!-- ============ GERENCIA (costos — solo gerente) ============ -->
@@ -1519,7 +1531,8 @@
       sb.from('movimientos').select('*').order('fecha',{ascending:false}),
       sb.from('planificacion').select('*').order('vence',{ascending:true}).then(function(r){return r;},function(){return {data:[]};}),
       sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};})
+      sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1535,7 +1548,36 @@
       _plan=((res[11]&&res[11].data)||[]);
       _gfijos=((res[12]&&res[12].data)||[]);
       _sdig=((res[13]&&res[13].data)||[]);
+      _acciones=((res[14]&&res[14].data)||[]);
     });
+  }
+  // ---- Libro de movimientos / acciones (trazabilidad tipo SAP) ----
+  var _acciones=[];
+  var ACC_BASE=1; // primer N° de acción
+  function accionProxNum(){ return _acciones.length?(Math.max.apply(null,_acciones.map(function(a){return +a.num||0;}))+1):ACC_BASE; }
+  function accFmt(n){ return "A-"+String(n||0).padStart(6,"0"); }
+  // registra una acción en el libro (no rompe el flujo si falla o falta la tabla)
+  function registrarAccion(o){ var sb=sbc(); if(!sb)return Promise.resolve();
+    var row={ num:accionProxNum(), tipo:o.tipo||"", fecha:o.fecha||todayISO(), descripcion:o.descripcion||"", monto:(+o.monto||0), cantidad:(o.cantidad!=null?(+o.cantidad||0):null),
+      ref_tipo:(o.ref_tipo||null), ref_num:(o.ref_num||null), proveedor:(o.proveedor||null), almacen:(o.almacen||null),
+      producto_id:(o.producto_id||null), vehiculo_id:(o.vehiculo_id||null), autor:(window.ISP_EMAIL||"") };
+    return sb.from("acciones").insert(row).select().single().then(function(r){ if(!r.error && r.data){ _acciones.unshift(r.data); } return r&&r.data; }, function(){ return null; });
+  }
+  var _mvFiltro="TODOS";
+  function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],GASTO:['#7c3aed','Gasto'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
+  function renderMovimientosLibro(){ var sb=sbc();
+    if(sb){ sb.from("acciones").select("*").order("num",{ascending:false}).then(function(r){ if(!r.error && r.data) _acciones=r.data; pintarMovimientos(); }, function(){ pintarMovimientos(); }); } else pintarMovimientos();
+    var bs=document.getElementById("mv-buscar"); if(bs && !bs.dataset.b){ bs.dataset.b="1"; bs.oninput=pintarMovimientos; }
+    var fl=document.getElementById("mv-filtro"); if(fl && !fl.dataset.b){ fl.dataset.b="1"; fl.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return; _mvFiltro=b.dataset.t; fl.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);}); pintarMovimientos(); }); }
+  }
+  function pintarMovimientos(){ var el=document.getElementById("mv-list"); if(!el)return;
+    var q=((document.getElementById("mv-buscar")||{}).value||"").toLowerCase().trim();
+    var list=(_acciones||[]).filter(function(a){ if(_mvFiltro!=="TODOS" && (a.tipo||"")!==_mvFiltro) return false; if(!q) return true;
+      return ((accFmt(a.num)+" "+(a.descripcion||"")+" "+(a.proveedor||"")+" "+(a.ref_tipo||"")+" "+(a.ref_num||"")+" "+(a.monto||"")+" "+(a.tipo||"")).toLowerCase().indexOf(q)>=0); });
+    var tot={}; list.forEach(function(a){ tot[a.tipo]=(tot[a.tipo]||0)+(+a.monto||0); });
+    var res=document.getElementById("mv-resumen"); if(res){ res.innerHTML='<div class="gasto-resumen">'+["COBRO","INGRESO","GASTO"].map(function(t){ return '<div><span>'+accTipoChip(t)+'</span><b>'+clp(tot[t]||0)+'</b></div>'; }).join("")+'<div class="tot"><span>Acciones</span><b>'+list.length+'</b></div></div>'; }
+    el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Documento</th><th class="r">Monto</th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):"");
+      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+escH(a.descripcion||"")+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td>'+escH(ref||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
   }
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
@@ -1567,7 +1609,7 @@
     document.body.classList.toggle('kiosco-user',kiosco);
     permAll().forEach(function(p){ document.body.classList.toggle('perm-no-'+p, !puedeEmail(email,p)); }); // permisos de acción
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
-      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
+      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
@@ -1627,6 +1669,7 @@
     else if(v==="cotizaciones") renderCotizaciones();
     else if(v==="solicitudes") renderSolicitudes();
     else if(v==="plan") renderPlan();
+    else if(v==="movimientos") renderMovimientosLibro();
     else if(v==="gerencia") renderGerencia();
     else if(v==="admin") renderAdmin();
   }
@@ -3100,7 +3143,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
     wrap.querySelector("#doc-btn").addEventListener("click",function(){ e.media=e.media||[]; abrirGaleria("Documentos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,application/pdf", function(){ persistVeh(e); renderCobroForm(e); }, {cats:['Boleta','Respaldo','Factura','Exterior','Interior','Motor','Otro'],defCat:'Boleta',filter:'Boleta'}); });
-    wrap.querySelector("#c-save").addEventListener("click",function(){ readForm(); e.cobrado=true; persistVeh(e); renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
+    wrap.querySelector("#c-save").addEventListener("click",function(){ var yaCobrado=e.cobrado; readForm(); e.cobrado=true; persistVeh(e);
+      if(!yaCobrado) registrarAccion({ tipo:"COBRO", fecha:todayISO(), descripcion:"Cobro · "+e.marca+" "+(e.modelo||"")+(e.patente?(" · "+e.patente):""), monto:ingresoReal(e), ref_tipo:(e.docTipo||null), vehiculo_id:e.id });
+      renderCobro(); updateCounts(); toast("✓ Cobro registrado — "+e.marca+" "+(e.modelo||"")); });
   }
   function field(lab,name,type,val,opts){
     if(type==="select"){ return '<label class="f"><span class="lab">'+lab+'</span><select name="'+name+'">'+opts.map(function(o){return '<option'+(o===val?' selected':'')+'>'+o+'</option>';}).join("")+'</select></label>'; }
@@ -3124,7 +3169,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
     var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),fecha:gastoForm.gFecha.value};
-    addGastoDB(o).then(function(){ gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; renderCostos(); toast("✓ Costo agregado"); });
+    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; renderCostos(); toast("✓ Costo agregado"); });
   });
   function gastoRowHTML(g){
     var nm=(g.media&&g.media.length)?' '+g.media.length:'';
@@ -3650,6 +3695,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var con="Materiales · "+(p.producto||"")+(row.proveedor?(" · "+row.proveedor):"");
         addGastoDB({con:con, tipo:"VARIABLE", monto:+row.costo, fecha:row.fecha, ref:(row.doc_num?(row.doc_tipo+" "+row.doc_num):""), mov_id:(r.data&&r.data.id)}); gOk=true;
       }
+      // libro de movimientos (trazabilidad): registra la acción
+      registrarAccion({ tipo:(tipo==="ENTRADA"?"INGRESO":"SALIDA"), fecha:row.fecha, cantidad:cant,
+        descripcion:(tipo==="ENTRADA"?"Ingreso":"Salida")+" · "+(p.producto||"")+(tipo==="SALIDA"&&row.motivo?(" · "+row.motivo):""),
+        monto:(tipo==="ENTRADA"?(+row.costo||0):0), ref_tipo:(tipo==="ENTRADA"?row.doc_tipo:null), ref_num:(tipo==="ENTRADA"?row.doc_num:null),
+        proveedor:(tipo==="ENTRADA"?row.proveedor:null), producto_id:p.id, almacen:(p.ubicacion||null) });
       document.getElementById("mov-modal").classList.remove("show"); renderStock();
       toast("✓ "+(tipo==="ENTRADA"?"Ingreso":"Salida")+" registrado"+(solId?" · SolPed marcada Recibida":"")+(gOk?" · gasto en Costos":""));
     });
@@ -3694,6 +3744,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
       lines.forEach(function(l){ l.p.entrada=(+l.p.entrada||0)+l.cant; saveProducto(l.p); }); // solo suma stock; no toca el costo unitario
       if(regGasto && c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):"")}); }
+      registrarAccion({ tipo:"INGRESO", fecha:fecha, descripcion:"Ingreso factura · "+lines.length+" material(es)"+(prov?(" · "+prov):""), monto:c.total, cantidad:totCant, ref_tipo:doc, ref_num:num, proveedor:prov });
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
       toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(regGasto&&c.total>0?" · gasto en Costos":""));
     });
