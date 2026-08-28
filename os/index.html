@@ -1332,11 +1332,29 @@
       <div class="media-modal-head"><span id="media-modal-title">Archivos</span><button type="button" id="media-modal-close" aria-label="Cerrar">×</button></div>
       <div class="gal-filter" id="media-modal-filter"></div>
       <div class="media-modal-body" id="media-modal-body"></div>
-      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">＋ Agregar archivos</button><button type="button" class="btn" id="media-modal-scan">📷 Escanear / foto</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
+      <div class="media-modal-foot"><button type="button" class="btn primary" id="media-modal-add">＋ Archivos</button><button type="button" class="btn" id="media-modal-scandoc">📄 Escanear documento</button><button type="button" class="btn" id="media-modal-scan">📷 Foto</button><div class="gal-prog" id="media-modal-prog"><div id="media-modal-progbar"></div></div><div class="gal-prog-txt" id="media-modal-progtxt"></div></div>
     </div>
   </div>
   <input type="file" id="media-modal-input" multiple hidden>
   <input type="file" id="media-modal-cam" accept="image/*" capture="environment" hidden>
+  <input type="file" id="media-modal-scani" accept="image/*" capture="environment" hidden>
+
+  <!-- Modal de escaneo (recorte automático de la hoja) -->
+  <div class="media-modal" id="scan-modal">
+    <div class="media-modal-box" style="max-width:520px">
+      <div class="media-modal-head"><span>📄 Escanear documento</span><button type="button" id="scan-close" aria-label="Cerrar">×</button></div>
+      <div style="padding:16px;text-align:center">
+        <div id="scan-status" style="font-size:13px;color:var(--ink-muted);margin-bottom:10px">Preparando…</div>
+        <div id="scan-preview" style="min-height:120px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:52vh"></div>
+        <label style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:12px;font-size:13px;cursor:pointer"><input type="checkbox" id="scan-bw"> Blanco y negro (documento)</label>
+      </div>
+      <div class="media-modal-foot" style="gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn primary" id="scan-save">Guardar PDF</button>
+        <button type="button" class="btn" id="scan-retry">Reintentar</button>
+        <button type="button" class="btn ghost" id="scan-orig">Sin recorte</button>
+      </div>
+    </div>
+  </div>
 
   <div class="media-modal" id="evento-modal">
     <div class="media-modal-box" style="max-width:440px">
@@ -2595,6 +2613,60 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     Promise.all(files.map(function(f){ return (f.type.indexOf("image")===0)?_imgAPdf(f):Promise.resolve(f); }))
       .then(function(out){ _mmProcesar(out); },function(){ _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); toast("No se pudo crear el PDF"); });
   });
+  // ---- Escáner de documento (jscanify + OpenCV): detecta la hoja, recorta y endereza ----
+  var _scanState={};
+  function _scanLibs(){ return new Promise(function(res,rej){
+    var p=[]; if(!window.cv) p.push(cargarLib("https://docs.opencv.org/4.7.0/opencv.js"));
+    if(!window.jscanify) p.push(cargarLib("https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js"));
+    Promise.all(p).then(function(){ var t0=Date.now();
+      (function wait(){ if(window.cv&&window.cv.Mat&&window.jscanify){ res(); }
+        else if(window.cv&&typeof window.cv.then==="function"){ window.cv.then(function(m){ window.cv=m; (window.jscanify?res():setTimeout(wait,150)); }); }
+        else if(Date.now()-t0>20000){ rej(new Error("timeout")); }
+        else setTimeout(wait,150); })();
+    }, rej);
+  }); }
+  function _loadImg(file,maxDim){ return new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){ var im=new Image(); im.onload=function(){
+    var sc=Math.min(1,maxDim/Math.max(im.width,im.height)); var cw=Math.round(im.width*sc), ch=Math.round(im.height*sc);
+    var cvn=document.createElement("canvas"); cvn.width=cw; cvn.height=ch; cvn.getContext("2d").drawImage(im,0,0,cw,ch);
+    var out=new Image(); out.onload=function(){ res(out); }; out.src=cvn.toDataURL("image/jpeg",0.92);
+  }; im.onerror=rej; im.src=fr.result; }; fr.onerror=rej; fr.readAsDataURL(file); }); }
+  function _scanShow(src){ var pv=document.getElementById("scan-preview"); pv.innerHTML="";
+    var bw=document.getElementById("scan-bw").checked; var w=src.width||src.naturalWidth, h=src.height||src.naturalHeight;
+    var cvn=document.createElement("canvas"); cvn.width=w; cvn.height=h; var ctx=cvn.getContext("2d"); ctx.drawImage(src,0,0,w,h);
+    if(bw){ var d=ctx.getImageData(0,0,w,h),a=d.data; for(var i=0;i<a.length;i+=4){ var g=0.3*a[i]+0.59*a[i+1]+0.11*a[i+2]; var v=g>155?255:(g<95?0:g); a[i]=a[i+1]=a[i+2]=v; } ctx.putImageData(d,0,0); }
+    cvn.style.maxWidth="100%"; cvn.style.maxHeight="48vh"; cvn.style.borderRadius="6px"; pv.appendChild(cvn); _scanState.render=cvn; }
+  function _scanProcess(file){ _scanState.file=file;
+    document.getElementById("scan-modal").classList.add("show");
+    var st=document.getElementById("scan-status"), pv=document.getElementById("scan-preview"); pv.innerHTML=""; document.getElementById("scan-bw").checked=false;
+    st.textContent="Cargando escáner… (la 1ª vez puede tardar unos segundos)";
+    _scanLibs().then(function(){ return _loadImg(file,1500); }).then(function(img){ _scanState.img=img;
+      try{ var scanner=new jscanify(); var mat=cv.imread(img); var contour=scanner.findPaperContour(mat); var W,H;
+        if(contour){ var c=scanner.getCornerPoints(contour); var d=function(a,b){return Math.hypot(a.x-b.x,a.y-b.y);};
+          W=Math.round(Math.max(d(c.topLeftCorner,c.topRightCorner),d(c.bottomLeftCorner,c.bottomRightCorner)));
+          H=Math.round(Math.max(d(c.topLeftCorner,c.bottomLeftCorner),d(c.topRightCorner,c.bottomRightCorner))); }
+        mat.delete();
+        if(!contour||W<40||H<40){ st.textContent="⚠ No detecté bien la hoja. Guarda sin recorte, o reintenta con más luz/contraste."; _scanState.canvas=null; _scanShow(img); return; }
+        var out=scanner.extractPaper(img,W,H); _scanState.canvas=out; st.textContent="✓ Hoja detectada y enderezada. Revisa y guarda."; _scanShow(out);
+      }catch(e){ st.textContent="⚠ No se pudo recortar. Guarda sin recorte o reintenta."; _scanState.canvas=null; _scanShow(img); }
+    },function(){ st.textContent="⚠ No se pudo cargar el escáner (revisa tu conexión). Usa 📷 Foto."; });
+  }
+  function _canvasAPdf(canvas){ return new Promise(function(resolve,reject){
+    var libs=[]; if(!(window.jspdf&&window.jspdf.jsPDF)) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"));
+    Promise.all(libs).then(function(){ try{ var jpg=canvas.toDataURL("image/jpeg",0.82), cw=canvas.width, ch=canvas.height;
+      var JS=window.jspdf.jsPDF, pdf=new JS({orientation:(cw>=ch?"l":"p"),unit:"pt",format:"a4"});
+      var Wp=pdf.internal.pageSize.getWidth(), Hp=pdf.internal.pageSize.getHeight(), r=Math.min(Wp/cw,Hp/ch), w=cw*r, h=ch*r;
+      pdf.addImage(jpg,"JPEG",(Wp-w)/2,(Hp-h)/2,w,h); resolve(new File([pdf.output("blob")],"escaneo-"+Date.now()+".pdf",{type:"application/pdf"}));
+    }catch(e){reject(e);} }, reject);
+  }); }
+  var _scani=document.getElementById("media-modal-scani");
+  var _mmScandoc=document.getElementById("media-modal-scandoc");
+  if(_mmScandoc) _mmScandoc.addEventListener("click",function(){ _scani.click(); });
+  if(_scani) _scani.addEventListener("change",function(){ var f=_scani.files[0]; _scani.value=""; if(f) _scanProcess(f); });
+  document.getElementById("scan-bw").addEventListener("change",function(){ _scanShow(_scanState.canvas||_scanState.img); });
+  document.getElementById("scan-retry").addEventListener("click",function(){ _scani.click(); });
+  document.getElementById("scan-close").addEventListener("click",function(){ document.getElementById("scan-modal").classList.remove("show"); });
+  document.getElementById("scan-orig").addEventListener("click",function(){ document.getElementById("scan-modal").classList.remove("show"); if(_scanState.file) _imgAPdf(_scanState.file).then(function(pdf){ _mmProcesar([pdf]); }); });
+  document.getElementById("scan-save").addEventListener("click",function(){ var cvn=_scanState.render; if(!cvn){ toast("Nada para guardar"); return; } document.getElementById("scan-modal").classList.remove("show"); _canvasAPdf(cvn).then(function(pdf){ _mmProcesar([pdf]); },function(){ toast("No se pudo crear el PDF"); }); });
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
     document.getElementById("r-svc").textContent=chosenSvcs.length;
