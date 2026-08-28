@@ -2571,7 +2571,30 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     siguiente();
   }
   _mmInput.addEventListener("change",function(){ var files=Array.prototype.slice.call(_mmInput.files); _mmInput.value=""; _mmProcesar(files); });
-  _mmCam.addEventListener("change",function(){ var files=Array.prototype.slice.call(_mmCam.files); _mmCam.value=""; _mmProcesar(files); });
+  // escanear: la(s) foto(s) se convierten a PDF (comprimido) antes de subir
+  function _imgAPdf(file){ return new Promise(function(resolve,reject){
+    var libs=[]; if(!(window.jspdf&&window.jspdf.jsPDF)) libs.push(cargarLib("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"));
+    Promise.all(libs).then(function(){ var fr=new FileReader();
+      fr.onload=function(){ var img=new Image();
+        img.onload=function(){ try{
+          var maxDim=1700, sc=Math.min(1, maxDim/Math.max(img.width,img.height));
+          var cw=Math.max(1,Math.round(img.width*sc)), ch=Math.max(1,Math.round(img.height*sc));
+          var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch; cv.getContext("2d").drawImage(img,0,0,cw,ch);
+          var jpg=cv.toDataURL("image/jpeg",0.8);
+          var JS=window.jspdf.jsPDF, pdf=new JS({orientation:(cw>=ch?"l":"p"),unit:"pt",format:"a4"});
+          var W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight(), r=Math.min(W/cw,H/ch), w=cw*r, h=ch*r;
+          pdf.addImage(jpg,"JPEG",(W-w)/2,(H-h)/2,w,h);
+          resolve(new File([pdf.output("blob")], "escaneo-"+Date.now()+".pdf", {type:"application/pdf"}));
+        }catch(e){ reject(e); } };
+        img.onerror=reject; img.src=fr.result; };
+      fr.onerror=reject; fr.readAsDataURL(file);
+    },reject);
+  }); }
+  _mmCam.addEventListener("change",function(){ var files=Array.prototype.slice.call(_mmCam.files); _mmCam.value=""; if(!files.length)return;
+    _mmProg.classList.add("show"); _mmTxt.classList.add("show"); _mmTxt.textContent="Creando PDF…";
+    Promise.all(files.map(function(f){ return (f.type.indexOf("image")===0)?_imgAPdf(f):Promise.resolve(f); }))
+      .then(function(out){ _mmProcesar(out); },function(){ _mmProg.classList.remove("show"); _mmTxt.classList.remove("show"); toast("No se pudo crear el PDF"); });
+  });
   function recepSummary(){
     document.getElementById("r-veh").textContent=(form.marca.value||"—")+" "+(form.modelo.value||"");
     document.getElementById("r-svc").textContent=chosenSvcs.length;
