@@ -1515,7 +1515,8 @@
       sb.from('solicitudes').select('*').order('created_at',{ascending:false}),
       sb.from('movimientos').select('*').order('fecha',{ascending:false}),
       sb.from('planificacion').select('*').order('vence',{ascending:true}).then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};})
+      sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1530,6 +1531,7 @@
       _movs=((res[10]&&res[10].data)||[]);
       _plan=((res[11]&&res[11].data)||[]);
       _gfijos=((res[12]&&res[12].data)||[]);
+      _sdig=((res[13]&&res[13].data)||[]);
     });
   }
   var _rtOn=false, _rtT;
@@ -2652,7 +2654,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     cvn.style.maxWidth="100%"; cvn.style.maxHeight="48vh"; cvn.style.borderRadius="6px"; pv.appendChild(cvn); _scanState.render=cvn; }
   function _scanProcess(file){ _scanState.file=file;
     document.getElementById("scan-modal").classList.add("show");
-    var st=document.getElementById("scan-status"), pv=document.getElementById("scan-preview"); pv.innerHTML=""; document.getElementById("scan-bw").checked=false;
+    var st=document.getElementById("scan-status"), pv=document.getElementById("scan-preview"); pv.innerHTML=""; document.getElementById("scan-bw").checked=true;
     st.textContent="Cargando escáner… (la 1ª vez puede tardar unos segundos)";
     _scanLibs().then(function(){ return _loadImg(file,1500); }).then(function(img){ _scanState.img=img;
       try{ var scanner=new jscanify(); var mat=cv.imread(img); var contour=scanner.findPaperContour(mat); var W,H;
@@ -3320,7 +3322,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("ger-content").innerHTML=kpis+desg+
       '<div class="chart" style="margin-bottom:16px"><h3>Personal spot <span class="tag">horas de asistencia × valor/hora</span></h3>'+persHTML+'</div>'+
       '<div class="chart" style="margin-bottom:16px"><h3>Gastos fijos <span class="tag">se repiten cada mes</span></h3>'+gfHTML+gfForm+'</div>'+
-      '<div class="chart"><h3>Gastos variables del mes <span class="tag">de la pestaña Gastos</span></h3>'+gvHTML+'</div>';
+      '<div class="chart"><h3>Gastos variables del mes <span class="tag">de la pestaña Gastos</span></h3>'+gvHTML+'</div>'+
+      sdigBlockHTML();
     var seed=document.getElementById("gf-seed"); if(seed) seed.onclick=importarGfBase;
     var vhs=document.querySelector("#ger-content .gvh-spot"); if(vhs) vhs.addEventListener("change",function(){ var v=parseFloat(vhs.value)||0; VH['__SPOT__']=v; upsertVH('__SPOT__',v); renderGerencia(); });
     var f=document.getElementById("gf-form"); if(f) f.onsubmit=function(ev){ ev.preventDefault(); var row={concepto:f.concepto.value.trim(),monto:parseInt(f.monto.value,10)||0,dia:parseInt(f.dia.value,10)||null,activo:true,orden:_gfijos.length}; if(!row.concepto)return; var sb=sbc(); if(!sb)return; sb.from("gastos_fijos").insert(row).select().single().then(function(r){ if(r.error){toast("⚠ No se pudo (¿corriste el SQL 24?)");return;} _gfijos.push(r.data); f.reset(); renderGerencia(); toast("✓ Gasto fijo agregado"); }); };
@@ -3328,8 +3331,160 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     box.querySelectorAll(".gf-del").forEach(function(b){ b.onclick=function(){ var x=_gfijos.filter(function(y){return String(y.id)===String(b.dataset.id);})[0]; if(x&&confirm("¿Eliminar «"+x.concepto+"»?")){ var sb=sbc(); if(sb)sb.from("gastos_fijos").delete().eq("id",x.id).then(function(){}); _gfijos=_gfijos.filter(function(y){return y.id!==x.id;}); renderGerencia(); } }; });
     box.querySelectorAll(".gf-tog").forEach(function(b){ b.onclick=function(){ var x=_gfijos.filter(function(y){return String(y.id)===String(b.dataset.id);})[0]; if(!x)return; x.activo=!gfActivo(x); var sb=sbc(); if(sb)sb.from("gastos_fijos").update({activo:x.activo}).eq("id",x.id).then(function(){}); renderGerencia(); }; });
     box.querySelectorAll(".gf-edit").forEach(function(b){ b.onclick=function(){ var x=_gfijos.filter(function(y){return String(y.id)===String(b.dataset.id);})[0]; if(!x)return; var m=prompt("Monto mensual de «"+x.concepto+"»:",x.monto||0); if(m===null)return; x.monto=parseInt(m,10)||0; var sb=sbc(); if(sb)sb.from("gastos_fijos").update({monto:x.monto}).eq("id",x.id).then(function(){}); renderGerencia(); }; });
+    wireSdig(box);
   }
   function importarGfBase(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;} var filas=GF_SEED.map(function(x,i){ return {concepto:x.concepto,monto:x.monto,dia:x.dia,activo:true,orden:i}; }); sb.from("gastos_fijos").insert(filas).select().then(function(r){ if(r.error){toast("⚠ Error (¿corriste el SQL 24?)");return;} (r.data||[]).forEach(function(row){_gfijos.push(row);}); renderGerencia(); toast("✓ Base cargada"); }); }
+
+  // ---------- Servicios digitales (suscripciones recurrentes — dentro de Gerencia) ----------
+  var _sdig=[];
+  var SDIG_CATS=["Redes","Web","Hosting","Almacenamiento","Espacio de trabajo","Publicidad","Otro"];
+  var SDIG_SEED=[
+    {nombre:"Hosting",proveedor:"HostingPlus",categoria:"Hosting",plan:"Plan Web",asignado_a:"Empresa",costo:4990,moneda:"CLP",ciclo:"Mensual",dia_cobro:1,autopago:false},
+    {nombre:"Dominio .cl",proveedor:"NIC Chile",categoria:"Web",plan:"Anual",asignado_a:"Empresa",costo:9950,moneda:"CLP",ciclo:"Anual",dia_cobro:null,autopago:false},
+    {nombre:"Agenda de redes",proveedor:"Metricool",categoria:"Redes",plan:"Advanced",asignado_a:"Empresa",costo:18,moneda:"USD",ciclo:"Mensual",dia_cobro:5,autopago:true},
+    {nombre:"Almacenamiento",proveedor:"Google One",categoria:"Almacenamiento",plan:"2 TB",asignado_a:"Empresa",costo:9300,moneda:"CLP",ciclo:"Mensual",dia_cobro:8,autopago:true}
+  ];
+  function sdUsd(){ return +VH['__USD__']||0; }
+  function sdActivo(x){ return x.activo!==false; }
+  function sdCLP(x){ var c=+x.costo||0; if((x.moneda||'CLP')==='USD'){ var r=sdUsd(); return r?Math.round(c*r):0; } return Math.round(c); }
+  function sdMensualCLP(x){ var base=sdCLP(x), ci=(x.ciclo||'Mensual'); if(ci==='Anual') return Math.round(base/12); if(ci==='Variable') return 0; return base; }
+  function sdProx(x){
+    if(x.prox_cobro) return new Date(x.prox_cobro+'T00:00:00');
+    var d=+x.dia_cobro||0; if(!d) return null;
+    if((x.ciclo||'Mensual')==='Anual') return null;
+    var now=new Date(), cand=new Date(now.getFullYear(),now.getMonth(),d);
+    if(d<now.getDate()) cand=new Date(now.getFullYear(),now.getMonth()+1,d);
+    return cand;
+  }
+  function sdProxISO(x){ var p=sdProx(x); return p?p.toISOString().slice(0,10):""; }
+  function sdEstado(x){
+    if(!sdActivo(x)) return {k:'off',txt:'Inactivo'};
+    if((x.ciclo||'Mensual')==='Variable') return {k:'na',txt:'Variable'};
+    var p=sdProx(x); if(!p) return {k:'na',txt:'Sin fecha'};
+    var hoy=new Date(); hoy.setHours(0,0,0,0);
+    var dd=Math.round((p-hoy)/86400000);
+    if(dd<0) return {k:'late',txt:'Vencido'};
+    if(dd<=5) return {k:'soon',txt:(dd===0?'Hoy':'En '+dd+'d')};
+    return {k:'ok',txt:'Al día'};
+  }
+  var SD_ST={ok:{bg:'rgba(46,125,84,.14)',fg:'var(--ok)'},soon:{bg:'rgba(154,100,16,.16)',fg:'#9a6410'},late:{bg:'rgba(166,58,68,.14)',fg:'var(--crit)'},na:{bg:'var(--ground)',fg:'var(--ink-muted)'},off:{bg:'var(--ground)',fg:'var(--ink-faint)'}};
+  function sdChip(e){ var s=SD_ST[e.k]||SD_ST.na; return '<span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:'+s.bg+';color:'+s.fg+';white-space:nowrap">'+e.txt+'</span>'; }
+  function sdigPorPersona(){ var m={}; _sdig.filter(sdActivo).forEach(function(x){ var k=(x.asignado_a||'Empresa'); m[k]=(m[k]||0)+sdMensualCLP(x); }); return m; }
+  function sdigActivosOrden(){ return _sdig.filter(sdActivo).slice().sort(function(a,b){ var pa=sdProx(a), pb=sdProx(b); if(!pa&&!pb)return 0; if(!pa)return 1; if(!pb)return -1; return pa-pb; }); }
+
+  function sdigBlockHTML(){
+    if(!esOwner()) return ''; // servicios digitales: solo el dueño, aunque otros vean Gerencia
+    var usd=sdUsd();
+    var act=_sdig.filter(sdActivo);
+    var totMes=act.reduce(function(s,x){return s+sdMensualCLP(x);},0);
+    var alerta=act.filter(function(x){ var k=sdEstado(x).k; return k==='soon'||k==='late'; }).length;
+    var kpis='<div class="kpis" style="margin-bottom:14px">'+
+      kstat("Mensual estimado",clp(totMes),act.length+" servicios activos")+
+      kstat("Por vencer / vencidos",String(alerta),alerta?"requieren atención":"todo al día")+
+      kstat("Dólar usado",usd?clp(usd):"— sin fijar",usd?"para convertir USD":"fija el valor abajo")+'</div>';
+
+    var rows=sdigActivosOrden().concat(_sdig.filter(function(x){return !sdActivo(x);}));
+    var tabla=_sdig.length?('<div class="tablewrap"><table><thead><tr><th>Servicio</th><th>Asignado</th><th class="r">Costo</th><th>Próx. cobro</th><th class="r">Auto</th><th></th></tr></thead><tbody>'+
+      rows.map(function(x){
+        var e=sdEstado(x), piso=sdProxISO(x), mon=(x.moneda||'CLP');
+        var costoTxt=(mon==='USD')?('US$'+(+x.costo||0)+(usd?(' · '+clp(sdCLP(x))):' · $?')):clp(+x.costo||0);
+        var proxTxt=piso?fFecha(piso):((x.ciclo==='Anual')?'anual (sin fecha)':'—');
+        return '<tr'+(sdActivo(x)?'':' style="opacity:.45"')+'>'+
+          '<td><b>'+escH(x.nombre||"")+'</b>'+(x.proveedor?'<br><span style="font-size:11px;color:var(--ink-muted)">'+escH(x.proveedor)+(x.plan?(' · '+escH(x.plan)):'')+'</span>':'')+'</td>'+
+          '<td>'+escH(x.asignado_a||'Empresa')+'</td>'+
+          '<td class="r" style="white-space:nowrap">'+costoTxt+'<br><span style="font-size:10.5px;color:var(--ink-faint)">'+escH(x.ciclo||'Mensual')+'</span></td>'+
+          '<td><button class="stk-btn sd-fecha" data-id="'+av(x.id)+'" style="font-weight:600">'+proxTxt+'</button> '+sdChip(e)+'</td>'+
+          '<td class="r"><button class="stk-btn sd-auto" data-id="'+av(x.id)+'" title="Pago automático" style="'+(x.autopago?'background:rgba(46,125,84,.14);color:var(--ok);border-color:transparent':'')+'">'+(x.autopago?'✓ Auto':'Manual')+'</button></td>'+
+          '<td class="r" style="white-space:nowrap"><button class="stk-btn sd-edit" data-id="'+av(x.id)+'">✎</button> <button class="stk-btn sd-tog" data-id="'+av(x.id)+'">'+(sdActivo(x)?'On':'Off')+'</button> <button class="stk-btn sd-del" data-id="'+av(x.id)+'">✕</button></td>'+
+        '</tr>';
+      }).join("")+'<tr><td colspan="2"><b>Total mensual estimado</b></td><td class="r"><b>'+clp(totMes)+'</b></td><td colspan="3"></td></tr></tbody></table></div>')
+      :'<div class="col-empty">Sin servicios cargados. <button class="btn" id="sd-seed" style="margin-left:8px">Cargar ejemplo</button></div>';
+
+    var perM=sdigPorPersona(), pks=Object.keys(perM).sort(function(a,b){return perM[b]-perM[a];});
+    var porPersona=pks.length?('<div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>Asignado a</th><th class="r">Costo mensual</th></tr></thead><tbody>'+
+      pks.map(function(k){ return '<tr><td>'+escH(k)+'</td><td class="r">'+clp(perM[k])+'</td></tr>'; }).join("")+'</tbody></table></div>'):'';
+
+    var opCat=SDIG_CATS.map(function(c){return '<option>'+c+'</option>';}).join("");
+    var opAsig='<option>Empresa</option>'+_trab.map(function(t){return '<option>'+escH(t.nombre||"")+'</option>';}).join("");
+    var form='<form id="sd-form" autocomplete="off" style="margin:14px 0 0;display:grid;gap:8px">'+
+      '<div class="row c3">'+
+        '<label class="f"><span class="lab">Servicio</span><input name="nombre" required placeholder="Hosting, Metricool…"></label>'+
+        '<label class="f"><span class="lab">Proveedor</span><input name="proveedor" placeholder="HostingPlus, Google…"></label>'+
+        '<label class="f"><span class="lab">Categoría</span><select name="categoria">'+opCat+'</select></label>'+
+      '</div>'+
+      '<div class="row c3">'+
+        '<label class="f"><span class="lab">Asignado a</span><select name="asignado_a">'+opAsig+'</select></label>'+
+        '<label class="f"><span class="lab">Costo</span><input name="costo" type="number" min="0" step="0.01" required></label>'+
+        '<label class="f"><span class="lab">Moneda</span><select name="moneda"><option>CLP</option><option>USD</option></select></label>'+
+      '</div>'+
+      '<div class="row c3">'+
+        '<label class="f"><span class="lab">Ciclo</span><select name="ciclo"><option>Mensual</option><option>Anual</option><option>Variable</option></select></label>'+
+        '<label class="f"><span class="lab">Día de cobro</span><input name="dia_cobro" type="number" min="1" max="31" placeholder="5"></label>'+
+        '<label class="f" style="flex-direction:row;align-items:center;gap:8px;align-self:end"><input name="autopago" type="checkbox" style="width:auto"> <span class="lab" style="margin:0">Pago automático</span></label>'+
+      '</div>'+
+      '<button class="btn primary" style="justify-self:start">＋ Agregar servicio</button>'+
+    '</form>';
+
+    var rate='<div class="row c3" style="align-items:end;margin:2px 0 10px"><label class="f"><span class="lab">Valor del dólar (CLP)</span><input class="sd-usd" type="number" min="0" step="1" value="'+(usd||"")+'" placeholder="ej: 950"></label><div class="f" style="grid-column:2/-1"><span class="lab">Reporte</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sd-rep">📄 Reporte (PDF)</button><button type="button" class="btn ghost" id="sd-copy">📋 Copiar aviso</button></div></div></div>';
+
+    return '<div class="chart" style="margin-top:16px"><h3>Servicios digitales <span class="tag">web · redes · hosting · suscripciones</span></h3>'+
+      '<p class="hint" style="display:block;margin:-2px 0 12px">Semáforo de cobros para adelantarse y que no se corten. 🟢 al día · 🟡 por vencer · 🔴 vencido.</p>'+
+      rate+kpis+tabla+
+      (porPersona?('<h3 style="margin:18px 0 0;font-size:14px">Costo por empleado <span class="tag">mensual equivalente</span></h3>'+porPersona):'')+
+      form+'</div>';
+  }
+
+  function sdInsertSeed(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;} var filas=SDIG_SEED.map(function(x,i){ x.orden=i; x.activo=true; return x; }); sb.from("servicios_digitales").insert(filas).select().then(function(r){ if(r.error){toast("⚠ Error (¿corriste el SQL 34?)");return;} (r.data||[]).forEach(function(row){_sdig.push(row);}); renderGerencia(); toast("✓ Ejemplo cargado"); }); }
+  function sdById(id){ return _sdig.filter(function(y){return String(y.id)===String(id);})[0]; }
+  function sdPatch(x,patch){ Object.keys(patch).forEach(function(k){x[k]=patch[k];}); var sb=sbc(); if(sb) sb.from("servicios_digitales").update(patch).eq("id",x.id).then(function(){}); }
+
+  function sdigAvisoTexto(){
+    var act=sdigActivosOrden().filter(function(x){return (x.ciclo||'Mensual')!=='Variable';});
+    var lines=act.map(function(x){ var iso=sdProxISO(x), f=iso?fFecha(iso):'—'; return '• '+(x.nombre||'')+' — '+f+' — '+clp(sdCLP(x))+((x.moneda||'CLP')==='USD'?' (aprox)':''); });
+    var tot=act.reduce(function(s,x){return s+sdMensualCLP(x);},0);
+    return 'Servicios digitales — cobros del mes:\n'+lines.join('\n')+'\nTotal aprox: '+clp(tot)+'\nPara tener la tarjeta con saldo antes de cada fecha y que no se corte nada. 🙏';
+  }
+  function sdigReportePDF(){
+    var w=window.open("","sdpdf"); if(!w){ toast("Permite las ventanas emergentes para el PDF"); return; }
+    var act=sdigActivosOrden(), usd=sdUsd();
+    var hoy=new Date(), mesTxt=(MESLC[hoy.getMonth()]||'')+" "+hoy.getFullYear();
+    var filas=act.map(function(x){ var iso=sdProxISO(x); return '<tr><td>'+(iso?fFecha(iso):((x.ciclo==='Anual')?'anual':'—'))+'</td><td><b>'+escH(x.nombre||'')+'</b>'+(x.proveedor?' <span style="color:#777">· '+escH(x.proveedor)+'</span>':'')+'</td><td>'+escH(x.asignado_a||'Empresa')+'</td><td>'+escH(x.ciclo||'Mensual')+'</td><td style="text-align:right">'+((x.moneda||'CLP')==='USD'?('US$'+(+x.costo||0)):clp(+x.costo||0))+'</td><td style="text-align:right"><b>'+clp(sdCLP(x))+'</b></td></tr>'; }).join("");
+    var tot=act.reduce(function(s,x){return s+sdMensualCLP(x);},0);
+    var perM=sdigPorPersona(), pks=Object.keys(perM).sort(function(a,b){return perM[b]-perM[a];});
+    var perHTML=pks.map(function(k){ return '<tr><td>'+escH(k)+'</td><td style="text-align:right"><b>'+clp(perM[k])+'</b></td></tr>'; }).join("");
+    var css='body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:32px;} h1{font-size:20px;margin:0} .sub{color:#666;font-size:13px;margin:2px 0 20px} '+
+      'table{width:100%;border-collapse:collapse;margin:8px 0 22px;font-size:12.5px} th{background:#111;color:#fff;text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em} '+
+      'td{padding:7px 10px;border-bottom:1px solid #e5e5e5} tfoot td{border-top:2px solid #111;font-weight:800;font-size:14px} .hd{border-bottom:4px solid #FF6B00;padding-bottom:12px;margin-bottom:18px} '+
+      'h2{font-size:14px;margin:20px 0 4px} .note{background:#f5f5f5;border-radius:8px;padding:12px 14px;font-size:12px;color:#333;white-space:pre-line;margin-top:10px}';
+    var html='<div class="hd"><h1>Servicios digitales · IS Performance</h1><div class="sub">Reporte de cobros — '+mesTxt+(usd?(' · dólar $'+usd):'')+'</div></div>'+
+      '<table><thead><tr><th>Fecha</th><th>Servicio</th><th>Asignado</th><th>Ciclo</th><th style="text-align:right">Costo</th><th style="text-align:right">≈ CLP</th></tr></thead><tbody>'+(filas||'<tr><td colspan="6">Sin servicios activos.</td></tr>')+'</tbody>'+
+      '<tfoot><tr><td colspan="5">Total mensual estimado</td><td style="text-align:right">'+clp(tot)+'</td></tr></tfoot></table>'+
+      (pks.length?('<h2>Costo por empleado</h2><table><thead><tr><th>Asignado a</th><th style="text-align:right">Mensual</th></tr></thead><tbody>'+perHTML+'</tbody></table>'):'')+
+      '<h2>Aviso para enviar</h2><div class="note">'+escH(sdigAvisoTexto())+'</div>';
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Servicios digitales '+mesTxt+'</title><style>'+css+'</style></head><body>'+html+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);};</scr'+'ipt></body></html>');
+    w.document.close();
+  }
+
+  function wireSdig(box){
+    var seed=box.querySelector("#sd-seed"); if(seed) seed.onclick=sdInsertSeed;
+    var u=box.querySelector(".sd-usd"); if(u) u.addEventListener("change",function(){ var v=parseFloat(u.value)||0; VH['__USD__']=v; upsertVH('__USD__',v); renderGerencia(); });
+    var rep=box.querySelector("#sd-rep"); if(rep) rep.onclick=sdigReportePDF;
+    var cp=box.querySelector("#sd-copy"); if(cp) cp.onclick=function(){ var t=sdigAvisoTexto(); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){toast("✓ Aviso copiado");},function(){ prompt("Copia el aviso:",t); }); } else { prompt("Copia el aviso:",t); } };
+    var f=box.querySelector("#sd-form"); if(f) f.onsubmit=function(ev){ ev.preventDefault();
+      var row={nombre:f.nombre.value.trim(),proveedor:f.proveedor.value.trim()||null,categoria:f.categoria.value,asignado_a:f.asignado_a.value,costo:parseFloat(f.costo.value)||0,moneda:f.moneda.value,ciclo:f.ciclo.value,dia_cobro:parseInt(f.dia_cobro.value,10)||null,autopago:!!f.autopago.checked,activo:true,orden:_sdig.length};
+      if(!row.nombre)return; var sb=sbc(); if(!sb)return;
+      sb.from("servicios_digitales").insert(row).select().single().then(function(r){ if(r.error){toast("⚠ No se pudo (¿corriste el SQL 34?)");return;} _sdig.push(r.data); f.reset(); renderGerencia(); toast("✓ Servicio agregado"); });
+    };
+    box.querySelectorAll(".sd-del").forEach(function(b){ b.onclick=function(){ var x=sdById(b.dataset.id); if(x&&confirm("¿Eliminar «"+x.nombre+"»?")){ var sb=sbc(); if(sb)sb.from("servicios_digitales").delete().eq("id",x.id).then(function(){}); _sdig=_sdig.filter(function(y){return y.id!==x.id;}); renderGerencia(); } }; });
+    box.querySelectorAll(".sd-tog").forEach(function(b){ b.onclick=function(){ var x=sdById(b.dataset.id); if(!x)return; sdPatch(x,{activo:!sdActivo(x)}); renderGerencia(); }; });
+    box.querySelectorAll(".sd-auto").forEach(function(b){ b.onclick=function(){ var x=sdById(b.dataset.id); if(!x)return; sdPatch(x,{autopago:!x.autopago}); renderGerencia(); }; });
+    box.querySelectorAll(".sd-edit").forEach(function(b){ b.onclick=function(){ var x=sdById(b.dataset.id); if(!x)return; var m=prompt("Costo de «"+x.nombre+"» ("+(x.moneda||'CLP')+"):",x.costo||0); if(m===null)return; sdPatch(x,{costo:parseFloat(m)||0}); renderGerencia(); }; });
+    box.querySelectorAll(".sd-fecha").forEach(function(b){ b.onclick=function(){ var x=sdById(b.dataset.id); if(!x)return;
+      if((x.ciclo||'Mensual')==='Anual'){ var f=prompt("Fecha del próximo cobro anual de «"+x.nombre+"» (AAAA-MM-DD):",x.prox_cobro||""); if(f===null)return; sdPatch(x,{prox_cobro:(f.trim()||null)}); }
+      else { var d=prompt("Día del mes en que se cobra «"+x.nombre+"» (1-31):",x.dia_cobro||""); if(d===null)return; var dv=parseInt(d,10); sdPatch(x,{dia_cobro:(dv>=1&&dv<=31?dv:null)}); }
+      renderGerencia(); }; });
+  }
   // ---------- tareas / recordatorios ----------
   function addTareaDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('tareas').insert(o).select().single().then(function(r){ if(!r.error) tareas.push(r.data); else toast('⚠ Error'); }); }
   function updateTareaDB(t){ var sb=sbc(); if(sb) sb.from('tareas').update({estado:t.estado,titulo:t.titulo,fecha:t.fecha,hora:t.hora,prioridad:t.prioridad,responsable:t.responsable}).eq('id',t.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
