@@ -1039,6 +1039,7 @@
           <button id="stock-ingreso" class="btn primary" style="white-space:nowrap" title="Ingresar varios productos de una factura/guía a la vez">＋ Ingreso</button>
           <button id="stock-salida" class="btn" style="white-space:nowrap" title="Dar salida a varios productos de una vez">－ Salida</button>
           <button id="stock-trasm" class="btn" style="white-space:nowrap" title="Mover varios productos entre almacenes de una vez">⇄ Traslado</button>
+          <button id="mv-backfill" class="btn ghost" style="white-space:nowrap;margin-left:auto" title="Cargar al libro los movimientos que ya existían (ingresos, gastos, cobros)">↺ Cargar histórico</button>
         </div>
       </div>
       <div class="card">
@@ -1613,9 +1614,9 @@
   function accFmt(n){ return "A-"+String(n||0).padStart(6,"0"); }
   // registra una acción en el libro (no rompe el flujo si falla o falta la tabla)
   function registrarAccion(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={ num:accionProxNum(), tipo:o.tipo||"", fecha:o.fecha||todayISO(), descripcion:o.descripcion||"", monto:(+o.monto||0), cantidad:(o.cantidad!=null?(+o.cantidad||0):null),
+    var row={ num:(o.num||accionProxNum()), tipo:o.tipo||"", fecha:o.fecha||todayISO(), descripcion:o.descripcion||"", monto:(+o.monto||0), cantidad:(o.cantidad!=null?(+o.cantidad||0):null),
       ref_tipo:(o.ref_tipo||null), ref_num:(o.ref_num||null), proveedor:(o.proveedor||null), almacen:(o.almacen||null),
-      producto_id:(o.producto_id||null), vehiculo_id:(o.vehiculo_id||null), autor:(window.ISP_EMAIL||"") };
+      producto_id:(o.producto_id||null), vehiculo_id:(o.vehiculo_id||null), origen:(o.origen||null), autor:(o.autor||window.ISP_EMAIL||"") };
     return sb.from("acciones").insert(row).select().single().then(function(r){ if(!r.error && r.data){ _acciones.unshift(r.data); } return r&&r.data; }, function(){ return null; });
   }
   var _mvFiltro="TODOS";
@@ -1626,6 +1627,22 @@
     if(sb){ sb.from("acciones").select("*").order("num",{ascending:false}).then(function(r){ if(!r.error && r.data) _acciones=r.data; pintarMovimientos(); }, function(){ pintarMovimientos(); }); } else pintarMovimientos();
     var bs=document.getElementById("mv-buscar"); if(bs && !bs.dataset.b){ bs.dataset.b="1"; bs.oninput=pintarMovimientos; }
     var fl=document.getElementById("mv-filtro"); if(fl && !fl.dataset.b){ fl.dataset.b="1"; fl.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(!b)return; _mvFiltro=b.dataset.t; fl.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);}); pintarMovimientos(); }); }
+    var bf=document.getElementById("mv-backfill"); if(bf && !bf.dataset.b){ bf.dataset.b="1"; bf.addEventListener("click",accionesBackfill); }
+  }
+  function accionesBackfill(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var hechos={}; (_acciones||[]).forEach(function(a){ if(a.origen) hechos[a.origen]=1; });
+    var items=[];
+    (_movs||[]).forEach(function(m){ var og="mov:"+m.id; if(hechos[og])return; var p=(productos||[]).filter(function(x){return String(x.id)===String(m.producto_id);})[0];
+      items.push({ origen:og, fecha:(m.fecha||todayISO()), _d:(m.fecha||m.created_at||""), tipo:(m.tipo==="ENTRADA"?"INGRESO":"SALIDA"), cantidad:(+m.cantidad||0),
+        descripcion:(m.tipo==="ENTRADA"?"Ingreso":"Salida")+" · "+((p&&p.producto)||"")+(m.motivo?(" · "+m.motivo):""), monto:(m.tipo==="ENTRADA"?(+m.costo||0):0),
+        ref_tipo:(m.doc_tipo||null), ref_num:(m.doc_num||null), proveedor:(m.proveedor||null), producto_id:(m.producto_id||null), autor:(m.autor||"") }); });
+    (gastos||[]).forEach(function(g){ var og="gasto:"+g.id; if(hechos[og])return; items.push({ origen:og, fecha:(g.fecha||todayISO()), _d:(g.fecha||""), tipo:"GASTO", descripcion:g.con||"", monto:(+g.monto||0), ref_num:(g.ref||null) }); });
+    (data||[]).filter(function(e){return e.cobrado;}).forEach(function(e){ var og="veh:"+e.id; if(hechos[og])return; items.push({ origen:og, fecha:(e.fCoord||e.fIngreso||todayISO()), _d:(e.fCoord||e.fIngreso||""), tipo:"COBRO", descripcion:"Cobro · "+e.marca+" "+(e.modelo||"")+(e.patente?(" · "+e.patente):""), monto:ingresoReal(e), ref_tipo:(e.docTipo||null), vehiculo_id:e.id }); });
+    if(!items.length){ toast("No hay histórico pendiente de cargar ✓"); return; }
+    if(!confirm("Se cargarán "+items.length+" movimiento(s) al libro (sin duplicar). ¿Continuar?")) return;
+    items.sort(function(a,b){ return (a._d||"")<(b._d||"")?-1:1; });
+    var base=accionProxNum(), done=0, total=items.length;
+    items.forEach(function(it,i){ it.num=base+i; registrarAccion(it).then(function(){ done++; if(done>=total){ renderMovimientosLibro(); toast("✓ "+total+" movimiento(s) cargados al libro"); } }); });
   }
   function pintarMovimientos(){ var el=document.getElementById("mv-list"); if(!el)return;
     var q=((document.getElementById("mv-buscar")||{}).value||"").toLowerCase().trim();

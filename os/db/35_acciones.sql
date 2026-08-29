@@ -19,8 +19,12 @@ create table if not exists acciones (
   producto_id  text,
   vehiculo_id  text,
   autor        text,
+  origen       text,                   -- para cargar historico sin duplicar (ej. "mov:<id>")
   created_at   timestamptz default now()
 );
+create unique index if not exists acciones_origen_uidx on acciones (origen) where origen is not null;
+alter table acciones add column if not exists origen text;  -- por si la tabla ya existía
+create unique index if not exists acciones_origen_uidx2 on acciones (origen) where origen is not null;
 create index if not exists acciones_num_idx   on acciones (num);
 create index if not exists acciones_fecha_idx  on acciones (fecha);
 create index if not exists acciones_tipo_idx   on acciones (tipo);
