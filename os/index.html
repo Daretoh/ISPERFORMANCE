@@ -504,7 +504,7 @@
   .stk-btn.sal:hover{background:var(--warn);color:#fff;border-color:var(--warn);}
   .stk-btn.del:hover{background:var(--crit);color:#fff;border-color:var(--crit);}
   /* galería de adjuntos */
-  .media-modal{display:none;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
+  .media-modal{display:none;position:fixed;inset:0;z-index:220;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
   .media-modal.show{display:flex;}
   .media-modal-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);width:100%;max-width:620px;max-height:86vh;display:flex;flex-direction:column;}
   .media-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:750;}
@@ -817,7 +817,6 @@
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
         <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
-        <button data-view="panel"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Panel</button>
         <button data-view="quimicos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Químicos</button>
         <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
@@ -931,6 +930,7 @@
             <label class="f"><span class="lab">Monto</span><input name="gMonto" type="number" min="0" step="1" required placeholder="9594"></label>
             <label class="f"><span class="lab">Referencia <span class="hint" style="text-transform:none;letter-spacing:0">— documento</span></span><input name="gRef" placeholder="FAC 12345, GD 678…"></label>
             <label class="f"><span class="lab">Fecha</span><input name="gFecha" type="date" required></label>
+            <label class="f" style="justify-content:flex-end"><span class="lab">Estado</span><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;padding:9px 0"><input type="checkbox" name="gPagado"> Ya pagado</label></label>
             <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
           </form>
           <div id="gasto-list"></div>
@@ -1394,7 +1394,8 @@
         <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;align-items:flex-start">
           <button type="button" class="btn" id="fact-adj">📎 Adjuntar / escanear documento</button>
           <span id="fact-adj-txt" style="font-size:12px;color:var(--crit);font-weight:600">Falta adjuntar el documento (obligatorio)</span>
-          <span style="font-size:11.5px;color:var(--ink-muted)">El costo se registra en Costos automáticamente.</span>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="fact-pagado"> ¿Ya está pagado?</label>
+          <span style="font-size:11.5px;color:var(--ink-muted)">Si no lo marcas, queda como <b>Por pagar</b> en Costos.</span>
         </div>
         <div style="text-align:right;font-size:13px;line-height:1.8">
           <div>Neto: <b id="fact-neto">$0</b></div>
@@ -1538,7 +1539,7 @@
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
   function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
-  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", mov_id:r.mov_id||null, media:(r.media||[])}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", mov_id:r.mov_id||null, pagado:!!r.pagado, fecha_pago:r.fecha_pago||null, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
   // Bandeja de avisos: cada accion deja un aviso para el equipo (lo reparte el robot + apps abiertas)
   function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
@@ -1552,9 +1553,9 @@
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),media:(o.media||[])};
+    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
     function ins(rw,retry){ return sb.from('gastos').insert(rw).select().single().then(function(r){
-      if(r.error){ if(retry && /referencia|mov_id|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="referencia"&&k!=="mov_id")rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
+      if(r.error){ if(retry && /referencia|mov_id|pagado|fecha_pago|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(["referencia","mov_id","pagado","fecha_pago"].indexOf(k)<0)rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
       gastos.unshift(gastoFromDB(r.data)); }); }
     return ins(row,true);
   }
@@ -1576,6 +1577,13 @@
     });
   }
   function updateGastoDB(g){ var sb=sbc(); if(sb) sb.from('gastos').update({media:g.media}).eq('id',g.id).then(function(r){ if(r.error) toast('⚠ No se pudo guardar'); }); }
+  // marcar un costo como pagado (o revertir), registrando el pago en el libro
+  function gastoPagar(id, pagar){ var g=gastos.filter(function(x){return String(x.id)===String(id);})[0]; if(!g)return; var sb=sbc(); if(!sb)return;
+    g.pagado=pagar; g.fecha_pago=pagar?todayISO():null;
+    sb.from('gastos').update({pagado:g.pagado, fecha_pago:g.fecha_pago}).eq('id',g.id).then(function(r){ if(r&&r.error){ toast('⚠ No se pudo (¿corriste el SQL 37?)'); return; }
+      if(pagar) registrarAccion({ tipo:"PAGO", fecha:todayISO(), descripcion:"Pago · "+(g.con||""), monto:(+g.monto||0), ref_num:(g.ref||null) });
+      renderCostos(); toast(pagar?("✓ Pagado — "+(g.con||"")):("Marcado por pagar")); });
+  }
   function delGastoDB(id){ var sb=sbc(); if(sb) sb.from('gastos').delete().eq('id',id).then(function(){}); }
   function upsertVH(t,val){ var sb=sbc(); if(sb) sb.from('valor_hora').upsert({trabajador:t,valor:val}).then(function(){}); }
 
@@ -1628,7 +1636,7 @@
     return sb.from("acciones").insert(row).select().single().then(function(r){ if(!r.error && r.data){ _acciones.unshift(r.data); } return r&&r.data; }, function(){ return null; });
   }
   var _mvFiltro="TODOS";
-  function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],TRASLADO:['#0891b2','Traslado'],GASTO:['#7c3aed','Gasto'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
+  function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],TRASLADO:['#0891b2','Traslado'],GASTO:['#7c3aed','Gasto'],PAGO:['#0e7a5f','Pago'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
   function accProdTxt(a){ if(!a.producto_id)return ""; var p=(productos||[]).filter(function(x){return String(x.id)===String(a.producto_id);})[0]; if(!p)return ""; return (p.sku?(p.sku+" · "):"")+(p.producto||""); }
   function accAlmTxt(a){ var al=a.almacen||""; if(!al)return ""; if(al.indexOf("→")>=0){ var pz=al.split("→"); return almNombre(pz[0])+" → "+almNombre(pz[1]); } return almNombre(al); }
   function renderMovimientosLibro(){ var sb=sbc();
@@ -2220,7 +2228,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["panel","Panel"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
@@ -3281,27 +3289,32 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   var gastoForm=document.getElementById("gasto-form");
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
-    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),fecha:gastoForm.gFecha.value};
-    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; renderCostos(); toast("✓ Costo agregado"); });
+    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
+    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
   });
   function gastoRowHTML(g){
     var nm=(g.media&&g.media.length)?' '+g.media.length:'';
-    return '<div class="lrow"><span><b>'+escH(g.con||"")+'</b> · '+escH(g.tipo||"")+(g.ref?' · <span style="color:var(--accent-ink);font-weight:700">'+escH(g.ref)+'</span>':'')+' · '+fFecha(g.fecha)+'</span><span class="num">'+clp(g.monto)+' <button class="gadj" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Respaldo'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
+    var estChip=g.pagado?'<span class="chip cobrado" style="margin-left:6px">✓ Pagado</span>':'<span class="chip pend" style="margin-left:6px">Por pagar</span>';
+    var payBtn=g.pagado?'<button class="gpay" data-id="'+g.id+'" data-p="0" title="Marcar por pagar" style="border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:2px 8px;font:700 11px var(--sans);color:var(--ink-muted);cursor:pointer">↩ Revertir</button>':'<button class="gpay" data-id="'+g.id+'" data-p="1" title="Marcar como pagado" style="border:1px solid var(--ok);background:var(--ok-soft);border-radius:6px;padding:2px 9px;font:700 11px var(--sans);color:var(--ok);cursor:pointer">✓ Pagar</button>';
+    return '<div class="lrow"><span><b>'+escH(g.con||"")+'</b> · '+escH(g.tipo||"")+(g.ref?' · <span style="color:var(--accent-ink);font-weight:700">'+escH(g.ref)+'</span>':'')+' · '+fFecha(g.fecha)+estChip+'</span><span class="num">'+clp(g.monto)+' '+payBtn+' <button class="gadj" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Respaldo'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
   }
   function renderCostos(){
     // ---- gastos con pestañas Recientes | Todos ----
     var gtab=state.costGTab||"recientes";
-    var totFijo=0,totVar=0; gastos.forEach(function(g){ if((g.tipo||"")==="FIJO") totFijo+=(+g.monto||0); else totVar+=(+g.monto||0); });
+    var totFijo=0,totVar=0,porPagar=0,nPP=0; gastos.forEach(function(g){ if((g.tipo||"")==="FIJO") totFijo+=(+g.monto||0); else totVar+=(+g.monto||0); if(!g.pagado){ porPagar+=(+g.monto||0); nPP++; } });
     var tabsHTML='<div class="cobro-tabs" style="padding:0 0 8px;top:0">'+
       '<button type="button" class="cbtab'+(gtab==="recientes"?" on":"")+'" data-gtab="recientes">Recientes</button>'+
+      '<button type="button" class="cbtab'+(gtab==="porpagar"?" on":"")+'" data-gtab="porpagar">Por pagar <span class="cbtab-n">'+nPP+'</span></button>'+
       '<button type="button" class="cbtab'+(gtab==="todos"?" on":"")+'" data-gtab="todos">Todos <span class="cbtab-n">'+gastos.length+'</span></button>'+
     '</div>';
-    var listaG=(gtab==="todos")?gastos.slice():gastos.slice(0,15);
-    var rowsHTML=listaG.map(gastoRowHTML).join("")||'<div class="col-empty">Sin gastos aún</div>';
-    var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>':'';
-    document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+'<div class="gasto-rows'+(gtab==="todos"?" full":"")+'">'+rowsHTML+'</div>';
+    var listaG=(gtab==="todos")?gastos.slice():(gtab==="porpagar")?gastos.filter(function(g){return !g.pagado;}):gastos.slice(0,15);
+    var rowsHTML=listaG.map(gastoRowHTML).join("")||'<div class="col-empty">'+(gtab==="porpagar"?"No hay costos por pagar 🎉":"Sin gastos aún")+'</div>';
+    var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>'
+      :(gtab==="porpagar")?'<div class="gasto-resumen"><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Total por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div></div>':'';
+    document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+'<div class="gasto-rows'+((gtab==="todos"||gtab==="porpagar")?" full":"")+'">'+rowsHTML+'</div>';
     var imb=document.getElementById("costos-import-mov"); if(imb && !imb.dataset.b){ imb.dataset.b="1"; imb.addEventListener("click",costosDesdeMovimientos); }
     document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ state.costGTab=b.dataset.gtab; renderCostos(); }); });
+    document.querySelectorAll("#gasto-list .gpay").forEach(function(b){ b.addEventListener("click",function(){ gastoPagar(b.dataset.id, b.dataset.p==="1"); }); });
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
       else { gastos=gastos.filter(function(x){return x.id!==b.dataset.id;}); delGastoDB(b.dataset.id); }
@@ -3952,7 +3965,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function abrirFactura(){ document.getElementById("fact-prov").value=""; document.getElementById("fact-num").value=""; document.getElementById("fact-doc").value="Factura"; document.getElementById("fact-fecha").value=todayISO();
     document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total";
     var fa=document.getElementById("fact-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
-    _factMedia=[]; factAdjTxt();
+    _factMedia=[]; factAdjTxt(); var fp=document.getElementById("fact-pagado"); if(fp)fp.checked=false;
     document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
     document.getElementById("fact-modal").classList.add("show"); }
   function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
@@ -3968,7 +3981,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
       lines.forEach(function(l){ almInit(l.p); l.p.entrada=(+l.p.entrada||0)+l.cant; l.p.stock_alm[alm]=(+l.p.stock_alm[alm]||0)+l.cant; saveProducto(l.p);
         registrarAccion({ tipo:"INGRESO", fecha:fecha, cantidad:l.cant, descripcion:"Ingreso · "+(l.p.producto||""), monto:Math.round(c.neto*(l.cant/totCant)), ref_tipo:doc, ref_num:num, proveedor:prov, producto_id:l.p.id, almacen:alm }); });
-      if(c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):""), media:_factMedia.slice()}); } // siempre a Costos, con el documento adjunto
+      var pagado=!!(document.getElementById("fact-pagado")&&document.getElementById("fact-pagado").checked);
+      if(c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):""), pagado:pagado, media:_factMedia.slice()}); if(pagado) registrarAccion({tipo:"PAGO", fecha:fecha, descripcion:"Pago · "+con, monto:c.total, ref_tipo:doc, ref_num:num, proveedor:prov}); } // siempre a Costos, con el documento adjunto
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
       toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(c.total>0?" · gasto en Costos":""));
     });
