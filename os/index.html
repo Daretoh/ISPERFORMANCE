@@ -3528,7 +3528,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
 
   // ---------- GERENCIA (costos — solo gerente) ----------
-  var _gfijos=[], _gerMes=null, _gerFold={personal:false,fijos:false,variables:false}; // desplegables Gerencia (true=abierto). Arrancan cerrados.
+  var _gfijos=[], _gerMes=null, _gerFold={personal:false,fijos:false,variables:false,sdig:false}; // desplegables Gerencia (true=abierto). Arrancan cerrados.
   var GF_SEED=[{concepto:"Arriendo taller",monto:1220000,dia:5},{concepto:"Internet taller",monto:15990,dia:10},{concepto:"Asesoría contabilidad",monto:40000,dia:5},{concepto:"Asesoría remuneraciones BUK",monto:50000,dia:5},{concepto:"Redes sociales",monto:40000,dia:1}];
   function gerMeses(){ var arr=[], d=new Date(); for(var i=0;i<6;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
   function gfActivo(x){ return x.activo!==false; }
@@ -3687,11 +3687,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
 
     var rate='<div class="row c3" style="align-items:end;margin:2px 0 10px"><label class="f"><span class="lab">Valor del dólar (CLP)</span><input class="sd-usd" type="number" min="0" step="1" value="'+(usd||"")+'" placeholder="ej: 950"></label><div class="f" style="grid-column:2/-1"><span class="lab">Reporte</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sd-rep">📄 Reporte (PDF)</button><button type="button" class="btn ghost" id="sd-copy">📋 Copiar aviso</button></div></div></div>';
 
-    return '<div class="chart" style="margin-top:16px"><h3>Servicios digitales <span class="tag">web · redes · hosting · suscripciones</span></h3>'+
+    return '<details class="chart ger-fold" data-fold="sdig"'+(_gerFold['sdig']?' open':'')+' style="margin-bottom:16px"><summary>Servicios digitales <span class="tag">web · redes · hosting · suscripciones</span></summary><div class="ger-fold-body">'+
       '<p class="hint" style="display:block;margin:-2px 0 12px">Semáforo de cobros para adelantarse y que no se corten. 🟢 al día · 🟡 por vencer · 🔴 vencido.</p>'+
       rate+kpis+tabla+
       (porPersona?('<h3 style="margin:18px 0 0;font-size:14px">Costo por empleado <span class="tag">mensual equivalente</span></h3>'+porPersona):'')+
-      form+'</div>';
+      form+'</div></details>';
   }
 
   function sdInsertSeed(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;} var filas=SDIG_SEED.map(function(x,i){ x.orden=i; x.activo=true; return x; }); sb.from("servicios_digitales").insert(filas).select().then(function(r){ if(r.error){toast("⚠ Error (¿corriste el SQL 34?)");return;} (r.data||[]).forEach(function(row){_sdig.push(row);}); renderGerencia(); toast("✓ Ejemplo cargado"); }); }
