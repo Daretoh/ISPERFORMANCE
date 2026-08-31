@@ -2742,7 +2742,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }).join("");
     _mmBody.querySelectorAll("img[data-path]").forEach(function(img){ urlFirmada(img.dataset.path).then(function(u){ if(u)img.src=u; }); });
     _mmBody.querySelectorAll(".gal-open").forEach(function(a){ a.addEventListener("click",function(ev){ ev.preventDefault(); urlFirmada(a.dataset.path).then(function(u){ if(u)window.open(u,"_blank"); }); }); });
-    _mmBody.querySelectorAll(".gal-del").forEach(function(b){ b.addEventListener("click",function(){ if(confirm("¿Quitar este archivo?")){ media.splice(+b.dataset.i,1); _galCtx.onChange(); galFilterRender(); galRender(); } }); });
+    _mmBody.querySelectorAll(".gal-del").forEach(function(b){ b.addEventListener("click",function(){
+      if(b.dataset.ok){ media.splice(+b.dataset.i,1); _galCtx.onChange(); galFilterRender(); galRender(); }
+      else { b.dataset.ok="1"; b.textContent="✓"; b.title="Toca de nuevo para quitar"; b.style.background="var(--crit)"; setTimeout(function(){ if(b&&b.dataset){ b.dataset.ok=""; b.textContent="×"; b.style.background=""; } },2500); }
+    }); });
     _mmBody.querySelectorAll(".gal-nm-input").forEach(function(inp){ inp.addEventListener("change",function(){ media[+inp.dataset.i].nombre=inp.value; _galCtx.onChange(); }); });
     _mmBody.querySelectorAll(".gal-cat").forEach(function(sel){ sel.addEventListener("change",function(){ media[+sel.dataset.i].cat=sel.value; _galCtx.onChange(); galFilterRender(); galRender(); }); });
   }
