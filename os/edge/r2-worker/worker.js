@@ -43,7 +43,8 @@ export default {
     const fname = (request.headers.get("x-filename") || "archivo").replace(/[^a-zA-Z0-9._-]/g, "_");
     const key = folder + "/" + Date.now() + "_" + fname;
     try {
-      await env.BUCKET.put(key, request.body, {
+      const buf = await request.arrayBuffer(); // buffer completo = subida confiable
+      await env.BUCKET.put(key, buf, {
         httpMetadata: { contentType: request.headers.get("content-type") || "application/octet-stream" },
       });
     } catch (e) {

@@ -1151,6 +1151,12 @@
         <button class="btn primary" id="of-test" style="margin-top:12px">Probar conexión</button>
         <pre id="of-out" style="margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;color:var(--ink-2)">(sin resultado aún)</pre>
       </div>
+      <div class="card" style="margin-top:16px">
+        <h3>☁️ Migrar archivos a Cloudflare R2</h3>
+        <p class="hint" style="display:block;margin:6px 0 12px;font-size:12px;color:var(--ink-muted)">Copia los archivos que están en Supabase hacia R2 y actualiza los enlaces. No borra nada de Supabase (eso se hace después, cuando confirmes que todo se ve bien).</p>
+        <button class="btn primary" id="r2-migrar">Migrar archivos a R2</button>
+        <pre id="r2-out" style="margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 var(--mono);white-space:pre-wrap;max-height:200px;overflow:auto;color:var(--ink-2)">(sin iniciar)</pre>
+      </div>
     </section>
 
     <!-- ============ COTIZACIONES ============ -->
@@ -2263,6 +2269,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         out.textContent="Respuesta del puente (status "+(d.status||"?")+", ok="+d.ok+"):\n\n"+(d.pdf_base64?("[PDF recibido, "+d.pdf_base64.length+" bytes base64]"):JSON.stringify(d.json!=null?d.json:d,null,2)).slice(0,4000);
       },function(e){ oft.disabled=false; out.textContent="⚠ No se pudo llamar al puente:\n"+String(e&&e.message||e); });
     }); }
+    var r2b=document.getElementById("r2-migrar"); if(r2b && !r2b.dataset.done){ r2b.dataset.done="1"; r2b.addEventListener("click",migrarR2); }
     var rolEl=document.getElementById("acc-rol");
     if(rolEl && !rolEl.dataset.done){ rolEl.innerHTML='<option value="">— Sin rol / personalizado —</option>'+ROLES_PRESET.map(function(r){ return '<option value="'+av(r.nombre)+'">'+escH(r.nombre)+'</option>'; }).join(""); rolEl.dataset.done="1";
       rolEl.addEventListener("change",function(){ var r=ROLES_PRESET.filter(function(x){return x.nombre===rolEl.value;})[0]; if(r) accSetChecks(r.vistas, r.permisos); }); }
@@ -2691,6 +2698,27 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   // devuelve la URL para ver el archivo: R2 (http) directo; Supabase antiguo -> URL firmada
   function urlFirmada(path){ if(/^https?:\/\//i.test(path||"")) return Promise.resolve(path); var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.storage.from("adjuntos").createSignedUrl(path,3600).then(function(r){ return (r.data&&r.data.signedUrl)||null; }); }
+  // migra los archivos antiguos (Supabase) a R2 y actualiza los enlaces. No borra de Supabase.
+  function migrarR2(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    var out=document.getElementById("r2-out");
+    var jobs=[];
+    (data||[]).forEach(function(e){ (e.media||[]).forEach(function(m,i){ if(m && m.path && !/^https?:/i.test(m.path)) jobs.push({t:"veh", rec:e, arr:e.media, idx:i, carpeta:"veh/"+e.id}); }); });
+    (gastos||[]).forEach(function(g){ (g.media||[]).forEach(function(m,i){ if(m && m.path && !/^https?:/i.test(m.path)) jobs.push({t:"gasto", rec:g, arr:g.media, idx:i, carpeta:"gasto/"+g.id}); }); });
+    (_solped||[]).forEach(function(s){ (s.media||[]).forEach(function(m,i){ if(m && m.path && !/^https?:/i.test(m.path)) jobs.push({t:"solped", rec:s, arr:s.media, idx:i, carpeta:"solped/"+s.id}); }); });
+    if(!jobs.length){ if(out)out.textContent="No hay archivos antiguos por migrar ✓"; toast("No hay archivos antiguos por migrar ✓"); return; }
+    if(!confirm("Se migrarán "+jobs.length+" archivo(s) de Supabase a R2. Puede tardar unos minutos. No se borra nada. ¿Continuar?")) return;
+    var i=0, ok=0, fail=0; var btn=document.getElementById("r2-migrar"); if(btn)btn.disabled=true;
+    function next(){
+      if(i>=jobs.length){ if(btn)btn.disabled=false; if(out)out.textContent="✓ Migración lista: "+ok+" copiado(s)"+(fail?", "+fail+" fallaron":"")+".\n\nRevisa que los archivos se vean bien y avísame para borrar los viejos de Supabase (liberar cuota)."; toast("✓ Migración: "+ok+" ok"+(fail?", "+fail+" fallaron":"")); return; }
+      var j=jobs[i]; i++; var m=j.arr[j.idx];
+      if(out)out.textContent="Migrando "+i+" de "+jobs.length+" …  ("+ok+" ok, "+fail+" fallos)";
+      urlFirmada(m.path).then(function(url){ if(!url) return null; return fetch(url).then(function(r){ return r.ok?r.blob():null; }); })
+        .then(function(blob){ if(!blob) return null; var f=new File([blob],(m.nombre||"archivo"),{type:blob.type||m.tipo||""}); return subirArchivo(f, j.carpeta); })
+        .then(function(nm){ if(nm){ nm.cat=m.cat||""; j.arr[j.idx]=nm; ok++; if(j.t==="veh") persistVeh(j.rec); else if(j.t==="gasto") updateGastoDB(j.rec); else if(j.t==="solped"){ var sb2=sbc(); if(sb2) sb2.from("solicitudes").update({media:j.rec.media}).eq("id",j.rec.id).then(function(){}); } } else { fail++; } setTimeout(next,120); })
+        .catch(function(){ fail++; setTimeout(next,120); });
+    }
+    next();
+  }
   var _galCtx=null; // {media, carpeta, acepta, onChange, cats, defCat, filter}
   var _mm=document.getElementById("media-modal"), _mmBody=document.getElementById("media-modal-body"), _mmInput=document.getElementById("media-modal-input"), _mmAdd=document.getElementById("media-modal-add");
   var _mmFilter=document.getElementById("media-modal-filter");
