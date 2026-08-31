@@ -2713,11 +2713,24 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   function solAvanzar(id,next){ var sb=sbc(); if(!sb)return; sb.from("solicitudes").update({estado:next}).eq("id",id).then(function(r){ if(r.error){toast("⚠ Error");return;} var s=_solped.filter(function(x){return x.id===id;})[0]; if(s)s.estado=next; pintarSolped(); updateCounts(); }); }
   function solEliminar(id){ var sb=sbc(); if(sb) sb.from("solicitudes").delete().eq("id",id).then(function(){}); _solped=_solped.filter(function(x){return x.id!==id;}); pintarSolped(); updateCounts(); }
+  // si el material ya existe (químicos o stock), su tipo ya está definido -> lo devuelve
+  function tipoDeMaterial(nombre){ nombre=(nombre||"").trim().toLowerCase(); if(!nombre) return null;
+    if((typeof QUIMICOS!=="undefined"?QUIMICOS:[]).some(function(q){ return (q.prod||"").trim().toLowerCase()===nombre; })) return "Químico";
+    var p=(productos||[]).filter(function(x){ return (x.producto||"").trim().toLowerCase()===nombre; })[0];
+    if(p){ if((p.tipo||"").toUpperCase()==="QUIMICO") return "Químico"; if((p.categoria||"VENTA")==="INSUMO") return "Insumo"; return null; }
+    return null;
+  }
+  function solTipoAuto(){ var it=document.getElementById("sol-item"), sel=document.getElementById("sol-tipo"); if(!it||!sel)return;
+    var t=tipoDeMaterial(it.value);
+    if(t){ sel.value=t; sel.disabled=true; sel.title="Ya definido cuando se creó el material"; sel.style.opacity=".6"; }
+    else { sel.disabled=false; sel.title=""; sel.style.opacity=""; }
+  }
   (function(){ var b=document.getElementById("sol-add"); if(!b)return;
+    var it=document.getElementById("sol-item"); if(it){ it.addEventListener("input",solTipoAuto); it.addEventListener("change",solTipoAuto); }
     b.onclick=function(){ var sb=sbc(); if(!sb)return;
       var item=(document.getElementById("sol-item").value||"").trim(); if(!item){ toast("Escribe qué se necesita"); return; }
       var row={ numero:solProxNum(), item:item, tipo:document.getElementById("sol-tipo").value, cantidad:(document.getElementById("sol-cant").value||"").trim(), urgencia:document.getElementById("sol-urg").value, motivo:(document.getElementById("sol-motivo").value||"").trim(), estado:"PENDIENTE", solicitante:(window.ISP_EMAIL||"") };
-      sb.from("solicitudes").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 15?)"); return; } _solped.unshift(r.data); ["sol-item","sol-cant","sol-motivo"].forEach(function(id){document.getElementById(id).value="";}); pintarSolped(); updateCounts(); toast("✓ Solicitud creada"); });
+      sb.from("solicitudes").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 15?)"); return; } _solped.unshift(r.data); ["sol-item","sol-cant","sol-motivo"].forEach(function(id){document.getElementById(id).value="";}); solTipoAuto(); pintarSolped(); updateCounts(); toast("✓ Solicitud creada"); });
     };
   })();
   function updateCounts(){
