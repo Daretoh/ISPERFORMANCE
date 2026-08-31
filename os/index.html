@@ -2676,15 +2676,21 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
 
   // ---------- adjuntos (Supabase Storage): fotos, videos, boletas, facturas ----------
   function tipoArchivo(f){ var t=f.type||""; if(t.indexOf("video")===0)return "video"; if(t.indexOf("image")===0)return "image"; return "doc"; }
+  // Archivos en Cloudflare R2 (via Worker seguro). Lectura por URL pública del bucket.
+  var R2_UPLOAD="https://isperformance-r2.emc2-cc.workers.dev";
+  var R2_PUBLIC="https://pub-cb5587fe76124fa1a09a0b25f3f82bc9.r2.dev";
   function subirArchivo(file,carpeta){ var sb=sbc(); if(!sb)return Promise.resolve(null);
     var safe=(file.name||"archivo").replace(/[^a-zA-Z0-9._-]/g,"_");
-    var path=carpeta+"/"+Date.now()+"_"+safe;
-    return sb.storage.from("adjuntos").upload(path,file).then(function(r){
-      if(r.error){ return null; }
-      return {path:path,tipo:tipoArchivo(file),nombre:file.name};
+    return sb.auth.getSession().then(function(res){
+      var tok=res&&res.data&&res.data.session&&res.data.session.access_token; if(!tok) return null;
+      return fetch(R2_UPLOAD,{ method:"POST", headers:{ "Authorization":"Bearer "+tok, "content-type":(file.type||"application/octet-stream"), "x-folder":(carpeta||"varios"), "x-filename":safe }, body:file })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if(d&&d.ok&&d.key){ var url=R2_PUBLIC+"/"+d.key; return {path:url,url:url,tipo:tipoArchivo(file),nombre:file.name,r2:true}; } toast("⚠ No se pudo subir el archivo"); return null; })
+        .catch(function(){ toast("⚠ Error al subir (revisa el Worker)"); return null; });
     }).catch(function(){ return null; });
   }
-  function urlFirmada(path){ var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.storage.from("adjuntos").createSignedUrl(path,3600).then(function(r){ return (r.data&&r.data.signedUrl)||null; }); }
+  // devuelve la URL para ver el archivo: R2 (http) directo; Supabase antiguo -> URL firmada
+  function urlFirmada(path){ if(/^https?:\/\//i.test(path||"")) return Promise.resolve(path); var sb=sbc(); if(!sb)return Promise.resolve(null); return sb.storage.from("adjuntos").createSignedUrl(path,3600).then(function(r){ return (r.data&&r.data.signedUrl)||null; }); }
   var _galCtx=null; // {media, carpeta, acepta, onChange, cats, defCat, filter}
   var _mm=document.getElementById("media-modal"), _mmBody=document.getElementById("media-modal-body"), _mmInput=document.getElementById("media-modal-input"), _mmAdd=document.getElementById("media-modal-add");
   var _mmFilter=document.getElementById("media-modal-filter");
