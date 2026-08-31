@@ -1718,7 +1718,7 @@
     function mostrar(){ if(avisado||document.getElementById('ver-banner'))return; avisado=true;
       var b=document.createElement('div'); b.id='ver-banner';
       b.innerHTML='<span>🔄 Hay una versión nueva del sistema.</span><button id="ver-recargar">Actualizar</button>';
-      document.body.appendChild(b); document.getElementById('ver-recargar').onclick=function(){ location.reload(); }; }
+      document.body.appendChild(b); document.getElementById('ver-recargar').onclick=function(){ location.replace(location.pathname+'?v='+Date.now()); }; }
     function chequear(){ try{ fetch(location.pathname+'?_v='+Date.now(),{method:'HEAD',cache:'no-store'}).then(function(r){ var s=firma(r); if(!s)return; if(sig===null){ sig=s; return; } if(s!==sig) mostrar(); }).catch(function(){}); }catch(e){} }
     chequear(); setInterval(chequear,150000); // primera lectura = firma base; luego cada ~2.5 min
     document.addEventListener('visibilitychange',function(){ if(!document.hidden) chequear(); });
