@@ -598,6 +598,9 @@
   .acc-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);}
   .acc-item .em{font-weight:700;font-size:13px;} .acc-item .vs{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
   .acc-item .acts button{background:none;border:none;color:var(--info);font:700 12px var(--sans);cursor:pointer;margin-left:8px;} .acc-item .acts .del{color:var(--crit);}
+  #nav-orden{display:flex;flex-direction:column;gap:6px;max-width:360px;}
+  .nav-ord-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;cursor:grab;user-select:none;}
+  .nav-ord-row:active{cursor:grabbing;} .nav-ord-grip{color:var(--ink-muted);font-size:13px;line-height:1;} .nav-ord-num{color:var(--ink-muted);font:700 11px var(--mono);min-width:16px;} .nav-ord-name{font-weight:600;font-size:13px;}
   /* Cotizaciones */
   .cotiz-items-head,.cotiz-item{display:grid;grid-template-columns:2.4fr .7fr 1fr .7fr 1fr 30px;gap:8px;align-items:center;}
   .cotiz-items-head{font:700 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);padding:0 2px 6px;border-bottom:1px solid var(--line);}
@@ -1157,6 +1160,11 @@
         <button class="btn primary" id="r2-migrar">Migrar archivos a R2</button>
         <pre id="r2-out" style="margin-top:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px;font:12px/1.5 var(--mono);white-space:pre-wrap;max-height:200px;overflow:auto;color:var(--ink-2)">(sin iniciar)</pre>
       </div>
+      <div class="card" style="margin-top:16px">
+        <h3>☰ Orden del menú</h3>
+        <p class="hint" style="display:block;margin:6px 0 12px;font-size:12px;color:var(--ink-muted)">Arrastra las pestañas para cambiar el orden en que aparecen en el menú (para todos). Cada quien ve solo las que tiene permitidas, en este orden.</p>
+        <div id="nav-orden"></div>
+      </div>
     </section>
 
     <!-- ============ COTIZACIONES ============ -->
@@ -1604,7 +1612,8 @@
       sb.from('planificacion').select('*').order('vence',{ascending:true}).then(function(r){return r;},function(){return {data:[]};}),
       sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};})
+      sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('config').select('*').then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1621,7 +1630,17 @@
       _gfijos=((res[12]&&res[12].data)||[]);
       _sdig=((res[13]&&res[13].data)||[]);
       _acciones=((res[14]&&res[14].data)||[]);
+      CONFIG={}; (((res[15]&&res[15].data)||[])).forEach(function(c){ CONFIG[c.clave]=c.valor; }); NAV_ORDER=(CONFIG['nav_orden']&&CONFIG['nav_orden'].length)?CONFIG['nav_orden']:null;
     });
+  }
+  var CONFIG={}, NAV_ORDER=null;
+  function guardarConfig(clave,valor){ CONFIG[clave]=valor; var sb=sbc(); if(sb) sb.from('config').upsert({clave:clave,valor:valor,updated_at:new Date().toISOString()},{onConflict:'clave'}).then(function(r){ if(r&&r.error) toast('⚠ No se pudo (¿corriste el SQL 38?)'); }); }
+  // reordena el menú según NAV_ORDER (global). Si no hay, deja el orden por defecto.
+  function aplicarOrdenNav(){ if(!NAV_ORDER||!NAV_ORDER.length)return; var tabs=document.getElementById('tabs'); if(!tabs)return;
+    var btns=Array.prototype.slice.call(tabs.querySelectorAll('button[data-view]'));
+    tabs.querySelectorAll('.nav-group-title').forEach(function(t){ t.style.display='none'; });
+    btns.sort(function(a,b){ var ia=NAV_ORDER.indexOf(a.dataset.view), ib=NAV_ORDER.indexOf(b.dataset.view); if(ia<0)ia=999; if(ib<0)ib=999; return ia-ib; });
+    var cont=tabs.querySelector('.nav-group')||tabs; btns.forEach(function(b){ cont.appendChild(b); });
   }
   // ---- Libro de movimientos / acciones (trazabilidad tipo SAP) ----
   var _acciones=[];
@@ -1694,6 +1713,7 @@
   function accesoDe(email){ email=(email||'').toLowerCase(); if(email===OWNER_EMAIL) return null; return (ACCESOS[email]!==undefined)?ACCESOS[email]:ROLES[email]; }
   function applyRole(email){
     email=(email||'').toLowerCase();
+    aplicarOrdenNav(); // reordena el menú según config antes de mostrar/ocultar
     var allowed=accesoDe(email); // null = ve todo
     var kiosco=!!(allowed && allowed.indexOf('kiosco')>=0); // "modo tablet": solo marcar asistencia
     document.body.classList.toggle('kiosco-user',kiosco);
@@ -2259,6 +2279,30 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var k=document.getElementById("acc-kiosco"); if(k){ k.checked=vs.indexOf('kiosco')>=0; accKioscoUI(k.checked); } }
   function accKioscoUI(on){ var lab=document.getElementById("acc-vistas-lab"); if(lab) lab.textContent=on?"Modo tablet — elige qué pestañas ve (barra inferior en el celular)":"Pestañas que puede ver"; }
   function accEmailActual(){ var sel=document.getElementById("acc-cuenta"), v=sel?sel.value:""; if(v==="__otro") return (document.getElementById("acc-email").value||"").trim().toLowerCase(); return (v||"").toLowerCase(); }
+  var TODAS_VISTAS=VISTAS_ADMIN.concat([["movimientos","Movimientos"],["gerencia","Gerencia"],["admin","Admin"]]);
+  function pintarOrdenNav(){
+    var box=document.getElementById("nav-orden"); if(!box)return;
+    var lbl={}; TODAS_VISTAS.forEach(function(v){ lbl[v[0]]=v[1]; });
+    var orden=[]; (NAV_ORDER||[]).forEach(function(v){ if(lbl[v]&&orden.indexOf(v)<0)orden.push(v); });
+    TODAS_VISTAS.forEach(function(v){ if(orden.indexOf(v[0])<0)orden.push(v[0]); });
+    box.innerHTML=orden.map(function(v,i){ return '<div class="nav-ord-row" draggable="true" data-v="'+escH(v)+'"><span class="nav-ord-grip">⣿</span><span class="nav-ord-num">'+(i+1)+'</span><span class="nav-ord-name">'+escH(lbl[v]||v)+'</span></div>'; }).join("");
+    var dragging=null;
+    box.querySelectorAll(".nav-ord-row").forEach(function(row){
+      row.addEventListener("dragstart",function(){ dragging=row; row.style.opacity=".4"; });
+      row.addEventListener("dragend",function(){ row.style.opacity=""; dragging=null; guardarOrdenNav(); });
+      row.addEventListener("dragover",function(e){ e.preventDefault(); if(!dragging||dragging===row)return;
+        var r=row.getBoundingClientRect(); var antes=(e.clientY-r.top)<(r.height/2);
+        box.insertBefore(dragging, antes?row:row.nextSibling);
+      });
+    });
+  }
+  function guardarOrdenNav(){ var box=document.getElementById("nav-orden"); if(!box)return;
+    var arr=Array.prototype.slice.call(box.querySelectorAll(".nav-ord-row")).map(function(r){ return r.dataset.v; });
+    box.querySelectorAll(".nav-ord-num").forEach(function(n,i){ n.textContent=(i+1); });
+    NAV_ORDER=arr; guardarConfig("nav_orden",arr);
+    aplicarOrdenNav(); if(window.ISP_EMAIL) applyRole(window.ISP_EMAIL);
+    toast("Orden del menú guardado");
+  }
   function pintarAdmin(){
     var box=document.getElementById("acc-vistas");
     if(box && !box.dataset.done){ box.innerHTML=VISTAS_ADMIN.map(function(v){ return '<label><input type="checkbox" value="'+v[0]+'">'+escH(v[1])+'</label>'; }).join(""); box.dataset.done="1"; }
@@ -2278,6 +2322,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       },function(e){ oft.disabled=false; out.textContent="⚠ No se pudo llamar al puente:\n"+String(e&&e.message||e); });
     }); }
     var r2b=document.getElementById("r2-migrar"); if(r2b && !r2b.dataset.done){ r2b.dataset.done="1"; r2b.addEventListener("click",migrarR2); }
+    pintarOrdenNav();
     var rolEl=document.getElementById("acc-rol");
     if(rolEl && !rolEl.dataset.done){ rolEl.innerHTML='<option value="">— Sin rol / personalizado —</option>'+ROLES_PRESET.map(function(r){ return '<option value="'+av(r.nombre)+'">'+escH(r.nombre)+'</option>'; }).join(""); rolEl.dataset.done="1";
       rolEl.addEventListener("change",function(){ var r=ROLES_PRESET.filter(function(x){return x.nombre===rolEl.value;})[0]; if(r) accSetChecks(r.vistas, r.permisos); }); }
