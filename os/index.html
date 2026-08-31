@@ -2300,6 +2300,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var vistos={}, lista=[]; // unión: equipo fijo + registrados (usuarios) + con acceso configurado
       function _push(em,nom){ em=(em||'').toLowerCase(); if(!em||em===OWNER_EMAIL||vistos[em])return; vistos[em]=1; lista.push({em:em,nom:nom||''}); }
       Object.keys(EQUIPO).forEach(function(em){ _push(em,EQUIPO[em]); });
+      GERENCIA_EMAILS.forEach(function(em){ _push(em,''); }); // correos de gerencia (aunque no hayan entrado aún)
       Object.keys(USUARIOS).forEach(function(em){ _push(em,USUARIOS[em]); });
       Object.keys(ACCESOS).forEach(function(em){ _push(em,''); });
       lista.sort(function(a,b){ return (a.nom||a.em)<(b.nom||b.em)?-1:1; });
