@@ -1253,7 +1253,7 @@
     <section class="view" id="view-solicitudes">
       <div class="vhead"><div class="eye">Reabastecimiento</div><h1>Solicitudes</h1></div>
       <div class="card">
-        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Nueva solicitud <button class="btn primary" id="fact-open" style="white-space:nowrap">📦 Ingreso de materiales</button></h3>
+        <h3>Nueva solicitud</h3>
         <div class="row c4" style="margin:10px 0">
           <label class="f" style="grid-column:span 2"><span class="lab">Qué se necesita</span><input id="sol-item" list="sol-item-list" placeholder="Ej: WINTEX Alumax, paños microfibra…"></label>
           <label class="f"><span class="lab">Tipo</span><select id="sol-tipo"><option>Químico</option><option>Insumo</option><option>Herramienta</option><option>Repuesto</option><option>Otro</option></select></label>
@@ -1405,6 +1405,7 @@
         <label class="f"><span class="lab">Fecha</span><input id="fact-fecha" type="date"></label>
         <label class="f"><span class="lab">Almacén (entra a)</span><select id="fact-alm"></select></label>
       </div>
+      <label class="f" style="margin:0 0 12px"><span class="lab">¿Viene de una solicitud? <span class="hint" style="text-transform:none;letter-spacing:0">— opcional, la marca como recibida y le enlaza este documento</span></span><select id="fact-solped"><option value="">— Ninguna —</option></select></label>
       <div class="fact-lhead"><span>Material (producto del stock)</span><span>Cantidad</span><span></span></div>
       <div id="fact-lines"></div>
       <button class="btn" id="fact-addline" style="margin-top:8px">＋ Agregar material</button>
@@ -2701,15 +2702,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var urg=(s.urgencia==="Urgente");
         var next={PENDIENTE:"COMPRADA",COMPRADA:"RECIBIDA"}[s.estado];
         var nextTxt={COMPRADA:"Comprada",RECIBIDA:"Recibida"}[next];
-        var recBtn=(s.estado!=="RECIBIDA")?'<button class="go" data-rec="'+s.id+'" style="background:var(--ok);border-color:var(--ok)">Recibir ▸</button>':'';
         var advBtn=(next&&next!=="RECIBIDA")?'<button class="go" data-go="'+s.id+'" data-next="'+next+'">'+nextTxt+' ›</button>':'';
         var recDet=(s.estado==="RECIBIDA"&&(s.recep_ref||s.recep_prov||s.recep_doc||s.recep_costo))?'<div class="si-meta" style="margin-top:4px;color:var(--ok)">✓ Recibido'+(s.recep_doc?(' · '+escH(s.recep_doc)):'')+(s.recep_ref?(' N°'+escH(s.recep_ref)):'')+(s.recep_prov?(' · '+escH(s.recep_prov)):'')+(s.recep_costo?(' · '+clp(s.recep_costo)):'')+'</div>':'';
-        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+(s.numero?'<span class="cn" style="color:var(--accent-ink);font-family:var(--mono);margin-right:5px">N°'+s.numero+'</span>':'')+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div>'+recDet+'</div><div class="sol-acts">'+recBtn+advBtn+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
+        return '<div class="sol-card'+(urg?" urg":"")+'"><div><div class="si-item">'+(s.numero?'<span class="cn" style="color:var(--accent-ink);font-family:var(--mono);margin-right:5px">N°'+s.numero+'</span>':'')+escH(s.item||"")+'</div><div class="si-meta"><span class="si-tag">'+escH(s.tipo||"—")+'</span>'+(s.cantidad?'<span>'+escH(s.cantidad)+'</span>':'')+(urg?'<span class="si-tag si-urg">Urgente</span>':'')+(s.motivo?'<span>· '+escH(s.motivo)+'</span>':'')+'</div>'+recDet+'</div><div class="sol-acts">'+advBtn+'<button class="del" data-del="'+s.id+'" title="Eliminar">✕</button></div></div>';
       }).join("")||'<div class="col-empty" style="font-size:12px">—</div>';
       return '<div class="sol-col"><h4><span>'+es[1]+'</span><span>'+items.length+'</span></h4>'+cards+'</div>';
     }).join("");
     el.querySelectorAll("[data-go]").forEach(function(b){ b.onclick=function(){ solAvanzar(b.dataset.go, b.dataset.next); }; });
-    el.querySelectorAll("[data-rec]").forEach(function(b){ b.onclick=function(){ var s=_solped.filter(function(x){return x.id===b.dataset.rec;})[0]; if(s) abrirMovDesdeSolped(s); }; });
     el.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ if(confirm("¿Eliminar esta solicitud?")) solEliminar(b.dataset.del); }; });
   }
   function solAvanzar(id,next){ var sb=sbc(); if(!sb)return; sb.from("solicitudes").update({estado:next}).eq("id",id).then(function(r){ if(r.error){toast("⚠ Error");return;} var s=_solped.filter(function(x){return x.id===id;})[0]; if(s)s.estado=next; pintarSolped(); updateCounts(); }); }
@@ -4050,6 +4049,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total";
     var fa=document.getElementById("fact-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
     _factMedia=[]; factAdjTxt(); var fp=document.getElementById("fact-pagado"); if(fp)fp.checked=false;
+    var fs=document.getElementById("fact-solped"); if(fs){ var pend=(_solped||[]).filter(function(s){ return (s.estado||"PENDIENTE")!=="RECIBIDA"; }); fs.innerHTML='<option value="">— Ninguna —</option>'+pend.map(function(s){ return '<option value="'+escH(s.id)+'">'+(s.numero?("N°"+s.numero+" · "):"")+escH((s.item||"").slice(0,40))+(s.cantidad?(" ("+escH(s.cantidad)+")"):"")+'</option>'; }).join(""); fs.value=""; }
     document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
     document.getElementById("fact-modal").classList.add("show"); }
   function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
@@ -4067,8 +4067,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         registrarAccion({ tipo:"INGRESO", fecha:fecha, cantidad:l.cant, descripcion:"Ingreso · "+(l.p.producto||""), monto:Math.round(c.neto*(l.cant/totCant)), ref_tipo:doc, ref_num:num, proveedor:prov, producto_id:l.p.id, almacen:alm }); });
       var pagado=!!(document.getElementById("fact-pagado")&&document.getElementById("fact-pagado").checked);
       if(c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):""), pagado:pagado, media:_factMedia.slice()}); if(pagado) registrarAccion({tipo:"PAGO", fecha:fecha, descripcion:"Pago · "+con, monto:c.total, ref_tipo:doc, ref_num:num, proveedor:prov}); } // siempre a Costos, con el documento adjunto
+      var solId=(document.getElementById("fact-solped")||{}).value||"", spTxt=""; // enlace a la solicitud (solped)
+      if(solId){ var sp=(_solped||[]).filter(function(x){return String(x.id)===String(solId);})[0];
+        if(sp){ sp.estado="RECIBIDA"; sp.recep_doc=doc; sp.recep_ref=num; sp.recep_prov=prov; sp.recep_costo=c.total; spTxt=(sp.numero?(" · solicitud N°"+sp.numero+" recibida"):" · solicitud recibida");
+          sb.from("solicitudes").update({estado:"RECIBIDA",recep_doc:doc,recep_ref:num,recep_prov:prov,recep_costo:c.total}).eq("id",sp.id).then(function(rr){ if(rr&&rr.error) sb.from("solicitudes").update({estado:"RECIBIDA"}).eq("id",sp.id).then(function(){}); });
+          if(typeof pintarSolped==="function") pintarSolped(); updateCounts(); } }
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
-      toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(c.total>0?" · gasto en Costos":""));
+      toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(c.total>0?" · gasto en Costos":"")+spTxt);
     });
   }
   (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
