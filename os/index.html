@@ -3705,7 +3705,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '<button class="btn primary" style="justify-self:start">＋ Agregar servicio</button>'+
     '</form>';
 
-    var rate='<div class="row c3" style="align-items:end;margin:2px 0 10px"><label class="f"><span class="lab">Valor del dólar (CLP)</span><input class="sd-usd" type="number" min="0" step="1" value="'+(usd||"")+'" placeholder="ej: 950"></label><div class="f" style="grid-column:2/-1"><span class="lab">Reporte</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sd-rep">📄 Reporte (PDF)</button><button type="button" class="btn ghost" id="sd-copy">📋 Copiar aviso</button></div></div></div>';
+    var rate='<div class="row c3" style="align-items:end;margin:2px 0 10px"><label class="f"><span class="lab">Valor del dólar (CLP) <span class="hint" style="text-transform:none;letter-spacing:0">— se actualiza solo</span></span><div style="display:flex;gap:6px"><input class="sd-usd" type="number" min="0" step="1" value="'+(usd||"")+'" placeholder="ej: 950" style="flex:1"><button type="button" class="btn" id="sd-usd-hoy" title="Traer el dólar de hoy (Banco Central de Chile)" style="white-space:nowrap">↻ Hoy</button></div></label><div class="f" style="grid-column:2/-1"><span class="lab">Reporte</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sd-rep">📄 Reporte (PDF)</button><button type="button" class="btn ghost" id="sd-copy">📋 Copiar aviso</button></div></div></div>';
 
     return '<details class="chart ger-fold" data-fold="sdig"'+(_gerFold['sdig']?' open':'')+' style="margin-bottom:16px"><summary>Servicios digitales <span class="tag">web · redes · hosting · suscripciones</span></summary><div class="ger-fold-body">'+
       '<p class="hint" style="display:block;margin:-2px 0 12px">Semáforo de cobros para adelantarse y que no se corten. 🟢 al día · 🟡 por vencer · 🔴 vencido.</p>'+
@@ -3746,9 +3746,24 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     w.document.close();
   }
 
+  // trae el dólar observado de hoy (Banco Central, vía mindicador.cl). force=true lo pide aunque ya se haya hecho hoy.
+  var _dolarDia=null;
+  function actualizarDolarHoy(force){
+    var hoy=todayISO(); if(!force && _dolarDia===hoy) return; // ya se actualizó hoy
+    var btn=document.getElementById("sd-usd-hoy"); if(btn && force){ btn.disabled=true; btn.textContent="…"; }
+    fetch("https://mindicador.cl/api/dolar").then(function(r){ return r.json(); }).then(function(d){
+      if(btn){ btn.disabled=false; btn.textContent="↻ Hoy"; }
+      var val=d&&d.serie&&d.serie[0]&&d.serie[0].valor; if(!val){ if(force)toast("No se pudo obtener el dólar"); return; }
+      var v=Math.round(val); _dolarDia=hoy;
+      if(v!==(+VH['__USD__']||0)){ VH['__USD__']=v; upsertVH('__USD__',v); renderGerencia(); if(force)toast("✓ Dólar de hoy: $"+v.toLocaleString("es-CL")); }
+      else { var el=document.querySelector("#ger-content .sd-usd"); if(el)el.value=v; if(force)toast("Dólar ya al día: $"+v.toLocaleString("es-CL")); }
+    }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent="↻ Hoy"; } if(force)toast("No se pudo obtener el dólar (revisa internet)"); });
+  }
   function wireSdig(box){
     var seed=box.querySelector("#sd-seed"); if(seed) seed.onclick=sdInsertSeed;
     var u=box.querySelector(".sd-usd"); if(u) u.addEventListener("change",function(){ var v=parseFloat(u.value)||0; VH['__USD__']=v; upsertVH('__USD__',v); renderGerencia(); });
+    var uh=box.querySelector("#sd-usd-hoy"); if(uh) uh.onclick=function(){ actualizarDolarHoy(true); };
+    actualizarDolarHoy(false); // auto: una vez al día al abrir Gerencia
     var rep=box.querySelector("#sd-rep"); if(rep) rep.onclick=sdigReportePDF;
     var cp=box.querySelector("#sd-copy"); if(cp) cp.onclick=function(){ var t=sdigAvisoTexto(); if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){toast("✓ Aviso copiado");},function(){ prompt("Copia el aviso:",t); }); } else { prompt("Copia el aviso:",t); } };
     var f=box.querySelector("#sd-form"); if(f) f.onsubmit=function(ev){ ev.preventDefault();
