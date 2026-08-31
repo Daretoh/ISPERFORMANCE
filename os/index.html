@@ -1385,8 +1385,10 @@
         <label class="f"><span class="lab">El monto es…</span><select id="fact-ivamode"><option value="total">Con IVA (total)</option><option value="neto">Sin IVA (neto)</option><option value="exento">Exento / sin IVA</option></select></label>
       </div>
       <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between">
-        <div style="font-size:13px">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="fact-gasto" checked> Registrar también como gasto en Costos</label>
+        <div style="font-size:13px;display:flex;flex-direction:column;gap:7px;align-items:flex-start">
+          <button type="button" class="btn" id="fact-adj">📎 Adjuntar / escanear documento</button>
+          <span id="fact-adj-txt" style="font-size:12px;color:var(--crit);font-weight:600">Falta adjuntar el documento (obligatorio)</span>
+          <span style="font-size:11.5px;color:var(--ink-muted)">El costo se registra en Costos automáticamente.</span>
         </div>
         <div style="text-align:right;font-size:13px;line-height:1.8">
           <div>Neto: <b id="fact-neto">$0</b></div>
@@ -1544,7 +1546,7 @@
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),media:[]};
+    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),media:(o.media||[])};
     function ins(rw,retry){ return sb.from('gastos').insert(rw).select().single().then(function(r){
       if(r.error){ if(retry && /referencia|mov_id|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="referencia"&&k!=="mov_id")rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
       gastos.unshift(gastoFromDB(r.data)); }); }
@@ -3908,17 +3910,20 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var iv=document.getElementById("fact-iva-val"); if(iv)iv.textContent=clp(c.iva);
     var ivr=document.getElementById("fact-ivarow"); if(ivr)ivr.style.display=c.afecto?"":"none";
     var t=document.getElementById("fact-total"); if(t)t.textContent=clp(c.total); }
+  var _factMedia=[];
+  function factAdjTxt(){ var t=document.getElementById("fact-adj-txt"); if(!t)return; if(_factMedia.length){ t.textContent="✓ "+_factMedia.length+" documento(s) adjunto(s)"; t.style.color="var(--ok)"; } else { t.textContent="Falta adjuntar el documento (obligatorio)"; t.style.color="var(--crit)"; } }
   function abrirFactura(){ document.getElementById("fact-prov").value=""; document.getElementById("fact-num").value=""; document.getElementById("fact-doc").value="Factura"; document.getElementById("fact-fecha").value=todayISO();
-    document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total"; document.getElementById("fact-gasto").checked=true;
+    document.getElementById("fact-monto").value=""; document.getElementById("fact-ivamode").value="total";
     var fa=document.getElementById("fact-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
+    _factMedia=[]; factAdjTxt();
     document.getElementById("fact-lines").innerHTML=""; factAddLine(); factAddLine(); factTotal();
     document.getElementById("fact-modal").classList.add("show"); }
   function guardarFactura(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
     var prov=(document.getElementById("fact-prov").value||"").trim(), doc=document.getElementById("fact-doc").value, num=(document.getElementById("fact-num").value||"").trim(), fecha=document.getElementById("fact-fecha").value||todayISO();
     var lines=[]; document.querySelectorAll("#fact-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; if(pid && cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant}); } });
     if(!lines.length){ toast("Agrega al menos un material (con producto y cantidad)"); return; }
-    var c=factCalc(); var regGasto=document.getElementById("fact-gasto").checked;
-    // prorratea el neto entre las líneas por cantidad (solo para trazar el costo del movimiento)
+    if(!_factMedia.length){ toast("Adjunta el documento (PDF/foto) antes de guardar"); factAdjTxt(); return; }
+    var c=factCalc();
     var totCant=lines.reduce(function(a,l){return a+l.cant;},0)||1;
     var rows=lines.map(function(l){ return { producto_id:l.p.id, tipo:"ENTRADA", cantidad:l.cant, fecha:fecha, doc_tipo:doc, doc_num:num, proveedor:prov, costo:Math.round(c.neto*(l.cant/totCant)), autor:(window.ISP_EMAIL||"") }; });
     var alm=(document.getElementById("fact-alm")||{}).value||ALM_DEFAULT;
@@ -3926,15 +3931,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
       lines.forEach(function(l){ almInit(l.p); l.p.entrada=(+l.p.entrada||0)+l.cant; l.p.stock_alm[alm]=(+l.p.stock_alm[alm]||0)+l.cant; saveProducto(l.p);
         registrarAccion({ tipo:"INGRESO", fecha:fecha, cantidad:l.cant, descripcion:"Ingreso · "+(l.p.producto||""), monto:Math.round(c.neto*(l.cant/totCant)), ref_tipo:doc, ref_num:num, proveedor:prov, producto_id:l.p.id, almacen:alm }); });
-      if(regGasto && c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):"")}); }
+      if(c.total>0){ var con="Materiales"+(prov?(" · "+prov):""); addGastoDB({con:con, tipo:"VARIABLE", monto:c.total, fecha:fecha, ref:(num?(doc+" "+num):""), media:_factMedia.slice()}); } // siempre a Costos, con el documento adjunto
       document.getElementById("fact-modal").classList.remove("show"); renderStock();
-      toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(regGasto&&c.total>0?" · gasto en Costos":""));
+      toast("✓ Ingreso registrado: "+lines.length+" material(es) · Total "+clp(c.total)+(c.total>0?" · gasto en Costos":""));
     });
   }
   (function(){ var o=document.getElementById("fact-open"), s=document.getElementById("fact-save"), c=document.getElementById("fact-cancel"), x=document.getElementById("fact-close"), a=document.getElementById("fact-addline"), m=document.getElementById("fact-modal");
     if(o)o.onclick=abrirFactura; var oi=document.getElementById("stock-ingreso"); if(oi)oi.onclick=abrirFactura; if(s)s.onclick=guardarFactura; if(a)a.onclick=factAddLine;
     var mto=document.getElementById("fact-monto"); if(mto)mto.oninput=factTotal;
     var ivm=document.getElementById("fact-ivamode"); if(ivm)ivm.onchange=factTotal;
+    var adj=document.getElementById("fact-adj"); if(adj)adj.onclick=function(){ var prov=(document.getElementById("fact-prov").value||"").trim(), num=(document.getElementById("fact-num").value||"").trim(), doc=document.getElementById("fact-doc").value;
+      abrirGaleria("Documento — "+(prov||"ingreso")+(num?(" "+num):""), _factMedia, "ingreso", "image/*,application/pdf", function(){ factAdjTxt(); }, {cats:['Factura','Guía','Boleta','Respaldo'],defCat:doc||'Factura',filter:'Factura'}); };
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
