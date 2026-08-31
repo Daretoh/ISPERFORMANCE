@@ -601,6 +601,15 @@
   #ver-banner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:11px 16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);font:600 13px var(--sans);max-width:92vw;animation:verIn .35s ease;}
   #ver-banner button{background:#fff;color:var(--accent-ink,#0d3b66);border:none;border-radius:8px;padding:7px 14px;font:700 13px var(--sans);cursor:pointer;white-space:nowrap;}
   @keyframes verIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+  /* Panel Gerencia: secciones desplegables */
+  details.ger-fold{padding:0;}
+  .ger-fold summary{list-style:none;cursor:pointer;padding:15px 18px;font-size:.95rem;font-weight:750;letter-spacing:-.01em;display:flex;align-items:center;}
+  .ger-fold summary::-webkit-details-marker{display:none;}
+  .ger-fold summary .tag{font:600 10px/1 var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-left:8px;}
+  .ger-fold summary::after{content:"▾";margin-left:auto;color:var(--ink-muted);font-size:12px;transition:transform .2s;}
+  .ger-fold:not([open]) summary::after{transform:rotate(-90deg);}
+  .ger-fold[open] summary{padding-bottom:4px;}
+  .ger-fold-body{padding:0 18px 16px;}
   /* Panel Gerencia: tendencia y servicios */
   .ger-trend{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:8px 2px 0;min-height:150px;}
   .ger-tcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:8px;padding:4px 2px;}
@@ -3518,7 +3527,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
 
   // ---------- GERENCIA (costos — solo gerente) ----------
-  var _gfijos=[], _gerMes=null;
+  var _gfijos=[], _gerMes=null, _gerFold={personal:true,fijos:true,variables:true}; // desplegables Gerencia (true=abierto)
   var GF_SEED=[{concepto:"Arriendo taller",monto:1220000,dia:5},{concepto:"Internet taller",monto:15990,dia:10},{concepto:"Asesoría contabilidad",monto:40000,dia:5},{concepto:"Asesoría remuneraciones BUK",monto:50000,dia:5},{concepto:"Redes sociales",monto:40000,dia:1}];
   function gerMeses(){ var arr=[], d=new Date(); for(var i=0;i<6;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
   function gfActivo(x){ return x.activo!==false; }
@@ -3567,11 +3576,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var gfHTML=_gfijos.length?('<div class="tablewrap"><table><thead><tr><th>Concepto</th><th class="r">Monto/mes</th><th class="r">Día</th><th></th></tr></thead><tbody>'+_gfijos.map(function(x){ return '<tr'+(gfActivo(x)?'':' style="opacity:.45"')+'><td>'+escH(x.concepto||"")+'</td><td class="r">'+clp(x.monto||0)+'</td><td class="r">'+(x.dia||"—")+'</td><td class="r" style="white-space:nowrap"><button class="stk-btn gf-edit" data-id="'+x.id+'">✎</button> <button class="stk-btn gf-tog" data-id="'+x.id+'">'+(gfActivo(x)?'On':'Off')+'</button> <button class="stk-btn gf-del" data-id="'+x.id+'">✕</button></td></tr>'; }).join("")+'<tr><td><b>Total fijo activo</b></td><td class="r"><b>'+clp(gFijoTot)+'</b></td><td></td><td></td></tr></tbody></table></div>'):'<div class="col-empty">Sin gastos fijos. <button class="btn" id="gf-seed" style="margin-left:8px">Cargar base sugerida</button></div>';
     var gfForm='<form id="gf-form" class="row c3" autocomplete="off" style="margin:12px 0 0"><label class="f"><span class="lab">Concepto</span><input name="concepto" required placeholder="Arriendo, Internet…"></label><label class="f"><span class="lab">Monto mensual</span><input name="monto" type="number" min="0" required></label><label class="f"><span class="lab">Día de pago</span><input name="dia" type="number" min="1" max="31" placeholder="5"></label><button class="btn primary" style="align-self:end">＋ Agregar fijo</button></form>';
     var gvHTML=gVar.length?('<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="r">Monto</th></tr></thead><tbody>'+gVar.slice().sort(function(a,b){return (a.fecha<b.fecha)?1:-1;}).map(function(g){ return '<tr><td>'+fFecha(g.fecha)+'</td><td>'+escH(g.con||"")+'</td><td>'+escH(g.tipo||"")+'</td><td class="r">'+clp(g.monto||0)+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin gastos variables este mes (se cargan desde la pestaña Gastos/Costos)</div>';
+    function fold(key,titulo,tag,cuerpo){ return '<details class="chart ger-fold" data-fold="'+key+'"'+(_gerFold[key]?' open':'')+' style="margin-bottom:16px"><summary>'+titulo+' <span class="tag">'+tag+'</span></summary><div class="ger-fold-body">'+cuerpo+'</div></details>'; }
     document.getElementById("ger-content").innerHTML=kpis+desg+trendHTML+svcHTML+
-      '<div class="chart" style="margin-bottom:16px"><h3>Personal spot <span class="tag">horas de asistencia × valor/hora</span></h3>'+persHTML+'</div>'+
-      '<div class="chart" style="margin-bottom:16px"><h3>Gastos fijos <span class="tag">se repiten cada mes</span></h3>'+gfHTML+gfForm+'</div>'+
-      '<div class="chart"><h3>Gastos variables del mes <span class="tag">de la pestaña Gastos</span></h3>'+gvHTML+'</div>'+
+      fold('personal','Personal spot','horas de asistencia × valor/hora',persHTML)+
+      fold('fijos','Gastos fijos','se repiten cada mes',gfHTML+gfForm)+
+      fold('variables','Gastos variables del mes','de la pestaña Gastos',gvHTML)+
       sdigBlockHTML();
+    document.querySelectorAll("#ger-content details[data-fold]").forEach(function(d){ d.addEventListener("toggle",function(){ _gerFold[d.dataset.fold]=d.open; }); });
     var seed=document.getElementById("gf-seed"); if(seed) seed.onclick=importarGfBase;
     var vhs=document.querySelector("#ger-content .gvh-spot"); if(vhs) vhs.addEventListener("change",function(){ var v=parseFloat(vhs.value)||0; VH['__SPOT__']=v; upsertVH('__SPOT__',v); renderGerencia(); });
     var f=document.getElementById("gf-form"); if(f) f.onsubmit=function(ev){ ev.preventDefault(); var row={concepto:f.concepto.value.trim(),monto:parseInt(f.monto.value,10)||0,dia:parseInt(f.dia.value,10)||null,activo:true,orden:_gfijos.length}; if(!row.concepto)return; var sb=sbc(); if(!sb)return; sb.from("gastos_fijos").insert(row).select().single().then(function(r){ if(r.error){toast("⚠ No se pudo (¿corriste el SQL 24?)");return;} _gfijos.push(r.data); f.reset(); renderGerencia(); toast("✓ Gasto fijo agregado"); }); };
