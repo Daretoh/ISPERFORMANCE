@@ -602,14 +602,15 @@
   #ver-banner button{background:#fff;color:var(--accent-ink,#0d3b66);border:none;border-radius:8px;padding:7px 14px;font:700 13px var(--sans);cursor:pointer;white-space:nowrap;}
   @keyframes verIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
   /* Panel Gerencia: secciones desplegables */
-  details.ger-fold{padding:0;}
-  .ger-fold summary{list-style:none;cursor:pointer;padding:15px 18px;font-size:.95rem;font-weight:750;letter-spacing:-.01em;display:flex;align-items:center;}
+  details.ger-fold{padding:0;overflow:hidden;}
+  .ger-fold summary{list-style:none;cursor:pointer;padding:14px 18px;font-size:.95rem;font-weight:750;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:var(--radius) var(--radius) 0 0;}
+  .ger-fold:not([open]) summary{border-radius:var(--radius);}
+  .ger-fold summary:hover{filter:brightness(.98);}
   .ger-fold summary::-webkit-details-marker{display:none;}
-  .ger-fold summary .tag{font:600 10px/1 var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-left:8px;}
-  .ger-fold summary::after{content:"▾";margin-left:auto;color:var(--ink-muted);font-size:12px;transition:transform .2s;}
-  .ger-fold:not([open]) summary::after{transform:rotate(-90deg);}
-  .ger-fold[open] summary{padding-bottom:4px;}
-  .ger-fold-body{padding:0 18px 16px;}
+  .ger-fold summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .2s;display:inline-block;}
+  .ger-fold[open] summary::before{transform:rotate(90deg);}
+  .ger-fold summary .tag{font:600 10px/1 var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-left:auto;}
+  .ger-fold-body{padding:14px 18px 16px;}
   /* Panel Gerencia: tendencia y servicios */
   .ger-trend{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;padding:8px 2px 0;min-height:150px;}
   .ger-tcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:8px;padding:4px 2px;}
@@ -3527,7 +3528,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
 
   // ---------- GERENCIA (costos — solo gerente) ----------
-  var _gfijos=[], _gerMes=null, _gerFold={personal:true,fijos:true,variables:true}; // desplegables Gerencia (true=abierto)
+  var _gfijos=[], _gerMes=null, _gerFold={personal:false,fijos:false,variables:false}; // desplegables Gerencia (true=abierto). Arrancan cerrados.
   var GF_SEED=[{concepto:"Arriendo taller",monto:1220000,dia:5},{concepto:"Internet taller",monto:15990,dia:10},{concepto:"Asesoría contabilidad",monto:40000,dia:5},{concepto:"Asesoría remuneraciones BUK",monto:50000,dia:5},{concepto:"Redes sociales",monto:40000,dia:1}];
   function gerMeses(){ var arr=[], d=new Date(); for(var i=0;i<6;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
   function gfActivo(x){ return x.activo!==false; }
