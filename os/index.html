@@ -598,6 +598,9 @@
   .acc-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);}
   .acc-item .em{font-weight:700;font-size:13px;} .acc-item .vs{font-size:11.5px;color:var(--ink-muted);margin-top:2px;}
   .acc-item .acts button{background:none;border:none;color:var(--info);font:700 12px var(--sans);cursor:pointer;margin-left:8px;} .acc-item .acts .del{color:var(--crit);}
+  #ver-banner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:12px;background:var(--accent);color:#fff;padding:11px 16px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);font:600 13px var(--sans);max-width:92vw;animation:verIn .35s ease;}
+  #ver-banner button{background:#fff;color:var(--accent-ink,#0d3b66);border:none;border-radius:8px;padding:7px 14px;font:700 13px var(--sans);cursor:pointer;white-space:nowrap;}
+  @keyframes verIn{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
   #acc-vistas{display:block;max-width:340px;}
   #acc-vistas .acc-vrow{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;margin-bottom:6px;cursor:grab;user-select:none;}
   #acc-vistas .acc-vrow:active{cursor:grabbing;} #acc-vistas .acc-vgrip{color:var(--ink-muted);font-size:14px;line-height:1;cursor:grab;} #acc-vistas .acc-vrow label{display:flex;align-items:center;gap:7px;margin:0;font-size:13px;cursor:pointer;flex:1;}
@@ -1683,6 +1686,18 @@
     }
   }).catch(function(){ toast('⚠ No se pudieron cargar los datos. Recarga la página.'); }); }
   window.ISP_onLogin=loadAllData;
+
+  // ---- aviso de "nueva versión": detecta cuando el archivo publicado cambió (sin build) ----
+  (function(){ var sig=null, avisado=false;
+    function firma(r){ return r.headers.get('etag')||r.headers.get('last-modified')||r.headers.get('content-length')||''; }
+    function mostrar(){ if(avisado||document.getElementById('ver-banner'))return; avisado=true;
+      var b=document.createElement('div'); b.id='ver-banner';
+      b.innerHTML='<span>🔄 Hay una versión nueva del sistema.</span><button id="ver-recargar">Actualizar</button>';
+      document.body.appendChild(b); document.getElementById('ver-recargar').onclick=function(){ location.reload(); }; }
+    function chequear(){ try{ fetch(location.pathname+'?_v='+Date.now(),{method:'HEAD',cache:'no-store'}).then(function(r){ var s=firma(r); if(!s)return; if(sig===null){ sig=s; return; } if(s!==sig) mostrar(); }).catch(function(){}); }catch(e){} }
+    chequear(); setInterval(chequear,150000); // primera lectura = firma base; luego cada ~2.5 min
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden) chequear(); });
+  })();
 
   // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
   var OWNER_EMAIL='ventas@isperformance.cl';
