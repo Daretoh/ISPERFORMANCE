@@ -2083,9 +2083,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var edt=a.motivo_edicion?'<span class="asis-edit-tag">✎ editado</span>':'';
         var det=a.motivo_edicion?'<div class="asis-editdet"><b>✎ Editado</b> · original '+(a.ts_original?hhmm(a.ts_original):"—")+' · por '+escH(a.editado_por||"?")+(a.editado_at?(' · '+fFecha(a.editado_at.slice(0,10))):'')+'<br><b>Motivo:</b> '+escH(a.motivo_edicion)+'</div>':'';
         var fix=puede('asis_editar')?' <button class="asis-fix" data-id="'+a.id+'" title="Corregir hora (queda registrado)">✎</button>':'';
-        return '<div class="asis-item"><div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+fix+'</span></div>'+det+'</div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
+        var flip=puede('asis_editar')?' <button class="asis-flip" data-id="'+a.id+'" data-tipo="'+escH(a.tipo)+'" data-nombre="'+av(a.nombre||"")+'" title="Cambiar Entrada↔Salida">⇄</button>':'';
+        return '<div class="asis-item"><div class="asis-row"><span><b>'+escH(a.nombre||"")+'</b></span><span class="'+cl+'">'+escH(a.tipo)+' · '+hhmm(a.ts)+' '+edt+fix+flip+'</span></div>'+det+'</div>'; }).join(""):'<div class="col-empty">Sin marcajes hoy</div>'; }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     document.querySelectorAll("#asis-list .asis-fix").forEach(function(b){ b.addEventListener("click",function(){ asisEditarHora(b.dataset.id); }); });
+    document.querySelectorAll("#asis-list .asis-flip").forEach(function(b){ b.addEventListener("click",function(){ asisCambiarTipo(b.dataset); }); });
     cargarAsisResumen(); cargarAsisIncompletos();
   }
   function diaKey(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -2100,7 +2102,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var dupBtn=document.getElementById("asis-dedup"); if(dupBtn && !dupBtn.dataset.b){ dupBtn.dataset.b="1"; dupBtn.addEventListener("click",asisLimpiarDuplicados); }
     var byPD={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre)+"|"+diaKey(a.ts); (byPD[k]=byPD[k]||[]).push(a); });
     var abiertos=[];
-    Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
+    Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(_cmpMark);
       // colapsa duplicados exactos (mismo tipo + mismo minuto) para no dejar entradas "abiertas" falsas
       var seen={}, clean=[]; arr.forEach(function(a){ var mk=(a.tipo||"")+"|"+(''+(a.ts||"")).slice(0,16); if(seen[mk])return; seen[mk]=1; clean.push(a); }); arr=clean;
       var openIn=null;
@@ -2113,13 +2115,21 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     el.innerHTML='<div class="tablewrap"><table><thead><tr><th>Trabajador</th><th>Día</th><th class="r">Entrada</th><th>Estado</th>'+(owner?'<th></th>':'')+'</tr></thead><tbody>'+abiertos.map(function(a){
       var dia=diaKey(a.ts), esHoyDia=(dia===hoy);
       var estado=esHoyDia?'<span class="chip" style="background:var(--ok-soft);color:var(--ok);font-weight:700">🟢 En el taller</span>':'<span class="chip" style="background:var(--crit-soft);color:var(--crit);font-weight:700">⚠ Sin salida</span>';
-      var acc=owner?('<td class="r" style="white-space:nowrap"><button class="stk-btn asis-editmark" data-id="'+a.id+'" data-ts="'+av(a.ts)+'" data-nombre="'+av(a.nombre||"")+'" data-tipo="ENTRADA" data-orig="'+av(a.ts_original||a.ts)+'">✎ Entrada</button> <button class="stk-btn asis-addsal" data-rut4="'+av(a.rut4||"")+'" data-nombre="'+av(a.nombre||"")+'" data-dia="'+dia+'" data-ent="'+hhmm(a.ts)+'">＋ Salida</button> <button class="stk-btn asis-delmark" data-id="'+a.id+'" data-nombre="'+av(a.nombre||"")+'" title="Eliminar este marcaje (duplicado o erróneo)" style="color:var(--crit);border-color:var(--crit)">🗑</button></td>'):'';
+      var acc=owner?('<td class="r" style="white-space:nowrap"><button class="stk-btn asis-editmark" data-id="'+a.id+'" data-ts="'+av(a.ts)+'" data-nombre="'+av(a.nombre||"")+'" data-tipo="ENTRADA" data-orig="'+av(a.ts_original||a.ts)+'">✎ Entrada</button> <button class="stk-btn asis-addsal" data-rut4="'+av(a.rut4||"")+'" data-nombre="'+av(a.nombre||"")+'" data-dia="'+dia+'" data-ent="'+hhmm(a.ts)+'">＋ Salida</button> <button class="stk-btn asis-fliptipo" data-id="'+a.id+'" data-tipo="ENTRADA" data-nombre="'+av(a.nombre||"")+'" title="Esta entrada en realidad era una salida">⇄ a Salida</button> <button class="stk-btn asis-delmark" data-id="'+a.id+'" data-nombre="'+av(a.nombre||"")+'" title="Eliminar este marcaje (duplicado o erróneo)" style="color:var(--crit);border-color:var(--crit)">🗑</button></td>'):'';
       var detEd=a.motivo_edicion?'<tr><td colspan="'+(owner?5:4)+'" style="padding-top:0"><div class="asis-editdet"><b>✎ Editado</b> · por '+escH(a.editado_por||"?")+' · <b>Obs:</b> '+escH(a.motivo_edicion)+'</div></td></tr>':'';
       return '<tr><td><b>'+escH(a.nombre||("••"+a.rut4))+'</b></td><td>'+fFecha(dia)+'</td><td class="r">'+hhmm(a.ts)+'</td><td>'+estado+'</td>'+acc+'</tr>'+detEd;
     }).join("")+'</tbody></table></div>';
     el.querySelectorAll(".asis-addsal").forEach(function(b){ b.addEventListener("click",function(){ asisAgregarSalida(b.dataset); }); });
     el.querySelectorAll(".asis-editmark").forEach(function(b){ b.addEventListener("click",function(){ asisEditarMarkData(b.dataset); }); });
     el.querySelectorAll(".asis-delmark").forEach(function(b){ b.addEventListener("click",function(){ asisEliminarMark(b.dataset); }); });
+    el.querySelectorAll(".asis-fliptipo").forEach(function(b){ b.addEventListener("click",function(){ asisCambiarTipo(b.dataset); }); });
+  }
+  function asisCambiarTipo(d){
+    var nuevo=(d.tipo==="ENTRADA")?"SALIDA":"ENTRADA";
+    if(!confirm("¿Cambiar este marcaje de "+d.nombre+" de "+d.tipo+" a "+nuevo+"?\n(úsalo cuando una entrada era en realidad una salida, o al revés)")) return;
+    var motivo=prompt("Motivo (queda registrado):","Corrección de tipo (era "+d.tipo+")"); if(motivo===null)return;
+    var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    sb.from("asistencia").update({ tipo:nuevo, motivo_edicion:(motivo||"Corrección de tipo"), editado_por:(window.ISP_EMAIL||""), editado_at:new Date().toISOString() }).eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Cambiado a "+nuevo); refrescarAsistencia(); });
   }
   function asisEliminarMark(d){
     if(!confirm("¿Eliminar este marcaje de "+d.nombre+"?\n(úsalo para duplicados o marcajes erróneos)")) return;
@@ -2155,7 +2165,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
     sb.from("asistencia").insert({nombre:d.nombre,rut4:d.rut4,tipo:"SALIDA",ts:dt.toISOString(),motivo_edicion:(motivo||"Salida agregada por administración"),editado_por:(window.ISP_EMAIL||"")}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Salida agregada"); refrescarAsistencia(); });
   }
-  function sesionesPersona(marks){ var s=marks.slice().sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}), out=[], inTs=null;
+  // a igual hora, la ENTRADA se procesa antes que la SALIDA (evita "sin salida" falso)
+  function _cmpMark(a,b){ var d=new Date(a.ts)-new Date(b.ts); if(d)return d; return ((a.tipo==="ENTRADA")?0:1)-((b.tipo==="ENTRADA")?0:1); }
+  function sesionesPersona(marks){ var s=marks.slice().sort(_cmpMark), out=[], inTs=null;
     s.forEach(function(a){ if(a.tipo==="ENTRADA") inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ out.push({out:new Date(a.ts),ms:new Date(a.ts)-inTs}); inTs=null; } }); return out; }
   function hMsRango(ses,desde){ return ses.reduce(function(t,x){ return (!desde||x.out>=desde)?t+x.ms:t; },0); }
   function cargarAsisResumen(){ var el=document.getElementById("asis-resumen"); if(!el)return; var sb=sbc(); if(!sb)return;
