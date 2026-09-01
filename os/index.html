@@ -2166,7 +2166,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var groups={}; (_asisIncMarks||[]).forEach(function(a){ var min=(''+(a.ts||"")).slice(0,16); var k=(a.rut4||a.nombre||"")+"|"+(a.tipo||"")+"|"+min; (groups[k]=groups[k]||[]).push(a); });
     var borrar=[]; Object.keys(groups).forEach(function(k){ var arr=groups[k]; if(arr.length>1){ arr.sort(function(a,b){ return String(a.id)<String(b.id)?-1:1; }); borrar=borrar.concat(arr.slice(1)); } });
     if(!borrar.length){ toast("No hay marcajes duplicados ✓"); return; }
-    if(!confirm("Se encontraron "+borrar.length+" marcaje(s) duplicado(s) (misma persona, mismo tipo y minuto).\nSe eliminarán dejando uno de cada uno. ¿Continuar?")) return;
+    var detalle=borrar.map(function(a){ return "•  "+(a.nombre||("••"+a.rut4))+"  ·  "+fFecha(diaKey(a.ts))+"  ·  "+(a.tipo||"")+"  "+hhmm(a.ts); }).join("\n");
+    if(!confirm("Se eliminará(n) este(os) "+borrar.length+" marcaje(s) duplicado(s) (misma persona, tipo y minuto), dejando uno de cada uno:\n\n"+detalle+"\n\n¿Continuar?")) return;
     var ids=borrar.map(function(a){return a.id;});
     sb.from("asistencia").delete().in("id",ids).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ "+ids.length+" duplicado(s) eliminados"); refrescarAsistencia(); });
   }
