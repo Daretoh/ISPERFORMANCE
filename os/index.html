@@ -1134,7 +1134,7 @@
     <section class="view" id="view-asistencia">
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
-      <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Marcajes sin salida <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— entradas sin su salida (cualquier día)</span><button id="asis-dedup" class="btn asis-fix" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">🧹 Limpiar duplicados</button></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
+      <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Marcajes de hoy <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— más los pendientes sin salida de días anteriores</span><button id="asis-dedup" class="btn asis-fix" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">🧹 Limpiar duplicados</button></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Historial de asistencia <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— horas por trabajador · elige el mes</span></h3><div class="pfilter" id="asis-mes" style="margin:6px 0 12px"></div><div id="asis-resumen" style="margin-top:4px"><div class="col-empty">Cargando…</div></div><details class="fsec" style="margin-top:14px"><summary>Ver todos los marcajes del mes</summary><div id="asis-hist" style="margin-top:10px"></div></details></div>
       <div class="dash-grid">
         <div class="card" id="trab-card">
@@ -1146,10 +1146,6 @@
           </form>
           <p class="hint" style="display:block;margin:-6px 0 4px;font-size:11.5px;color:var(--ink-faint)">Marca su asistencia con los <b>últimos 4 dígitos</b> del RUT (el sistema los toma solo).</p>
           <div id="trab-list"></div>
-        </div>
-        <div class="card">
-          <h3>Marcajes de hoy</h3>
-          <div id="asis-list" style="margin-top:8px"></div>
         </div>
       </div>
     </section>
@@ -2077,15 +2073,20 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function pintarAsistencia(){
     var tl=document.getElementById("trab-list");
     if(tl){ tl.innerHTML=_trab.length?_trab.map(function(t){ return '<div class="asis-row"><span><b>'+escH(t.nombre)+'</b> <span class="rut">marca ••'+escH(t.rut4)+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
-    var al=document.getElementById("asis-list");
-    if(al){ var hoy=_asis.filter(function(a){return esHoy(a.ts);}); al.innerHTML=asisMarcajesTablaHTML(hoy); asisBindTabla(al); }
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     cargarAsisResumen(); cargarAsisIncompletos();
   }
   function diaKey(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  // panel principal: marcajes de HOY + entradas pendientes sin salida de días anteriores, en una sola tabla
   function cargarAsisIncompletos(){ var el=document.getElementById("asis-abiertos"); if(!el)return; var sb=sbc(); if(!sb)return;
+    var dupBtn=document.getElementById("asis-dedup"); if(dupBtn && !dupBtn.dataset.b){ dupBtn.dataset.b="1"; dupBtn.addEventListener("click",asisLimpiarDuplicados); }
     var desde=new Date(Date.now()-90*86400000);
-    sb.from("asistencia").select("*").gte("ts",desde.toISOString()).order("ts").then(function(r){ if(r.error){ el.innerHTML='<div class="col-empty">No disponible</div>'; return; } pintarIncompletos(r.data||[]); });
+    sb.from("asistencia").select("*").gte("ts",desde.toISOString()).order("ts").then(function(r){ if(r.error){ el.innerHTML='<div class="col-empty">No disponible</div>'; return; }
+      var marks=r.data||[]; _asisIncMarks=marks;
+      var hoy=diaKey(new Date().toISOString()), abiertas=asisEntradasAbiertas(marks);
+      var mostrar=marks.filter(function(a){ return diaKey(a.ts)===hoy || abiertas[a.id]; });
+      el.innerHTML=asisMarcajesTablaHTML(mostrar); asisBindTabla(el);
+    });
   }
   var _asisIncMarks=[];
   function pintarIncompletos(marks){
