@@ -16,7 +16,7 @@ jobs:
       - run: npm init -y && npm install web-push @supabase/supabase-js
       - run: node scripts/enviar-notificaciones.mjs
         env:
-          SUPABASE_URL: https://fyjvcnqklgzrscgpytqj.supabase.co
+          SUPABASE_URL: https://osmdueveprvwhbtlfnqf.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
           VAPID_PUBLIC: BDt1m2YVzH-GB8MN4CF5ORzPhoEEBEJK3licTQH4K-oy_o1pXMMSbJl7HHbmeHY3XrOzUP-CvcNgz1V_J_CMupw
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
