@@ -4072,9 +4072,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
   // ---- Salida múltiple (varias líneas) ----
+  function salmProdOptions(alm){ alm=alm||ALM_DEFAULT; return '<option value="">— Producto —</option>'+productos.slice().filter(function(x){ return almStock(x,alm)>0; }).sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+' · '+almStock(x,alm)+'</option>'; }).join(""); }
   function salmAddLine(){ var box=document.getElementById("salm-lines"); if(!box)return;
+    var alm=(document.getElementById("salm-alm")||{}).value||ALM_DEFAULT;
     var div=document.createElement("div"); div.className="fact-line";
-    div.innerHTML='<select class="fl-prod">'+trasmProdOptions()+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
+    div.innerHTML='<select class="fl-prod">'+salmProdOptions(alm)+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
     box.appendChild(div); div.querySelector(".fl-del").onclick=function(){ div.remove(); };
   }
   function abrirSalidaMulti(){ var fa=document.getElementById("salm-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
@@ -4100,6 +4102,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   (function(){ var m=document.getElementById("salm-modal");
     var o=document.getElementById("stock-salida"), s=document.getElementById("salm-save"), c=document.getElementById("salm-cancel"), x=document.getElementById("salm-close"), a=document.getElementById("salm-addline");
     if(o)o.onclick=abrirSalidaMulti; if(s)s.onclick=guardarSalidaMulti; if(a)a.onclick=salmAddLine;
+    var fa=document.getElementById("salm-alm"); if(fa)fa.onchange=function(){ var box=document.getElementById("salm-lines"); if(box){ box.innerHTML=""; salmAddLine(); salmAddLine(); } };
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
