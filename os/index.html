@@ -1384,6 +1384,13 @@
         <label class="f"><span class="lab">Fecha</span><input id="salm-fecha" type="date"></label>
         <label class="f"><span class="lab">Motivo / uso</span><input id="salm-motivo" placeholder="Para qué se usó"></label>
       </div>
+      <label style="display:flex;align-items:center;gap:9px;margin:2px 0 10px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);cursor:pointer"><input type="checkbox" id="salm-venta"> <b>💰 Es una venta (entra plata)</b></label>
+      <div id="salm-venta-fields" style="display:none;margin:0 0 12px">
+        <div class="row c2" style="margin:0">
+          <label class="f"><span class="lab">Monto total de la venta $</span><input id="salm-monto" type="number" min="0" step="1" placeholder="0"></label>
+          <label class="f"><span class="lab">Voucher / boleta</span><button type="button" class="btn" id="salm-voucher" style="padding:9px">📎 Adjuntar voucher</button><span id="salm-voucher-txt" style="font-size:11.5px;color:var(--ink-muted);margin-top:4px;display:block"></span></label>
+        </div>
+      </div>
       <div class="fact-lhead"><span>Producto</span><span>Cantidad</span><span></span></div>
       <div id="salm-lines"></div>
       <button class="btn" id="salm-addline" style="margin-top:8px">＋ Agregar producto</button>
@@ -1665,8 +1672,9 @@
   function registrarAccion(o){ var sb=sbc(); if(!sb)return Promise.resolve();
     var row={ num:(o.num||accionProxNum()), tipo:o.tipo||"", fecha:o.fecha||todayISO(), descripcion:o.descripcion||"", monto:(+o.monto||0), cantidad:(o.cantidad!=null?(+o.cantidad||0):null),
       ref_tipo:(o.ref_tipo||null), ref_num:(o.ref_num||null), proveedor:(o.proveedor||null), almacen:(o.almacen||null),
-      producto_id:(o.producto_id||null), vehiculo_id:(o.vehiculo_id||null), origen:(o.origen||null), autor:(o.autor||window.ISP_EMAIL||"") };
-    return sb.from("acciones").insert(row).select().single().then(function(r){ if(!r.error && r.data){ _acciones.unshift(r.data); } return r&&r.data; }, function(){ return null; });
+      producto_id:(o.producto_id||null), vehiculo_id:(o.vehiculo_id||null), origen:(o.origen||null), media:(o.media||[]), autor:(o.autor||window.ISP_EMAIL||"") };
+    function ins(rw,retry){ return sb.from("acciones").insert(rw).select().single().then(function(r){ if(r.error){ if(retry && /media|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="media")rw2[k]=rw[k]; }); return ins(rw2,false); } return null; } if(r.data){ _acciones.unshift(r.data); } return r.data; }, function(){ return null; }); }
+    return ins(row,true);
   }
   var _mvFiltro="TODOS";
   function accTipoChip(t){ var m={COBRO:['#1e9e6a','Cobro'],INGRESO:['#2f63d6','Ingreso'],SALIDA:['#c2410c','Salida'],TRASLADO:['#0891b2','Traslado'],GASTO:['#7c3aed','Gasto'],PAGO:['#0e7a5f','Pago'],COTIZACION:['#0d3b66','Cotización'],AJUSTE:['#666','Ajuste']}; var c=m[t]||['#666',t||'—']; return '<span style="display:inline-block;font:700 10px/1 var(--mono);padding:3px 8px;border-radius:20px;background:'+c[0]+';color:#fff;white-space:nowrap">'+escH(c[1])+'</span>'; }
@@ -1700,7 +1708,8 @@
     var tot={}; list.forEach(function(a){ tot[a.tipo]=(tot[a.tipo]||0)+(+a.monto||0); });
     var res=document.getElementById("mv-resumen"); if(res){ res.innerHTML='<div class="gasto-resumen">'+["COBRO","INGRESO","GASTO"].map(function(t){ return '<div><span>'+accTipoChip(t)+'</span><b>'+clp(tot[t]||0)+'</b></div>'; }).join("")+'<div class="tot"><span>Acciones</span><b>'+list.length+'</b></div></div>'; }
     el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Producto / detalle</th><th class="r">Cant</th><th>Almacén</th><th>Documento</th><th>Quién</th><th class="r">Monto</th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):""); var prod=accProdTxt(a);
-      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+(prod?('<b>'+escH(prod)+'</b>'):escH(a.descripcion||"—"))+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td class="r">'+(a.cantidad!=null?a.cantidad:"—")+'</td><td>'+escH(accAlmTxt(a)||"—")+'</td><td>'+escH(ref||"—")+'</td><td style="font-size:11px;color:var(--ink-muted)">'+escH((a.autor||"").split("@")[0]||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
+      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+(prod?('<b>'+escH(prod)+'</b>'):escH(a.descripcion||"—"))+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td class="r">'+(a.cantidad!=null?a.cantidad:"—")+'</td><td>'+escH(accAlmTxt(a)||"—")+'</td><td>'+escH(ref||"—")+((a.media&&a.media.length)?(' <button class="stk-btn acc-adj" data-id="'+av(a.id)+'" title="Ver voucher/adjunto">📎</button>'):'')+'</td><td style="font-size:11px;color:var(--ink-muted)">'+escH((a.autor||"").split("@")[0]||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
+    el.querySelectorAll(".acc-adj").forEach(function(b){ b.addEventListener("click",function(){ var a=(_acciones||[]).filter(function(x){return String(x.id)===String(b.dataset.id);})[0]; if(!a)return; a.media=a.media||[]; abrirGaleria("Voucher / adjunto — "+accFmt(a.num), a.media, "venta", "image/*,application/pdf", function(){ var sb=sbc(); if(sb) sb.from("acciones").update({media:a.media}).eq("id",a.id).then(function(){}); }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); }); });
   }
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
@@ -4079,13 +4088,19 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     div.innerHTML='<select class="fl-prod">'+salmProdOptions(alm)+'</select><input class="fl-cant" type="number" min="1" value="1"><button type="button" class="fl-del" aria-label="Quitar">×</button>';
     box.appendChild(div); div.querySelector(".fl-del").onclick=function(){ div.remove(); };
   }
+  var _salmVoucher=[];
   function abrirSalidaMulti(){ var fa=document.getElementById("salm-alm"); if(fa){ fa.innerHTML=ALMACENES.map(function(a){ return '<option value="'+a.cod+'">'+escH(a.nombre)+'</option>'; }).join(""); fa.value=ALM_DEFAULT; }
     document.getElementById("salm-fecha").value=todayISO(); document.getElementById("salm-motivo").value="";
+    _salmVoucher=[]; var vk=document.getElementById("salm-venta"); if(vk)vk.checked=false;
+    var vf=document.getElementById("salm-venta-fields"); if(vf)vf.style.display="none";
+    var vm=document.getElementById("salm-monto"); if(vm)vm.value=""; var vt=document.getElementById("salm-voucher-txt"); if(vt)vt.textContent="";
     document.getElementById("salm-lines").innerHTML=""; salmAddLine(); salmAddLine();
     document.getElementById("salm-modal").classList.add("show");
   }
   function guardarSalidaMulti(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
     var alm=document.getElementById("salm-alm").value||ALM_DEFAULT, fecha=document.getElementById("salm-fecha").value||todayISO(), motivo=(document.getElementById("salm-motivo").value||"").trim();
+    var esVenta=!!(document.getElementById("salm-venta")||{}).checked, montoVenta=parseInt((document.getElementById("salm-monto")||{}).value,10)||0;
+    if(esVenta && montoVenta<=0){ toast("Ingresa el monto de la venta"); return; }
     var lines=[]; document.querySelectorAll("#salm-lines .fact-line").forEach(function(r){ var pid=r.querySelector(".fl-prod").value; var cant=parseInt(r.querySelector(".fl-cant").value,10)||0; if(pid&&cant>0){ var p=productos.filter(function(x){return String(x.id)===pid;})[0]; if(p) lines.push({p:p,cant:cant}); } });
     if(!lines.length){ toast("Agrega al menos un producto"); return; }
     var falla=lines.filter(function(l){ return l.cant>almStock(l.p,alm); });
@@ -4095,14 +4110,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       (r.data||[]).forEach(function(row){ _movs.unshift(row); });
       lines.forEach(function(l){ almInit(l.p); l.p.salida=(+l.p.salida||0)+l.cant; l.p.stock_alm[alm]=Math.max(0,(+l.p.stock_alm[alm]||0)-l.cant); saveProducto(l.p);
         registrarAccion({ tipo:"SALIDA", fecha:fecha, cantidad:l.cant, descripcion:"Salida · "+(l.p.producto||"")+(motivo?(" · "+motivo):""), producto_id:l.p.id, almacen:alm }); });
+      if(esVenta){ registrarAccion({ tipo:"COBRO", fecha:fecha, monto:montoVenta, descripcion:"Venta · "+lines.map(function(l){return (l.cant+"× "+(l.p.producto||""));}).join(", "), ref_tipo:"VENTA", almacen:alm, media:_salmVoucher.slice() }).then(function(){ pintarMovimientos(); }); }
       document.getElementById("salm-modal").classList.remove("show"); renderStock();
-      toast("✓ Salida de "+lines.length+" producto(s) · "+almNombre(alm));
+      toast("✓ Salida de "+lines.length+" producto(s)"+(esVenta?(" · Venta "+clp(montoVenta)):"")+" · "+almNombre(alm));
     });
   }
   (function(){ var m=document.getElementById("salm-modal");
     var o=document.getElementById("stock-salida"), s=document.getElementById("salm-save"), c=document.getElementById("salm-cancel"), x=document.getElementById("salm-close"), a=document.getElementById("salm-addline");
     if(o)o.onclick=abrirSalidaMulti; if(s)s.onclick=guardarSalidaMulti; if(a)a.onclick=salmAddLine;
     var fa=document.getElementById("salm-alm"); if(fa)fa.onchange=function(){ var box=document.getElementById("salm-lines"); if(box){ box.innerHTML=""; salmAddLine(); salmAddLine(); } };
+    var vk=document.getElementById("salm-venta"); if(vk)vk.onchange=function(){ var vf=document.getElementById("salm-venta-fields"); if(vf)vf.style.display=vk.checked?"":"none"; };
+    var vb=document.getElementById("salm-voucher"); if(vb)vb.onclick=function(){ abrirGaleria("Voucher de venta", _salmVoucher, "venta", "image/*,application/pdf", function(){ var vt=document.getElementById("salm-voucher-txt"); if(vt)vt.textContent=_salmVoucher.length?("✓ "+_salmVoucher.length+" archivo(s)"):""; }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); };
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
