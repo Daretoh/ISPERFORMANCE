@@ -853,6 +853,7 @@
         <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro</button>
         <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
         <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventario</button>
+        <button data-view="pos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>POS</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
         <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
@@ -1070,6 +1071,28 @@
     </section>
 
     <!-- ============ MOVIMIENTOS (libro / trazabilidad) ============ -->
+    <section class="view" id="view-pos">
+      <style>
+        .pos-wrap{display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start}
+        @media(max-width:860px){.pos-wrap{grid-template-columns:1fr}}
+        .pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+        .pos-card{text-align:left;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--ground);padding:10px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+        .pos-card:hover{border-color:var(--accent-ink)}
+        .pos-card-nm{font-weight:700;font-size:13px;line-height:1.2}
+        .pos-card-meta{font-size:11px;color:var(--ink-muted)}
+        .pos-card-precio{font-weight:800;color:var(--accent-ink);margin-top:2px}
+        .pos-right{border:1px solid var(--line-strong);border-radius:var(--radius);padding:14px;background:var(--ground);position:sticky;top:10px}
+        .pos-line{display:grid;grid-template-columns:1fr 52px 82px auto 22px;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+        .pos-line-nm{font-size:12.5px;font-weight:600;line-height:1.15}
+        .pos-line-cant,.pos-line-precio{width:100%;padding:5px;border:1px solid var(--line-strong);border-radius:6px;font:inherit;box-sizing:border-box}
+        .pos-line-sub{font-size:12px;font-weight:700;text-align:right;white-space:nowrap}
+        .pos-line-del{background:none;border:none;color:var(--crit);font-size:18px;cursor:pointer;line-height:1}
+        .pos-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:2px solid var(--line-strong);font-size:19px;font-weight:800}
+      </style>
+      <div class="vhead"><div class="eye">Ventas</div><h1>POS / Ventas</h1></div>
+      <div id="pos-root"></div>
+    </section>
+
     <section class="view" id="view-movimientos">
       <div class="vhead"><div class="eye">Trazabilidad</div><h1>Movimientos</h1></div>
       <div class="card" style="margin-bottom:16px">
@@ -1805,6 +1828,7 @@
     else if(v==="costos") renderCostos();
     else if(v==="tareas") renderTareas();
     else if(v==="stock") renderStock();
+    else if(v==="pos") renderPOS();
     else if(v==="panel") renderPanel();
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
@@ -2338,7 +2362,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
@@ -4124,6 +4148,52 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(c)c.onclick=function(){m.classList.remove("show");}; if(x)x.onclick=function(){m.classList.remove("show");};
     if(m)m.addEventListener("click",function(ev){ if(ev.target===m) m.classList.remove("show"); });
   })();
+  // ---------- POS / Ventas de productos ----------
+  var _posCart=[]; // [{id, cant, precio}]
+  var _posVoucher=[];
+  function posSellables(){ return (productos||[]).filter(function(p){ return (p.categoria==="VENTA") || (+p.precio>0); }); }
+  function posDeduct(p,cant){ almInit(p); var m=p.stock_alm; var best=ALM_DEFAULT, bv=-1; ALMACENES.forEach(function(a){ var v=+m[a.cod]||0; if(v>bv){bv=v;best=a.cod;} }); p.salida=(+p.salida||0)+cant; p.stock_alm[best]=Math.max(0,(+p.stock_alm[best]||0)-cant); return best; }
+  function posAdd(id){ var p=(productos||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!p)return; var l=_posCart.filter(function(x){return String(x.id)===String(id);})[0]; if(l){ l.cant++; } else { _posCart.push({id:String(id), cant:1, precio:(+p.precio||0)}); } renderPOS(); }
+  function posTotal(){ return _posCart.reduce(function(t,l){ return t+(l.cant*(+l.precio||0)); },0); }
+  function renderPOS(){ var root=document.getElementById("pos-root"); if(!root)return;
+    var q=((document.getElementById("pos-buscar")||{}).value||"").toLowerCase().trim();
+    var prevCli=(document.getElementById("pos-cli")||{}).value||"", prevPago=(document.getElementById("pos-pago")||{}).value||"DÉBITO", prevFecha=(document.getElementById("pos-fecha")||{}).value||todayISO();
+    var sell=posSellables().filter(function(p){ if(!q)return true; return ((p.producto||"")+" "+(p.marca||"")+" "+(p.sku||"")).toLowerCase().indexOf(q)>=0; }).sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;});
+    var cliList=(clientes||[]).map(function(c){ return '<option value="'+av(c.nombre_mostrar||c.nombre||c.razon_social||"")+'">'; }).join("");
+    var prodCards=sell.map(function(p){ var st=stockDe(p); return '<button type="button" class="pos-card" data-add="'+av(p.id)+'"><div class="pos-card-nm">'+escH(p.producto||"")+'</div><div class="pos-card-meta">'+escH(p.sku||"")+' · stock '+st+'</div><div class="pos-card-precio">'+(p.precio?clp(p.precio):'<span style="color:var(--crit);font-weight:600">sin precio</span>')+'</div></button>'; }).join("") || '<div class="col-empty">Sin productos'+(q?' para "'+q+'"':'')+'.</div>';
+    var cartRows=_posCart.map(function(l){ var p=(productos||[]).filter(function(x){return String(x.id)===String(l.id);})[0]||{}; return '<div class="pos-line"><span class="pos-line-nm">'+escH(p.producto||"")+'</span><input class="pos-line-cant" type="number" min="1" value="'+l.cant+'" data-id="'+av(l.id)+'"><input class="pos-line-precio" type="number" min="0" step="1" value="'+(+l.precio||0)+'" data-id="'+av(l.id)+'"><span class="pos-line-sub">'+clp(l.cant*(+l.precio||0))+'</span><button class="pos-line-del" data-id="'+av(l.id)+'" aria-label="Quitar">×</button></div>'; }).join("") || '<div class="col-empty" style="padding:14px">Toca un producto para agregarlo a la venta.</div>';
+    root.innerHTML='<div class="pos-wrap">'+
+      '<div class="pos-left"><input type="search" id="pos-buscar" class="cli-search" style="margin:0 0 10px" placeholder="🔍 Buscar producto…" value="'+av(q)+'"><div class="pos-grid">'+prodCards+'</div></div>'+
+      '<div class="pos-right"><h3 style="margin:0 0 8px">Venta</h3><div id="pos-cart">'+cartRows+'</div>'+
+        '<div class="pos-total"><span>Total</span><b>'+clp(posTotal())+'</b></div>'+
+        '<div class="row c2" style="margin:10px 0 0"><label class="f"><span class="lab">Cliente (opcional)</span><input id="pos-cli" list="pos-cli-list" placeholder="Nombre" value="'+av(prevCli)+'"><datalist id="pos-cli-list">'+cliList+'</datalist></label>'+
+        '<label class="f"><span class="lab">Medio de pago</span><select id="pos-pago"><option'+(prevPago==="EFECTIVO"?" selected":"")+'>EFECTIVO</option><option'+(prevPago==="DÉBITO"?" selected":"")+'>DÉBITO</option><option'+(prevPago==="CRÉDITO"?" selected":"")+'>CRÉDITO</option><option'+(prevPago==="TRANSFERENCIA"?" selected":"")+'>TRANSFERENCIA</option></select></label></div>'+
+        '<div class="row c2" style="margin:10px 0 0"><label class="f"><span class="lab">Fecha</span><input id="pos-fecha" type="date" value="'+av(prevFecha)+'"></label>'+
+        '<label class="f"><span class="lab">Voucher / boleta</span><button type="button" class="btn" id="pos-voucher" style="padding:9px">📎 Adjuntar</button><span id="pos-voucher-txt" style="font-size:11.5px;color:var(--ink-muted);display:block;margin-top:4px">'+(_posVoucher.length?("✓ "+_posVoucher.length+" archivo(s)"):"")+'</span></label></div>'+
+        '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="pos-save" style="flex:1">💰 Registrar venta</button><button class="btn ghost" id="pos-clear">Vaciar</button></div>'+
+      '</div></div>';
+    var bs=document.getElementById("pos-buscar"); if(bs)bs.oninput=function(){ renderPOS(); var el=document.getElementById("pos-buscar"); if(el){el.focus(); try{el.setSelectionRange(el.value.length,el.value.length);}catch(_){}}};
+    root.querySelectorAll(".pos-card").forEach(function(b){ b.onclick=function(){ posAdd(b.dataset.add); }; });
+    root.querySelectorAll(".pos-line-cant").forEach(function(i){ i.onchange=function(){ var l=_posCart.filter(function(x){return String(x.id)===String(i.dataset.id);})[0]; if(l){ l.cant=Math.max(1,parseInt(i.value,10)||1); renderPOS(); } }; });
+    root.querySelectorAll(".pos-line-precio").forEach(function(i){ i.onchange=function(){ var l=_posCart.filter(function(x){return String(x.id)===String(i.dataset.id);})[0]; if(l){ l.precio=Math.max(0,parseInt(i.value,10)||0); renderPOS(); } }; });
+    root.querySelectorAll(".pos-line-del").forEach(function(b){ b.onclick=function(){ _posCart=_posCart.filter(function(x){return String(x.id)!==String(b.dataset.id);}); renderPOS(); }; });
+    var vb=document.getElementById("pos-voucher"); if(vb)vb.onclick=function(){ abrirGaleria("Voucher de venta", _posVoucher, "venta", "image/*,application/pdf", function(){ var t=document.getElementById("pos-voucher-txt"); if(t)t.textContent=_posVoucher.length?("✓ "+_posVoucher.length+" archivo(s)"):""; }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); };
+    var cl=document.getElementById("pos-clear"); if(cl)cl.onclick=function(){ if(_posCart.length && !confirm("¿Vaciar la venta?"))return; _posCart=[]; _posVoucher=[]; renderPOS(); };
+    var sv=document.getElementById("pos-save"); if(sv)sv.onclick=posGuardar;
+  }
+  function posGuardar(){ var sb=sbc(); if(!sb){toast("Sin conexión");return;}
+    if(!_posCart.length){ toast("Agrega productos a la venta"); return; }
+    var total=posTotal(); if(total<=0){ toast("El total debe ser mayor a 0 (pon los precios)"); return; }
+    var cli=(document.getElementById("pos-cli")||{}).value.trim()||"", pago=(document.getElementById("pos-pago")||{}).value||"", fecha=(document.getElementById("pos-fecha")||{}).value||todayISO();
+    var lines=_posCart.map(function(l){ return { p:(productos||[]).filter(function(x){return String(x.id)===String(l.id);})[0], cant:l.cant, precio:l.precio }; }).filter(function(l){return l.p;});
+    if(!lines.length){ toast("Sin productos válidos"); return; }
+    var rows=lines.map(function(l){ posDeduct(l.p,l.cant); saveProducto(l.p); return { producto_id:l.p.id, tipo:"SALIDA", cantidad:l.cant, fecha:fecha, motivo:"Venta POS"+(cli?(" · "+cli):""), autor:(window.ISP_EMAIL||"") }; });
+    sb.from("movimientos").insert(rows).select().then(function(r){ if(!r.error){ (r.data||[]).forEach(function(x){ _movs.unshift(x); }); }
+      var desc="Venta POS ("+pago+")"+(cli?(" · "+cli):"")+" · "+lines.map(function(l){return (l.cant+"× "+(l.p.producto||""));}).join(", ");
+      registrarAccion({ tipo:"COBRO", fecha:fecha, monto:total, descripcion:desc, ref_tipo:"VENTA", media:_posVoucher.slice() }).then(function(){ pintarMovimientos(); });
+      _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total));
+    }, function(){ toast("⚠ No se pudo registrar la venta"); });
+  }
   // ---- Ingresar factura con varios materiales ----
   function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
   function factAddLine(){ var box=document.getElementById("fact-lines"); if(!box)return;
