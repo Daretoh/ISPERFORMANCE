@@ -854,6 +854,7 @@
         <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
         <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventario</button>
         <button data-view="pos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>POS</button>
+        <button data-view="gm"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cierre GM</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
         <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
@@ -1091,6 +1092,20 @@
       </style>
       <div class="vhead"><div class="eye">Ventas</div><h1>POS / Ventas</h1></div>
       <div id="pos-root"></div>
+    </section>
+
+    <section class="view" id="view-gm">
+      <style>
+        .gm-table{font-size:12px;white-space:nowrap}
+        .gm-table th,.gm-table td{padding:5px 6px}
+        .gm-table td.c{text-align:center}
+        .gm-table input[type=number]{width:60px;padding:4px;border:1px solid var(--line-strong);border-radius:5px;font:inherit;box-sizing:border-box}
+        .gm-table .gm-qty{width:48px}.gm-table .gm-desc{width:78px}
+        .gm-table select{padding:4px;border:1px solid var(--line-strong);border-radius:5px}
+        .gm-sh{font-size:10.5px}
+      </style>
+      <div class="vhead"><div class="eye">Cliente flota</div><h1>Cierre GM</h1></div>
+      <div id="gm-root"></div>
     </section>
 
     <section class="view" id="view-movimientos">
@@ -1656,7 +1671,8 @@
       sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('config').select('*').then(function(r){return r;},function(){return {data:[]};})
+      sb.from('config').select('*').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('gm_cierre').select('*').then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1674,6 +1690,7 @@
       _sdig=((res[13]&&res[13].data)||[]);
       _acciones=((res[14]&&res[14].data)||[]);
       CONFIG={}; (((res[15]&&res[15].data)||[])).forEach(function(c){ CONFIG[c.clave]=c.valor; }); NAV_ORDER=(CONFIG['nav_orden']&&CONFIG['nav_orden'].length)?CONFIG['nav_orden']:null;
+      _gmCierre=((res[16]&&res[16].data)||[]);
     });
   }
   var CONFIG={}, NAV_ORDER=null;
@@ -1829,6 +1846,7 @@
     else if(v==="tareas") renderTareas();
     else if(v==="stock") renderStock();
     else if(v==="pos") renderPOS();
+    else if(v==="gm") renderCierreGM();
     else if(v==="panel") renderPanel();
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
@@ -2362,7 +2380,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["clientes","Clientes"],["cobro","Cobro"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["gm","Cierre GM"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
@@ -4194,6 +4212,78 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total));
     }, function(){ toast("⚠ No se pudo registrar la venta"); });
   }
+  // ---------- Cierre mensual · Guillermo Morales ----------
+  var _gmCierre=[];
+  var GM_TALLAS=["S","M","L","XL"];
+  var GM_SERV=[
+    {k:'paquete',n:'Paquete flota',p:{S:90000,M:105000,L:120000,XL:135000}},
+    {k:'interior',n:'Interior',p:{S:25000,M:25000,L:30000,XL:30000}},
+    {k:'exterior',n:'Exterior',p:{S:25000,M:30000,L:30000,XL:35000}},
+    {k:'motor',n:'Motor',p:{S:20000,M:25000,L:30000,XL:35000}},
+    {k:'brillo',n:'Realce brillo',p:{S:20000,M:25000,L:30000,XL:35000}},
+    {k:'barniz',n:'Corr. barniz',p:{S:70000,M:80000,L:90000,XL:100000}},
+    {k:'tapiz',n:'Tapiz',p:{S:50000,M:50000,L:50000,XL:50000}},
+    {k:'vidrios',n:'Desc. vidrios',p:{S:20000,M:20000,L:25000,XL:25000}},
+    {k:'desab',n:'Desab/pintura (x pza)',p:{S:150000,M:150000,L:150000,XL:150000},qty:true},
+    {k:'retiro',n:'Retiro/entrega',p:{S:5000,M:5000,L:5000,XL:5000}}
+  ];
+  function gmServ(k){ for(var i=0;i<GM_SERV.length;i++){ if(GM_SERV[i].k===k) return GM_SERV[i]; } return null; }
+  function gmMes(){ return (document.getElementById('gm-mes')||{}).value || todayISO().slice(0,7); }
+  function gmEsGM(e){ return String(e.cliente||"").toUpperCase().indexOf("GUILLERMO MORALES")>=0; }
+  function gmVehMes(mes){ return (data||[]).filter(function(e){ return gmEsGM(e) && ((e.fIngreso||e.fCoord||"").slice(0,7)===mes); }); }
+  function gmValor(r){ var t=r.talla||"M", it=r.items||{}, sum=0; Object.keys(it).forEach(function(k){ var s=gmServ(k); if(s&&it[k]) sum+=(s.p[t]||0)*(+it[k]||0); }); return sum-(+r.descuento||0); }
+  function gmUpsert(r){ var sb=sbc(); if(!sb)return; var pay={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:r.patente||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") };
+    if(r.id){ sb.from('gm_cierre').update(pay).eq('id',r.id).then(function(res){ if(res&&res.error)toast('⚠ No se pudo guardar (¿SQL 40?)'); }); }
+    else { sb.from('gm_cierre').insert(pay).select().single().then(function(res){ if(res&&res.data){ r.id=res.data.id; } else if(res&&res.error){ toast('⚠ No se pudo guardar (¿corriste el SQL 40?)'); } }); } }
+  function gmRows(mes){ var out=[]; (_gmCierre||[]).forEach(function(r){ if(r.mes===mes){ if(!r._rid) r._rid=(r.vehiculo_id?('v:'+r.vehiculo_id):('m:'+(r.id||Math.random().toString(36).slice(2)))); out.push(r); } });
+    var have={}; out.forEach(function(r){ if(r.vehiculo_id)have[r.vehiculo_id]=1; });
+    gmVehMes(mes).forEach(function(e){ if(!have[e.id]){ out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:{}, descuento:0, cobrado:false }); } });
+    return out; }
+  function gmEnsure(rid,mes){ var r=(_gmCierre||[]).filter(function(x){return x._rid===rid && x.mes===mes;})[0]; if(r) return r;
+    if(rid.indexOf('v:')===0){ var vid=rid.slice(2); var e=(data||[]).filter(function(x){return String(x.id)===vid;})[0]||{}; r={ id:null, _rid:rid, mes:mes, vehiculo_id:vid, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); return r; }
+    return null; }
+  function renderCierreGM(){ var root=document.getElementById('gm-root'); if(!root)return;
+    var mes=gmMes(), rows=gmRows(mes);
+    var total=0,cob=0; rows.forEach(function(r){ var v=gmValor(r); total+=v; if(r.cobrado)cob+=v; });
+    var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th class="r">Valor real</th><th>Pagado</th></tr>';
+    var body=rows.map(function(r,i){ var t=r.talla||'M';
+      var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
+      return '<tr>'+
+        '<td>'+(i+1)+'</td>'+
+        '<td><b>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</b>'+(r._auto?'':' <span class="tag" style="font-size:9px;vertical-align:middle">manual</span>')+'</td>'+
+        '<td>'+escH(r.patente||'—')+'</td>'+
+        '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
+        cells+
+        '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
+        '<td class="r"><b>'+clp(gmValor(r))+'</b></td>'+
+        '<td class="c"><input type="checkbox" class="gm-cob" data-rid="'+av(r._rid)+'"'+(r.cobrado?' checked':'')+'>'+(r._auto?'':' <button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:16px">×</button>')+'</td>'+
+        '</tr>'; }).join('');
+    root.innerHTML=
+      '<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+
+        '<label class="f" style="margin:0"><span class="lab">Mes</span><input type="month" id="gm-mes" value="'+mes+'"></label>'+
+        '<button class="btn" id="gm-add">＋ Agregar vehículo</button>'+
+        '<button class="btn" id="gm-print">🖨 Cotización de cierre</button>'+
+        '<button class="btn primary" id="gm-cobrar">💰 Registrar cobro del mes</button>'+
+      '</div>'+
+      '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Total mes</span><b>'+clp(total)+'</b></div><div><span>Cobrado</span><b>'+clp(cob)+'</b></div><div class="tot"><span>Pendiente</span><b>'+clp(total-cob)+'</b></div></div>'+
+      '<div class="tablewrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
+    var mm=document.getElementById('gm-mes'); if(mm)mm.onchange=renderCierreGM;
+    function edit(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); renderCierreGM(); }
+    root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
+    root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ edit(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
+    root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ edit(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
+    root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ edit(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
+    root.querySelectorAll('.gm-cob').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.cobrado=c.checked; }); }; });
+    root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre?'))return; var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); renderCierreGM(); }; });
+    var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var marca=prompt('Marca:'); if(marca===null)return; var modelo=prompt('Modelo:')||''; var patente=prompt('Patente:')||''; var talla=(prompt('Talla (S / M / L / XL):','M')||'M').toUpperCase(); if(GM_TALLAS.indexOf(talla)<0)talla='M'; var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:marca, modelo:modelo, patente:patente, talla:talla, items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); };
+    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ gmImprimir(mes,rows,total); };
+    var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ var pend=total-cob; if(pend<=0){ toast('No hay pendiente por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(pend)+'? Queda como ingreso en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:pend, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)', ref_tipo:'CIERRE GM' }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(pend)); };
+  }
+  function gmImprimir(mes,rows,total){ var w=window.open('','gmpdf'); if(!w){ toast('Permite las ventanas emergentes'); return; }
+    var css='body{font:13px/1.4 Arial,sans-serif;color:#111;padding:24px}h1{font-size:18px;margin:0 0 2px}table{border-collapse:collapse;width:100%;margin-top:12px;font-size:11px}th,td{border:1px solid #ccc;padding:5px 7px;text-align:left}th{background:#f2f2f2}td.r,th.r{text-align:right}.tot{font-size:15px;font-weight:800;margin-top:10px;text-align:right}';
+    var tb=rows.filter(function(r){return gmValor(r)>0 || Object.keys(r.items||{}).length;}).map(function(r,i){ var det=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); return s?(s.n+(r.items[k]>1?(' x'+r.items[k]):'')):k; }).join(', ')||'—'; return '<tr><td>'+(i+1)+'</td><td>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim())+'</td><td>'+escH(r.patente||'')+'</td><td>'+(r.talla||'M')+'</td><td>'+escH(det)+(r.descuento?(' · desc. '+clp(r.descuento)):'')+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>'; }).join('');
+    var html='<h1>Cierre mensual · Automotora Guillermo Morales</h1><div>'+mes+' · IS Performance</div><table><thead><tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th><th>Detalle</th><th class="r">Valor</th></tr></thead><tbody>'+tb+'</tbody></table><div class="tot">Total del mes: '+clp(total)+'</div>';
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Cierre GM '+mes+'</title><style>'+css+'</style></head><body>'+html+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);};</scr'+'ipt></body></html>'); w.document.close(); }
   // ---- Ingresar factura con varios materiales ----
   function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
   function factAddLine(){ var box=document.getElementById("fact-lines"); if(!box)return;
