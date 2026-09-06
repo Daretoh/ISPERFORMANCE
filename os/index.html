@@ -1096,12 +1096,23 @@
 
     <section class="view" id="view-gm">
       <style>
-        .gm-table{font-size:12px;white-space:nowrap}
-        .gm-table th,.gm-table td{padding:5px 6px}
+        .gm-wrap{max-height:72vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:12px}
+        .gm-table{font-size:11px;white-space:nowrap;border-collapse:separate;border-spacing:0;min-width:0}
+        .gm-table th,.gm-table td{padding:4px 5px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+        .gm-table thead th{position:sticky;top:0;z-index:3;background:var(--surface-2);white-space:normal;line-height:1.15;vertical-align:bottom}
+        .gm-table th.gm-sh{width:42px;min-width:42px;max-width:42px;font-size:9px;letter-spacing:0}
         .gm-table td.c{text-align:center}
-        .gm-table input[type=number]{width:60px;padding:4px;border:1px solid var(--line-strong);border-radius:5px;font:inherit;box-sizing:border-box}
-        .gm-table .gm-qty{width:48px}.gm-table .gm-desc{width:78px}
-        .gm-table select{padding:4px;border:1px solid var(--line-strong);border-radius:5px}
+        /* columnas alternadas para diferenciar cada check */
+        .gm-table tbody td:nth-child(2n){background:color-mix(in srgb,var(--accent-soft) 32%,transparent)}
+        .gm-table tbody tr:hover td{background:var(--surface-3)}
+        /* primeras dos columnas ancladas al hacer scroll horizontal */
+        .gm-table th:nth-child(1),.gm-table td:nth-child(1){position:sticky;left:0;z-index:2;background:var(--surface);width:28px;min-width:28px;text-align:center}
+        .gm-table th:nth-child(2),.gm-table td:nth-child(2){position:sticky;left:28px;z-index:2;background:var(--surface);max-width:140px;white-space:normal}
+        .gm-table thead th:nth-child(1),.gm-table thead th:nth-child(2){z-index:4;background:var(--surface-2)}
+        .gm-table input[type=number]{width:46px;padding:3px;border:1px solid var(--line-strong);border-radius:5px;font:inherit;box-sizing:border-box}
+        .gm-table .gm-qty{width:42px}.gm-table .gm-desc{width:60px}
+        .gm-table select{padding:3px;border:1px solid var(--line-strong);border-radius:5px}
+        .gm-table input[type=checkbox]{width:16px;height:16px}
         .gm-sh{font-size:10.5px}
       </style>
       <div class="vhead"><div class="eye">Cliente flota</div><h1>Cierre GM</h1></div>
@@ -4233,8 +4244,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function gmVehMes(mes){ return (data||[]).filter(function(e){ return gmEsGM(e) && ((e.fIngreso||e.fCoord||"").slice(0,7)===mes); }); }
   function gmValor(r){ var t=r.talla||"M", it=r.items||{}, sum=0; Object.keys(it).forEach(function(k){ var s=gmServ(k); if(s&&it[k]) sum+=(s.p[t]||0)*(+it[k]||0); }); return sum-(+r.descuento||0); }
   function gmUpsert(r){ var sb=sbc(); if(!sb)return; var pay={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:r.patente||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") };
-    if(r.id){ sb.from('gm_cierre').update(pay).eq('id',r.id).then(function(res){ if(res&&res.error)toast('⚠ No se pudo guardar (¿SQL 40?)'); }); }
-    else { sb.from('gm_cierre').insert(pay).select().single().then(function(res){ if(res&&res.data){ r.id=res.data.id; } else if(res&&res.error){ toast('⚠ No se pudo guardar (¿corriste el SQL 40?)'); } }); } }
+    if(r.id){ sb.from('gm_cierre').update(pay).eq('id',r.id).then(function(res){ if(res&&res.error)toast('⚠ No se pudo guardar (¿SQL 40?)'); }); return; }
+    if(r._inserting){ r._dirty=true; return; } // ya hay un insert en curso: no dupliques, guarda cambios para después
+    r._inserting=true;
+    sb.from('gm_cierre').insert(pay).select().single().then(function(res){ r._inserting=false; if(res&&res.data){ r.id=res.data.id; if(r._dirty){ r._dirty=false; gmUpsert(r); } } else if(res&&res.error){ toast('⚠ No se pudo guardar (¿corriste el SQL 40?)'); } }); }
   function gmRows(mes){ var out=[]; (_gmCierre||[]).forEach(function(r){ if(r.mes===mes){ if(!r._rid) r._rid=(r.vehiculo_id?('v:'+r.vehiculo_id):('m:'+(r.id||Math.random().toString(36).slice(2)))); out.push(r); } });
     var have={}; out.forEach(function(r){ if(r.vehiculo_id)have[r.vehiculo_id]=1; });
     gmVehMes(mes).forEach(function(e){ if(!have[e.id]){ out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:{}, descuento:0, cobrado:false }); } });
@@ -4250,7 +4263,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
       return '<tr>'+
         '<td>'+(i+1)+'</td>'+
-        '<td><b>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</b>'+(r._auto?'':' <span class="tag" style="font-size:9px;vertical-align:middle">manual</span>')+'</td>'+
+        '<td><b>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</b>'+(r.vehiculo_id?'':' <span class="tag" style="font-size:9px;vertical-align:middle">manual</span>')+'</td>'+
         '<td>'+escH(r.patente||'—')+'</td>'+
         '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
         cells+
@@ -4266,7 +4279,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<button class="btn primary" id="gm-cobrar">💰 Registrar cobro del mes</button>'+
       '</div>'+
       '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Total mes</span><b>'+clp(total)+'</b></div><div><span>Cobrado</span><b>'+clp(cob)+'</b></div><div class="tot"><span>Pendiente</span><b>'+clp(total-cob)+'</b></div></div>'+
-      '<div class="tablewrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
+      '<div class="gm-wrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
     var mm=document.getElementById('gm-mes'); if(mm)mm.onchange=renderCierreGM;
     function edit(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); renderCierreGM(); }
     root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
