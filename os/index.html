@@ -4291,7 +4291,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var total=0,cob=0; rows.forEach(function(r){ var v=gmValor(r); total+=v; if(r.cobrado)cob+=v; });
     var rec=gmMesRec(mes), mto=gmMontos(mes), ei=gmEstIdx(rec.estado);
     var estLbl={BORRADOR:['Borrador','#666'],COTIZADO:['Cotizado','#0d3b66'],OC:['OC recibida','#7c3aed'],FACTURADO:['Facturado','#c2410c'],COBRADO:['Cobrado','#1e9e6a']}[rec.estado]||['Borrador','#666'];
-    var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th class="r">Valor real</th><th>Pagado</th></tr>';
+    var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th class="r">Valor real</th><th></th></tr>';
     var body=rows.map(function(r,i){ var t=r.talla||'M';
       var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
       return '<tr>'+
@@ -4304,7 +4304,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         cells+
         '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
         '<td class="r"><b>'+clp(gmValor(r))+'</b></td>'+
-        '<td class="c"><input type="checkbox" class="gm-cob" data-rid="'+av(r._rid)+'"'+(r.cobrado?' checked':'')+'>'+(r._auto?'':' <button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:16px">×</button>')+'</td>'+
+        '<td class="c">'+(r._auto?'':'<button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar del cierre" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:16px">×</button>')+'</td>'+
         '</tr>'; }).join('');
     root.innerHTML=
       '<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+
@@ -4351,7 +4351,6 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ edit(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
     root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ edit(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
     root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ edit(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
-    root.querySelectorAll('.gm-cob').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.cobrado=c.checked; }); }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre?'))return; var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); renderCierreGM(); }; });
     var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
     var iv=document.getElementById('gm-iva'); if(iv)iv.onchange=function(){ rec.iva=iv.checked; gmMesSave(rec); renderCierreGM(); };
