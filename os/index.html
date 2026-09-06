@@ -4263,8 +4263,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
       return '<tr>'+
         '<td>'+(i+1)+'</td>'+
-        '<td><b>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</b>'+(r.vehiculo_id?'':' <span class="tag" style="font-size:9px;vertical-align:middle">manual</span>')+'</td>'+
-        '<td>'+escH(r.patente||'—')+'</td>'+
+        (r.vehiculo_id
+          ? '<td><b>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</b></td>'+'<td>'+escH(r.patente||'—')+'</td>'
+          : '<td><input class="gm-marca" data-rid="'+av(r._rid)+'" value="'+av(r.marca||'')+'" placeholder="Marca" style="width:100%;box-sizing:border-box"><input class="gm-modelo" data-rid="'+av(r._rid)+'" value="'+av(r.modelo||'')+'" placeholder="Modelo" style="width:100%;box-sizing:border-box;margin-top:2px"></td>'+'<td><input class="gm-pat" data-rid="'+av(r._rid)+'" value="'+av(r.patente||'')+'" placeholder="Patente" style="width:78px"></td>'
+        )+
         '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
         cells+
         '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
@@ -4274,21 +4276,25 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     root.innerHTML=
       '<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+
         '<label class="f" style="margin:0"><span class="lab">Mes</span><input type="month" id="gm-mes" value="'+mes+'"></label>'+
-        '<button class="btn" id="gm-add">＋ Agregar vehículo</button>'+
-        '<button class="btn" id="gm-print">🖨 Cotización de cierre</button>'+
-        '<button class="btn primary" id="gm-cobrar">💰 Registrar cobro del mes</button>'+
+        '<button class="btn" id="gm-add">+ Agregar vehículo</button>'+
+        '<button class="btn" id="gm-print">Cotización de cierre</button>'+
+        '<button class="btn primary" id="gm-cobrar">Registrar cobro del mes</button>'+
       '</div>'+
       '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Total mes</span><b>'+clp(total)+'</b></div><div><span>Cobrado</span><b>'+clp(cob)+'</b></div><div class="tot"><span>Pendiente</span><b>'+clp(total-cob)+'</b></div></div>'+
       '<div class="gm-wrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
     var mm=document.getElementById('gm-mes'); if(mm)mm.onchange=renderCierreGM;
     function edit(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); renderCierreGM(); }
+    function editNoRender(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); } // para campos de texto: no re-render (no pierde el foco)
+    root.querySelectorAll('.gm-marca').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.marca=x.value; }); }; });
+    root.querySelectorAll('.gm-modelo').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.modelo=x.value; }); }; });
+    root.querySelectorAll('.gm-pat').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.patente=x.value; }); }; });
     root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
     root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ edit(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
     root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ edit(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
     root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ edit(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
     root.querySelectorAll('.gm-cob').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.cobrado=c.checked; }); }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre?'))return; var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); renderCierreGM(); }; });
-    var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var marca=prompt('Marca:'); if(marca===null)return; var modelo=prompt('Modelo:')||''; var patente=prompt('Patente:')||''; var talla=(prompt('Talla (S / M / L / XL):','M')||'M').toUpperCase(); if(GM_TALLAS.indexOf(talla)<0)talla='M'; var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:marca, modelo:modelo, patente:patente, talla:talla, items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); };
+    var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
     var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ gmImprimir(mes,rows,total); };
     var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ var pend=total-cob; if(pend<=0){ toast('No hay pendiente por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(pend)+'? Queda como ingreso en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:pend, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)', ref_tipo:'CIERRE GM' }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(pend)); };
   }
