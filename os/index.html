@@ -4273,9 +4273,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!r.oc_media)r.oc_media=[]; if(!r.factura_media)r.factura_media=[]; if(r.iva==null)r.iva=true;
     return r; }
   function gmEstIdx(e){ var i=GM_ESTADOS.indexOf(e||'BORRADOR'); return i<0?0:i; }
+  function gmNextCotizNum(){ var mx=57; (_gmMes||[]).forEach(function(m){ if((+m.cotiz_num||0)>mx)mx=+m.cotiz_num; }); return mx+1; } // arranca en 58
   function gmAvanzar(rec,est){ if(gmEstIdx(est)>gmEstIdx(rec.estado)) rec.estado=est; }
   function gmMontos(mes){ var neto=0; gmRows(mes).forEach(function(r){ neto+=gmValor(r); }); var rec=gmMesRec(mes); var iva=rec.iva?Math.round(neto*GM_IVA):0; return { neto:neto, iva:iva, total:neto+iva }; }
-  function gmMesSave(rec){ var sb=sbc(); if(!sb)return; var pay={ mes:rec.mes, estado:rec.estado||'BORRADOR', iva:!!rec.iva, cotiz_fecha:rec.cotiz_fecha||null, cotiz_total:(rec.cotiz_total!=null?rec.cotiz_total:null), oc_num:rec.oc_num||null, oc_fecha:rec.oc_fecha||null, oc_media:(rec.oc_media||[]), factura_num:rec.factura_num||null, factura_fecha:rec.factura_fecha||null, factura_media:(rec.factura_media||[]), cobro_fecha:rec.cobro_fecha||null, cobro_monto:(rec.cobro_monto!=null?rec.cobro_monto:null), notas:rec.notas||null, autor:(window.ISP_EMAIL||"") };
+  function gmMesSave(rec){ var sb=sbc(); if(!sb)return; var pay={ mes:rec.mes, estado:rec.estado||'BORRADOR', iva:!!rec.iva, cotiz_num:(rec.cotiz_num!=null?rec.cotiz_num:null), cotiz_fecha:rec.cotiz_fecha||null, cotiz_total:(rec.cotiz_total!=null?rec.cotiz_total:null), oc_num:rec.oc_num||null, oc_fecha:rec.oc_fecha||null, oc_media:(rec.oc_media||[]), factura_num:rec.factura_num||null, factura_fecha:rec.factura_fecha||null, factura_media:(rec.factura_media||[]), cobro_fecha:rec.cobro_fecha||null, cobro_monto:(rec.cobro_monto!=null?rec.cobro_monto:null), notas:rec.notas||null, autor:(window.ISP_EMAIL||"") };
     sb.from('gm_cierre_mes').upsert(pay,{onConflict:'mes'}).select().single().then(function(res){ if(res&&res.data){ rec.id=res.data.id; } else if(res&&res.error){ toast('⚠ No se pudo guardar el flujo (¿corriste el SQL 41?)'); } }); }
   function gmUpsert(r){ var sb=sbc(); if(!sb)return; var pay={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:r.patente||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") };
     if(r.id){ sb.from('gm_cierre').update(pay).eq('id',r.id).then(function(res){ if(res&&res.error)toast('⚠ No se pudo guardar (¿SQL 40?)'); }); return; }
@@ -4381,11 +4382,11 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var fcf=document.getElementById('gm-fc-fecha'); if(fcf)fcf.onchange=function(){ rec.factura_fecha=fcf.value; gmMesSave(rec); };
     var fca=document.getElementById('gm-fc-adj'); if(fca)fca.onclick=function(){ abrirGaleria('Factura · '+mes, rec.factura_media, 'gm/'+mes+'/factura', 'image/*,application/pdf', function(){ gmMesSave(rec); renderCierreGM(); }); };
     var fck=document.getElementById('gm-fc-ok'); if(fck)fck.onclick=function(){ rec.factura_num=(fcn&&fcn.value)||rec.factura_num; rec.factura_fecha=(fcf&&fcf.value)||rec.factura_fecha||todayISO(); gmAvanzar(rec,'FACTURADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Factura registrada'); };
-    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ gmImprimir(mes,rows,mto); rec.cotiz_fecha=todayISO(); rec.cotiz_total=mto.total; gmAvanzar(rec,'COTIZADO'); gmMesSave(rec); renderCierreGM(); };
+    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ if(!rec.cotiz_num) rec.cotiz_num=gmNextCotizNum(); gmImprimir(mes,rows,mto,rec.cotiz_num); rec.cotiz_fecha=todayISO(); rec.cotiz_total=mto.total; gmAvanzar(rec,'COTIZADO'); gmMesSave(rec); renderCierreGM(); };
     var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ if(gmEstIdx(rec.estado)>=4){ toast('Este mes ya está cobrado'); return; } var monto=mto.total; if(monto<=0){ toast('No hay monto por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(monto)+(rec.iva?' (IVA incluido)':'')+'?\nQueda como COBRO en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:monto, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)'+(rec.factura_num?(' · Factura '+rec.factura_num):''), ref_tipo:'CIERRE GM', ref_num:(rec.factura_num||null) }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); rec.cobro_fecha=todayISO(); rec.cobro_monto=monto; gmAvanzar(rec,'COBRADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(monto)); };
     var _ngw=root.querySelector('.gm-wrap'); if(_ngw){ _ngw.scrollLeft=_psx; _ngw.scrollTop=_psy; } if(_pwy) try{ window.scrollTo(0,_pwy); }catch(e){}
   }
-  function gmImprimir(mes,rows,mto){ var m=(typeof mto==='number')?{neto:mto,iva:0,total:mto}:(mto||{neto:0,iva:0,total:0});
+  function gmImprimir(mes,rows,mto,num){ var m=(typeof mto==='number')?{neto:mto,iva:0,total:mto}:(mto||{neto:0,iva:0,total:0}); var f=todayISO().split('-'), fechaTxt=f[2]+'/'+f[1]+'/'+f[0]; num=num||1;
     var lista=rows.filter(function(r){return gmValor(r)>0 || Object.keys(r.items||{}).length;});
     var filas=lista.map(function(r,i){ var det=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); return s?(s.n+(r.items[k]>1?(' x'+r.items[k]):'')):k; }).join(', ')||'—';
       return '<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</td><td>'+escH(r.patente||'—')+'</td><td>'+(r.talla||'M')+'</td><td class="cp-desc">'+escH(det)+(r.descuento?(' · desc. '+clp(r.descuento)):'')+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>'; }).join('');
@@ -4394,10 +4395,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var icoWeb='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
     var cli='AUTOMOTORA GUILLERMO MORALES';
     var html='<div class="cp-sheet"><div id="cp-main">'
-      +'<div class="cp-head"><img class="cp-logo-img" src="'+LOGO_ISP_B64+'" alt="IS Performance"><div class="cp-meta"><span>Cierre mensual</span><b>'+escH(cli)+'</b><span>Periodo: '+escH(mes)+'</span></div></div>'
-      +'<div class="cp-cliente-box"><div class="cp-cli-title">Resumen del periodo</div><div class="cp-cli-grid">'
-        +'<div><span>Cliente</span><b>'+escH(cli)+'</b></div><div><span>Periodo</span><b>'+escH(mes)+'</b></div>'
-        +'<div><span>Vehículos</span><b>'+lista.length+'</b></div><div><span>Emitido</span><b>'+fFecha(todayISO())+'</b></div>'
+      +'<div class="cp-head"><img class="cp-logo-img" src="'+LOGO_ISP_B64+'" alt="IS Performance"><div class="cp-meta"><span>N° Cotización</span><b>'+String(num).padStart(6,"0")+'</b><span>Fecha: '+fechaTxt+'</span></div></div>'
+      +'<div class="cp-cliente-box"><div class="cp-cli-title">Resumen de periodo</div><div class="cp-cli-grid">'
+        +'<div><span>Cliente</span><b>'+escH(cli)+'</b></div><div><span>Periodo</span><b>'+escH(gmMesNom(mes))+'</b></div>'
+        +'<div><span>Total vehículos</span><b>'+lista.length+'</b></div><div><span>Emitido</span><b>'+fFecha(todayISO())+'</b></div>'
       +'</div></div>'
       +'<table class="cp-table"><colgroup><col style="width:5%"><col style="width:28%"><col style="width:12%"><col style="width:7%"><col style="width:33%"><col style="width:15%"></colgroup><thead><tr><th>#</th><th>Vehículo</th><th>Patente</th><th>Talla</th><th>Detalle</th><th class="r">Total</th></tr></thead><tbody>'+filas+'</tbody></table>'
       +'</div><div id="cp-cierre">'
@@ -4407,7 +4408,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'<div class="cp-nota"><b>Nota:</b> Cierre mensual de servicios de flota. Los valores corresponden a los servicios realizados en el periodo indicado.</div>'
       +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
       +'</div></div>';
-    _cotActual='Cierre GM '+mes;
+    _cotActual=String(num).padStart(6,"0");
     document.getElementById('cotiz-modal-body').innerHTML=html;
     document.getElementById('cotiz-modal').classList.add('show'); }
   // ---- Ingresar factura con varios materiales ----

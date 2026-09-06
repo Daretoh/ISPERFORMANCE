@@ -9,6 +9,7 @@ create table if not exists gm_cierre_mes (
   mes            text not null unique,            -- 'YYYY-MM'
   estado         text default 'BORRADOR',         -- BORRADOR|COTIZADO|OC|FACTURADO|COBRADO
   iva            boolean default true,            -- afecto a IVA 19%
+  cotiz_num      integer,                         -- N# de cotizacion (arranca en 58)
   cotiz_fecha    date,
   cotiz_total    integer,                         -- total (con IVA) al momento de cotizar
   oc_num         text,
