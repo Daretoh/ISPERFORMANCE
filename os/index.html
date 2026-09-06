@@ -1114,6 +1114,22 @@
         .gm-table select{padding:3px;border:1px solid var(--line-strong);border-radius:5px}
         .gm-table input[type=checkbox]{width:16px;height:16px}
         .gm-sh{font-size:10.5px}
+        /* panel de flujo Cotizado -> OC -> Facturado -> Cobrado */
+        .gm-flow{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;margin:10px 0}
+        .gm-flow-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+        .gm-badge{display:inline-block;font:700 11px/1 var(--mono);letter-spacing:.03em;color:#fff;padding:5px 10px;border-radius:20px;text-transform:uppercase}
+        .gm-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+        @media(max-width:820px){.gm-steps{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:480px){.gm-steps{grid-template-columns:1fr}}
+        .gm-step{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--ground);display:flex;flex-direction:column;gap:6px;opacity:.75}
+        .gm-step.active{opacity:1;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+        .gm-step.done{opacity:1;border-color:#1e9e6a;background:color-mix(in srgb,#1e9e6a 8%,var(--ground))}
+        .gm-step-h{font:700 12px/1.1 var(--mono);text-transform:uppercase;letter-spacing:.02em;color:var(--ink-muted)}
+        .gm-step.done .gm-step-h::after{content:" ✓";color:#1e9e6a}
+        .gm-step-b{font-size:12px;color:var(--ink);flex:1}
+        .gm-step-b input{font:inherit;padding:5px;border:1px solid var(--line-strong);border-radius:6px}
+        .gm-step-f{display:flex;gap:6px;flex-wrap:wrap}
+        .btn.sm{padding:6px 10px;font-size:12px}
       </style>
       <div class="vhead"><div class="eye">Cliente flota</div><h1>Cierre GM</h1></div>
       <div id="gm-root"></div>
@@ -1683,7 +1699,8 @@
       sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};}),
       sb.from('config').select('*').then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('gm_cierre').select('*').then(function(r){return r;},function(){return {data:[]};})
+      sb.from('gm_cierre').select('*').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('gm_cierre_mes').select('*').then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1702,6 +1719,7 @@
       _acciones=((res[14]&&res[14].data)||[]);
       CONFIG={}; (((res[15]&&res[15].data)||[])).forEach(function(c){ CONFIG[c.clave]=c.valor; }); NAV_ORDER=(CONFIG['nav_orden']&&CONFIG['nav_orden'].length)?CONFIG['nav_orden']:null;
       _gmCierre=((res[16]&&res[16].data)||[]);
+      _gmMes=((res[17]&&res[17].data)||[]);
     });
   }
   var CONFIG={}, NAV_ORDER=null;
@@ -4226,6 +4244,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   // ---------- Cierre mensual · Guillermo Morales ----------
   var _gmCierre=[];
   var GM_TALLAS=["S","M","L","XL"];
+  var _gmMes=[]; // registro por mes: estado/OC/factura/cobro
+  var GM_ESTADOS=["BORRADOR","COTIZADO","OC","FACTURADO","COBRADO"];
+  var GM_IVA=0.19;
   var GM_SERV=[
     {k:'paquete',n:'Paquete flota',p:{S:90000,M:105000,L:120000,XL:135000}},
     {k:'interior',n:'Interior',p:{S:25000,M:25000,L:30000,XL:30000}},
@@ -4243,6 +4264,16 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function gmEsGM(e){ return String(e.cliente||"").toUpperCase().indexOf("GUILLERMO MORALES")>=0; }
   function gmVehMes(mes){ return (data||[]).filter(function(e){ return gmEsGM(e) && ((e.fIngreso||e.fCoord||"").slice(0,7)===mes); }); }
   function gmValor(r){ var t=r.talla||"M", it=r.items||{}, sum=0; Object.keys(it).forEach(function(k){ var s=gmServ(k); if(s&&it[k]) sum+=(s.p[t]||0)*(+it[k]||0); }); return sum-(+r.descuento||0); }
+  // ----- registro por mes (flujo Cotizado -> OC -> Facturado -> Cobrado) -----
+  function gmMesRec(mes){ var r=(_gmMes||[]).filter(function(x){return x.mes===mes;})[0];
+    if(!r){ r={ mes:mes, estado:'BORRADOR', iva:true, cotiz_fecha:null, cotiz_total:null, oc_num:null, oc_fecha:null, oc_media:[], factura_num:null, factura_fecha:null, factura_media:[], cobro_fecha:null, cobro_monto:null, notas:null }; _gmMes.push(r); }
+    if(!r.oc_media)r.oc_media=[]; if(!r.factura_media)r.factura_media=[]; if(r.iva==null)r.iva=true;
+    return r; }
+  function gmEstIdx(e){ var i=GM_ESTADOS.indexOf(e||'BORRADOR'); return i<0?0:i; }
+  function gmAvanzar(rec,est){ if(gmEstIdx(est)>gmEstIdx(rec.estado)) rec.estado=est; }
+  function gmMontos(mes){ var neto=0; gmRows(mes).forEach(function(r){ neto+=gmValor(r); }); var rec=gmMesRec(mes); var iva=rec.iva?Math.round(neto*GM_IVA):0; return { neto:neto, iva:iva, total:neto+iva }; }
+  function gmMesSave(rec){ var sb=sbc(); if(!sb)return; var pay={ mes:rec.mes, estado:rec.estado||'BORRADOR', iva:!!rec.iva, cotiz_fecha:rec.cotiz_fecha||null, cotiz_total:(rec.cotiz_total!=null?rec.cotiz_total:null), oc_num:rec.oc_num||null, oc_fecha:rec.oc_fecha||null, oc_media:(rec.oc_media||[]), factura_num:rec.factura_num||null, factura_fecha:rec.factura_fecha||null, factura_media:(rec.factura_media||[]), cobro_fecha:rec.cobro_fecha||null, cobro_monto:(rec.cobro_monto!=null?rec.cobro_monto:null), notas:rec.notas||null, autor:(window.ISP_EMAIL||"") };
+    sb.from('gm_cierre_mes').upsert(pay,{onConflict:'mes'}).select().single().then(function(res){ if(res&&res.data){ rec.id=res.data.id; } else if(res&&res.error){ toast('⚠ No se pudo guardar el flujo (¿corriste el SQL 41?)'); } }); }
   function gmUpsert(r){ var sb=sbc(); if(!sb)return; var pay={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:r.patente||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") };
     if(r.id){ sb.from('gm_cierre').update(pay).eq('id',r.id).then(function(res){ if(res&&res.error)toast('⚠ No se pudo guardar (¿SQL 40?)'); }); return; }
     if(r._inserting){ r._dirty=true; return; } // ya hay un insert en curso: no dupliques, guarda cambios para después
@@ -4258,6 +4289,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function renderCierreGM(){ var root=document.getElementById('gm-root'); if(!root)return;
     var mes=gmMes(), rows=gmRows(mes);
     var total=0,cob=0; rows.forEach(function(r){ var v=gmValor(r); total+=v; if(r.cobrado)cob+=v; });
+    var rec=gmMesRec(mes), mto=gmMontos(mes), ei=gmEstIdx(rec.estado);
+    var estLbl={BORRADOR:['Borrador','#666'],COTIZADO:['Cotizado','#0d3b66'],OC:['OC recibida','#7c3aed'],FACTURADO:['Facturado','#c2410c'],COBRADO:['Cobrado','#1e9e6a']}[rec.estado]||['Borrador','#666'];
     var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th class="r">Valor real</th><th>Pagado</th></tr>';
     var body=rows.map(function(r,i){ var t=r.talla||'M';
       var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
@@ -4277,10 +4310,36 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+
         '<label class="f" style="margin:0"><span class="lab">Mes</span><input type="month" id="gm-mes" value="'+mes+'"></label>'+
         '<button class="btn" id="gm-add">+ Agregar vehículo</button>'+
-        '<button class="btn" id="gm-print">Cotización de cierre</button>'+
-        '<button class="btn primary" id="gm-cobrar">Registrar cobro del mes</button>'+
       '</div>'+
-      '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Total mes</span><b>'+clp(total)+'</b></div><div><span>Cobrado</span><b>'+clp(cob)+'</b></div><div class="tot"><span>Pendiente</span><b>'+clp(total-cob)+'</b></div></div>'+
+      '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Neto</span><b>'+clp(mto.neto)+'</b></div>'+(rec.iva?'<div><span>IVA 19%</span><b>'+clp(mto.iva)+'</b></div>':'')+'<div class="tot"><span>Total'+(rec.iva?' c/IVA':'')+'</span><b>'+clp(mto.total)+'</b></div></div>'+
+      '<div class="gm-flow">'+
+        '<div class="gm-flow-top">'+
+          '<span class="gm-badge" style="background:'+estLbl[1]+'">'+escH(estLbl[0])+'</span>'+
+          '<label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-left:auto"><input type="checkbox" id="gm-iva"'+(rec.iva?' checked':'')+'> Afecto a IVA (19%)</label>'+
+        '</div>'+
+        '<div class="gm-steps">'+
+          '<div class="gm-step'+(ei>=1?' done':(ei===0?' active':''))+'">'+
+            '<div class="gm-step-h">1 · Cotización</div>'+
+            '<div class="gm-step-b">'+(rec.cotiz_fecha?('Enviada '+escH(rec.cotiz_fecha)+'<br>Total '+clp(rec.cotiz_total!=null?rec.cotiz_total:mto.total)):'Genera y envía la cotización a GM.')+'</div>'+
+            '<div class="gm-step-f"><button class="btn sm" id="gm-print">'+(rec.cotiz_fecha?'Ver / re-generar PDF':'Generar y guardar')+'</button></div>'+
+          '</div>'+
+          '<div class="gm-step'+(ei>=2?' done':(ei===1?' active':''))+'">'+
+            '<div class="gm-step-h">2 · Orden de compra</div>'+
+            '<div class="gm-step-b"><input id="gm-oc-num" placeholder="N° OC de GM" value="'+av(rec.oc_num||'')+'" style="width:100%;box-sizing:border-box;margin-bottom:4px"><input id="gm-oc-fecha" type="date" value="'+av(rec.oc_fecha||'')+'" style="width:100%;box-sizing:border-box"></div>'+
+            '<div class="gm-step-f"><button class="btn sm" id="gm-oc-adj">Adjuntar ('+(rec.oc_media||[]).length+')</button><button class="btn sm primary" id="gm-oc-ok">Marcar OC</button></div>'+
+          '</div>'+
+          '<div class="gm-step'+(ei>=3?' done':(ei===2?' active':''))+'">'+
+            '<div class="gm-step-h">3 · Factura</div>'+
+            '<div class="gm-step-b"><input id="gm-fc-num" placeholder="N° factura" value="'+av(rec.factura_num||'')+'" style="width:100%;box-sizing:border-box;margin-bottom:4px"><input id="gm-fc-fecha" type="date" value="'+av(rec.factura_fecha||'')+'" style="width:100%;box-sizing:border-box"></div>'+
+            '<div class="gm-step-f"><button class="btn sm" id="gm-fc-adj">Adjuntar ('+(rec.factura_media||[]).length+')</button><button class="btn sm primary" id="gm-fc-ok">Marcar facturado</button></div>'+
+          '</div>'+
+          '<div class="gm-step'+(ei>=4?' done':(ei===3?' active':''))+'">'+
+            '<div class="gm-step-h">4 · Cobro</div>'+
+            '<div class="gm-step-b">'+(rec.cobro_fecha?('Cobrado '+escH(rec.cobro_fecha)+'<br>'+clp(rec.cobro_monto!=null?rec.cobro_monto:mto.total)):('Por cobrar: '+clp(mto.total)))+'</div>'+
+            '<div class="gm-step-f"><button class="btn sm primary" id="gm-cobrar"'+(ei>=4?' disabled':'')+'>Registrar cobro</button></div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
       '<div class="gm-wrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
     var mm=document.getElementById('gm-mes'); if(mm)mm.onchange=renderCierreGM;
     function edit(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); renderCierreGM(); }
@@ -4295,13 +4354,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     root.querySelectorAll('.gm-cob').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.cobrado=c.checked; }); }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre?'))return; var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); renderCierreGM(); }; });
     var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
-    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ gmImprimir(mes,rows,total); };
-    var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ var pend=total-cob; if(pend<=0){ toast('No hay pendiente por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(pend)+'? Queda como ingreso en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:pend, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)', ref_tipo:'CIERRE GM' }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(pend)); };
+    var iv=document.getElementById('gm-iva'); if(iv)iv.onchange=function(){ rec.iva=iv.checked; gmMesSave(rec); renderCierreGM(); };
+    var ocn=document.getElementById('gm-oc-num'); if(ocn)ocn.onchange=function(){ rec.oc_num=ocn.value; gmMesSave(rec); };
+    var ocf=document.getElementById('gm-oc-fecha'); if(ocf)ocf.onchange=function(){ rec.oc_fecha=ocf.value; gmMesSave(rec); };
+    var oca=document.getElementById('gm-oc-adj'); if(oca)oca.onclick=function(){ abrirGaleria('OC · '+mes, rec.oc_media, 'gm/'+mes+'/oc', 'image/*,application/pdf', function(){ gmMesSave(rec); renderCierreGM(); }); };
+    var ock=document.getElementById('gm-oc-ok'); if(ock)ock.onclick=function(){ rec.oc_num=(ocn&&ocn.value)||rec.oc_num; rec.oc_fecha=(ocf&&ocf.value)||rec.oc_fecha||todayISO(); gmAvanzar(rec,'OC'); gmMesSave(rec); renderCierreGM(); toast('✓ OC registrada'); };
+    var fcn=document.getElementById('gm-fc-num'); if(fcn)fcn.onchange=function(){ rec.factura_num=fcn.value; gmMesSave(rec); };
+    var fcf=document.getElementById('gm-fc-fecha'); if(fcf)fcf.onchange=function(){ rec.factura_fecha=fcf.value; gmMesSave(rec); };
+    var fca=document.getElementById('gm-fc-adj'); if(fca)fca.onclick=function(){ abrirGaleria('Factura · '+mes, rec.factura_media, 'gm/'+mes+'/factura', 'image/*,application/pdf', function(){ gmMesSave(rec); renderCierreGM(); }); };
+    var fck=document.getElementById('gm-fc-ok'); if(fck)fck.onclick=function(){ rec.factura_num=(fcn&&fcn.value)||rec.factura_num; rec.factura_fecha=(fcf&&fcf.value)||rec.factura_fecha||todayISO(); gmAvanzar(rec,'FACTURADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Factura registrada'); };
+    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ gmImprimir(mes,rows,mto); rec.cotiz_fecha=todayISO(); rec.cotiz_total=mto.total; gmAvanzar(rec,'COTIZADO'); gmMesSave(rec); renderCierreGM(); };
+    var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ if(gmEstIdx(rec.estado)>=4){ toast('Este mes ya está cobrado'); return; } var monto=mto.total; if(monto<=0){ toast('No hay monto por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(monto)+(rec.iva?' (IVA incluido)':'')+'?\nQueda como COBRO en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:monto, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)'+(rec.factura_num?(' · Factura '+rec.factura_num):''), ref_tipo:'CIERRE GM', ref_num:(rec.factura_num||null) }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); rec.cobro_fecha=todayISO(); rec.cobro_monto=monto; gmAvanzar(rec,'COBRADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(monto)); };
   }
-  function gmImprimir(mes,rows,total){ var w=window.open('','gmpdf'); if(!w){ toast('Permite las ventanas emergentes'); return; }
+  function gmImprimir(mes,rows,mto){ var m=(typeof mto==='number')?{neto:mto,iva:0,total:mto}:(mto||{neto:0,iva:0,total:0}); var w=window.open('','gmpdf'); if(!w){ toast('Permite las ventanas emergentes'); return; }
     var css='body{font:13px/1.4 Arial,sans-serif;color:#111;padding:24px}h1{font-size:18px;margin:0 0 2px}table{border-collapse:collapse;width:100%;margin-top:12px;font-size:11px}th,td{border:1px solid #ccc;padding:5px 7px;text-align:left}th{background:#f2f2f2}td.r,th.r{text-align:right}.tot{font-size:15px;font-weight:800;margin-top:10px;text-align:right}';
     var tb=rows.filter(function(r){return gmValor(r)>0 || Object.keys(r.items||{}).length;}).map(function(r,i){ var det=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); return s?(s.n+(r.items[k]>1?(' x'+r.items[k]):'')):k; }).join(', ')||'—'; return '<tr><td>'+(i+1)+'</td><td>'+escH(((r.marca||'')+' '+(r.modelo||'')).trim())+'</td><td>'+escH(r.patente||'')+'</td><td>'+(r.talla||'M')+'</td><td>'+escH(det)+(r.descuento?(' · desc. '+clp(r.descuento)):'')+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>'; }).join('');
-    var html='<h1>Cierre mensual · Automotora Guillermo Morales</h1><div>'+mes+' · IS Performance</div><table><thead><tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th><th>Detalle</th><th class="r">Valor</th></tr></thead><tbody>'+tb+'</tbody></table><div class="tot">Total del mes: '+clp(total)+'</div>';
+    var foot=(m.iva>0)?('<div class="tot" style="font-size:12px;font-weight:600">Neto: '+clp(m.neto)+'</div><div class="tot" style="font-size:12px;font-weight:600">IVA 19%: '+clp(m.iva)+'</div><div class="tot">Total del mes: '+clp(m.total)+'</div>'):('<div class="tot">Total del mes: '+clp(m.total)+'</div>');
+    var html='<h1>Cierre mensual · Automotora Guillermo Morales</h1><div>'+mes+' · IS Performance</div><table><thead><tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th><th>Detalle</th><th class="r">Valor</th></tr></thead><tbody>'+tb+'</tbody></table>'+foot;
     w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Cierre GM '+mes+'</title><style>'+css+'</style></head><body>'+html+'<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},300);};</scr'+'ipt></body></html>'); w.document.close(); }
   // ---- Ingresar factura con varios materiales ----
   function factProdOptions(){ return '<option value="">— Producto del stock —</option>'+productos.slice().sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;}).map(function(x){ return '<option value="'+x.id+'">'+escH((x.sku?(x.sku+" · "):"")+(x.producto||""))+'</option>'; }).join(""); }
