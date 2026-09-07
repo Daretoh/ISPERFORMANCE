@@ -1454,6 +1454,7 @@
 
   <!-- Modal de movimiento de stock (ingreso con referencia / salida) -->
   <div class="mov-modal" id="veh-modal"><div class="mov-box" id="veh-modal-box"></div></div>
+  <div class="mov-modal" id="mov-edit"><div class="mov-box" id="mov-edit-box"></div></div>
   <div class="mov-modal" id="mov-modal">
     <div class="mov-box">
       <div class="mov-head"><h3 id="mov-title">Movimiento</h3><button id="mov-close" aria-label="Cerrar">×</button></div>
@@ -1841,10 +1842,63 @@
       return ((accFmt(a.num)+" "+(a.descripcion||"")+" "+(a.proveedor||"")+" "+(a.ref_tipo||"")+" "+(a.ref_num||"")+" "+(a.monto||"")+" "+(a.tipo||"")+" "+accProdTxt(a)+" "+accAlmTxt(a)+" "+(a.autor||"")).toLowerCase().indexOf(q)>=0); });
     var tot={}; list.forEach(function(a){ tot[a.tipo]=(tot[a.tipo]||0)+(+a.monto||0); });
     var res=document.getElementById("mv-resumen"); if(res){ res.innerHTML='<div class="gasto-resumen">'+["COBRO","INGRESO","GASTO"].map(function(t){ return '<div><span>'+accTipoChip(t)+'</span><b>'+clp(tot[t]||0)+'</b></div>'; }).join("")+'<div class="tot"><span>Acciones</span><b>'+list.length+'</b></div></div>'; }
-    el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Producto / detalle</th><th class="r">Cant</th><th>Almacén</th><th>Documento</th><th>Quién</th><th class="r">Monto</th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):""); var prod=accProdTxt(a);
-      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+(prod?('<b>'+escH(prod)+'</b>'):escH(a.descripcion||"—"))+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td class="r">'+(a.cantidad!=null?a.cantidad:"—")+'</td><td>'+escH(accAlmTxt(a)||"—")+'</td><td>'+escH(ref||"—")+((a.media&&a.media.length)?(' <button class="stk-btn acc-adj" data-id="'+av(a.id)+'" title="Ver voucher/adjunto">📎</button>'):'')+'</td><td style="font-size:11px;color:var(--ink-muted)">'+escH((a.autor||"").split("@")[0]||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
+    el.innerHTML=list.length?('<div class="tablewrap"><table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Producto / detalle</th><th class="r">Cant</th><th>Almacén</th><th>Documento</th><th>Quién</th><th class="r">Monto</th><th></th></tr></thead><tbody>'+list.map(function(a){ var ref=(a.ref_tipo||"")+(a.ref_num?(" "+a.ref_num):""); var prod=accProdTxt(a);
+      return '<tr><td><b style="font-family:var(--mono);color:var(--accent-ink)">'+accFmt(a.num)+'</b></td><td>'+fFecha((a.fecha||"").slice(0,10))+'</td><td>'+accTipoChip(a.tipo)+'</td><td>'+(prod?('<b>'+escH(prod)+'</b>'):escH(a.descripcion||"—"))+(a.proveedor?' <span style="color:var(--ink-muted)">· '+escH(a.proveedor)+'</span>':'')+'</td><td class="r">'+(a.cantidad!=null?a.cantidad:"—")+'</td><td>'+escH(accAlmTxt(a)||"—")+'</td><td>'+escH(ref||"—")+((a.media&&a.media.length)?(' <button class="stk-btn acc-adj" data-id="'+av(a.id)+'" title="Ver voucher/adjunto">📎</button>'):'')+'</td><td style="font-size:11px;color:var(--ink-muted)">'+escH((a.autor||"").split("@")[0]||"—")+'</td><td class="r">'+(a.monto?clp(a.monto):"—")+'</td><td class="c"><button class="mv-edit" data-id="'+av(a.id)+'" title="Editar / revertir movimiento" style="background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;padding:3px 8px;color:var(--ink-muted)">✎</button></td></tr>'; }).join("")+'</tbody></table></div>'):'<div class="col-empty">Sin movimientos'+(q?' para "'+q+'"':'')+'.</div>';
     el.querySelectorAll(".acc-adj").forEach(function(b){ b.addEventListener("click",function(){ var a=(_acciones||[]).filter(function(x){return String(x.id)===String(b.dataset.id);})[0]; if(!a)return; a.media=a.media||[]; abrirGaleria("Voucher / adjunto — "+accFmt(a.num), a.media, "venta", "image/*,application/pdf", function(){ var sb=sbc(); if(sb) sb.from("acciones").update({media:a.media}).eq("id",a.id).then(function(){}); }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); }); });
+    el.querySelectorAll(".mv-edit").forEach(function(b){ b.addEventListener("click",function(){ abrirMovEdit(b.dataset.id); }); });
   }
+  // ---- Editar / revertir un movimiento (con ajuste de stock) ----
+  function aplicarStockAccion(tipo, pid, alm, cant, signo){ if(!pid||!cant)return; var p=(productos||[]).filter(function(x){return String(x.id)===String(pid);})[0]; if(!p)return; almInit(p); alm=alm||ALM_DEFAULT; cant=+cant||0;
+    if(tipo==='SALIDA'){ p.salida=Math.max(0,(+p.salida||0)+signo*cant); p.stock_alm[alm]=(+p.stock_alm[alm]||0)-signo*cant; }
+    else if(tipo==='INGRESO'||tipo==='ENTRADA'){ p.entrada=Math.max(0,(+p.entrada||0)+signo*cant); p.stock_alm[alm]=(+p.stock_alm[alm]||0)+signo*cant; }
+    saveProducto(p); }
+  function cerrarMovEdit(){ var m=document.getElementById('mov-edit'); if(m)m.classList.remove('show'); }
+  function abrirMovEdit(id){ var a=(_acciones||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!a)return;
+    var box=document.getElementById('mov-edit-box'); if(!box)return;
+    var esStock=(a.tipo==='SALIDA'||a.tipo==='INGRESO'||a.tipo==='ENTRADA') && !!a.producto_id;
+    var prodOpts=(productos||[]).slice().sort(function(x,y){return (x.producto||'')<(y.producto||'')?-1:1;}).map(function(p){ return '<option value="'+av(p.id)+'"'+(String(p.id)===String(a.producto_id)?' selected':'')+'>'+escH((p.sku?(p.sku+' · '):'')+(p.producto||''))+'</option>'; }).join('');
+    var almOpts=ALMACENES.map(function(al){ return '<option value="'+al.cod+'"'+(al.cod===(a.almacen||ALM_DEFAULT)?' selected':'')+'>'+escH(al.nombre)+'</option>'; }).join('');
+    box.innerHTML='<div class="mov-head"><h3>Editar '+accFmt(a.num)+'</h3><button type="button" id="mov-edit-close" aria-label="Cerrar">×</button></div>'+
+      '<div class="vd-sub" style="margin-bottom:6px">'+accTipoChip(a.tipo)+' · '+fFecha((a.fecha||'').slice(0,10))+'</div>'+
+      (esStock?('<label class="f" style="margin-top:10px"><span class="lab">Producto</span><select id="me-prod">'+prodOpts+'</select></label>'+
+        '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Cantidad</span><input id="me-cant" type="number" min="0" value="'+(a.cantidad!=null?a.cantidad:0)+'"></label>'+
+        '<label class="f"><span class="lab">Almacén</span><select id="me-alm">'+almOpts+'</select></label></div>'):'')+
+      '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Monto</span><input id="me-monto" type="number" min="0" value="'+(+a.monto||0)+'"></label>'+
+      '<label class="f"><span class="lab">Fecha</span><input id="me-fecha" type="date" value="'+((a.fecha||'').slice(0,10))+'"></label></div>'+
+      '<label class="f" style="margin-top:8px"><span class="lab">Descripción</span><input id="me-desc" value="'+av(a.descripcion||'')+'"></label>'+
+      (esStock?'<div style="font-size:11px;color:var(--ink-muted);margin-top:8px">Al guardar o revertir, el stock se ajusta solo (devuelve/descuenta la diferencia).</div>':'')+
+      '<div class="vd-actions" style="margin-top:16px"><button type="button" class="btn" id="me-revertir" style="border-color:var(--crit);color:var(--crit)">Revertir y eliminar</button><button type="button" class="btn primary" id="me-guardar">Guardar cambios</button></div>';
+    document.getElementById('mov-edit').classList.add('show');
+    document.getElementById('mov-edit-close').onclick=cerrarMovEdit;
+    document.getElementById('me-guardar').onclick=function(){ movEditGuardar(a,esStock); };
+    document.getElementById('me-revertir').onclick=function(){ movEditRevertir(a,esStock); };
+  }
+  function movEditGuardar(a, esStock){ var sb=sbc(); if(!sb){toast('Sin conexión');return;}
+    var upd={};
+    var newMonto=parseInt((document.getElementById('me-monto')||{}).value,10)||0;
+    var newDesc=(document.getElementById('me-desc')||{}).value||'';
+    var newFecha=(document.getElementById('me-fecha')||{}).value||(a.fecha||'').slice(0,10);
+    if(esStock){ var newPid=(document.getElementById('me-prod')||{}).value; var newCant=Math.max(0,parseInt((document.getElementById('me-cant')||{}).value,10)||0); var newAlm=(document.getElementById('me-alm')||{}).value||ALM_DEFAULT;
+      var oldName=accProdTxt(a);
+      aplicarStockAccion(a.tipo, a.producto_id, a.almacen, a.cantidad, -1); // deshace el efecto viejo
+      aplicarStockAccion(a.tipo, newPid, newAlm, newCant, +1);             // aplica el nuevo
+      a.producto_id=newPid; a.cantidad=newCant; a.almacen=newAlm;
+      var newName=accProdTxt(a);
+      if(oldName && newName && oldName!==newName && !/corregido/i.test(newDesc)) newDesc=(newDesc||'')+' · corregido: '+oldName+' → '+newName;
+      upd.producto_id=newPid; upd.cantidad=newCant; upd.almacen=newAlm;
+    }
+    a.monto=newMonto; a.descripcion=newDesc; a.fecha=newFecha;
+    upd.monto=newMonto; upd.descripcion=newDesc; upd.fecha=newFecha;
+    sb.from('acciones').update(upd).eq('id',a.id).then(function(r){ if(r&&r.error) toast('⚠ No se pudo guardar'); });
+    cerrarMovEdit(); pintarMovimientos(); toast('✓ Movimiento actualizado'+(esStock?' · stock ajustado':''));
+  }
+  function movEditRevertir(a, esStock){ if(!confirm('¿Revertir y eliminar '+accFmt(a.num)+'?'+(esStock?' Se devolverá/ajustará el stock.':'')))return; var sb=sbc(); if(!sb){toast('Sin conexión');return;}
+    if(esStock){ aplicarStockAccion(a.tipo, a.producto_id, a.almacen, a.cantidad, -1); }
+    sb.from('acciones').delete().eq('id',a.id).then(function(){});
+    _acciones=(_acciones||[]).filter(function(x){return x!==a;});
+    cerrarMovEdit(); pintarMovimientos(); toast('✓ Movimiento revertido'+(esStock?' · stock devuelto':''));
+  }
+  (function(){ var m=document.getElementById('mov-edit'); if(m) m.addEventListener('click',function(ev){ if(ev.target===m) cerrarMovEdit(); }); })();
   var _rtOn=false, _rtT;
   function loadAllData(){ mapLoad().then(function(){
     fillMarcas(); fillTrabajadores(); updateCounts(); renderTab(state.view);
