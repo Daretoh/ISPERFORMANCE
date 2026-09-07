@@ -1982,7 +1982,7 @@
     document.body.classList.toggle('kiosco-user',kiosco);
     permAll().forEach(function(p){ document.body.classList.toggle('perm-no-'+p, !puedeEmail(email,p)); }); // permisos de acción
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
-      var show=(v==='cotizaciones')?false:(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0); // cotizaciones oculto por ahora
+      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
     ordenarNavPara(allowed); // orden personalizado del menú para este usuario
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
