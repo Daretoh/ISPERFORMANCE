@@ -228,6 +228,23 @@
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--surface-2);}
   td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;}
+  /* Costos: tabla de columnas fijas (estilo SAP; texto largo -> …) */
+  .cost-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:8px;}
+  .cost-table{width:100%;min-width:920px;border-collapse:collapse;table-layout:fixed;font-size:12.5px;}
+  .cost-table th,.cost-table td{padding:8px 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
+  .cost-table th:last-child,.cost-table td:last-child{border-right:none;}
+  .cost-table thead th{position:sticky;top:0;background:var(--surface-2);font:700 10px/1.1 var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink-muted);z-index:1;}
+  .cost-table td.r,.cost-table th.r{text-align:right;font-variant-numeric:tabular-nums;}
+  .cost-table tbody tr:nth-child(even) td{background:var(--surface-2);}
+  .cost-table tbody tr:hover td{background:var(--surface-3);}
+  .cost-table .col-empty{text-align:center;color:var(--ink-muted);padding:20px;}
+  .cost-centro{display:inline-block;font:700 10px/1 var(--mono);padding:3px 7px;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink);text-transform:uppercase;letter-spacing:.02em;}
+  .cost-mut{color:var(--ink-faint);}
+  .cost-act{overflow:visible!important;white-space:nowrap;text-align:right;}
+  .cost-b{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 7px;font:700 11px var(--sans);color:var(--ink-muted);cursor:pointer;vertical-align:middle;}
+  .cost-b:hover{background:var(--surface-2);}
+  .cost-b.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft);}
+  .cost-b.del{color:var(--crit);border-color:transparent;background:none;font-size:15px;padding:2px 6px;}
   .chip{display:inline-flex;align-items:center;gap:4px;font:700 10px/1 var(--mono);padding:4px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;}
   .chip.agendado{background:var(--surface-3);color:var(--ink-muted);}
   .chip.espera{background:var(--accent-soft);color:var(--accent-ink);}
@@ -968,6 +985,8 @@
           <form id="gasto-form" class="row c3" autocomplete="off" style="margin-bottom:16px">
             <label class="f"><span class="lab">Concepto</span><input name="gCon" required placeholder="Arriendo, luz, insumos…"></label>
             <label class="f"><span class="lab">Tipo</span><select name="gTipo"><option>FIJO</option><option>VARIABLE</option></select></label>
+            <label class="f"><span class="lab">Centro</span><select name="gCentro"><option>General</option><option>Pintura</option><option>Taller</option><option>Oficina</option><option>POS</option><option>Bodega</option></select></label>
+            <label class="f"><span class="lab">Vehículo <span class="hint" style="text-transform:none;letter-spacing:0">— patente (opcional)</span></span><input name="gPatente" list="gasto-pat-list" placeholder="Ej: ABCD12"><datalist id="gasto-pat-list"></datalist></label>
             <label class="f"><span class="lab">Monto</span><input name="gMonto" type="number" min="0" step="1" required placeholder="9594"></label>
             <label class="f"><span class="lab">Referencia <span class="hint" style="text-transform:none;letter-spacing:0">— documento</span></span><input name="gRef" placeholder="FAC 12345, GD 678…"></label>
             <label class="f"><span class="lab">Fecha</span><input name="gFecha" type="date" required></label>
@@ -1632,7 +1651,7 @@
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
   function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
-  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", mov_id:r.mov_id||null, pagado:!!r.pagado, fecha_pago:r.fecha_pago||null, media:(r.media||[])}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", centro:r.centro||"", patente:r.patente||"", mov_id:r.mov_id||null, pagado:!!r.pagado, fecha_pago:r.fecha_pago||null, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
   // Bandeja de avisos: cada accion deja un aviso para el equipo (lo reparte el robot + apps abiertas)
   function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
@@ -1646,9 +1665,9 @@
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
+    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),centro:(o.centro||null),patente:(o.patente||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
     function ins(rw,retry){ return sb.from('gastos').insert(rw).select().single().then(function(r){
-      if(r.error){ if(retry && /referencia|mov_id|pagado|fecha_pago|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(["referencia","mov_id","pagado","fecha_pago"].indexOf(k)<0)rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
+      if(r.error){ if(retry && /referencia|centro|patente|mov_id|pagado|fecha_pago|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(["referencia","centro","patente","mov_id","pagado","fecha_pago"].indexOf(k)<0)rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
       gastos.unshift(gastoFromDB(r.data)); }); }
     return ins(row,true);
   }
@@ -3497,14 +3516,28 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   var gastoForm=document.getElementById("gasto-form");
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
-    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
-    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
+    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),centro:(gastoForm.gCentro?gastoForm.gCentro.value:""),patente:(gastoForm.gPatente?gastoForm.gPatente.value.trim().toUpperCase():""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
+    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPatente)gastoForm.gPatente.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
   });
-  function gastoRowHTML(g){
-    var nm=(g.media&&g.media.length)?' '+g.media.length:'';
-    var estChip=g.pagado?'<span class="chip cobrado" style="margin-left:6px">✓ Pagado</span>':'<span class="chip pend" style="margin-left:6px">Por pagar</span>';
-    var payBtn=g.pagado?'<button class="gpay" data-id="'+g.id+'" data-p="0" title="Marcar por pagar" style="border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:2px 8px;font:700 11px var(--sans);color:var(--ink-muted);cursor:pointer">↩ Revertir</button>':'<button class="gpay" data-id="'+g.id+'" data-p="1" title="Marcar como pagado" style="border:1px solid var(--ok);background:var(--ok-soft);border-radius:6px;padding:2px 9px;font:700 11px var(--sans);color:var(--ok);cursor:pointer">✓ Pagar</button>';
-    return '<div class="lrow"><span><b>'+escH(g.con||"")+'</b> · '+escH(g.tipo||"")+(g.ref?' · <span style="color:var(--accent-ink);font-weight:700">'+escH(g.ref)+'</span>':'')+' · '+fFecha(g.fecha)+estChip+'</span><span class="num">'+clp(g.monto)+' '+payBtn+' <button class="gadj" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Respaldo'+nm+'</button> <button class="ldel" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button></span></div>';
+  function gastoRowTR(g){
+    var nm=(g.media&&g.media.length)?(' <b>'+g.media.length+'</b>'):'';
+    var est=g.pagado?'<span class="chip cobrado">✓ Pagado</span>':'<span class="chip pend">Por pagar</span>';
+    var pay=g.pagado
+      ?'<button class="gpay cost-b" data-id="'+g.id+'" data-p="0" title="Marcar por pagar">↩</button>'
+      :'<button class="gpay cost-b ok" data-id="'+g.id+'" data-p="1" title="Marcar como pagado">✓ Pagar</button>';
+    var adj='<button class="gadj cost-b" data-id="'+g.id+'" title="Adjuntar respaldo (factura/boleta)"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'+nm+'</button>';
+    var del='<button class="ldel cost-b del" data-s="gasto" data-id="'+g.id+'" aria-label="Borrar">×</button>';
+    return '<tr>'+
+      '<td>'+fFecha(g.fecha)+'</td>'+
+      '<td title="'+av(g.con||"")+'">'+escH(g.con||"")+'</td>'+
+      '<td>'+(g.centro?('<span class="cost-centro">'+escH(g.centro)+'</span>'):'<span class="cost-mut">—</span>')+'</td>'+
+      '<td>'+(g.patente?escH(g.patente):'<span class="cost-mut">—</span>')+'</td>'+
+      '<td>'+escH(g.tipo||"")+'</td>'+
+      '<td title="'+av(g.ref||"")+'">'+(g.ref?escH(g.ref):'<span class="cost-mut">—</span>')+'</td>'+
+      '<td class="r">'+clp(g.monto)+'</td>'+
+      '<td>'+est+'</td>'+
+      '<td class="cost-act">'+pay+' '+adj+' '+del+'</td>'+
+    '</tr>';
   }
   function renderCostos(){
     // ---- gastos con pestañas Recientes | Todos ----
@@ -3516,10 +3549,14 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '<button type="button" class="cbtab'+(gtab==="todos"?" on":"")+'" data-gtab="todos">Todos <span class="cbtab-n">'+gastos.length+'</span></button>'+
     '</div>';
     var listaG=(gtab==="todos")?gastos.slice():(gtab==="porpagar")?gastos.filter(function(g){return !g.pagado;}):gastos.slice(0,15);
-    var rowsHTML=listaG.map(gastoRowHTML).join("")||'<div class="col-empty">'+(gtab==="porpagar"?"No hay costos por pagar 🎉":"Sin gastos aún")+'</div>';
+    var pdl=document.getElementById('gasto-pat-list'); if(pdl){ var pats={}; (data||[]).forEach(function(e){ if(e.patente)pats[e.patente]=1; }); pdl.innerHTML=Object.keys(pats).sort().map(function(p){return '<option value="'+av(p)+'">';}).join(''); }
+    var colg='<colgroup><col style="width:74px"><col style="width:210px"><col style="width:92px"><col style="width:92px"><col style="width:82px"><col style="width:118px"><col style="width:104px"><col style="width:98px"><col style="width:150px"></colgroup>';
+    var head='<thead><tr><th>Fecha</th><th>Concepto</th><th>Centro</th><th>Vehículo</th><th>Tipo</th><th>Referencia</th><th class="r">Monto</th><th>Estado</th><th class="cost-act">Acciones</th></tr></thead>';
+    var trs=listaG.map(gastoRowTR).join("")||'<tr><td colspan="9" class="col-empty">'+(gtab==="porpagar"?"No hay costos por pagar 🎉":"Sin gastos aún")+'</td></tr>';
+    var rowsHTML='<div class="cost-wrap"><table class="cost-table">'+colg+head+'<tbody>'+trs+'</tbody></table></div>';
     var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>'
       :(gtab==="porpagar")?'<div class="gasto-resumen"><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Total por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div></div>':'';
-    document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+'<div class="gasto-rows'+((gtab==="todos"||gtab==="porpagar")?" full":"")+'">'+rowsHTML+'</div>';
+    document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+rowsHTML;
     var imb=document.getElementById("costos-import-mov"); if(imb && !imb.dataset.b){ imb.dataset.b="1"; imb.addEventListener("click",costosDesdeMovimientos); }
     document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ state.costGTab=b.dataset.gtab; renderCostos(); }); });
     document.querySelectorAll("#gasto-list .gpay").forEach(function(b){ b.addEventListener("click",function(){ gastoPagar(b.dataset.id, b.dataset.p==="1"); }); });
