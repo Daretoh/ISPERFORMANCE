@@ -321,7 +321,7 @@
   #acc-permisos label{display:flex;align-items:center;justify-content:flex-start;text-align:left;gap:8px;font-size:12.5px;line-height:1.25;padding:6px 2px;cursor:pointer;color:var(--ink-2);}
   #acc-permisos label input{flex:0 0 auto;width:16px;height:16px;margin:0;accent-color:var(--accent);}
   body.perm-no-seg_avanzar .kbtn, body.perm-no-seg_avanzar #vd-back, body.perm-no-seg_avanzar #vd-fwd{display:none!important;}
-  body.perm-no-seg_editar .kedit-toggle, body.perm-no-seg_editar #vd-edit{display:none!important;}
+  body.perm-no-seg_editar .kedit-toggle, body.perm-no-seg_editar #vd-edit, body.perm-no-seg_editar .cli-hist-edit{display:none!important;}
   body.perm-no-seg_trabajos .ktrab-addrow, body.perm-no-seg_trabajos .ktrab-del, body.perm-no-seg_trabajos .svc-inc-add{display:none!important;}
   body.perm-no-seg_borrar .kdel{display:none!important;}
   body.perm-no-cobro_registrar #c-save{display:none!important;}
@@ -1474,6 +1474,7 @@
   <!-- Modal de movimiento de stock (ingreso con referencia / salida) -->
   <div class="mov-modal" id="veh-modal"><div class="mov-box" id="veh-modal-box"></div></div>
   <div class="mov-modal" id="mov-edit"><div class="mov-box" id="mov-edit-box"></div></div>
+  <div class="mov-modal" id="veh-edit"><div class="mov-box" id="veh-edit-box"></div></div>
   <div class="mov-modal" id="mov-modal">
     <div class="mov-box">
       <div class="mov-head"><h3 id="mov-title">Movimiento</h3><button id="mov-close" aria-label="Cerrar">×</button></div>
@@ -3366,6 +3367,42 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     tickCrons();
   }
   (function(){ var m=document.getElementById("veh-modal"); if(m) m.addEventListener("click",function(ev){ if(ev.target===m) cerrarVehDetalle(); }); })();
+  // ---- Editar datos del vehículo (desde Clientes u otros lugares) ----
+  function cerrarVehEditar(){ var m=document.getElementById("veh-edit"); if(m)m.classList.remove("show"); }
+  function abrirVehEditar(id){ var e=data.filter(function(x){return String(x.id)===String(id);})[0]; if(!e)return; var box=document.getElementById("veh-edit-box"); if(!box)return;
+    box.innerHTML='<div class="mov-head"><h3>Editar vehículo</h3><button type="button" id="veh-edit-close" aria-label="Cerrar">×</button></div>'+
+      '<div class="row c2" style="margin-top:6px"><label class="f"><span class="lab">Marca</span><input id="ve-marca" value="'+av(e.marca||"")+'"></label>'+
+        '<label class="f"><span class="lab">Modelo</span><input id="ve-modelo" value="'+av(e.modelo||"")+'"></label></div>'+
+      '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Patente</span><input id="ve-patente" value="'+av(e.patente||"")+'" style="text-transform:uppercase"></label>'+
+        '<label class="f"><span class="lab">Talla</span><select id="ve-talla">'+["S","M","L","XL"].map(function(t){return '<option'+(e.talla===t?" selected":"")+'>'+t+'</option>';}).join("")+'</select></label></div>'+
+      '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Año</span><input id="ve-anio" value="'+av(e.anioVeh||"")+'"></label>'+
+        '<label class="f"><span class="lab">Estado</span><select id="ve-estado">'+ESTADOS.map(function(s){return '<option'+(e.estado===s?" selected":"")+'>'+s+'</option>';}).join("")+'</select></label></div>'+
+      '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Cliente</span><input id="ve-cliente" value="'+av(e.cliente||"")+'"></label>'+
+        '<label class="f"><span class="lab">Teléfono</span><input id="ve-contacto" value="'+av(e.contacto||"")+'"></label></div>'+
+      '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Precio venta</span><input id="ve-precio" type="number" min="0" value="'+(+e.precioVenta||0)+'"></label>'+
+        '<label class="f"><span class="lab">Fecha</span><input id="ve-fecha" type="date" value="'+((e.fCoord||e.fIngreso||"")||"")+'"></label></div>'+
+      '<label class="f" style="margin-top:8px"><span class="lab">Servicios <span class="hint" style="text-transform:none;letter-spacing:0">— separados por coma</span></span><input id="ve-servicios" value="'+av((e.servicios||[]).join(", "))+'"></label>'+
+      '<div class="vd-actions" style="margin-top:16px"><button type="button" class="btn primary" id="ve-guardar" style="flex:1">Guardar cambios</button></div>';
+    document.getElementById("veh-edit").classList.add("show");
+    document.getElementById("veh-edit-close").onclick=cerrarVehEditar;
+    document.getElementById("ve-guardar").onclick=function(){
+      e.marca=(document.getElementById("ve-marca").value||"").trim();
+      e.modelo=(document.getElementById("ve-modelo").value||"").trim();
+      e.patente=(document.getElementById("ve-patente").value||"").trim().toUpperCase();
+      e.talla=document.getElementById("ve-talla").value;
+      e.anioVeh=(document.getElementById("ve-anio").value||"").trim();
+      e.estado=document.getElementById("ve-estado").value;
+      e.cliente=(document.getElementById("ve-cliente").value||"").trim();
+      e.contacto=(document.getElementById("ve-contacto").value||"").trim();
+      e.precioVenta=parseInt(document.getElementById("ve-precio").value,10)||0;
+      var f=document.getElementById("ve-fecha").value; if(f) e.fCoord=f;
+      e.servicios=(document.getElementById("ve-servicios").value||"").split(",").map(function(s){return s.trim();}).filter(Boolean);
+      persistVeh(e); cerrarVehEditar();
+      if(state.view==="clientes") renderClientes(); else if(state.view==="seguimiento") renderBoard(); else if(state.view==="cobro") renderCobro();
+      updateCounts(); toast("✓ Vehículo actualizado");
+    };
+  }
+  (function(){ var m=document.getElementById("veh-edit"); if(m) m.addEventListener("click",function(ev){ if(ev.target===m) cerrarVehEditar(); }); })();
   function renderBoard(){
     renderResumen();
     var board=document.getElementById("board");
@@ -4969,7 +5006,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var nm=(e.media||[]).length; var folder='<button class="cli-hist-media" data-id="'+e.id+'" title="Ver adjuntos del auto" style="border:none;background:transparent;cursor:pointer;font-size:16px;line-height:1">📁'+(nm?'<span style="font-size:9px;font-weight:800;vertical-align:top;color:var(--accent-ink)">'+nm+'</span>':'')+'</button>';
       var cots=(_cotiz||[]).filter(function(x){return x.vehiculo_id && String(x.vehiculo_id)===String(e.id);});
       var cotChip=cots.map(function(ct){ return '<button class="cli-cot" data-cotid="'+ct.id+'" title="Ver cotización" style="border:1px solid var(--line-strong);background:var(--surface-2);border-radius:6px;padding:2px 7px;font:700 10px var(--sans);color:var(--accent-ink);cursor:pointer;margin-left:4px">Cot. N°'+ct.numero+'</button>'; }).join("");
-      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td><td style="text-align:center">'+folder+cotChip+'</td></tr>';
+      var editBtn='<button class="cli-hist-edit" data-id="'+e.id+'" title="Editar datos del vehículo" style="border:none;background:transparent;cursor:pointer;font-size:15px;line-height:1;color:var(--accent-ink);margin-right:2px">✎</button>';
+      return '<tr><td>'+fFecha(e.fCoord||e.fIngreso)+'</td><td><b>'+e.marca+'</b> '+(e.modelo||"")+'</td><td>'+((e.servicios||[]).map(svcCorto).join(" + ")||"—")+(e.tipoVenta&&e.tipoVenta!=="NORMAL"?' <span class="chip pend">'+e.tipoVenta+'</span>':'')+'</td><td>'+st+'</td><td class="r">'+clp(e.precioVenta)+'</td><td style="text-align:center;white-space:nowrap">'+editBtn+folder+cotChip+'</td></tr>';
     }).join("");
     var info=clientesInfo[c.clave]||{};
     var esEmp=(info.tipo==='EMPRESA');
@@ -5052,6 +5090,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var _segAdd=wrap.querySelector("#cli-seg-add");
     if(_segAdd) _segAdd.addEventListener("click",function(){ var f=wrap.querySelector("#cli-seg-fecha").value||todayISO(); var rr=wrap.querySelector("#cli-seg-res").value; var nn=wrap.querySelector("#cli-seg-nota").value.trim(); addSeguimiento(c.clave, f, rr, nn, function(){ wrap.querySelector("#cli-seg-nota").value=''; toast("✓ Contacto registrado"); }); });
     wrap.querySelectorAll(".cli-hist-media").forEach(function(b){ b.addEventListener("click",function(){ var e=data.filter(function(x){return String(x.id)===String(b.dataset.id);})[0]; if(!e){ toast("No encontrado"); return; } e.media=e.media||[]; abrirGaleria("Adjuntos — "+e.marca+" "+(e.modelo||"")+(e.patente?(" ("+e.patente+")"):""), e.media, "veh/"+e.id, "image/*,video/*,application/pdf", function(){ persistVeh(e); renderClientes(); }, {cats:['Exterior','Interior','Motor','Boleta','Respaldo','Factura','Otro'],defCat:'Exterior'}); }); });
+    wrap.querySelectorAll(".cli-hist-edit").forEach(function(b){ b.addEventListener("click",function(){ abrirVehEditar(b.dataset.id); }); });
     wrap.querySelectorAll(".cli-cot").forEach(function(b){ b.addEventListener("click",function(){ var ct=(_cotiz||[]).filter(function(x){return String(x.id)===String(b.dataset.cotid);})[0]; if(ct) cotImprimir(ct); }); });
     var _mergeBtn=wrap.querySelector("#cli-merge-btn");
     if(_mergeBtn) _mergeBtn.addEventListener("click",function(){ var tgt=wrap.querySelector("#cli-merge").value; if(!tgt){ toast("Elige el cliente destino"); return; } if(confirm("¿Fusionar «"+cliNombre(c)+"» dentro del cliente elegido? Se moverán sus vehículos y seguimiento.")){ fusionarCliente(c.clave, tgt); } });
