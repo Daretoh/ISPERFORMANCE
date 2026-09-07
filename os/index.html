@@ -4518,7 +4518,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     {k:'barniz',n:'Corr. barniz',p:{S:70000,M:80000,L:90000,XL:100000}},
     {k:'tapiz',n:'Tapiz',p:{S:50000,M:50000,L:50000,XL:50000}},
     {k:'vidrios',n:'Desc. vidrios',p:{S:20000,M:20000,L:25000,XL:25000}},
-    {k:'desab',n:'Desab/pintura ($)',p:{S:0,M:0,L:0,XL:0},manual:true}
+    {k:'desab',n:'Extra ($)',p:{S:0,M:0,L:0,XL:0},manual:true}
   ];
   var GM_RETIRO={S:5000,M:5000,L:5000,XL:5000}; // retiro/entrega: siempre presente en todos los vehiculos
   function gmServ(k){ for(var i=0;i<GM_SERV.length;i++){ if(GM_SERV[i].k===k) return GM_SERV[i]; } return null; }
@@ -4596,7 +4596,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
         cells+
         '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
-        '<td><input class="gm-notas" data-rid="'+av(r._rid)+'" value="'+av(r.notas||'')+'" placeholder="—" style="width:150px;box-sizing:border-box"></td>'+
+        '<td><input class="gm-notas" data-rid="'+av(r._rid)+'" value="'+av(r.notas||'')+'" placeholder="Detalle del extra…" style="width:170px;box-sizing:border-box"></td>'+
         '<td class="r gm-valor" data-rid="'+av(r._rid)+'"><b>'+clp(gmValor(r))+'</b></td>'+
         '<td class="c"><button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar del cierre" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:18px">×</button></td>'+
         '</tr>'; }).join('');
@@ -4687,7 +4687,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       var serv=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); if(!s||s.manual)return null; return s.n; }).filter(Boolean);
       serv.push('Retiro/entrega');
       var det=serv.join(', ')+(r.descuento?(' · desc. '+clp(r.descuento)):'');
-      var obs=[]; var db=(r.items&&+r.items.desab)||0; if(db>0) obs.push('Desab/pintura: '+clp(db)); if(r.notas) obs.push(escH(r.notas));
+      var obs=[]; var db=(r.items&&+r.items.desab)||0; if(db>0) obs.push('Extra: '+clp(db)); if(r.notas) obs.push(escH(r.notas));
       var main='<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</td><td>'+escH(r.patente||'—')+'</td><td>'+(r.talla||'M')+'</td><td class="cp-desc">'+escH(det)+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>';
       var obsRow=obs.length?('<tr><td></td><td class="cp-desc" colspan="4" style="font-size:10.5px;color:#555;background:#faf8f5"><b>Obs:</b> '+obs.join(' · ')+'</td><td></td></tr>'):'';
       return main+obsRow; }).join('');
