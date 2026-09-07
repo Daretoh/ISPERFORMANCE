@@ -1170,7 +1170,8 @@
         .gm-table th:nth-child(2),.gm-table td:nth-child(2){position:sticky;left:28px;z-index:2;background:var(--surface);max-width:140px;white-space:normal}
         .gm-table thead th:nth-child(1),.gm-table thead th:nth-child(2){z-index:4;background:var(--surface-2)}
         .gm-table input[type=number]{width:46px;padding:3px;border:1px solid var(--line-strong);border-radius:5px;font:inherit;box-sizing:border-box}
-        .gm-table .gm-qty{width:42px}.gm-table .gm-desc{width:60px}
+        .gm-table .gm-qty{width:42px}.gm-table .gm-desc{width:60px}.gm-table .gm-manual{width:76px}
+        .gm-table .gm-notas{padding:4px 6px;border:1px solid var(--line-strong);border-radius:5px;font:inherit}
         .gm-table select{padding:3px;border:1px solid var(--line-strong);border-radius:5px}
         .gm-table input[type=checkbox]{width:16px;height:16px}
         .gm-sh{font-size:10.5px}
@@ -4338,7 +4339,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     {k:'barniz',n:'Corr. barniz',p:{S:70000,M:80000,L:90000,XL:100000}},
     {k:'tapiz',n:'Tapiz',p:{S:50000,M:50000,L:50000,XL:50000}},
     {k:'vidrios',n:'Desc. vidrios',p:{S:20000,M:20000,L:25000,XL:25000}},
-    {k:'desab',n:'Desab/pintura (x pza)',p:{S:150000,M:150000,L:150000,XL:150000},qty:true},
+    {k:'desab',n:'Desab/pintura ($)',p:{S:0,M:0,L:0,XL:0},manual:true},
     {k:'retiro',n:'Retiro/entrega',p:{S:5000,M:5000,L:5000,XL:5000}}
   ];
   function gmServ(k){ for(var i=0;i<GM_SERV.length;i++){ if(GM_SERV[i].k===k) return GM_SERV[i]; } return null; }
@@ -4348,7 +4349,22 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function gmMesShift(mes,d){ var p=(mes||'').split('-'); var dt=new Date((+p[0]||2026),((+p[1]||1)-1)+d,1); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
   function gmEsGM(e){ return String(e.cliente||"").toUpperCase().indexOf("GUILLERMO MORALES")>=0; }
   function gmVehMes(mes){ return (data||[]).filter(function(e){ return gmEsGM(e) && ((e.fIngreso||e.fCoord||"").slice(0,7)===mes); }); }
-  function gmValor(r){ var t=r.talla||"M", it=r.items||{}, sum=0; Object.keys(it).forEach(function(k){ var s=gmServ(k); if(s&&it[k]) sum+=(s.p[t]||0)*(+it[k]||0); }); return sum-(+r.descuento||0); }
+  function gmValor(r){ var t=r.talla||"M", it=r.items||{}, sum=0; Object.keys(it).forEach(function(k){ var s=gmServ(k); if(s&&it[k]){ if(s.manual) sum+=(+it[k]||0); else sum+=(s.p[t]||0)*(+it[k]||0); } }); return sum-(+r.descuento||0); }
+  // sugiere los servicios GM segun los trabajos/servicios que trae el vehiculo desde Seguimiento
+  function gmItemsFromVeh(e){ var it={}, all='';
+    (e.servicios||[]).forEach(function(s){ all+=' '+(s||'').toLowerCase(); });
+    (e.trabajos||[]).forEach(function(w){ all+=' '+((w&&w.t)||'').toLowerCase(); });
+    function has(){ for(var i=0;i<arguments.length;i++){ if(all.indexOf(arguments[i])>=0)return true; } return false; }
+    if(has('preparacion para la venta','preparación para la venta','preparacion venta','paquete')) it.paquete=1;
+    if(has('interior')) it.interior=1;
+    if(has('exterior')) it.exterior=1;
+    if(has('motor')) it.motor=1;
+    if(has('brillo','realce')) it.brillo=1;
+    if(has('barniz','correccion','corrección','correpcion')) it.barniz=1;
+    if(has('tapiz')) it.tapiz=1;
+    if(has('vidrio','descontamin')) it.vidrios=1;
+    if(has('retiro','entrega')) it.retiro=1;
+    return it; }
   // ----- registro por mes (flujo Cotizado -> OC -> Facturado -> Cobrado) -----
   function gmMesRec(mes){ var r=(_gmMes||[]).filter(function(x){return x.mes===mes;})[0];
     if(!r){ r={ mes:mes, estado:'BORRADOR', iva:true, cotiz_fecha:null, cotiz_total:null, oc_num:null, oc_fecha:null, oc_media:[], factura_num:null, factura_fecha:null, factura_media:[], cobro_fecha:null, cobro_monto:null, notas:null }; _gmMes.push(r); }
@@ -4371,12 +4387,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(r.vehiculo_id) savedByVeh[r.vehiculo_id]=r; else manual.push(r); });
     var out=[];
     gmVehMes(mes).forEach(function(e){ if(savedByVeh[e.id]){ out.push(savedByVeh[e.id]); delete savedByVeh[e.id]; }
-      else { out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:{}, descuento:0, cobrado:false }); } });
+      else { out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false }); } });
     Object.keys(savedByVeh).forEach(function(k){ out.push(savedByVeh[k]); }); // guardados cuyo vehiculo no cae en el mes
     manual.forEach(function(r){ out.push(r); });
     return out; }
   function gmEnsure(rid,mes){ var r=(_gmCierre||[]).filter(function(x){return x._rid===rid && x.mes===mes;})[0]; if(r) return r;
-    if(rid.indexOf('v:')===0){ var vid=rid.slice(2); var e=(data||[]).filter(function(x){return String(x.id)===vid;})[0]||{}; r={ id:null, _rid:rid, mes:mes, vehiculo_id:vid, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); return r; }
+    if(rid.indexOf('v:')===0){ var vid=rid.slice(2); var e=(data||[]).filter(function(x){return String(x.id)===vid;})[0]||{}; r={ id:null, _rid:rid, mes:mes, vehiculo_id:vid, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false, notas:null }; _gmCierre.push(r); return r; }
     return null; }
   function renderCierreGM(){ var root=document.getElementById('gm-root'); if(!root)return;
     var _pgw=root.querySelector('.gm-wrap'); var _psx=_pgw?_pgw.scrollLeft:0, _psy=_pgw?_pgw.scrollTop:0, _pwy=(window.pageYOffset||document.documentElement.scrollTop||0); // conservar scroll
@@ -4384,9 +4400,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var total=0,cob=0; rows.forEach(function(r){ var v=gmValor(r); total+=v; if(r.cobrado)cob+=v; });
     var rec=gmMesRec(mes), mto=gmMontos(mes), ei=gmEstIdx(rec.estado);
     var estLbl={BORRADOR:['Borrador','#666'],COTIZADO:['Cotizado','#0d3b66'],OC:['OC recibida','#7c3aed'],FACTURADO:['Facturado','#c2410c'],COBRADO:['Cobrado','#1e9e6a']}[rec.estado]||['Borrador','#666'];
-    var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th class="r">Valor real</th><th></th></tr>';
+    var head='<tr><th>N°</th><th>Vehículo</th><th>Patente</th><th>Talla</th>'+GM_SERV.map(function(s){return '<th class="gm-sh">'+escH(s.n)+'</th>';}).join('')+'<th>Desc.</th><th>Notas / Obs</th><th class="r">Valor real</th><th></th></tr>';
     var body=rows.map(function(r,i){ var t=r.talla||'M';
-      var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
+      var cells=GM_SERV.map(function(s){ var v=(r.items&&r.items[s.k])||0; if(s.manual){ return '<td class="c"><input class="gm-qty gm-manual" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" step="1000" value="'+(v||0)+'" placeholder="$" title="Monto manual (varía por vehículo)"></td>'; } if(s.qty){ return '<td class="c"><input class="gm-qty" data-rid="'+av(r._rid)+'" data-k="'+s.k+'" type="number" min="0" value="'+(v||0)+'" title="'+clp(s.p[t])+' c/u"></td>'; } return '<td class="c"><input type="checkbox" class="gm-chk" data-rid="'+av(r._rid)+'" data-k="'+s.k+'"'+(v?' checked':'')+' title="'+clp(s.p[t])+'"></td>'; }).join('');
       return '<tr>'+
         '<td>'+(i+1)+'</td>'+
         (r.vehiculo_id
@@ -4396,7 +4412,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
         cells+
         '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
-        '<td class="r"><b>'+clp(gmValor(r))+'</b></td>'+
+        '<td><input class="gm-notas" data-rid="'+av(r._rid)+'" value="'+av(r.notas||'')+'" placeholder="—" style="width:150px;box-sizing:border-box"></td>'+
+        '<td class="r gm-valor" data-rid="'+av(r._rid)+'"><b>'+clp(gmValor(r))+'</b></td>'+
         '<td class="c">'+(r._auto?'':'<button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar del cierre" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:16px">×</button>')+'</td>'+
         '</tr>'; }).join('');
     root.innerHTML=
@@ -4411,7 +4428,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '</label>'+
         '<button class="btn" id="gm-add">+ Agregar vehículo</button>'+
       '</div>'+
-      '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Neto</span><b>'+clp(mto.neto)+'</b></div>'+(rec.iva?'<div><span>IVA 19%</span><b>'+clp(mto.iva)+'</b></div>':'')+'<div class="tot"><span>Total'+(rec.iva?' c/IVA':'')+'</span><b>'+clp(mto.total)+'</b></div></div>'+
+      '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Neto</span><b id="gm-sum-neto">'+clp(mto.neto)+'</b></div>'+(rec.iva?'<div><span>IVA 19%</span><b id="gm-sum-iva">'+clp(mto.iva)+'</b></div>':'')+'<div class="tot"><span>Total'+(rec.iva?' c/IVA':'')+'</span><b id="gm-sum-total">'+clp(mto.total)+'</b></div></div>'+
       '<div class="gm-flow">'+
         '<div class="gm-flow-top">'+
           '<span class="gm-badge" style="background:'+estLbl[1]+'">'+escH(estLbl[0])+'</span>'+
@@ -4435,24 +4452,32 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '</div>'+
           '<div class="gm-step'+(ei>=4?' done':(ei===3?' active':''))+'">'+
             '<div class="gm-step-h">4 · Cobro</div>'+
-            '<div class="gm-step-b">'+(rec.cobro_fecha?('Cobrado '+escH(rec.cobro_fecha)+'<br>'+clp(rec.cobro_monto!=null?rec.cobro_monto:mto.total)):('Por cobrar: '+clp(mto.total)))+'</div>'+
+            '<div class="gm-step-b">'+(rec.cobro_fecha?('Cobrado '+escH(rec.cobro_fecha)+'<br>'+clp(rec.cobro_monto!=null?rec.cobro_monto:mto.total)):('Por cobrar: <span id="gm-porcobrar">'+clp(mto.total)+'</span>'))+'</div>'+
             '<div class="gm-step-f"><button class="btn sm primary" id="gm-cobrar"'+(ei>=4?' disabled':'')+'>Registrar cobro</button></div>'+
           '</div>'+
         '</div>'+
       '</div>'+
-      '<div class="gm-wrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+7)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
+      '<div class="gm-wrap"><table class="gm-table"><thead>'+head+'</thead><tbody>'+(body||'<tr><td colspan="'+(GM_SERV.length+8)+'" class="col-empty">Sin vehículos de GM este mes. Usa "Agregar vehículo".</td></tr>')+'</tbody></table></div>';
     var mm=document.getElementById('gm-mes'); if(mm)mm.onchange=renderCierreGM;
     var mp=document.getElementById('gm-mes-prev'); if(mp)mp.onclick=function(){ if(mm){ mm.value=gmMesShift(mes,-1); renderCierreGM(); } };
     var mn=document.getElementById('gm-mes-next'); if(mn)mn.onclick=function(){ if(mm){ mm.value=gmMesShift(mes,1); renderCierreGM(); } };
     function edit(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); renderCierreGM(); }
     function editNoRender(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); } // para campos de texto: no re-render (no pierde el foco)
+    function editLive(rid,fn){ var r=gmEnsure(rid,mes); if(!r)return; fn(r); gmUpsert(r); // casillero/cantidad: sin re-render (rapido y sin perder el clic)
+      var cell=root.querySelector('.gm-valor[data-rid="'+r._rid+'"]'); if(cell)cell.innerHTML='<b>'+clp(gmValor(r))+'</b>';
+      var m2=gmMontos(mes);
+      var sn=document.getElementById('gm-sum-neto'); if(sn)sn.textContent=clp(m2.neto);
+      var si=document.getElementById('gm-sum-iva'); if(si)si.textContent=clp(m2.iva);
+      var stt=document.getElementById('gm-sum-total'); if(stt)stt.textContent=clp(m2.total);
+      var pcs=document.getElementById('gm-porcobrar'); if(pcs)pcs.textContent=clp(m2.total); }
     root.querySelectorAll('.gm-marca').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.marca=x.value; }); }; });
     root.querySelectorAll('.gm-modelo').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.modelo=x.value; }); }; });
     root.querySelectorAll('.gm-pat').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.patente=x.value; }); }; });
-    root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ edit(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
-    root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ edit(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
-    root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ edit(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
-    root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ edit(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
+    root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ editLive(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
+    root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ editLive(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
+    root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ editLive(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
+    root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ editLive(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
+    root.querySelectorAll('.gm-notas').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.notas=x.value; }); }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre?'))return; var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); renderCierreGM(); }; });
     var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
     var iv=document.getElementById('gm-iva'); if(iv)iv.onchange=function(){ rec.iva=iv.checked; gmMesSave(rec); renderCierreGM(); };
@@ -4470,8 +4495,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   function gmImprimir(mes,rows,mto,num){ var m=(typeof mto==='number')?{neto:mto,iva:0,total:mto}:(mto||{neto:0,iva:0,total:0}); var f=todayISO().split('-'), fechaTxt=f[2]+'/'+f[1]+'/'+f[0]; num=num||1;
     var lista=rows.filter(function(r){return gmValor(r)>0 || Object.keys(r.items||{}).length;});
-    var filas=lista.map(function(r,i){ var det=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); return s?(s.n+(r.items[k]>1?(' x'+r.items[k]):'')):k; }).join(', ')||'—';
-      return '<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</td><td>'+escH(r.patente||'—')+'</td><td>'+(r.talla||'M')+'</td><td class="cp-desc">'+escH(det)+(r.descuento?(' · desc. '+clp(r.descuento)):'')+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>'; }).join('');
+    var filas=lista.map(function(r,i){ var det=Object.keys(r.items||{}).map(function(k){ var s=gmServ(k); if(!s)return k; if(s.manual)return s.n.replace(' ($)','')+' '+clp(r.items[k]); return s.n+(r.items[k]>1?(' x'+r.items[k]):''); }).join(', ')||'—';
+      var extra=(r.descuento?(' · desc. '+clp(r.descuento)):'')+(r.notas?(' · '+escH(r.notas)):'');
+      return '<tr><td>'+(i+1)+'</td><td class="cp-desc">'+escH(((r.marca||'')+' '+(r.modelo||'')).trim()||'—')+'</td><td>'+escH(r.patente||'—')+'</td><td>'+(r.talla||'M')+'</td><td class="cp-desc">'+escH(det)+extra+'</td><td class="r">'+clp(gmValor(r))+'</td></tr>'; }).join('');
     var icoTel='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.7 2.34a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.06a2 2 0 0 1 2.11-.45c.74.34 1.53.57 2.34.7A2 2 0 0 1 22 16.92z"/></svg>';
     var icoMail='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/></svg>';
     var icoWeb='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FF7A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
