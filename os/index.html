@@ -4548,7 +4548,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(dupes.length){ var sbd=sbc(); dupes.forEach(function(r){ if(sbd&&r.id) sbd.from('gm_cierre').delete().eq('id',r.id).then(function(){}); }); _gmCierre=_gmCierre.filter(function(x){ return dupes.indexOf(x)<0; }); } // limpia duplicados viejos (se queda con el primero)
     var out=[];
     gmVehMes(mes).forEach(function(e){ if(excl[e.id]) return; // vehiculo excluido de este mes
-      if(savedByVeh[e.id]){ out.push(savedByVeh[e.id]); delete savedByVeh[e.id]; }
+      if(savedByVeh[e.id]){ var sr=savedByVeh[e.id]; sr.marca=e.marca; sr.modelo=e.modelo; sr.patente=e.patente; out.push(sr); delete savedByVeh[e.id]; } // refresca nombre/patente desde el vehiculo en vivo
       else { out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false }); } });
     Object.keys(savedByVeh).forEach(function(k){ out.push(savedByVeh[k]); }); // guardados cuyo vehiculo no cae en el mes
     manual.forEach(function(r){ out.push(r); });
