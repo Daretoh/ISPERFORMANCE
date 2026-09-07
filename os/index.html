@@ -1875,6 +1875,11 @@
     else if(tipo==='INGRESO'||tipo==='ENTRADA'){ p.entrada=Math.max(0,(+p.entrada||0)+signo*cant); p.stock_alm[alm]=(+p.stock_alm[alm]||0)+signo*cant; }
     saveProducto(p); }
   function cerrarMovEdit(){ var m=document.getElementById('mov-edit'); if(m)m.classList.remove('show'); }
+  // helpers para convertir una SALIDA en venta (crea el COBRO/ingreso, sale en POS)
+  function salidaGrupo(a){ return (_acciones||[]).filter(function(x){return x.tipo==='SALIDA' && (+x.num||0)===(+a.num||0);}); }
+  function ventaDescDe(a){ var g=salidaGrupo(a); if(!g.length)g=[a]; return g.map(function(x){ var p=(productos||[]).filter(function(pp){return String(pp.id)===String(x.producto_id);})[0]; return (x.cantidad||1)+'× '+((p&&p.producto)||accProdTxt(x)||'ítem'); }).join(', '); }
+  function ventaMontoSug(a){ var g=salidaGrupo(a); var s=0; g.forEach(function(x){ var p=(productos||[]).filter(function(pp){return String(pp.id)===String(x.producto_id);})[0]; s+=(+x.cantidad||0)*((p&&+p.precio)||0); }); return s; }
+  function ventaExiste(a){ return (_acciones||[]).some(function(x){return x.tipo==='COBRO' && x.ref_tipo==='VENTA' && String(x.ref_num)===String(a.num);}); }
   function abrirMovEdit(id){ var a=(_acciones||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!a)return;
     var box=document.getElementById('mov-edit-box'); if(!box)return;
     var esStock=(a.tipo==='SALIDA'||a.tipo==='INGRESO'||a.tipo==='ENTRADA') && !!a.producto_id;
@@ -1889,11 +1894,18 @@
       '<label class="f"><span class="lab">Fecha</span><input id="me-fecha" type="date" value="'+((a.fecha||'').slice(0,10))+'"></label></div>'+
       '<label class="f" style="margin-top:8px"><span class="lab">Descripción</span><input id="me-desc" value="'+av(a.descripcion||'')+'"></label>'+
       '<div style="margin-top:10px"><button type="button" class="btn" id="me-voucher" style="width:100%">📎 Voucher / comprobante'+((a.media&&a.media.length)?(' ('+a.media.length+')'):'')+'</button></div>'+
+      (a.tipo==='SALIDA'?(ventaExiste(a)
+        ? '<div style="margin-top:10px;padding:10px;border-radius:8px;background:var(--ok-soft);color:var(--ok);font-size:12.5px;font-weight:600">✓ Esta salida ya está registrada como venta (aparece en POS).</div>'
+        : '<div style="margin-top:10px;padding:10px;border:1px dashed var(--line-strong);border-radius:8px;background:var(--surface-2)">'+
+            '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer"><input type="checkbox" id="me-esventa"> Es una venta (registrar ingreso y mostrar en POS)</label>'+
+            '<div id="me-venta-fields" style="display:none;margin-top:8px"><label class="f"><span class="lab">Monto de la venta</span><input id="me-vmonto" type="number" min="0" value="'+ventaMontoSug(a)+'"></label><div class="hint" style="text-transform:none;letter-spacing:0;margin-top:4px">La salida (stock) se mantiene; esto agrega el cobro/ingreso.</div></div>'+
+          '</div>'):'')+
       (esStock?'<div style="font-size:11px;color:var(--ink-muted);margin-top:8px">Al guardar o revertir, el stock se ajusta solo (devuelve/descuenta la diferencia).</div>':'')+
       '<div class="vd-actions" style="margin-top:16px"><button type="button" class="btn" id="me-revertir" style="border-color:var(--crit);color:var(--crit)">Revertir y eliminar</button><button type="button" class="btn primary" id="me-guardar">Guardar cambios</button></div>';
     document.getElementById('mov-edit').classList.add('show');
     document.getElementById('mov-edit-close').onclick=cerrarMovEdit;
     var mev=document.getElementById('me-voucher'); if(mev)mev.onclick=function(){ a.media=a.media||[]; abrirGaleria('Voucher — '+accFmt(a.num), a.media, 'venta', 'image/*,application/pdf', function(){ var sb=sbc(); if(sb) sb.from('acciones').update({media:a.media}).eq('id',a.id).then(function(){}); abrirMovEdit(a.id); pintarMovimientos(); }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); };
+    var mev2=document.getElementById('me-esventa'); if(mev2)mev2.onchange=function(){ var f=document.getElementById('me-venta-fields'); if(f)f.style.display=mev2.checked?'':'none'; };
     document.getElementById('me-guardar').onclick=function(){ movEditGuardar(a,esStock); };
     document.getElementById('me-revertir').onclick=function(){ movEditRevertir(a,esStock); };
   }
@@ -1914,7 +1926,12 @@
     a.monto=newMonto; a.descripcion=newDesc; a.fecha=newFecha;
     upd.monto=newMonto; upd.descripcion=newDesc; upd.fecha=newFecha;
     sb.from('acciones').update(upd).eq('id',a.id).then(function(r){ if(r&&r.error) toast('⚠ No se pudo guardar'); });
-    cerrarMovEdit(); pintarMovimientos(); toast('✓ Movimiento actualizado'+(esStock?' · stock ajustado':''));
+    // convertir la salida en venta: crea el COBRO (ingreso) que aparece en POS · Ventas
+    var ev=document.getElementById('me-esventa'); var hizoVenta=false;
+    if(a.tipo==='SALIDA' && ev && ev.checked && !ventaExiste(a)){ var vm=parseInt((document.getElementById('me-vmonto')||{}).value,10)||0;
+      if(vm>0){ registrarAccion({ tipo:'COBRO', fecha:a.fecha, monto:vm, descripcion:'Venta · '+ventaDescDe(a), ref_tipo:'VENTA', ref_num:String(a.num||''), media:(a.media||[]) }).then(function(){ pintarMovimientos(); if(typeof renderPosVentas==='function') renderPosVentas(); }); hizoVenta=true; }
+      else { toast('Pon el monto de la venta'); return; } }
+    cerrarMovEdit(); pintarMovimientos(); toast(hizoVenta?('✓ Registrada como venta · aparece en POS'):('✓ Movimiento actualizado'+(esStock?' · stock ajustado':'')));
   }
   function movEditRevertir(a, esStock){ if(!confirm('¿Revertir y eliminar '+accFmt(a.num)+'?'+(esStock?' Se devolverá/ajustará el stock.':'')))return; var sb=sbc(); if(!sb){toast('Sin conexión');return;}
     if(esStock){ aplicarStockAccion(a.tipo, a.producto_id, a.almacen, a.cantidad, -1); }
