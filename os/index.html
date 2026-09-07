@@ -383,9 +383,23 @@
   .vd-prog-bar{flex:1;height:9px;border-radius:99px;background:var(--surface-3);overflow:hidden;}
   .vd-prog-bar>span{display:block;height:100%;background:var(--accent);border-radius:99px;}
   .vd-sec{font:800 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 7px;}
-  .vd-trab{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0;}
+  .vd-trab{display:flex;gap:9px;align-items:center;font-size:13.5px;padding:5px 0;cursor:pointer;}
+  .vd-trab input[type=checkbox]{width:20px;height:20px;flex:none;cursor:pointer;}
+  .vd-trab span{flex:1;}
+  .vd-trab span.done{text-decoration:line-through;color:var(--ink-faint);}
   .vd-actions{display:flex;gap:8px;margin-top:16px;}
   .vd-actions .btn{flex:1;}
+  /* Modo tablet: panel del vehiculo a pantalla completa y grande */
+  body.kiosco-user #veh-modal-box{max-width:none;width:96vw;max-height:92vh;overflow:auto;}
+  body.kiosco-user #veh-modal .mov-head h3{font-size:26px;}
+  body.kiosco-user #veh-modal .vd-sub{font-size:16px;}
+  body.kiosco-user #veh-modal .vd-cron-big{font-size:40px;}
+  body.kiosco-user #veh-modal .vd-sec{font-size:13px;margin:18px 0 9px;}
+  body.kiosco-user #veh-modal .vd-trab{font-size:18px;padding:10px 0;}
+  body.kiosco-user #veh-modal .vd-trab input[type=checkbox]{width:30px;height:30px;}
+  body.kiosco-user #veh-modal .vd-actions{margin-top:22px;}
+  body.kiosco-user #veh-modal .vd-actions .btn{font-size:17px;padding:16px 12px;font-weight:800;border-radius:12px;}
+  body.kiosco-user #veh-modal #veh-modal-close{font-size:30px;}
   details.panel-extra>summary{cursor:pointer;list-style:none;font:800 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;gap:10px;}
   details.panel-extra>summary::-webkit-details-marker{display:none;}
   details.panel-extra>summary::after{content:"⌄";margin-left:auto;opacity:.6;}
@@ -3239,13 +3253,14 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   function dragAfter(container,y){ var rows=[].slice.call(container.querySelectorAll(".seg-vrow:not(.dragging)")); var closest={off:-Infinity,el:null}; rows.forEach(function(r){ var b=r.getBoundingClientRect(); var off=y-b.top-b.height/2; if(off<0&&off>closest.off) closest={off:off,el:r}; }); return closest.el; }
   function guardarOrdenResumen(list){ var rows=[].slice.call(list.querySelectorAll(".seg-vrow")); var cambio=false; rows.forEach(function(r,i){ var e=data.filter(function(x){return String(x.id)===String(r.dataset.id);})[0]; if(e && (+e.orden||0)!==i+1){ e.orden=i+1; persistVeh(e); cambio=true; } }); if(cambio) toast("✓ Prioridad actualizada"); }
-  function cerrarVehDetalle(){ var m=document.getElementById("veh-modal"); if(m)m.classList.remove("show"); }
+  var _vdDirty=false;
+  function cerrarVehDetalle(){ var m=document.getElementById("veh-modal"); if(m)m.classList.remove("show"); if(_vdDirty){ _vdDirty=false; renderBoard(); } }
   function abrirVehDetalle(id){
     var e=data.filter(function(x){return String(x.id)===String(id);})[0]; if(!e)return;
     var box=document.getElementById("veh-modal-box"); if(!box)return;
     var idx=ESTADOS.indexOf(e.estado); var rec=_fdt(e.fIngreso,e.hIngreso), pr=progresoVeh(e), prio=prioDeVeh(e);
     var tr=e.trabajos||[], trDone=tr.filter(function(w){return w.ok;}).length;
-    var trHTML=tr.length?tr.map(function(w){return '<div class="vd-trab"><span>'+(w.ok?"✅":"⬜")+'</span> <span'+(w.ok?' style="text-decoration:line-through;opacity:.55"':'')+'>'+escH(w.t||"")+'</span></div>';}).join(""):'<div class="col-empty" style="padding:8px">Sin trabajos aún</div>';
+    var trHTML=tr.length?tr.map(function(w,ti){return '<label class="vd-trab"><input type="checkbox" class="vd-ck" data-id="'+e.id+'" data-i="'+ti+'"'+(w.ok?' checked':'')+'><span'+(w.ok?' class="done"':'')+'>'+escH(w.t||"")+'</span></label>';}).join(""):'<div class="col-empty" style="padding:8px">Sin trabajos aún</div>';
     var e1=durTexto(e.fIngreso,e.hIngreso,e.fInicio,e.hInicio), e2=durTexto(e.fInicio,e.hInicio,e.fSalida,e.hSalida), e3=durTexto(e.fSalida,e.hSalida,e.fEntrega,e.hEntrega);
     var etap=(e1?'<span class="ket ket-espera">⏳ '+e1+'</span>':'')+(e2?'<span class="ket ket-proc">🔧 '+e2+'</span>':'')+(e3?'<span class="ket ket-entr">📦 '+e3+'</span>':'')+((!e1&&!e2&&!e3)?'<span class="col-empty">Aún sin tiempos</span>':'');
     var nm=(e.media||[]).length;
@@ -3253,7 +3268,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       '<div class="vd-sub">'+escH(e.patente||"sin patente")+' · '+estLabel(e.estado)+(e.cliente?(' · '+escH(nomCliVeh(e))):'')+'</div>'+
       (rec?'<div class="vd-cron"><div class="vd-cron-lbl">Lleva en el taller</div><div class="vd-cron-big cron" data-cron="'+rec.getTime()+'">'+fmtElapsed(Date.now()-rec.getTime())+'</div><div class="vd-cron-lbl">desde la recepción</div></div>':'<div class="vd-cron sinrec">Aún no se recepciona</div>')+
       '<div class="vd-prog"><span class="vd-prog-bar"><span style="width:'+pr+'%"></span></span><b>'+pr+'%</b> · '+prio+'</div>'+
-      '<div class="vd-sec">Trabajos ('+trDone+'/'+tr.length+')</div>'+trHTML+
+      '<div class="vd-sec">Trabajos (<span id="vd-trcount">'+trDone+'/'+tr.length+'</span>)</div>'+trHTML+
       '<div class="vd-sec">Tiempos por etapa</div><div class="ketapas">'+etap+'</div>'+
       '<button type="button" class="btn" id="vd-media" style="width:100%;margin-top:12px">Fotos y videos'+(nm?' ('+nm+')':'')+'</button>'+
       '<div class="vd-actions">'+
@@ -3265,6 +3280,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     document.getElementById("veh-modal-close").onclick=cerrarVehDetalle;
     var bk=document.getElementById("vd-back"); if(bk)bk.onclick=function(){ cerrarVehDetalle(); advance(id,-1); };
     var fw=document.getElementById("vd-fwd"); if(fw)fw.onclick=function(){ cerrarVehDetalle(); advance(id,1); };
+    box.querySelectorAll('.vd-ck').forEach(function(ck){ ck.addEventListener('change',function(){ var i=+ck.dataset.i; if(!e.trabajos||!e.trabajos[i])return; e.trabajos[i].ok=ck.checked; persistVeh(e); _vdDirty=true;
+      var sp=ck.parentNode.querySelector('span'); if(sp)sp.className=ck.checked?'done':'';
+      var cnt=document.getElementById('vd-trcount'); if(cnt){ var d=e.trabajos.filter(function(w){return w.ok;}).length; cnt.textContent=d+'/'+e.trabajos.length; } }); });
     var ed=document.getElementById("vd-edit"); if(ed)ed.onclick=function(){ cerrarVehDetalle(); _kedit[id]=true; renderBoard(); };
     var md=document.getElementById("vd-media"); if(md)md.onclick=function(){ e.media=e.media||[]; abrirGaleria("Fotos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,video/*,application/pdf", function(){ persistVeh(e); }, {cats:['Exterior','Interior','Motor','Boleta','Respaldo','Otro'],defCat:'Exterior'}); };
     tickCrons();
