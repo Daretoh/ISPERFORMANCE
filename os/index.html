@@ -1365,12 +1365,13 @@
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-          <button type="button" class="btn primary" id="cot-save">Guardar y generar PDF</button>
+          <button type="button" class="btn" id="cot-draft">Guardar borrador</button>
+          <button type="button" class="btn primary" id="cot-save">Confirmar y generar PDF</button>
           <button type="button" class="btn ghost" id="cot-clear">Limpiar</button>
         </div>
       </div>
       <div class="card" style="margin-top:16px">
-        <h3 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Registro de cotizaciones <button type="button" class="btn primary" id="cons-open" style="white-space:nowrap">📑 Cierre / consolidar</button></h3>
+        <h3 style="margin:0">Registro de cotizaciones</h3>
         <input type="search" id="cot-buscar" class="cli-search" placeholder="Buscar por N°, cliente o vehículo…" style="margin:8px 0">
         <div id="cot-list" style="margin-top:8px"></div>
       </div>
@@ -2799,7 +2800,10 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var ir=document.getElementById("cot-iva-row"); if(ir)ir.style.display=conIva?"":"none";
     document.getElementById("cot-total").textContent=clp(total);
     return {sub:sub,dval:dval,neto:neto,iva:ivaVal,total:total,da:da,conIva:conIva,filas:filas}; }
-  function cotProxNum(){ return _cotiz.length?(Math.max.apply(null,_cotiz.map(function(c){return +c.numero||0;}))+1):COT_BASE; }
+  function nextCotizGlobal(){ var mx=168; (_cotiz||[]).forEach(function(c){ if((+c.numero||0)>mx)mx=+c.numero; }); (typeof _gmMes!=='undefined'?(_gmMes||[]):[]).forEach(function(m){ if((+m.cotiz_num||0)>mx)mx=+m.cotiz_num; }); return mx+1; } // correlativo unico, compartido con Cierre GM (desde 169)
+  function cotProxNum(){ return nextCotizGlobal(); }
+  var _cotEditId=null, _cotEditNum=null;
+  function cotCargar(c){ if(!c)return; document.getElementById('cot-nom').value=c.cliente_nombre||''; document.getElementById('cot-tel').value=c.cliente_tel||''; document.getElementById('cot-veh').value=c.vehiculo||''; document.getElementById('cot-anio').value=c.anio||''; document.getElementById('cot-descadic').value=(+c.desc_adic_pct||0); var iv=document.getElementById('cot-iva'); if(iv)iv.checked=!!c.con_iva; var vh=document.getElementById('cot-vehid'); if(vh)vh.value=c.vehiculo_id||''; document.getElementById('cot-items').innerHTML=''; (c.items||[]).forEach(function(it){ cotAddRow(it); }); if(!(c.items&&c.items.length)) cotAddRow(); _cotEditId=c.id; _cotEditNum=c.numero||null; cotCalc(); document.getElementById('cot-num-tag').textContent='N° '+(c.numero||nextCotizGlobal())+(c.estado==='BORRADOR'?' (borrador)':''); try{ document.getElementById('cot-nom').scrollIntoView({block:'center'}); }catch(e){} toast('Borrador N°'+c.numero+' cargado — edítalo y confirma'); }
   function cotTotalDe(c){ if(c.total!=null && c.total!=="") return +c.total; var sub=0; (c.items||[]).forEach(function(it){ sub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); }); var neto=sub-Math.round(sub*(+c.desc_adic_pct||0)/100); return c.con_iva?neto+Math.round(neto*0.19):neto; }
   function renderCotizaciones(){ var sb=sbc();
     if(document.getElementById("cot-items").children.length===0){ cotAddRow(); cotAddRow(); cotAddRow(); }
@@ -2813,19 +2817,28 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function pintarCotList(){ var el=document.getElementById("cot-list"); if(!el)return;
     var bs=document.getElementById("cot-buscar"), q=((bs&&bs.value)||"").toLowerCase().trim();
     var list=q?_cotiz.filter(function(c){ return ("n°"+c.numero+" "+(c.cliente_nombre||"")+" "+(c.vehiculo||"")).toLowerCase().indexOf(q)>=0 || String(c.numero).indexOf(q)>=0; }):_cotiz;
-    el.innerHTML=list.length?list.map(function(c){ return '<div class="cot-row"><span><span class="cn">N°'+c.numero+'</span> · '+escH(c.cliente_nombre||"—")+(c.vehiculo?" · "+escH(c.vehiculo):"")+' · '+fFecha((c.fecha||"").slice(0,10))+'</span><span><b>'+clp(cotTotalDe(c))+'</b><span class="acts"><button class="pdf" data-pdf="'+c.id+'">PDF</button><button class="del" data-del="'+c.id+'">×</button></span></span></div>'; }).join(""):'<div class="col-empty">'+(q?'Sin resultados':'Aún no hay cotizaciones')+'</div>';
+    el.innerHTML=list.length?list.map(function(c){ var esB=(c.estado==='BORRADOR'); var badge=esB?' <span class="chip pend" style="font-size:9px;vertical-align:middle">Borrador</span>':'';
+      return '<div class="cot-row"><span><span class="cn">N°'+c.numero+'</span>'+badge+' · '+escH(c.cliente_nombre||"—")+(c.vehiculo?" · "+escH(c.vehiculo):"")+' · '+fFecha((c.fecha||"").slice(0,10))+'</span><span><b>'+clp(cotTotalDe(c))+'</b><span class="acts">'+(esB?'<button class="edit" data-edit="'+c.id+'">Editar</button>':'')+'<button class="pdf" data-pdf="'+c.id+'">PDF</button><button class="del" data-del="'+c.id+'">×</button></span></span></div>'; }).join(""):'<div class="col-empty">'+(q?'Sin resultados':'Aún no hay cotizaciones')+'</div>';
+    el.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick=function(){ var c=_cotiz.filter(function(x){return x.id===b.dataset.edit;})[0]; if(c) cotCargar(c); }; });
     el.querySelectorAll("[data-pdf]").forEach(function(b){ b.onclick=function(){ var c=_cotiz.filter(function(x){return x.id===b.dataset.pdf;})[0]; if(c) cotImprimir(c); }; });
     el.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ var c=_cotiz.filter(function(x){return x.id===b.dataset.del;})[0]; if(c && confirm("¿Eliminar la cotización N°"+c.numero+"?")){ var sb=sbc(); if(sb) sb.from("cotizaciones").delete().eq("id",c.id).then(function(){}); _cotiz=_cotiz.filter(function(x){return x.id!==c.id;}); pintarCotList(); } }; });
   }
-  function cotGuardar(){ var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
+  function cotGuardar(modo){ var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
     var d=cotCalc(), filas=d.filas.filter(function(f){return f.desc||f.precio;});
     if(!filas.length){ toast("Agrega al menos una línea con descripción o precio"); return; }
-    var numero=cotProxNum();
-    var row={ numero:numero, fecha:todayISO(), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), vehiculo:document.getElementById("cot-veh").value.trim(), anio:document.getElementById("cot-anio").value.trim(), items:filas, desc_adic_pct:d.da, con_iva:d.conIva, vehiculo_id:(document.getElementById("cot-vehid").value||null), estado:"ENVIADA", autor:(window.ISP_EMAIL||"") };
-    function _ins(rw,retry){ sb.from("cotizaciones").insert(rw).select().single().then(function(r){ if(r.error){ if(retry && /con_iva|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(k!=="con_iva")rw2[k]=rw[k]; }); _ins(rw2,false); return; } toast("⚠ No se pudo guardar (¿corriste el SQL 13?)"); return; } _cotiz.unshift(r.data); pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); toast("✓ Cotización N°"+numero+" guardada"); cotImprimir(r.data); }); }
-    _ins(row,true);
+    var confirmar=(modo==='confirmar');
+    var numero=_cotEditNum||nextCotizGlobal();
+    var row={ numero:numero, fecha:todayISO(), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), vehiculo:document.getElementById("cot-veh").value.trim(), anio:document.getElementById("cot-anio").value.trim(), items:filas, desc_adic_pct:d.da, con_iva:d.conIva, vehiculo_id:(document.getElementById("cot-vehid").value||null), estado:(confirmar?"CONFIRMADA":"BORRADOR"), autor:(window.ISP_EMAIL||"") };
+    function ok(data){ var i=_cotiz.map(function(x){return x.id;}).indexOf(data.id); if(i>=0)_cotiz[i]=data; else _cotiz.unshift(data);
+      _cotEditId=data.id; _cotEditNum=data.numero||null;
+      pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+nextCotizGlobal();
+      if(confirmar){ cotImprimir(data); toast("✓ Cotización N°"+data.numero+" confirmada"); _cotEditId=null; _cotEditNum=null; cotLimpiar(); }
+      else toast("✓ Borrador N°"+data.numero+" guardado"); }
+    function run(rw,retry){ var q=_cotEditId?sb.from("cotizaciones").update(rw).eq("id",_cotEditId).select().single():sb.from("cotizaciones").insert(rw).select().single();
+      q.then(function(r){ if(r.error){ if(retry && /con_iva|estado|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(["con_iva","estado"].indexOf(k)<0)rw2[k]=rw[k]; }); run(rw2,false); return; } toast("⚠ No se pudo guardar (¿corriste el SQL 13?)"); return; } ok(r.data); }); }
+    run(row,true);
   }
-  function cotLimpiar(){ document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-vehid").value=""; document.getElementById("cot-descadic").value="0"; var iv=document.getElementById("cot-iva"); if(iv)iv.checked=false; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); }
+  function cotLimpiar(){ _cotEditId=null; _cotEditNum=null; document.getElementById("cot-items").innerHTML=""; ["cot-nom","cot-tel","cot-veh","cot-anio"].forEach(function(id){document.getElementById(id).value="";}); document.getElementById("cot-vehid").value=""; document.getElementById("cot-descadic").value="0"; var iv=document.getElementById("cot-iva"); if(iv)iv.checked=false; cotAddRow(); cotAddRow(); cotAddRow(); cotCalc(); var tg=document.getElementById("cot-num-tag"); if(tg)tg.textContent="N° "+nextCotizGlobal(); }
   var CP_CSS='*{box-sizing:border-box}body{margin:0;padding:0;font-family:Inter,-apple-system,Segoe UI,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cp-sheet{max-width:800px;margin:0 auto}.cp-head{background:#111;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:4px solid #FF6B00}.cp-head .cp-logo-img{height:56px;width:auto;display:block}.cp-head .cp-meta{text-align:right;font-size:12px;color:#cfc9c2;display:flex;flex-direction:column;gap:2px}.cp-head .cp-meta b{font-size:20px;color:#fff}.cp-sec{font:800 12px/1 sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;color:#111;border-left:4px solid #FF6B00;padding-left:8px}.cp-cliente-box{margin-top:16px;border:1px solid #e5e2dd;border-radius:10px;overflow:hidden}.cp-cli-title{background:#f5f2ee;font:800 11px/1 sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#333;padding:9px 14px;border-left:4px solid #FF6B00}.cp-cli-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:14px}.cp-cli-grid>div{display:flex;flex-direction:column;gap:2px}.cp-cli-grid span{font:700 9.5px/1 monospace;letter-spacing:.06em;text-transform:uppercase;color:#948b80}.cp-cli-grid b{font-size:14px;color:#111}table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:16px;table-layout:fixed}table.cp-table th{background:#111;color:#fff;padding:9px 8px;text-align:left;font-weight:700;font-size:11px}table.cp-table th:first-child{border-left:3px solid #FF6B00}table.cp-table th.r,table.cp-table td.r{text-align:right}table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top}table.cp-table tbody tr:nth-child(even){background:#faf8f5}table.cp-table td.cp-desc{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35}.cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:18px;flex-wrap:wrap}.cp-pay{font-size:12.5px;line-height:1.7}.cp-pay .cp-sec{margin-top:0}.cp-totbox{min-width:260px}.cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:8px 12px;font-size:13px}.cp-totbox .r1.big{background:#FF6B00;color:#fff;font-weight:800;font-size:15px;border-radius:0 0 6px 6px}.cp-firma{margin-top:38px;text-align:center}.cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px}.cp-firma b{font-size:14px}.cp-firma small{color:#555}.cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-left:3px solid #FF6B00;border-radius:6px;padding:12px 14px}.cp-foot-brand{margin-top:22px;background:#111;border-radius:16px 16px 8px 8px;padding:18px 24px;display:flex;flex-direction:column;align-items:center;gap:12px}.cp-foot-logo{height:44px;width:auto}.cp-foot-items{display:flex;flex-direction:row;align-items:center;width:100%;font-size:12px;color:#e8e4de}.cp-foot-items span{flex:1;display:flex;align-items:center;gap:8px}.cp-foot-items span:nth-child(1){justify-content:flex-start}.cp-foot-items span:nth-child(2){justify-content:center}.cp-foot-items span:nth-child(3){justify-content:flex-end}table.cp-table tr{page-break-inside:avoid;break-inside:avoid}table.cp-table thead{display:table-header-group}#cp-cierre{page-break-inside:avoid;break-inside:avoid}@page{margin:12mm}';
   var _cotActual="";
   function cargarLib(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){rej(new Error("no cargo "+src));}; document.head.appendChild(s); }); }
@@ -2967,7 +2980,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     ["cons-cli","cons-desde","cons-hasta"].forEach(function(id){ var e=document.getElementById(id); if(e)e.addEventListener("change",function(){ if((document.getElementById("cons-cli").value||"").trim()) consBuscar(); }); });
   })();
   (function(){ var a=document.getElementById("cot-add-row"); if(a) a.onclick=function(){ cotAddRow(); };
-    var s=document.getElementById("cot-save"); if(s) s.onclick=cotGuardar;
+    var s=document.getElementById("cot-save"); if(s) s.onclick=function(){ cotGuardar('confirmar'); };
+    var dft=document.getElementById("cot-draft"); if(dft) dft.onclick=function(){ cotGuardar('borrador'); };
     var l=document.getElementById("cot-clear"); if(l) l.onclick=cotLimpiar;
     var pc=document.getElementById("cotiz-print-btn"), cc=document.getElementById("cotiz-modal-close"), cm=document.getElementById("cotiz-modal");
     if(pc) pc.onclick=cotPrintPDF;
@@ -4548,7 +4562,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!r.oc_media)r.oc_media=[]; if(!r.factura_media)r.factura_media=[]; if(r.iva==null)r.iva=true;
     return r; }
   function gmEstIdx(e){ var i=GM_ESTADOS.indexOf(e||'BORRADOR'); return i<0?0:i; }
-  function gmNextCotizNum(){ var mx=168; (_gmMes||[]).forEach(function(m){ if((+m.cotiz_num||0)>mx)mx=+m.cotiz_num; }); return mx+1; } // arranca en 169
+  function gmNextCotizNum(){ return (typeof nextCotizGlobal==='function')?nextCotizGlobal():169; } // correlativo unico compartido con Cotizaciones
   function gmAvanzar(rec,est){ if(gmEstIdx(est)>gmEstIdx(rec.estado)) rec.estado=est; }
   function gmMontos(mes){ var neto=0; gmRows(mes).forEach(function(r){ neto+=gmValor(r); }); var rec=gmMesRec(mes); var iva=rec.iva?Math.round(neto*GM_IVA):0; return { neto:neto, iva:iva, total:neto+iva }; }
   function gmMesSave(rec){ var sb=sbc(); if(!sb)return; var pay={ mes:rec.mes, estado:rec.estado||'BORRADOR', iva:!!rec.iva, cotiz_num:(rec.cotiz_num!=null?rec.cotiz_num:null), cotiz_fecha:rec.cotiz_fecha||null, cotiz_total:(rec.cotiz_total!=null?rec.cotiz_total:null), oc_num:rec.oc_num||null, oc_fecha:rec.oc_fecha||null, oc_media:(rec.oc_media||[]), factura_num:rec.factura_num||null, factura_fecha:rec.factura_fecha||null, factura_media:(rec.factura_media||[]), cobro_fecha:rec.cobro_fecha||null, cobro_monto:(rec.cobro_monto!=null?rec.cobro_monto:null), notas:rec.notas||null, autor:(window.ISP_EMAIL||"") };
