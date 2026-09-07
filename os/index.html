@@ -4548,7 +4548,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!r.oc_media)r.oc_media=[]; if(!r.factura_media)r.factura_media=[]; if(r.iva==null)r.iva=true;
     return r; }
   function gmEstIdx(e){ var i=GM_ESTADOS.indexOf(e||'BORRADOR'); return i<0?0:i; }
-  function gmNextCotizNum(){ var mx=57; (_gmMes||[]).forEach(function(m){ if((+m.cotiz_num||0)>mx)mx=+m.cotiz_num; }); return mx+1; } // arranca en 58
+  function gmNextCotizNum(){ var mx=168; (_gmMes||[]).forEach(function(m){ if((+m.cotiz_num||0)>mx)mx=+m.cotiz_num; }); return mx+1; } // arranca en 169
   function gmAvanzar(rec,est){ if(gmEstIdx(est)>gmEstIdx(rec.estado)) rec.estado=est; }
   function gmMontos(mes){ var neto=0; gmRows(mes).forEach(function(r){ neto+=gmValor(r); }); var rec=gmMesRec(mes); var iva=rec.iva?Math.round(neto*GM_IVA):0; return { neto:neto, iva:iva, total:neto+iva }; }
   function gmMesSave(rec){ var sb=sbc(); if(!sb)return; var pay={ mes:rec.mes, estado:rec.estado||'BORRADOR', iva:!!rec.iva, cotiz_num:(rec.cotiz_num!=null?rec.cotiz_num:null), cotiz_fecha:rec.cotiz_fecha||null, cotiz_total:(rec.cotiz_total!=null?rec.cotiz_total:null), oc_num:rec.oc_num||null, oc_fecha:rec.oc_fecha||null, oc_media:(rec.oc_media||[]), factura_num:rec.factura_num||null, factura_fecha:rec.factura_fecha||null, factura_media:(rec.factura_media||[]), cobro_fecha:rec.cobro_fecha||null, cobro_monto:(rec.cobro_monto!=null?rec.cobro_monto:null), notas:rec.notas||null, autor:(window.ISP_EMAIL||"") };
