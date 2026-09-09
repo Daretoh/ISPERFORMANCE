@@ -2957,7 +2957,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'<div id="cp-cierre">'
         +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
         +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div>'+(c.con_iva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(ivaVal)+'</span></div>'):'')+'<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
-        +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>IS Performance</b><br><small>'+escH(miNombre())+'</small></div>'
+        +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
         +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
         +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
       +'</div>'
@@ -3012,7 +3012,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'</div><div id="cp-cierre">'
       +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
       +'<div class="cp-totbox"><div class="r1"><span>Subtotal ('+_consList.length+' veh.)</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento '+(da?da+"%":"")+'</span><span>'+clp(dval)+'</span></div>'+(conIva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(iva)+'</span></div>'):'')+'<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
-      +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>IS Performance</b><br><small>'+escH(miNombre())+'</small></div>'
+      +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
       +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
       +'</div></div>';
     _cotActual="Cierre "+cli;
@@ -4791,7 +4791,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       +'</div><div id="cp-cierre">'
       +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
       +'<div class="cp-totbox">'+(m.iva>0?('<div class="r1"><span>Neto</span><span>'+clp(m.neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(m.iva)+'</span></div>'):'')+'<div class="r1 big"><span>Total a pagar</span><span>'+clp(m.total)+'</span></div></div></div>'
-      +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>IS Performance</b><br><small>'+escH(miNombre())+'</small></div>'
+      +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
       +'<div class="cp-nota"><b>Nota:</b> Cierre mensual de servicios de flota. Los valores corresponden a los servicios realizados en el periodo indicado.</div>'
       +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
       +'</div></div>';
