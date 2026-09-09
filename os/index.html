@@ -1894,6 +1894,9 @@
     var box=document.getElementById('mov-edit-box'); if(!box)return;
     var esStock=(a.tipo==='SALIDA'||a.tipo==='INGRESO'||a.tipo==='ENTRADA') && !!a.producto_id;
     var vtgt=(a.tipo==='SALIDA'&&ventaDe(a))?ventaDe(a):a; // el voucher se guarda en la venta si esta salida ya es venta
+    var mvpat=a.vehiculo_id?(((data||[]).filter(function(e){return String(e.id)===String(a.vehiculo_id);})[0]||{}).patente||''):'';
+    var mvopt={}; (data||[]).forEach(function(e){ var p=((e.patente||'')+'').trim(); if(p && !mvopt[p.toUpperCase()]) mvopt[p.toUpperCase()]='<option value="'+av(p)+'">'+escH(((e.marca||'')+' '+(e.modelo||'')).trim()+(e.cliente?(' · '+e.cliente):''))+'</option>'; });
+    var mvehOpts=Object.keys(mvopt).sort().map(function(k){return mvopt[k];}).join('');
     var prodOpts=(productos||[]).slice().sort(function(x,y){return (x.producto||'')<(y.producto||'')?-1:1;}).map(function(p){ return '<option value="'+av(p.id)+'"'+(String(p.id)===String(a.producto_id)?' selected':'')+'>'+escH((p.sku?(p.sku+' · '):'')+(p.producto||''))+'</option>'; }).join('');
     var almOpts=ALMACENES.map(function(al){ return '<option value="'+al.cod+'"'+(al.cod===(a.almacen||ALM_DEFAULT)?' selected':'')+'>'+escH(al.nombre)+'</option>'; }).join('');
     box.innerHTML='<div class="mov-head"><h3>Editar '+accFmt(a.num)+'</h3><button type="button" id="mov-edit-close" aria-label="Cerrar">×</button></div>'+
@@ -1904,6 +1907,7 @@
       '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Monto</span><input id="me-monto" type="number" min="0" value="'+(+a.monto||0)+'"></label>'+
       '<label class="f"><span class="lab">Fecha</span><input id="me-fecha" type="date" value="'+((a.fecha||'').slice(0,10))+'"></label></div>'+
       '<label class="f" style="margin-top:8px"><span class="lab">Descripción</span><input id="me-desc" value="'+av(a.descripcion||'')+'"></label>'+
+      '<label class="f" style="margin-top:8px"><span class="lab">Vehículo (patente, opcional) <span class="hint" style="text-transform:none;letter-spacing:0">— enlaza este movimiento a un auto</span></span><input id="me-veh" list="me-veh-list" value="'+av(mvpat)+'" placeholder="Patente" style="text-transform:uppercase"><datalist id="me-veh-list">'+mvehOpts+'</datalist></label>'+
       '<div style="margin-top:10px"><button type="button" class="btn" id="me-voucher" style="width:100%">📎 Voucher '+((a.tipo==='SALIDA'&&ventaDe(a))?('de la venta '+accFmt(vtgt.num)):'/ comprobante')+((vtgt.media&&vtgt.media.length)?(' ('+vtgt.media.length+')'):'')+'</button></div>'+
       (a.tipo==='SALIDA'?(ventaExiste(a)
         ? '<div style="margin-top:10px;padding:10px;border-radius:8px;background:var(--ok-soft);color:var(--ok);font-size:12.5px;font-weight:600">✓ Registrada como venta '+accFmt(vtgt.num)+' — aparece en <b>POS / Ventas</b> y en <b>Cobro / Ventas</b>. El botón de arriba guarda el voucher en esa venta.</div>'
@@ -1934,8 +1938,11 @@
       if(oldName && newName && oldName!==newName && !/corregido/i.test(newDesc)) newDesc=(newDesc||'')+' · corregido: '+oldName+' → '+newName;
       upd.producto_id=newPid; upd.cantidad=newCant; upd.almacen=newAlm;
     }
+    var patV=((document.getElementById('me-veh')||{}).value||'').trim().toUpperCase();
+    var vsel=patV?(data||[]).filter(function(e){return ((e.patente||'')+'').trim().toUpperCase()===patV;})[0]:null;
+    a.vehiculo_id=vsel?vsel.id:null;
     a.monto=newMonto; a.descripcion=newDesc; a.fecha=newFecha;
-    upd.monto=newMonto; upd.descripcion=newDesc; upd.fecha=newFecha;
+    upd.monto=newMonto; upd.descripcion=newDesc; upd.fecha=newFecha; upd.vehiculo_id=a.vehiculo_id;
     sb.from('acciones').update(upd).eq('id',a.id).then(function(r){ if(r&&r.error) toast('⚠ No se pudo guardar'); });
     // convertir la salida en venta: crea el COBRO (ingreso) que aparece en POS · Ventas
     var ev=document.getElementById('me-esventa'); var hizoVenta=false;
@@ -4500,7 +4507,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function posTotal(){ return _posCart.reduce(function(t,l){ return t+(l.cant*(+l.precio||0)); },0); }
   function renderPOS(){ var root=document.getElementById("pos-root"); if(!root)return;
     var q=((document.getElementById("pos-buscar")||{}).value||"").toLowerCase().trim();
-    var prevCli=(document.getElementById("pos-cli")||{}).value||"", prevPago=(document.getElementById("pos-pago")||{}).value||"DÉBITO", prevFecha=(document.getElementById("pos-fecha")||{}).value||todayISO();
+    var prevCli=(document.getElementById("pos-cli")||{}).value||"", prevPago=(document.getElementById("pos-pago")||{}).value||"DÉBITO", prevFecha=(document.getElementById("pos-fecha")||{}).value||todayISO(), prevVeh=(document.getElementById("pos-veh")||{}).value||"";
+    var vpat={}; (data||[]).forEach(function(e){ var p=((e.patente||"")+"").trim(); if(p && !vpat[p.toUpperCase()]) vpat[p.toUpperCase()]='<option value="'+av(p)+'">'+escH(((e.marca||'')+' '+(e.modelo||'')).trim()+(e.cliente?(' · '+e.cliente):''))+'</option>'; });
+    var vehList=Object.keys(vpat).sort().map(function(k){return vpat[k];}).join("");
     var sell=posSellables().filter(function(p){ if(!q)return true; return ((p.producto||"")+" "+(p.marca||"")+" "+(p.sku||"")).toLowerCase().indexOf(q)>=0; }).sort(function(a,b){return (a.producto||"")<(b.producto||"")?-1:1;});
     var cliNames={}; Object.keys(clientesInfo||{}).forEach(function(k){ var c=clientesInfo[k]||{}; var n=((c.nombre_mostrar||c.nombre||c.razon_social||"")+"").trim(); if(n)cliNames[n]=1; });
     (data||[]).forEach(function(e){ var n=((e.cliente||"")+"").trim(); if(n)cliNames[n]=1; }); // incluye clientes de vehículos (por cobrar, como Richard)
@@ -4517,6 +4526,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         '<div class="pos-total"><span>Total</span><b>'+clp(posTotal())+'</b></div>'+
         '<div class="row c2" style="margin:10px 0 0"><label class="f"><span class="lab">Cliente (opcional)</span><input id="pos-cli" list="pos-cli-list" placeholder="Nombre" value="'+av(prevCli)+'"><datalist id="pos-cli-list">'+cliList+'</datalist></label>'+
         '<label class="f"><span class="lab">Medio de pago</span><select id="pos-pago"><option'+(prevPago==="EFECTIVO"?" selected":"")+'>EFECTIVO</option><option'+(prevPago==="DÉBITO"?" selected":"")+'>DÉBITO</option><option'+(prevPago==="CRÉDITO"?" selected":"")+'>CRÉDITO</option><option'+(prevPago==="TRANSFERENCIA"?" selected":"")+'>TRANSFERENCIA</option></select></label></div>'+
+        '<label class="f" style="margin:10px 0 0"><span class="lab">Vehículo (opcional) <span class="hint" style="text-transform:none;letter-spacing:0">— patente, para enlazar la venta al auto</span></span><input id="pos-veh" list="pos-veh-list" placeholder="Patente" value="'+av(prevVeh)+'" style="text-transform:uppercase"><datalist id="pos-veh-list">'+vehList+'</datalist></label>'+
         '<div class="row c2" style="margin:10px 0 0"><label class="f"><span class="lab">Fecha</span><input id="pos-fecha" type="date" value="'+av(prevFecha)+'"></label>'+
         '<label class="f"><span class="lab">Voucher / boleta</span><button type="button" class="btn" id="pos-voucher" style="padding:9px">📎 Adjuntar</button><span id="pos-voucher-txt" style="font-size:11.5px;color:var(--ink-muted);display:block;margin-top:4px">'+(_posVoucher.length?("✓ "+_posVoucher.length+" archivo(s)"):"")+'</span></label></div>'+
         '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn primary" id="pos-save" style="flex:1">💰 Registrar venta</button><button class="btn ghost" id="pos-clear">Vaciar</button></div>'+
@@ -4564,13 +4574,16 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(!_posCart.length){ toast("Agrega productos o un servicio a la venta"); return; }
     var total=posTotal(); if(total<=0){ toast("El total debe ser mayor a 0 (pon los precios)"); return; }
     var cli=(document.getElementById("pos-cli")||{}).value.trim()||"", pago=(document.getElementById("pos-pago")||{}).value||"", fecha=(document.getElementById("pos-fecha")||{}).value||todayISO();
+    var patInp=((document.getElementById("pos-veh")||{}).value||"").trim().toUpperCase();
+    var vehSel=patInp?(data||[]).filter(function(e){return ((e.patente||"")+"").trim().toUpperCase()===patInp;})[0]:null; // vehiculo a enlazar (más reciente con esa patente)
+    var vehId=vehSel?vehSel.id:null;
     var prodLines=_posCart.filter(function(l){return !l.manual;}).map(function(l){ return { p:(productos||[]).filter(function(x){return String(x.id)===String(l.id);})[0], cant:l.cant, precio:l.precio }; }).filter(function(l){return l.p;});
     var manualLines=_posCart.filter(function(l){return l.manual && ((l.desc||"").trim() || (+l.precio||0));});
     if(!prodLines.length && !manualLines.length){ toast("Sin líneas válidas"); return; }
     function descAll(){ return _posCart.map(function(l){ if(l.manual){ return l.cant+"× "+(((l.desc||"").trim())||"servicio"); } var p=(productos||[]).filter(function(x){return String(x.id)===String(l.id);})[0]; return l.cant+"× "+((p&&p.producto)||""); }).filter(function(s){return s;}).join(", "); }
-    function finish(){ var desc="Venta POS ("+pago+")"+(cli?(" · "+cli):"")+" · "+descAll();
-      registrarAccion({ tipo:"COBRO", fecha:fecha, monto:total, descripcion:desc, ref_tipo:"VENTA", media:_posVoucher.slice() }).then(function(){ pintarMovimientos(); });
-      _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total)); }
+    function finish(){ var desc="Venta POS ("+pago+")"+(cli?(" · "+cli):"")+(patInp?(" · "+patInp):"")+" · "+descAll();
+      registrarAccion({ tipo:"COBRO", fecha:fecha, monto:total, descripcion:desc, ref_tipo:"VENTA", vehiculo_id:vehId, media:_posVoucher.slice() }).then(function(){ pintarMovimientos(); });
+      _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total)+(vehSel?(" · "+(vehSel.patente||"")):"")); }
     if(prodLines.length){ var rows=prodLines.map(function(l){ posDeduct(l.p,l.cant); saveProducto(l.p); return { producto_id:l.p.id, tipo:"SALIDA", cantidad:l.cant, fecha:fecha, motivo:"Venta POS"+(cli?(" · "+cli):""), autor:(window.ISP_EMAIL||"") }; });
       sb.from("movimientos").insert(rows).select().then(function(r){ if(!r.error){ (r.data||[]).forEach(function(x){ _movs.unshift(x); }); } finish(); }, function(){ toast("⚠ No se pudo registrar la venta"); }); }
     else { finish(); } // venta de solo servicio: sin movimiento de stock
