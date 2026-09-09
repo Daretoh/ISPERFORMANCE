@@ -1941,6 +1941,7 @@
     var patV=((document.getElementById('me-veh')||{}).value||'').trim().toUpperCase();
     var vsel=patV?(data||[]).filter(function(e){return ((e.patente||'')+'').trim().toUpperCase()===patV;})[0]:null;
     a.vehiculo_id=vsel?vsel.id:null;
+    if(a.tipo==='COBRO' && vsel && !vsel.cobrado){ vsel.cobrado=true; persistVeh(vsel); } // cobro enlazado: el auto sale de Pendientes
     a.monto=newMonto; a.descripcion=newDesc; a.fecha=newFecha;
     upd.monto=newMonto; upd.descripcion=newDesc; upd.fecha=newFecha; upd.vehiculo_id=a.vehiculo_id;
     sb.from('acciones').update(upd).eq('id',a.id).then(function(r){ if(r&&r.error) toast('⚠ No se pudo guardar'); });
@@ -4583,7 +4584,8 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     function descAll(){ return _posCart.map(function(l){ if(l.manual){ return l.cant+"× "+(((l.desc||"").trim())||"servicio"); } var p=(productos||[]).filter(function(x){return String(x.id)===String(l.id);})[0]; return l.cant+"× "+((p&&p.producto)||""); }).filter(function(s){return s;}).join(", "); }
     function finish(){ var desc="Venta POS ("+pago+")"+(cli?(" · "+cli):"")+(patInp?(" · "+patInp):"")+" · "+descAll();
       registrarAccion({ tipo:"COBRO", fecha:fecha, monto:total, descripcion:desc, ref_tipo:"VENTA", vehiculo_id:vehId, media:_posVoucher.slice() }).then(function(){ pintarMovimientos(); });
-      _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total)+(vehSel?(" · "+(vehSel.patente||"")):"")); }
+      if(vehSel && !vehSel.cobrado){ vehSel.cobrado=true; persistVeh(vehSel); } // enlazado a un vehiculo: sale de "Pendientes" en Cobro
+      _posCart=[]; _posVoucher=[]; renderPOS(); toast("✓ Venta registrada · "+clp(total)+(vehSel?(" · "+(vehSel.patente||"")+" cobrado"):"")); }
     if(prodLines.length){ var rows=prodLines.map(function(l){ posDeduct(l.p,l.cant); saveProducto(l.p); return { producto_id:l.p.id, tipo:"SALIDA", cantidad:l.cant, fecha:fecha, motivo:"Venta POS"+(cli?(" · "+cli):""), autor:(window.ISP_EMAIL||"") }; });
       sb.from("movimientos").insert(rows).select().then(function(r){ if(!r.error){ (r.data||[]).forEach(function(x){ _movs.unshift(x); }); } finish(); }, function(){ toast("⚠ No se pudo registrar la venta"); }); }
     else { finish(); } // venta de solo servicio: sin movimiento de stock
