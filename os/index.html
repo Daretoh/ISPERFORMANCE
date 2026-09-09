@@ -1888,10 +1888,12 @@
   function salidaGrupo(a){ return (_acciones||[]).filter(function(x){return x.tipo==='SALIDA' && (+x.num||0)===(+a.num||0);}); }
   function ventaDescDe(a){ var g=salidaGrupo(a); if(!g.length)g=[a]; return g.map(function(x){ var p=(productos||[]).filter(function(pp){return String(pp.id)===String(x.producto_id);})[0]; return (x.cantidad||1)+'× '+((p&&p.producto)||accProdTxt(x)||'ítem'); }).join(', '); }
   function ventaMontoSug(a){ var g=salidaGrupo(a); var s=0; g.forEach(function(x){ var p=(productos||[]).filter(function(pp){return String(pp.id)===String(x.producto_id);})[0]; s+=(+x.cantidad||0)*((p&&+p.precio)||0); }); return s; }
-  function ventaExiste(a){ return (_acciones||[]).some(function(x){return x.tipo==='COBRO' && x.ref_tipo==='VENTA' && String(x.ref_num)===String(a.num);}); }
+  function ventaExiste(a){ return !!ventaDe(a); }
+  function ventaDe(a){ return (_acciones||[]).filter(function(x){return x.tipo==='COBRO' && x.ref_tipo==='VENTA' && String(x.ref_num)===String(a.num);})[0]||null; } // la venta (COBRO) ligada a esta salida
   function abrirMovEdit(id){ var a=(_acciones||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!a)return;
     var box=document.getElementById('mov-edit-box'); if(!box)return;
     var esStock=(a.tipo==='SALIDA'||a.tipo==='INGRESO'||a.tipo==='ENTRADA') && !!a.producto_id;
+    var vtgt=(a.tipo==='SALIDA'&&ventaDe(a))?ventaDe(a):a; // el voucher se guarda en la venta si esta salida ya es venta
     var prodOpts=(productos||[]).slice().sort(function(x,y){return (x.producto||'')<(y.producto||'')?-1:1;}).map(function(p){ return '<option value="'+av(p.id)+'"'+(String(p.id)===String(a.producto_id)?' selected':'')+'>'+escH((p.sku?(p.sku+' · '):'')+(p.producto||''))+'</option>'; }).join('');
     var almOpts=ALMACENES.map(function(al){ return '<option value="'+al.cod+'"'+(al.cod===(a.almacen||ALM_DEFAULT)?' selected':'')+'>'+escH(al.nombre)+'</option>'; }).join('');
     box.innerHTML='<div class="mov-head"><h3>Editar '+accFmt(a.num)+'</h3><button type="button" id="mov-edit-close" aria-label="Cerrar">×</button></div>'+
@@ -1902,9 +1904,9 @@
       '<div class="row c2" style="margin-top:8px"><label class="f"><span class="lab">Monto</span><input id="me-monto" type="number" min="0" value="'+(+a.monto||0)+'"></label>'+
       '<label class="f"><span class="lab">Fecha</span><input id="me-fecha" type="date" value="'+((a.fecha||'').slice(0,10))+'"></label></div>'+
       '<label class="f" style="margin-top:8px"><span class="lab">Descripción</span><input id="me-desc" value="'+av(a.descripcion||'')+'"></label>'+
-      '<div style="margin-top:10px"><button type="button" class="btn" id="me-voucher" style="width:100%">📎 Voucher / comprobante'+((a.media&&a.media.length)?(' ('+a.media.length+')'):'')+'</button></div>'+
+      '<div style="margin-top:10px"><button type="button" class="btn" id="me-voucher" style="width:100%">📎 Voucher '+((a.tipo==='SALIDA'&&ventaDe(a))?('de la venta '+accFmt(vtgt.num)):'/ comprobante')+((vtgt.media&&vtgt.media.length)?(' ('+vtgt.media.length+')'):'')+'</button></div>'+
       (a.tipo==='SALIDA'?(ventaExiste(a)
-        ? '<div style="margin-top:10px;padding:10px;border-radius:8px;background:var(--ok-soft);color:var(--ok);font-size:12.5px;font-weight:600">✓ Toda esta salida ya está registrada como venta (aparece en POS).</div>'
+        ? '<div style="margin-top:10px;padding:10px;border-radius:8px;background:var(--ok-soft);color:var(--ok);font-size:12.5px;font-weight:600">✓ Registrada como venta '+accFmt(vtgt.num)+' — aparece en <b>POS / Ventas</b> y en <b>Cobro / Ventas</b>. El botón de arriba guarda el voucher en esa venta.</div>'
         : '<div style="margin-top:10px;padding:10px;border:1px dashed var(--line-strong);border-radius:8px;background:var(--surface-2)">'+
             '<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer"><input type="checkbox" id="me-esventa"> Registrar TODA esta salida como venta ('+salidaGrupo(a).length+' material'+(salidaGrupo(a).length!==1?'es':'')+')</label>'+
             '<div id="me-venta-fields" style="display:none;margin-top:8px"><label class="f"><span class="lab">Monto TOTAL de la venta</span><input id="me-vmonto" type="number" min="0" value="'+ventaMontoSug(a)+'"></label><div class="hint" style="text-transform:none;letter-spacing:0;margin-top:4px">Incluye todos los materiales de la salida '+accFmt(a.num)+': '+escH(ventaDescDe(a))+'. La salida (stock) se mantiene; esto agrega el cobro/ingreso y sale en POS.</div></div>'+
@@ -1913,7 +1915,7 @@
       '<div class="vd-actions" style="margin-top:16px"><button type="button" class="btn" id="me-revertir" style="border-color:var(--crit);color:var(--crit)">Revertir y eliminar</button><button type="button" class="btn primary" id="me-guardar">Guardar cambios</button></div>';
     document.getElementById('mov-edit').classList.add('show');
     document.getElementById('mov-edit-close').onclick=cerrarMovEdit;
-    var mev=document.getElementById('me-voucher'); if(mev)mev.onclick=function(){ a.media=a.media||[]; abrirGaleria('Voucher — '+accFmt(a.num), a.media, 'venta', 'image/*,application/pdf', function(){ var sb=sbc(); if(sb) sb.from('acciones').update({media:a.media}).eq('id',a.id).then(function(){}); abrirMovEdit(a.id); pintarMovimientos(); }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); };
+    var mev=document.getElementById('me-voucher'); if(mev)mev.onclick=function(){ var t=(a.tipo==='SALIDA'&&ventaDe(a))?ventaDe(a):a; t.media=t.media||[]; abrirGaleria('Voucher — '+accFmt(t.num), t.media, 'venta', 'image/*,application/pdf', function(){ var sb=sbc(); if(sb) sb.from('acciones').update({media:t.media}).eq('id',t.id).then(function(){}); abrirMovEdit(a.id); pintarMovimientos(); if(typeof renderPosVentas==='function') renderPosVentas(); }, {cats:['Voucher','Boleta','Respaldo','Otro'],defCat:'Voucher'}); };
     var mev2=document.getElementById('me-esventa'); if(mev2)mev2.onchange=function(){ var f=document.getElementById('me-venta-fields'); if(f)f.style.display=mev2.checked?'':'none'; };
     document.getElementById('me-guardar').onclick=function(){ movEditGuardar(a,esStock); };
     document.getElementById('me-revertir').onclick=function(){ movEditRevertir(a,esStock); };
