@@ -4668,12 +4668,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     ins(true); }
   function gmRows(mes){ // orden estable: vehiculos del mes en su orden natural, luego los manuales
     var savedByVeh={}, manual=[], excl={}, dupes=[];
+    (_gmCierre||[]).forEach(function(r){ if(r.mes===mes && r.vehiculo_id && r.excluido) excl[r.vehiculo_id]=r; }); // 1) la exclusion se calcula PRIMERO: gana sobre cualquier copia activa
     (_gmCierre||[]).forEach(function(r){ if(r.mes!==mes)return; if(!r._rid) r._rid=(r.vehiculo_id?('v:'+r.vehiculo_id):('m:'+(r.id||Math.random().toString(36).slice(2))));
-      if(r.vehiculo_id){ if(r.excluido){ excl[r.vehiculo_id]=r; return; } if(savedByVeh[r.vehiculo_id]){ dupes.push(r); return; } savedByVeh[r.vehiculo_id]=r; }
+      if(r.vehiculo_id){ if(r.excluido) return; if(excl[r.vehiculo_id]){ dupes.push(r); return; } if(savedByVeh[r.vehiculo_id]){ dupes.push(r); return; } savedByVeh[r.vehiculo_id]=r; } // copia activa de un auto excluido, o duplicado -> a la basura
       else { if(r.excluido) return; manual.push(r); } });
-    if(dupes.length){ var sbd=sbc(); dupes.forEach(function(r){ if(sbd&&r.id) sbd.from('gm_cierre').delete().eq('id',r.id).then(function(){}); }); _gmCierre=_gmCierre.filter(function(x){ return dupes.indexOf(x)<0; }); } // limpia duplicados viejos (se queda con el primero)
+    if(dupes.length){ var sbd=sbc(); dupes.forEach(function(r){ if(sbd&&r.id) sbd.from('gm_cierre').delete().eq('id',r.id).then(function(){}); }); _gmCierre=_gmCierre.filter(function(x){ return dupes.indexOf(x)<0; }); } // limpia duplicados/copias activas de excluidos
     var out=[], congelado=gmCerrado(mes)&&gmHaySnap(mes); // mes cerrado (y con foto guardada): no se auto-agregan autos nuevos de Seguimiento
-    gmVehMes(mes).forEach(function(e){ if(excl[e.id]) return; // vehiculo excluido de este mes
+    gmVehMes(mes).forEach(function(e){ if(excl[e.id]){ delete savedByVeh[e.id]; return; } // vehiculo excluido de este mes
       if(savedByVeh[e.id]){ var sr=savedByVeh[e.id]; sr.marca=e.marca; sr.modelo=e.modelo; sr.patente=e.patente; out.push(sr); delete savedByVeh[e.id]; } // refresca nombre/patente desde el vehiculo en vivo
       else if(!congelado){ out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false }); } });
     Object.keys(savedByVeh).forEach(function(k){ out.push(savedByVeh[k]); }); // guardados cuyo vehiculo no cae en el mes
