@@ -1797,7 +1797,8 @@
       sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};}),
       sb.from('config').select('*').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('gm_cierre').select('*').then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('gm_cierre_mes').select('*').then(function(r){return r;},function(){return {data:[]};})
+      sb.from('gm_cierre_mes').select('*').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('gm_log').select('*').order('created_at',{ascending:false}).then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(res){
       data=(res[0].data||[]).map(vehFromDB);
       reloj=(res[1].data||[]).map(relojFromDB);
@@ -1817,6 +1818,7 @@
       CONFIG={}; (((res[15]&&res[15].data)||[])).forEach(function(c){ CONFIG[c.clave]=c.valor; }); NAV_ORDER=(CONFIG['nav_orden']&&CONFIG['nav_orden'].length)?CONFIG['nav_orden']:null;
       _gmCierre=((res[16]&&res[16].data)||[]);
       _gmMes=((res[17]&&res[17].data)||[]);
+      _gmLog=((res[18]&&res[18].data)||[]);
     });
   }
   var CONFIG={}, NAV_ORDER=null;
@@ -4592,6 +4594,21 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   }
   // ---------- Cierre mensual · Guillermo Morales ----------
   var _gmCierre=[];
+  var _gmLog=[]; // historial de cambios del cierre GM (quien/cuando/que)
+  // registra un cambio en el historial (queda para siempre, compartido)
+  function gmLog(mes,accion,detalle){ var e={ mes:mes, accion:accion, detalle:detalle||'', autor:(window.ISP_EMAIL||''), created_at:new Date().toISOString() }; _gmLog.unshift(e); var sb=sbc(); if(sb) sb.from('gm_log').insert({ mes:e.mes, accion:e.accion, detalle:e.detalle, autor:e.autor }).then(function(r){ if(r&&r.error) console.warn('gm_log', r.error); }); }
+  function gmRowLbl(r){ if(!r)return '—'; if(r.vehiculo_id||r.marca||r.modelo) return (((r.marca||'')+' '+(r.modelo||'')).trim()||'Vehículo')+(r.patente?(' ('+r.patente+')'):''); return 'Fila manual'; }
+  function gmWho(em){ return (typeof EQUIPO!=='undefined' && EQUIPO && EQUIPO[em])||em||'—'; }
+  function gmHistFecha(s){ var d=new Date(s); if(isNaN(d.getTime()))return s||''; function p(n){return String(n).padStart(2,'0');} return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+  function gmHistModal(mes){ var list=(_gmLog||[]).filter(function(e){return e.mes===mes;}).sort(function(a,b){return (b.created_at||'').localeCompare(a.created_at||'');});
+    var filas=list.length? list.map(function(e){ return '<tr><td style="white-space:nowrap;color:#666;font-size:12px">'+escH(gmHistFecha(e.created_at))+'</td><td><b>'+escH(e.accion||'')+'</b>'+(e.detalle?(' · '+escH(e.detalle)):'')+'</td><td style="color:#444;white-space:nowrap">'+escH(gmWho(e.autor))+'</td></tr>'; }).join('') : '<tr><td colspan="3" style="text-align:center;color:#888;padding:16px">Sin cambios registrados aún para '+escH(gmMesNom(mes))+'.<br><span style="font-size:12px">(El historial se llena desde ahora, con cada vez que se agrega, quita o emite.)</span></td></tr>';
+    var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:620px;width:100%;max-height:82vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
+      '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">🕑 Historial · Cierre GM '+escH(gmMesNom(mes))+'</b><button id="gmh-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
+      '<div style="padding:8px 16px 16px"><table style="width:100%;border-collapse:collapse;font-size:13px"><tbody>'+filas.replace(/<tr>/g,'<tr style="border-bottom:1px solid var(--line,#f0f0f0)">')+'</tbody></table></div>'+
+    '</div>';
+    ov.addEventListener('click',function(ev){ if(ev.target===ov)document.body.removeChild(ov); });
+    document.body.appendChild(ov); var x=ov.querySelector('#gmh-x'); if(x)x.onclick=function(){ try{document.body.removeChild(ov);}catch(e){} }; }
   var GM_TALLAS=["S","M","L","XL"];
   var _gmMes=[]; // registro por mes: estado/OC/factura/cobro
   var GM_ESTADOS=["BORRADOR","COTIZADO","OC","FACTURADO","COBRADO"];
@@ -4653,13 +4670,19 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       if(r.vehiculo_id){ if(r.excluido){ excl[r.vehiculo_id]=r; return; } if(savedByVeh[r.vehiculo_id]){ dupes.push(r); return; } savedByVeh[r.vehiculo_id]=r; }
       else { if(r.excluido) return; manual.push(r); } });
     if(dupes.length){ var sbd=sbc(); dupes.forEach(function(r){ if(sbd&&r.id) sbd.from('gm_cierre').delete().eq('id',r.id).then(function(){}); }); _gmCierre=_gmCierre.filter(function(x){ return dupes.indexOf(x)<0; }); } // limpia duplicados viejos (se queda con el primero)
-    var out=[];
+    var out=[], emitido=gmEmitido(mes)&&gmHaySnap(mes); // una vez emitida (y con foto guardada), no se auto-agregan autos nuevos de Seguimiento
     gmVehMes(mes).forEach(function(e){ if(excl[e.id]) return; // vehiculo excluido de este mes
       if(savedByVeh[e.id]){ var sr=savedByVeh[e.id]; sr.marca=e.marca; sr.modelo=e.modelo; sr.patente=e.patente; out.push(sr); delete savedByVeh[e.id]; } // refresca nombre/patente desde el vehiculo en vivo
-      else { out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false }); } });
+      else if(!emitido){ out.push({ id:null, _rid:'v:'+e.id, _auto:true, mes:mes, vehiculo_id:e.id, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false }); } });
     Object.keys(savedByVeh).forEach(function(k){ out.push(savedByVeh[k]); }); // guardados cuyo vehiculo no cae en el mes
     manual.forEach(function(r){ out.push(r); });
     return out; }
+  function gmEmitido(mes){ return gmEstIdx(gmMesRec(mes).estado)>=1; } // COTIZADO o mas avanzado
+  function gmHaySnap(mes){ return (_gmCierre||[]).some(function(r){ return r.mes===mes && r.vehiculo_id && r.id && !r.excluido; }); } // ya se guardo la "foto" del mes (al emitir/regenerar)
+  // vehiculos GM del mes que quedaron fuera de la cotizacion ya emitida (no se agregaron solos)
+  function gmNuevosPend(mes){ if(!(gmEmitido(mes)&&gmHaySnap(mes)))return []; var saved={},excl={}; (_gmCierre||[]).forEach(function(r){ if(r.mes!==mes||!r.vehiculo_id)return; if(r.excluido)excl[r.vehiculo_id]=1; else saved[r.vehiculo_id]=1; }); return gmVehMes(mes).filter(function(e){ return !saved[e.id] && !excl[e.id]; }); }
+  // congela lo que se ve hoy: persiste cada fila auto para que el mes emitido quede fijo
+  function gmSnapshot(mes){ gmRows(mes).forEach(function(r){ if(!r.id){ if((_gmCierre||[]).indexOf(r)<0)_gmCierre.push(r); gmUpsert(r); } }); }
   function gmEnsure(rid,mes){ var r=(_gmCierre||[]).filter(function(x){return x._rid===rid && x.mes===mes;})[0]; if(r) return r;
     if(rid.indexOf('v:')===0){ var vid=rid.slice(2); var e=(data||[]).filter(function(x){return String(x.id)===vid;})[0]||{}; r={ id:null, _rid:rid, mes:mes, vehiculo_id:vid, marca:e.marca, modelo:e.modelo, patente:e.patente, talla:e.talla||'M', items:gmItemsFromVeh(e), descuento:0, cobrado:false, notas:null }; _gmCierre.push(r); return r; }
     return null; }
@@ -4697,7 +4720,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
           '</span>'+
         '</label>'+
         '<button class="btn" id="gm-add">+ Agregar vehículo</button>'+
+        '<button class="btn" id="gm-hist" title="Ver quién agregó/quitó/emitió y cuándo">🕑 Historial</button>'+
       '</div>'+
+      (function(){ var np=gmNuevosPend(mes); if(!np.length)return ''; return '<div class="gm-aviso" style="margin:8px 0;padding:8px 12px;border:1px solid #f0c36d;background:#fff8e6;border-radius:8px;font-size:13px;color:#7a5b00">⚠ La cotización de este mes ya fue emitida. Hay <b>'+np.length+'</b> vehículo(s) nuevo(s) de GM en Seguimiento que <b>no</b> se agregaron solos: '+np.map(function(e){return escH(((e.marca||'')+' '+(e.modelo||'')).trim()+(e.patente?(' '+e.patente):''));}).join(', ')+'. Para incluirlos, agrégalos manualmente o vuelve a generar la cotización.</div>'; })()+
       '<div class="gasto-resumen" style="margin:10px 0"><div><span>Vehículos</span><b>'+rows.length+'</b></div><div><span>Neto</span><b id="gm-sum-neto">'+clp(mto.neto)+'</b></div>'+(rec.iva?'<div><span>IVA 19%</span><b id="gm-sum-iva">'+clp(mto.iva)+'</b></div>':'')+'<div class="tot"><span>Total'+(rec.iva?' c/IVA':'')+'</span><b id="gm-sum-total">'+clp(mto.total)+'</b></div></div>'+
       '<div class="gm-flow">'+
         '<div class="gm-flow-top">'+
@@ -4750,21 +4775,23 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ editLive(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
     root.querySelectorAll('.gm-notas').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.notas=x.value; }); }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre de '+gmMesNom(mes)+'?'))return;
+      gmLog(mes,'quitó vehículo',gmRowLbl(r));
       if(r.vehiculo_id){ r.excluido=true; gmUpsert(r); } // vehiculo real de Seguimiento: se excluye del mes (no reaparece)
       else { var sb=sbc(); if(sb&&r.id) sb.from('gm_cierre').delete().eq('id',r.id).then(function(){}); _gmCierre=_gmCierre.filter(function(x){return x!==r;}); }
       renderCierreGM(); }; });
-    var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
+    var add=document.getElementById('gm-add'); if(add)add.onclick=function(){ var r={ id:null, _rid:'m:'+Math.random().toString(36).slice(2), mes:mes, vehiculo_id:null, marca:'', modelo:'', patente:'', talla:'M', items:{}, descuento:0, cobrado:false }; _gmCierre.push(r); gmUpsert(r); gmLog(mes,'agregó fila manual',''); renderCierreGM(); var el=root.querySelector('.gm-marca[data-rid="'+r._rid+'"]'); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } };
+    var gh=document.getElementById('gm-hist'); if(gh)gh.onclick=function(){ gmHistModal(mes); };
     var iv=document.getElementById('gm-iva'); if(iv)iv.onchange=function(){ rec.iva=iv.checked; gmMesSave(rec); renderCierreGM(); };
     var ocn=document.getElementById('gm-oc-num'); if(ocn)ocn.onchange=function(){ rec.oc_num=ocn.value; gmMesSave(rec); };
     var ocf=document.getElementById('gm-oc-fecha'); if(ocf)ocf.onchange=function(){ rec.oc_fecha=ocf.value; gmMesSave(rec); };
     var oca=document.getElementById('gm-oc-adj'); if(oca)oca.onclick=function(){ abrirGaleria('OC · '+mes, rec.oc_media, 'gm/'+mes+'/oc', 'image/*,application/pdf', function(){ gmMesSave(rec); renderCierreGM(); }); };
-    var ock=document.getElementById('gm-oc-ok'); if(ock)ock.onclick=function(){ rec.oc_num=(ocn&&ocn.value)||rec.oc_num; rec.oc_fecha=(ocf&&ocf.value)||rec.oc_fecha||todayISO(); gmAvanzar(rec,'OC'); gmMesSave(rec); renderCierreGM(); toast('✓ OC registrada'); };
+    var ock=document.getElementById('gm-oc-ok'); if(ock)ock.onclick=function(){ rec.oc_num=(ocn&&ocn.value)||rec.oc_num; rec.oc_fecha=(ocf&&ocf.value)||rec.oc_fecha||todayISO(); gmAvanzar(rec,'OC'); gmMesSave(rec); gmLog(mes,'registró OC',(rec.oc_num||'')); renderCierreGM(); toast('✓ OC registrada'); };
     var fcn=document.getElementById('gm-fc-num'); if(fcn)fcn.onchange=function(){ rec.factura_num=fcn.value; gmMesSave(rec); };
     var fcf=document.getElementById('gm-fc-fecha'); if(fcf)fcf.onchange=function(){ rec.factura_fecha=fcf.value; gmMesSave(rec); };
     var fca=document.getElementById('gm-fc-adj'); if(fca)fca.onclick=function(){ abrirGaleria('Factura · '+mes, rec.factura_media, 'gm/'+mes+'/factura', 'image/*,application/pdf', function(){ gmMesSave(rec); renderCierreGM(); }); };
-    var fck=document.getElementById('gm-fc-ok'); if(fck)fck.onclick=function(){ rec.factura_num=(fcn&&fcn.value)||rec.factura_num; rec.factura_fecha=(fcf&&fcf.value)||rec.factura_fecha||todayISO(); gmAvanzar(rec,'FACTURADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Factura registrada'); };
-    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ if(!rec.cotiz_num) rec.cotiz_num=gmNextCotizNum(); gmImprimir(mes,rows,mto,rec.cotiz_num); rec.cotiz_fecha=todayISO(); rec.cotiz_total=mto.total; gmAvanzar(rec,'COTIZADO'); gmMesSave(rec); renderCierreGM(); };
-    var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ if(gmEstIdx(rec.estado)>=4){ toast('Este mes ya está cobrado'); return; } var monto=mto.total; if(monto<=0){ toast('No hay monto por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(monto)+(rec.iva?' (IVA incluido)':'')+'?\nQueda como COBRO en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:monto, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)'+(rec.factura_num?(' · Factura '+rec.factura_num):''), ref_tipo:'CIERRE GM', ref_num:(rec.factura_num||null) }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); rec.cobro_fecha=todayISO(); rec.cobro_monto=monto; gmAvanzar(rec,'COBRADO'); gmMesSave(rec); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(monto)); };
+    var fck=document.getElementById('gm-fc-ok'); if(fck)fck.onclick=function(){ rec.factura_num=(fcn&&fcn.value)||rec.factura_num; rec.factura_fecha=(fcf&&fcf.value)||rec.factura_fecha||todayISO(); gmAvanzar(rec,'FACTURADO'); gmMesSave(rec); gmLog(mes,'registró factura',(rec.factura_num||'')); renderCierreGM(); toast('✓ Factura registrada'); };
+    var pr=document.getElementById('gm-print'); if(pr)pr.onclick=function(){ var yaEmit=gmEmitido(mes); if(!rec.cotiz_num) rec.cotiz_num=gmNextCotizNum(); gmImprimir(mes,rows,mto,rec.cotiz_num); rec.cotiz_fecha=todayISO(); rec.cotiz_total=mto.total; gmAvanzar(rec,'COTIZADO'); gmMesSave(rec); gmSnapshot(mes); gmLog(mes,(yaEmit?'re-generó cotización':'emitió cotización'),'N°'+rec.cotiz_num+' · '+rows.length+' vehículos · '+clp(mto.total)); renderCierreGM(); };
+    var cbb=document.getElementById('gm-cobrar'); if(cbb)cbb.onclick=function(){ if(gmEstIdx(rec.estado)>=4){ toast('Este mes ya está cobrado'); return; } var monto=mto.total; if(monto<=0){ toast('No hay monto por cobrar'); return; } if(!confirm('Registrar el cobro del mes '+mes+' por '+clp(monto)+(rec.iva?' (IVA incluido)':'')+'?\nQueda como COBRO en Movimientos.'))return; registrarAccion({ tipo:'COBRO', fecha:todayISO(), monto:monto, descripcion:'Cierre GM '+mes+' · '+rows.filter(function(r){return gmValor(r)>0;}).length+' vehículo(s)'+(rec.factura_num?(' · Factura '+rec.factura_num):''), ref_tipo:'CIERRE GM', ref_num:(rec.factura_num||null) }).then(function(){ pintarMovimientos(); }); rows.forEach(function(r){ if(!r.cobrado && gmValor(r)>0){ var rr=gmEnsure(r._rid,mes); rr.cobrado=true; gmUpsert(rr); } }); rec.cobro_fecha=todayISO(); rec.cobro_monto=monto; gmAvanzar(rec,'COBRADO'); gmMesSave(rec); gmLog(mes,'registró cobro',clp(monto)); renderCierreGM(); toast('✓ Cobro del mes registrado · '+clp(monto)); };
     var _ngw=root.querySelector('.gm-wrap'); if(_ngw){ _ngw.scrollLeft=_psx; _ngw.scrollTop=_psy; } if(_pwy) try{ window.scrollTo(0,_pwy); }catch(e){}
   }
   function gmImprimir(mes,rows,mto,num){ var m=(typeof mto==='number')?{neto:mto,iva:0,total:mto}:(mto||{neto:0,iva:0,total:0}); var f=todayISO().split('-'), fechaTxt=f[2]+'/'+f[1]+'/'+f[0]; num=num||1;
