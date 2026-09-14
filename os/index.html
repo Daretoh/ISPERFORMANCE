@@ -1296,7 +1296,7 @@
       <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Historial de asistencia <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— horas por trabajador · elige el mes</span></h3><div class="pfilter" id="asis-mes" style="margin:6px 0 12px"></div><div id="asis-resumen" style="margin-top:4px"><div class="col-empty">Cargando…</div></div><details class="fsec" style="margin-top:14px"><summary>Ver todos los marcajes del mes</summary><div id="asis-hist" style="margin-top:10px"></div></details></div>
       <div class="dash-grid">
         <div class="card" id="trab-card">
-          <h3>Trabajadores</h3>
+          <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Trabajadores <button type="button" id="cargos-btn" class="btn sm" style="margin-left:auto;white-space:nowrap">💼 Cargos y tratos</button></h3>
           <form id="trab-form" class="row c2" autocomplete="off" style="margin:6px 0 14px">
             <label class="f" style="grid-column:1/-1"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
             <label class="f" style="grid-column:1/-1"><span class="lab">RUT</span><input name="tRut" required inputmode="text" placeholder="16331734-6"></label>
@@ -2321,14 +2321,56 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     if(open)html+='</div>';
     el.innerHTML=html;
   }
+  // ---------- Nucleo compartido RRHH + Remuneraciones ----------
+  var _cargos=[]; // catalogo de cargos {id,nombre,trato}
+  // Title Case respetando acentos: "juan PÉREZ" -> "Juan Pérez"
+  function titleCase(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim().replace(/(^|[\s\-\/])([a-záéíóúñü])/g,function(m,p,c){ return p+c.toUpperCase(); }); }
+  // clave de deduplicacion: minusculas, sin acentos, espacios colapsados
+  function normNom(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+  function cargoDe(nombreCargo){ var n=normNom(nombreCargo); return (_cargos||[]).filter(function(c){ return normNom(c.nombre)===n; })[0]||null; }
+  function tratoDe(nombreCargo){ var c=cargoDe(nombreCargo); return c?(+c.trato||0):0; }
+  // valor hora del trabajador: override propio (tabla valor_hora) -> trato/8 del cargo -> valor hora global spot
+  function valorHoraDe(trab){ if(!trab)return (+VH['__SPOT__']||0);
+    var ov=VH[trab.nombre]; if(ov!=null && ov!=='' && +ov>0) return +ov;
+    var tr=tratoDe(trab.cargo); if(tr>0) return Math.round(tr/8);
+    return (+VH['__SPOT__']||0); }
+  function trabActivo(t){ return (t&&t.estado)!=='inactivo'; }
+  function esFijo(t){ return (t&&t.tipo_pago)==='contrato'; }
+  function cargoUpsert(c){ var sb=sbc(); if(!sb)return; var pay={nombre:(c.nombre||''),trato:(+c.trato||0)};
+    if(c.id){ sb.from('cargo').update(pay).eq('id',c.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); return; }
+    if(c._ins)return; c._ins=true; sb.from('cargo').insert(pay).select().single().then(function(r){ c._ins=false; if(r&&r.data){ c.id=r.data.id; } else toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); }
+  function abrirCargos(){
+    var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    function findC(rid){ return (_cargos||[]).filter(function(x){return x._rid===rid;})[0]; }
+    function filas(){ return (_cargos||[]).slice().sort(function(a,b){return normNom(a.nombre)<normNom(b.nombre)?-1:1;}).map(function(c){ if(!c._rid)c._rid='c'+Math.random().toString(36).slice(2);
+      return '<tr data-rid="'+av(c._rid)+'" style="border-bottom:1px solid var(--line,#f0f0f0)">'+
+        '<td style="padding:4px 6px"><input class="cg-nom" value="'+av(c.nombre||'')+'" placeholder="Ej: Lavador" style="width:100%;box-sizing:border-box"></td>'+
+        '<td style="padding:4px 6px"><input class="cg-trato" type="number" min="0" step="1000" value="'+(+c.trato||0)+'" style="width:110px" title="Pago por jornada de 8h"></td>'+
+        '<td style="padding:4px 6px;white-space:nowrap;color:#666;font-size:12px">= '+clp(Math.round((+c.trato||0)/8))+'/h</td>'+
+        '<td style="padding:4px 6px"><button class="btn sm cg-del" title="Quitar">✕</button></td></tr>'; }).join(''); }
+    function render(){ ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:560px;width:100%;max-height:82vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
+        '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">💼 Cargos y tratos</b><button id="cg-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
+        '<div style="padding:10px 16px 16px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#888;font-size:11px"><th style="padding:0 6px">Cargo</th><th style="padding:0 6px">Trato (8h)</th><th style="padding:0 6px">Valor hora</th><th></th></tr></thead><tbody id="cg-body">'+(filas()||'<tr><td colspan="4" style="color:#888;padding:12px;text-align:center">Sin cargos. Agrega el primero.</td></tr>')+'</tbody></table>'+
+        '<button id="cg-add" class="btn sm" style="margin-top:10px">+ Agregar cargo</button>'+
+        '<p class="hint" style="display:block;margin-top:10px;font-size:11.5px;color:var(--ink-faint)">El <b>trato</b> es el pago por una jornada de 8h. El <b>valor hora</b> se calcula solo (trato ÷ 8) y alimenta Remuneraciones.</p></div></div>';
+      ov.querySelector('#cg-x').onclick=close;
+      ov.querySelector('#cg-add').onclick=function(){ _cargos.push({_rid:'c'+Math.random().toString(36).slice(2),nombre:'',trato:0}); render(); var ins=ov.querySelectorAll('.cg-nom'); if(ins.length)ins[ins.length-1].focus(); };
+      ov.querySelectorAll('.cg-nom').forEach(function(i){ i.onchange=function(){ var c=findC(i.closest('tr').dataset.rid); if(!c)return; c.nombre=titleCase(i.value.trim()); cargoUpsert(c); render(); }; });
+      ov.querySelectorAll('.cg-trato').forEach(function(i){ i.onchange=function(){ var c=findC(i.closest('tr').dataset.rid); if(!c)return; c.trato=Math.max(0,parseInt(i.value,10)||0); cargoUpsert(c); render(); }; });
+      ov.querySelectorAll('.cg-del').forEach(function(b){ b.onclick=function(){ var c=findC(b.closest('tr').dataset.rid); if(!c)return; if(c.nombre && !confirm('¿Quitar el cargo «'+c.nombre+'»?'))return; var sb=sbc(); if(sb&&c.id)sb.from('cargo').delete().eq('id',c.id).then(function(){}); _cargos=_cargos.filter(function(x){return x!==c;}); render(); }; });
+    }
+    function close(){ try{document.body.removeChild(ov);}catch(e){} }
+    ov.addEventListener('click',function(ev){ if(ev.target===ov)close(); });
+    document.body.appendChild(ov); render(); }
   // ---------- Asistencia (reloj entrada/salida por RUT) ----------
   var _trab=[], _asis=[], _kioBuf="";
   function cargarAsistencia(cb){
     var sb=sbc(); if(!sb){ if(cb)cb(); return; }
     Promise.all([
       sb.from('trabajadores').select('*').order('nombre'),
-      sb.from('asistencia').select('*').order('ts',{ascending:false}).limit(80)
-    ]).then(function(res){ if(res[0].data)_trab=res[0].data; if(res[1].data)_asis=res[1].data; if(cb)cb(); }, function(){ if(cb)cb(); });
+      sb.from('asistencia').select('*').order('ts',{ascending:false}).limit(80),
+      sb.from('cargo').select('*').order('nombre').then(function(r){return r;},function(){return {data:[]};})
+    ]).then(function(res){ if(res[0].data)_trab=res[0].data; if(res[1].data)_asis=res[1].data; if(res[2]&&res[2].data)_cargos=res[2].data; if(cb)cb(); }, function(){ if(cb)cb(); });
   }
   function renderAsistencia(){ cargarAsistencia(pintarAsistencia); }
   function esHoy(ts){ var d=new Date(ts), n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
@@ -2577,12 +2619,13 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   (function(){
     var tf=document.getElementById("trab-form");
     if(tf) tf.addEventListener("submit",function(ev){ ev.preventDefault(); var sb=sbc(); if(!sb)return;
-      var nombre=tf.tNombre.value.trim();
+      var nombre=titleCase(tf.tNombre.value.trim());
       var p=parseRUT(tf.tRut.value);
       if(!nombre){ toast("Falta el nombre"); return; }
       if(!p){ toast("RUT inválido. Escríbelo así: 16331734-6"); return; }
       if(_trab.some(function(x){return String(x.rut4)===p.rut4;})){ toast("⚠ Ya hay alguien con esos últimos 4 dígitos ("+p.rut4+")"); return; }
       sb.from("trabajadores").insert({nombre:nombre,rut:p.fmt,rut4:p.rut4}).select().single().then(function(r){ if(r.error){ console.error("trabajadores insert:",r.error); toast("⚠ No se pudo guardar: "+(r.error.message||r.error.hint||r.error.details||"error desconocido")); return; } _trab.push(r.data); _trab.sort(function(a,b){return (a.nombre||"")<(b.nombre||"")?-1:1;}); tf.reset(); pintarAsistencia(); toast("✓ Trabajador agregado · marca con "+p.rut4); }); });
+    var cgb=document.getElementById("cargos-btn"); if(cgb) cgb.addEventListener("click",abrirCargos);
     var kb=document.getElementById("asis-kiosco-btn"); if(kb) kb.addEventListener("click",kioOpen);
     var kc=document.getElementById("kiosco-close"); if(kc) kc.addEventListener("click",kioClose);
     var cn=document.getElementById("kio-cancel"); if(cn) cn.addEventListener("click",kioReset);
