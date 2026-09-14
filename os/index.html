@@ -2336,6 +2336,56 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     return (+VH['__SPOT__']||0); }
   function trabActivo(t){ return (t&&t.estado)!=='inactivo'; }
   function esFijo(t){ return (t&&t.tipo_pago)==='contrato'; }
+  function tbadge(txt,bg,fg){ return '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:'+bg+';color:'+(fg||'#fff')+';margin-left:4px;vertical-align:middle">'+txt+'</span>'; }
+  function trabUpsert(t){ var sb=sbc(); if(!sb)return; var pay={ nombre:t.nombre, cargo:t.cargo||null, estado:t.estado||'activo', tipo_pago:t.tipo_pago||'hora', jornada_horas:((t.jornada_horas!=null&&t.jornada_horas!=='')?+t.jornada_horas:null), chofer:!!t.chofer, fecha_ingreso:t.fecha_ingreso||null, telefono:t.telefono||null, email:t.email||null, talla_botas:t.talla_botas||null, talla_ropa:t.talla_ropa||null, afp:t.afp||null, salud:t.salud||null, direccion:t.direccion||null, emergencia:t.emergencia||null, notas:t.notas||null };
+    sb.from('trabajadores').update(pay).eq('id',t.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo guardar (¿corriste el SQL 47?)'); }); }
+  function abrirFichaTrab(id){ var t=(_trab||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!t)return;
+    var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    function opCargos(cur){ var o='<option value="">— sin cargo —</option>'; (_cargos||[]).slice().sort(function(a,b){return normNom(a.nombre)<normNom(b.nombre)?-1:1;}).forEach(function(c){ o+='<option value="'+av(c.nombre)+'"'+(normNom(c.nombre)===normNom(cur||'')?' selected':'')+'>'+escH(c.nombre)+' ('+clp(Math.round((+c.trato||0)/8))+'/h)</option>'; }); return o; }
+    function fld(lab,inner){ return '<label class="f" style="display:block"><span class="lab">'+lab+'</span>'+inner+'</label>'; }
+    var inS='style="width:100%;box-sizing:border-box"';
+    ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:640px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
+      '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">Ficha · '+escH(t.nombre||'')+'</b><span class="rut" style="color:#888;font-size:12px">'+escH(t.rut||('••'+t.rut4))+'</span><button id="ft-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
+      '<div style="padding:14px 16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px 12px">'+
+        '<div style="grid-column:1/-1">'+fld('Nombre','<input id="ft-nombre" value="'+av(t.nombre||'')+'" '+inS+'>')+'</div>'+
+        fld('Cargo','<select id="ft-cargo" '+inS+'>'+opCargos(t.cargo)+'</select>')+
+        fld('Estado','<select id="ft-estado" '+inS+'><option value="activo"'+(trabActivo(t)?' selected':'')+'>Activo</option><option value="inactivo"'+(!trabActivo(t)?' selected':'')+'>Inactivo</option></select>')+
+        fld('Tipo de pago','<select id="ft-tipo" '+inS+'><option value="hora"'+(!esFijo(t)?' selected':'')+'>Spot (por hora)</option><option value="contrato"'+(esFijo(t)?' selected':'')+'>Contrato fijo</option></select>')+
+        '<div id="ft-jornada-row"'+(esFijo(t)?'':' hidden')+'>'+fld('Jornada normal (h/día)','<input id="ft-jornada" type="number" min="0" step="0.5" value="'+(t.jornada_horas!=null?t.jornada_horas:'')+'" placeholder="9" '+inS+'>')+'</div>'+
+        '<div style="grid-column:1/-1"><label style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><input id="ft-chofer" type="checkbox"'+(t.chofer?' checked':'')+'> Es chofer (habilita vueltas en Remuneraciones)</label></div>'+
+        fld('Fecha de ingreso','<input id="ft-fing" type="date" value="'+av(t.fecha_ingreso||'')+'" '+inS+'>')+
+        fld('Teléfono','<input id="ft-tel" value="'+av(t.telefono||'')+'" '+inS+'>')+
+        fld('Email','<input id="ft-email" value="'+av(t.email||'')+'" '+inS+'>')+
+        fld('Dirección','<input id="ft-dir" value="'+av(t.direccion||'')+'" '+inS+'>')+
+        fld('AFP','<input id="ft-afp" value="'+av(t.afp||'')+'" '+inS+'>')+
+        fld('Salud (Fonasa/Isapre)','<input id="ft-salud" value="'+av(t.salud||'')+'" '+inS+'>')+
+        fld('Talla ropa','<input id="ft-tropa" value="'+av(t.talla_ropa||'')+'" '+inS+'>')+
+        fld('Talla botas','<input id="ft-tbotas" value="'+av(t.talla_botas||'')+'" '+inS+'>')+
+        '<div style="grid-column:1/-1">'+fld('Contacto de emergencia','<input id="ft-emer" value="'+av(t.emergencia||'')+'" '+inS+'>')+'</div>'+
+        '<div style="grid-column:1/-1">'+fld('Notas','<textarea id="ft-notas" rows="2" '+inS+'>'+escH(t.notas||'')+'</textarea>')+'</div>'+
+      '</div></div>';
+    function close(){ try{document.body.removeChild(ov);}catch(e){} }
+    ov.addEventListener('click',function(ev){ if(ev.target===ov)close(); });
+    document.body.appendChild(ov);
+    var g=function(i){ return ov.querySelector(i); };
+    g('#ft-x').onclick=close;
+    function save(){ trabUpsert(t); }
+    g('#ft-nombre').onchange=function(){ t.nombre=titleCase(this.value.trim()); save(); pintarAsistencia(); };
+    g('#ft-cargo').onchange=function(){ t.cargo=this.value||null; save(); pintarAsistencia(); };
+    g('#ft-estado').onchange=function(){ t.estado=this.value; save(); pintarAsistencia(); };
+    g('#ft-tipo').onchange=function(){ t.tipo_pago=this.value; g('#ft-jornada-row').hidden=(this.value!=='contrato'); save(); pintarAsistencia(); };
+    g('#ft-jornada').onchange=function(){ t.jornada_horas=(this.value===''?null:Math.max(0,parseFloat(this.value)||0)); save(); };
+    g('#ft-chofer').onchange=function(){ t.chofer=this.checked; save(); pintarAsistencia(); };
+    g('#ft-fing').onchange=function(){ t.fecha_ingreso=this.value||null; save(); };
+    g('#ft-tel').onchange=function(){ t.telefono=this.value.trim(); save(); };
+    g('#ft-email').onchange=function(){ t.email=this.value.trim(); save(); };
+    g('#ft-dir').onchange=function(){ t.direccion=this.value.trim(); save(); };
+    g('#ft-afp').onchange=function(){ t.afp=this.value.trim(); save(); };
+    g('#ft-salud').onchange=function(){ t.salud=this.value.trim(); save(); };
+    g('#ft-tropa').onchange=function(){ t.talla_ropa=this.value.trim(); save(); };
+    g('#ft-tbotas').onchange=function(){ t.talla_botas=this.value.trim(); save(); };
+    g('#ft-emer').onchange=function(){ t.emergencia=this.value.trim(); save(); };
+    g('#ft-notas').onchange=function(){ t.notas=this.value.trim(); save(); }; }
   function cargoUpsert(c){ var sb=sbc(); if(!sb)return; var pay={nombre:(c.nombre||''),trato:(+c.trato||0)};
     if(c.id){ sb.from('cargo').update(pay).eq('id',c.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); return; }
     if(c._ins)return; c._ins=true; sb.from('cargo').insert(pay).select().single().then(function(r){ c._ins=false; if(r&&r.data){ c.id=r.data.id; } else toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); }
@@ -2377,7 +2427,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function hhmm(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
   function pintarAsistencia(){
     var tl=document.getElementById("trab-list");
-    if(tl){ tl.innerHTML=_trab.length?_trab.map(function(t){ return '<div class="asis-row"><span><b>'+escH(t.nombre)+'</b> <span class="rut">marca ••'+escH(t.rut4)+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
+    if(tl){ var arr=_trab.slice().sort(function(a,b){ var ai=trabActivo(a)?0:1, bi=trabActivo(b)?0:1; if(ai!==bi)return ai-bi; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
+      tl.innerHTML=arr.length?arr.map(function(t){ var vh=valorHoraDe(t);
+        var badges=(esFijo(t)?tbadge('Fijo','#7c3aed'):tbadge('Spot','#0d3b66'))+(t.chofer?tbadge('🚚','#e8e8e8','#333'):'')+(trabActivo(t)?'':tbadge('inactivo','#9aa0a6'));
+        var meta=(t.cargo?escH(t.cargo)+' · ':'')+(vh?clp(vh)+'/h':'sin valor hora')+' · marca ••'+escH(t.rut4);
+        return '<div class="asis-row"'+(trabActivo(t)?'':' style="opacity:.55"')+'><span class="trab-open" data-tid="'+t.id+'" style="cursor:pointer;flex:1"><b>'+escH(t.nombre)+'</b> '+badges+'<br><span class="rut" style="font-size:11px">'+meta+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
+    document.querySelectorAll("#trab-list .trab-open").forEach(function(s){ s.addEventListener("click",function(){ abrirFichaTrab(s.dataset.tid); }); });
     document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
     cargarAsisResumen(); cargarAsisIncompletos();
   }
