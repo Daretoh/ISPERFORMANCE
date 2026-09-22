@@ -3038,10 +3038,12 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     function _fila(it){ var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*(+it.descPct||0)/100); _idx++;
       return '<tr><td>'+_idx+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+((+it.descPct||0)?(+it.descPct+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>'; }
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
-    if(vehs){ vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return;
-        var hdr=((v.veh||"Vehículo")+(v.patente?(" · "+v.patente):"")+(v.talla?(" · Talla "+v.talla):"")+(v.anio?(" · "+v.anio):""));
-        filasHTML+='<tr><td colspan="7" style="background:#f0ece6;color:#111;font-weight:800;border-left:3px solid #FF6B00;padding:7px 8px">'+escH(hdr)+'</td></tr>';
-        its.forEach(function(it){ filasHTML+=_fila(it); }); });
+    if(vehs){ vehs.forEach(function(v,vi){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return;
+        var titulo=(v.veh||"Vehículo "+(vi+1));
+        var meta=[ (v.patente?("Patente "+v.patente):""), (v.talla?("Talla "+v.talla):""), (v.anio||"") ].filter(Boolean).join("  ·  ");
+        filasHTML+='<tr><td colspan="7" style="background:#111;color:#fff;font-weight:800;padding:9px 10px;border-left:3px solid #FF6B00;font-size:12.5px">'+escH((vi+1)+". "+titulo)+(meta?('<span style="font-weight:600;color:#f0a868;margin-left:10px;font-size:11px">'+escH(meta)+'</span>'):"")+'</td></tr>';
+        var vsub=0; its.forEach(function(it){ filasHTML+=_fila(it); vsub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); });
+        filasHTML+='<tr><td colspan="6" class="r" style="font-weight:700;color:#555;padding:6px 8px;background:#f5f2ee">Subtotal '+escH(titulo)+'</td><td class="r" style="font-weight:800;padding:6px 8px;background:#f5f2ee">'+clp(vsub)+'</td></tr>'; });
     } else { (c.items||[]).filter(function(it){ return it && (((it.desc||"").trim()) || (+it.precio||0) || (+it.cant||0)); }).forEach(function(it){ filasHTML+=_fila(it); }); }
     var da=+c.desc_adic_pct||0, daval=Math.round(sub*da/100), neto=sub-daval;
     var ivaVal=c.con_iva?Math.round(neto*0.19):0, total=neto+ivaVal;
