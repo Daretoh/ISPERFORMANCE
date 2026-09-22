@@ -2927,8 +2927,17 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var ov=document.createElement("div"); ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
     function lista(mes){ _gmiRows=gmRows(mes).filter(function(r){ return r.vehiculo_id||r.marca||r.patente; });
       if(!_gmiRows.length) return '<div style="color:#888;padding:14px;text-align:center">Sin vehículos de GM en '+escH(gmMesNom(mes))+'.</div>';
-      return _gmiRows.map(function(r){ var val=(typeof gmValor==="function")?gmValor(r):0; var nom=((r.marca||"")+" "+(r.modelo||"")).trim()||"Vehículo";
-        return '<label style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line,#f0f0f0);font-size:13px;cursor:pointer"><input type="checkbox" class="gmi-chk" data-rid="'+av(r._rid)+'" checked><span style="flex:1"><b>'+escH(nom)+'</b> · '+escH(r.patente||"—")+' · Talla '+escH(r.talla||"M")+'</span><b>'+clp(val)+'</b></label>'; }).join(""); }
+      var body=_gmiRows.map(function(r){ var val=(typeof gmValor==="function")?gmValor(r):0; var nom=((r.marca||"")+" "+(r.modelo||"")).trim()||"Vehículo";
+        return '<tr class="gmi-row" data-rid="'+av(r._rid)+'" style="border-bottom:1px solid var(--line,#eee);cursor:pointer">'+
+          '<td style="padding:8px 6px;width:32px;text-align:center"><input type="checkbox" class="gmi-chk" data-rid="'+av(r._rid)+'" checked></td>'+
+          '<td style="padding:8px 6px"><b>'+escH(nom)+'</b></td>'+
+          '<td style="padding:8px 6px;white-space:nowrap;color:var(--ink-muted)">'+escH(r.patente||"—")+'</td>'+
+          '<td style="padding:8px 6px;white-space:nowrap;text-align:center">'+escH(r.talla||"M")+'</td>'+
+          '<td style="padding:8px 6px;white-space:nowrap;text-align:right;font-weight:700">'+clp(val)+'</td>'+
+        '</tr>'; }).join("");
+      return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
+        '<thead><tr style="text-align:left;color:#888;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid var(--line,#ddd)"><th></th><th style="padding:5px 6px">Vehículo</th><th style="padding:5px 6px">Patente</th><th style="padding:5px 6px;text-align:center">Talla</th><th style="padding:5px 6px;text-align:right">Valor</th></tr></thead>'+
+        '<tbody>'+body+'</tbody></table></div>'; }
     function render(mes){ ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:600px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
         '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">📋 Traer autos de Cierre GM</b><button id="gmi-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
         '<div style="padding:12px 16px 16px">'+
@@ -2939,6 +2948,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
       ov.querySelector("#gmi-x").onclick=close;
       ov.querySelector("#gmi-prev").onclick=function(){ render(gmMesShift(mes,-1)); };
       ov.querySelector("#gmi-next").onclick=function(){ render(gmMesShift(mes,1)); };
+      ov.querySelectorAll(".gmi-row").forEach(function(tr){ tr.onclick=function(ev){ if(ev.target&&ev.target.classList.contains("gmi-chk"))return; var c=tr.querySelector(".gmi-chk"); if(c)c.checked=!c.checked; }; });
       ov.querySelector("#gmi-all").onclick=function(){ var cs=ov.querySelectorAll(".gmi-chk"), any=Array.prototype.some.call(cs,function(c){return !c.checked;}); cs.forEach(function(c){ c.checked=any; }); };
       ov.querySelector("#gmi-add").onclick=function(){ var rids=Array.prototype.slice.call(ov.querySelectorAll(".gmi-chk:checked")).map(function(c){return c.dataset.rid;});
         if(!rids.length){ toast("Marca al menos un vehículo"); return; }
