@@ -98,32 +98,6 @@
   .view.active{display:block;animation:fade .22s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
   @media (prefers-reduced-motion:reduce){.view.active{animation:none;}}
-  /* ---- Planificación ---- */
-  .plan-prio{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:20px 0 8px;padding-left:10px;border-left:4px solid var(--line);color:var(--ink-muted);}
-  .plan-prio.p-ALTA{border-left-color:var(--crit);color:var(--crit);}
-  .plan-prio.p-MEDIA{border-left-color:var(--warn);color:var(--warn);}
-  .plan-prio.p-BAJA{border-left-color:var(--ok);color:var(--ok);}
-  .plan-card{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;background:var(--card,#fff);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;flex-wrap:wrap;}
-  .plan-card.done{opacity:.55;}
-  .plan-card.done .plan-tit{text-decoration:line-through;}
-  .plan-main{flex:1 1 260px;min-width:0;}
-  .plan-tit{font-weight:700;font-size:14.5px;}
-  .plan-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:5px;}
-  .plan-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;background:var(--accent-soft,#f0f0f5);color:var(--accent-ink,#555);padding:2px 8px;border-radius:20px;}
-  .plan-who{font-size:11.5px;font-weight:600;color:var(--ink);}
-  .plan-who.none{color:var(--ink-muted);font-weight:400;font-style:italic;}
-  .plan-venc{font-size:11.5px;color:var(--ink-muted);}
-  .plan-venc.pronto{color:var(--warn);font-weight:700;}
-  .plan-venc.venc{color:var(--crit);font-weight:800;}
-  .plan-costo{font-size:11px;font-weight:700;color:var(--accent-ink,#666);background:var(--accent-soft,#f0f0f5);padding:2px 8px;border-radius:20px;}
-  .plan-desc{font-size:12px;color:var(--ink-muted);margin-top:5px;}
-  .plan-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-  .plan-estados{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
-  .plan-estados .pe{border:none;background:none;font:inherit;font-size:11px;padding:5px 9px;cursor:pointer;color:var(--ink-muted);border-right:1px solid var(--line);}
-  .plan-estados .pe:last-child{border-right:none;}
-  .plan-estados .pe.on{background:var(--accent-ink,#333);color:#fff;font-weight:700;}
-  .plan-edit,.plan-del{border:1px solid var(--line);background:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--ink-muted);font-size:13px;}
-  .plan-del:hover{color:var(--crit);border-color:var(--crit);}
 
   .vhead{margin:2px 0 18px;}
   .vhead .eye{font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:7px;}
@@ -577,22 +551,6 @@
   .gadj{display:inline-flex;align-items:center;gap:4px;vertical-align:middle;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink-2);border-radius:999px;padding:3px 9px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px;}
   .gadj:hover{background:var(--accent-soft);color:var(--accent-ink);}
   /* Químicos / diluciones */
-  .qui-cat{font:800 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin:22px 0 11px;padding-bottom:7px;border-bottom:1px solid var(--line);}
-  .qui-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;}
-  @media (max-width:760px){.qui-grid{grid-template-columns:1fr;}}
-  .qui-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;box-shadow:var(--shadow);}
-  .qui-card .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;}
-  .qui-card .prod{font-weight:800;font-size:15px;letter-spacing:-.01em;}
-  .qui-card .marca{font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);}
-  .qui-card .uso{color:var(--ink-2);font-size:13px;margin:5px 0 10px;}
-  .qui-dils{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px;}
-  .qui-dil{font:700 12px/1 var(--sans);padding:5px 10px;border-radius:8px;white-space:nowrap;}
-  .qui-dil.n{background:var(--ok-soft);color:var(--ok);}
-  .qui-dil.a{background:var(--crit-soft);color:var(--crit);}
-  .qui-dil.dur{background:var(--info-soft);color:var(--info);}
-  .qui-meta{font-size:12.5px;color:var(--ink-muted);display:flex;flex-direction:column;gap:4px;}
-  .qui-meta b{color:var(--ink-2);font-weight:700;}
-  .qui-meta .nota b{color:var(--warn);}
   /* Asistencia: gestión + kiosco */
   .asis-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;}
   .asis-row .rut{font:700 11px/1 var(--mono);color:var(--ink-faint);}
@@ -616,6 +574,36 @@
   .kio-mark.out{background:#111;color:#fff;}
   .kio-cancel{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:12px;padding:12px 18px;font:700 14px var(--sans);cursor:pointer;}
   .kio-check{font-size:72px;line-height:1;margin-bottom:10px;}
+  /* ---- RRHH + Remuneraciones ---- */
+  #view-rrhh .card,.rh-body .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;}
+  #view-rrhh .dash-grid{grid-template-columns:1fr;margin-top:0;}
+  .rh-body .card h3{font:800 12px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);}
+  .rh-chip{display:inline-flex;align-items:center;gap:4px;font:700 11px/1 var(--sans);padding:5px 9px;border-radius:999px;white-space:nowrap;}
+  .rh-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .rh-sub{font-size:11.5px;color:var(--ink-muted);font-weight:500;}
+  .rh-doc{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:12px 14px;margin-top:10px;}
+  .rh-top{display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .rh-nm{flex:1;font-weight:750;font-size:14px;min-width:0;}
+  .rh-bar{height:5px;background:var(--surface-2);border-radius:99px;margin-top:9px;overflow:hidden;} .rh-bar i{display:block;height:100%;background:var(--ok);border-radius:99px;}
+  .rh-pers{display:flex;align-items:center;gap:8px;padding:8px 4px;border-top:1px solid var(--line);cursor:pointer;} .rh-pers:hover{background:var(--surface-2);}
+  .rh-pnm{flex:1;font-size:13px;font-weight:600;} .rh-clip{font-size:11.5px;color:var(--ink-muted);}
+  .remu-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .remu-bar .btn{padding:9px 13px;}
+  .remu-sem{flex:1;min-width:150px;text-align:center;display:flex;flex-direction:column;gap:3px;} .remu-sem b{font:800 13px/1 var(--mono);color:var(--accent-ink);text-transform:uppercase;letter-spacing:.06em;} .remu-sem span{font-size:13px;color:var(--ink-2);}
+  .remu-total{display:flex;justify-content:space-between;align-items:center;background:var(--accent-soft,rgba(255,107,0,.1));border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;} .remu-total span{font-weight:650;color:var(--accent-ink);} .remu-total b{font:800 21px/1 var(--sans);color:var(--accent-ink);}
+  .remu-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:14px;}
+  @media (max-width:640px){.remu-dias{grid-template-columns:repeat(4,1fr);}}
+  .rd-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;text-align:center;cursor:pointer;} .rd-card:hover{border-color:var(--accent);}
+  .rd-card.hoy{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;} .rd-card.cero{opacity:.55;}
+  .rd-card .d{font-size:11.5px;color:var(--ink-muted);} .rd-card .v{font-weight:800;font-size:13px;margin-top:4px;} .rd-card .h{font-size:11px;color:var(--ink-muted);margin-top:2px;}
+  .remu-tbl td{vertical-align:top;}
+  .rm-day{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line);}
+  .rm-dcol{display:flex;flex-direction:column;gap:4px;align-items:flex-end;width:150px;flex:0 0 auto;}
+  .rm-dcol input{width:100%;box-sizing:border-box;font:600 13px var(--sans);padding:6px 8px;border:1px solid var(--line-strong);border-radius:8px;background:var(--ground);color:var(--ink);text-align:right;}
+  .rm-dcol input.rm-dobs{font-weight:400;font-size:12px;text-align:left;}
+  .rm-real.aj{color:var(--warn);font-weight:700;text-decoration:line-through;}
+  .rm-lin{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;} .rm-lin.tot{font-size:14.5px;border-bottom:none;} .rm-lin.tot b{color:var(--accent-ink);}
+  .rm-it{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);}
   /* Modo tablet (usuario kiosco): oculta gestión de trabajadores y el botón visible de salir */
   body.kiosco-user #trab-card,body.kiosco-user #asis-resumen-card,body.kiosco-user #asis-abiertos-card{display:none!important;}
   body.kiosco-user #kiosco-close{display:none!important;}
@@ -919,12 +907,21 @@
         <button data-view="gm"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cierre GM</button>
         <button data-view="cc"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/></svg>Cierres cliente</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
-        <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
-        <button data-view="quimicos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>Químicos</button>
         <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
         <button data-view="admin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">RRHH</div>
+        <button data-view="rrhh" data-seg="trab"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Trabajadores</button>
+        <button data-view="rrhh" data-seg="doc"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>Documentación</button>
+        <button data-view="rrhh" data-seg="capacit"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg>Capacitaciones</button>
+        <button data-view="rrhh" data-seg="finiquito"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>Finiquitos</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Remuneraciones</div>
+        <button data-view="remu"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>Remuneraciones</button>
       </div>
     </nav>
     <div class="side-foot">
@@ -1111,32 +1108,6 @@
     </section>
 
     <!-- ============ PLANIFICACIÓN ============ -->
-    <section class="view" id="view-plan">
-      <div class="vhead"><div class="eye">Gestión</div><h1>Planificación</h1></div>
-      <div id="plan-kpis"></div>
-      <div class="stock-bar">
-        <div class="pfilter" id="plan-festado"><button data-e="ACTIVAS" class="on">Activas</button><button data-e="TODAS">Todas</button><button data-e="PENDIENTE">Sin iniciar</button><button data-e="PROCESO">En proceso</button><button data-e="HECHO">Hechas</button></div>
-        <select id="plan-fpersona" class="cli-search" style="margin:0;max-width:220px"><option value="">Todos los responsables</option></select>
-        <button id="plan-import" class="btn" style="white-space:nowrap;display:none">＋ Importar plan maestro</button>
-        <button id="plan-sync" class="btn" style="white-space:nowrap;display:none" title="Rellena montos, responsables, áreas y notas desde el plan maestro, conservando el estado de cada tarea">↻ Sincronizar montos/responsables</button>
-      </div>
-      <details class="stock-newwrap">
-        <summary>＋ Nueva tarea de planificación</summary>
-        <form id="plan-form" class="row c3" autocomplete="off" style="margin:14px 0 4px">
-          <label class="f" style="grid-column:span 2"><span class="lab">Tarea</span><input name="titulo" required placeholder="Ej. Optimizar Google Business Profile"></label>
-          <label class="f"><span class="lab">Área</span><input name="area" list="plan-area-list" placeholder="Web, Marketing, Clientes…"></label>
-          <datalist id="plan-area-list"><option>1. Desarrollo Comercial</option><option>2. Marketing y Posicionamiento</option><option>3. Redes y Comunidad</option><option>4. Experiencia del Cliente</option><option>5. Kit de Entrega</option><option>6. Fidelización</option><option>7. Reseñas y Promociones</option><option>8. Historial y Trazabilidad</option><option>9. Registro de Coatings</option><option>10. Automatización</option><option>11. Productos Corporativos</option><option>12. Administración</option><option>14. Manuales</option><option>15. Expansión</option><option>16. Ideas Futuras</option><option>17. Cultura y Visión</option></datalist>
-          <label class="f"><span class="lab">Prioridad</span><select name="prioridad"><option value="ALTA">Alta</option><option value="MEDIA">Media</option><option value="BAJA">Baja</option></select></label>
-          <label class="f"><span class="lab">Responsable</span><input name="asignado" list="plan-persona-list" placeholder="Asignar a…"></label>
-          <datalist id="plan-persona-list"></datalist>
-          <label class="f"><span class="lab">Vence</span><input name="vence" type="date"></label>
-          <label class="f" style="grid-column:1/-1"><span class="lab">Descripción (opcional)</span><input name="descripcion" placeholder="Detalle o notas"></label>
-          <button type="submit" class="btn primary" style="align-self:end">Agregar</button>
-        </form>
-      </details>
-      <div id="plan-list"></div>
-    </section>
-
     <!-- ============ PANEL ============ -->
     <section class="view" id="view-panel">
       <div class="vhead"><div class="eye">Este mes</div><h1>Panel de control</h1><p id="panel-sub"></p></div>
@@ -1302,31 +1273,70 @@
       </div>
     </section>
 
-    <!-- ============ QUÍMICOS / DILUCIONES ============ -->
-    <section class="view" id="view-quimicos">
-      <div class="vhead"><div class="eye">Referencia</div><h1>Químicos y diluciones</h1></div>
-      <input type="search" id="qui-search" class="cli-search" placeholder="Buscar producto, marca o uso… (ej: champú, WINTEX, cerámico)">
-      <div id="qui-list"></div>
-    </section>
-
     <!-- ============ ASISTENCIA (reloj entrada/salida por RUT) ============ -->
     <section class="view" id="view-asistencia">
       <div class="vhead"><div class="eye">Equipo</div><h1>Asistencia</h1></div>
       <button type="button" class="btn primary" id="asis-kiosco-btn" style="margin-bottom:18px">Abrir modo tablet</button>
       <div class="card" id="asis-abiertos-card" style="margin-bottom:16px"><h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Marcajes de hoy <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— más los pendientes sin salida de días anteriores</span><button id="asis-dedup" class="btn asis-fix" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">🧹 Limpiar duplicados</button></h3><div id="asis-abiertos" style="margin-top:10px"><div class="col-empty">Cargando…</div></div></div>
       <div class="card" id="asis-resumen-card" style="margin-bottom:16px"><h3>Historial de asistencia <span class="hint" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)">— horas por trabajador · elige el mes</span></h3><div class="pfilter" id="asis-mes" style="margin:6px 0 12px"></div><div id="asis-resumen" style="margin-top:4px"><div class="col-empty">Cargando…</div></div><details class="fsec" style="margin-top:14px"><summary>Ver todos los marcajes del mes</summary><div id="asis-hist" style="margin-top:10px"></div></details></div>
-      <div class="dash-grid">
-        <div class="card" id="trab-card">
-          <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Trabajadores <button type="button" id="cargos-btn" class="btn sm" style="margin-left:auto;white-space:nowrap">💼 Cargos y tratos</button></h3>
-          <form id="trab-form" class="row c2" autocomplete="off" style="margin:6px 0 14px">
-            <label class="f" style="grid-column:1/-1"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
-            <label class="f" style="grid-column:1/-1"><span class="lab">RUT</span><input name="tRut" required inputmode="text" placeholder="16331734-6"></label>
-            <div style="grid-column:1/-1"><button type="submit" class="btn primary" style="width:100%">Agregar trabajador</button></div>
-          </form>
-          <p class="hint" style="display:block;margin:-6px 0 4px;font-size:11.5px;color:var(--ink-faint)">Marca su asistencia con los <b>últimos 4 dígitos</b> del RUT (el sistema los toma solo).</p>
-          <div id="trab-list"></div>
+      <p class="hint" id="asis-rrhh-hint" style="display:block;font-size:12px;color:var(--ink-muted)">Los trabajadores (alta, ficha, cargos) ahora están en <a href="#" id="asis-ir-rrhh" style="color:var(--accent-ink);font-weight:700">RRHH → Trabajadores</a>.</p>
+    </section>
+
+    <!-- ============ RRHH (Trabajadores · Documentación · Capacitaciones · Finiquitos) ============ -->
+    <section class="view" id="view-rrhh">
+      <div class="vhead"><div class="eye">RRHH</div><h1>Recursos Humanos</h1></div>
+      <div class="pfilter" id="rrhh-seg"><button data-seg="trab" class="on">Trabajadores</button><button data-seg="doc">Documentación</button><button data-seg="capacit">Capacitaciones</button><button data-seg="finiquito">Finiquitos</button></div>
+
+      <div id="rrhh-trab">
+        <div class="dash-grid">
+          <div class="card" id="trab-card">
+            <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Trabajadores <span class="hint" id="trab-cnt" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink-faint)"></span><button type="button" id="cargos-btn" class="btn sm" style="margin-left:auto;white-space:nowrap">💼 Cargos y tratos</button></h3>
+            <details class="fsec" style="margin:4px 0 12px"><summary>＋ Agregar trabajador</summary>
+              <form id="trab-form" class="row c2" autocomplete="off" style="margin:10px 0 6px">
+                <label class="f" style="grid-column:1/-1"><span class="lab">Nombre</span><input name="tNombre" required placeholder="Ej: Mario Pérez"></label>
+                <label class="f" style="grid-column:1/-1"><span class="lab">RUT</span><input name="tRut" required inputmode="text" placeholder="16331734-6"></label>
+                <div style="grid-column:1/-1"><button type="submit" class="btn primary" style="width:100%">Agregar trabajador</button></div>
+              </form>
+              <p class="hint" style="display:block;margin:0 0 4px;font-size:11.5px;color:var(--ink-faint)">Marca su asistencia con los <b>últimos 4 dígitos</b> del RUT (el sistema los toma solo).</p>
+            </details>
+            <input type="search" id="trab-search" class="cli-search" placeholder="Buscar nombre, RUT o cargo…" style="max-width:none;margin-bottom:10px">
+            <div class="pfilter" id="trab-fil" style="margin-bottom:12px"><button data-f="activo" class="on">Activos</button><button data-f="inactivo">Inactivos</button><button data-f="todos">Todos</button></div>
+            <div id="trab-list"></div>
+          </div>
         </div>
       </div>
+
+      <div id="rrhh-doc" hidden>
+        <p class="hint" id="rrhh-panel-note" style="display:block;margin:0 0 10px;color:var(--ink-muted)"></p>
+        <div id="rrhh-alert"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="pfilter" id="rrhh-fil"><button data-f="activo" class="on">Solo activos</button><button data-f="todos">Todos</button></div>
+          <div class="pfilter" id="rrhh-vis"><button data-v="doc" class="on">Por documento</button><button data-v="persona">Por persona</button></div>
+        </div>
+        <div id="rrhh-list"></div>
+      </div>
+
+      <div id="rrhh-fin" hidden>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><p class="hint" style="margin:0;color:var(--ink-muted);flex:1">Registro de finiquitos: trabajador, fecha, motivo, monto y el documento. <span id="fin-cnt"></span></p><button type="button" id="fin-nuevo" class="btn primary" style="flex:0 0 auto">＋ Nuevo finiquito</button></div>
+        <div id="fin-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ REMUNERACIONES (semanal: asistencia + reloj -> pago) ============ -->
+    <section class="view" id="view-remu">
+      <div class="vhead"><div class="eye">Remuneraciones</div><h1>Remuneraciones <span id="remu-cnt" style="font-size:.8rem;font-weight:500;color:var(--ink-muted)"></span></h1></div>
+      <div class="remu-bar">
+        <button type="button" class="btn ghost" id="remu-prev">‹</button>
+        <div class="remu-sem"><b id="remu-semlbl">Semana</b><span id="remu-rango"></span></div>
+        <button type="button" class="btn ghost" id="remu-hoy">Hoy</button>
+        <button type="button" class="btn ghost" id="remu-next">›</button>
+        <button type="button" class="btn ghost" id="remu-cfg-btn">💼 Cargos y tratos</button>
+        <button type="button" class="btn ghost" id="remu-csv">⬇ CSV</button>
+      </div>
+      <div class="remu-total"><span>Total a pagar (contable)</span><b id="remu-total-val">$0</b></div>
+      <div id="remu-dias" class="remu-dias"></div>
+      <div id="remu-list"></div>
+      <p class="hint" style="display:block;margin-top:12px;font-size:11.5px;color:var(--ink-faint)">Horas = marcajes de <b>Asistencia</b> (tablet) + horas manuales del <b>reloj</b> (Costos). Si se pisan, se cuentan una sola vez. <b>Spot</b>: se pagan todas las horas × valor hora. <b>Fijo</b>: solo lo que pasa de su jornada diaria (fin de semana cuenta completo). Valor hora = trato del cargo ÷ 8 (o el propio de la persona).</p>
     </section>
 
     <!-- ============ ADMIN (accesos/permisos — solo dueño) ============ -->
@@ -1817,7 +1827,7 @@
       sb.from('cotizaciones').select('*').order('numero',{ascending:false}),
       sb.from('solicitudes').select('*').order('created_at',{ascending:false}),
       sb.from('movimientos').select('*').order('fecha',{ascending:false}),
-      sb.from('planificacion').select('*').order('vence',{ascending:true}).then(function(r){return r;},function(){return {data:[]};}),
+      Promise.resolve({data:[]}), // (antes: planificacion — módulo retirado; se mantiene el índice)
       sb.from('gastos_fijos').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('servicios_digitales').select('*').order('orden').then(function(r){return r;},function(){return {data:[]};}),
       sb.from('acciones').select('*').order('num',{ascending:false}).then(function(r){return r;},function(){return {data:[]};}),
@@ -1838,7 +1848,6 @@
       _cotiz=((res[8]&&res[8].data)||[]);
       _solped=((res[9]&&res[9].data)||[]);
       _movs=((res[10]&&res[10].data)||[]);
-      _plan=((res[11]&&res[11].data)||[]);
       _gfijos=((res[12]&&res[12].data)||[]);
       _sdig=((res[13]&&res[13].data)||[]);
       _acciones=((res[14]&&res[14].data)||[]);
@@ -2021,7 +2030,7 @@
   var OWNER_EMAIL='ventas@isperformance.cl';
   var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com']; // vista Gerencia (costos): solo estos correos
   function esOwner(){ return (window.ISP_EMAIL||'').toLowerCase()===OWNER_EMAIL; }
-  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','quimicos','asistencia'] }; // fallback si no hay nada en la BD
+  var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','asistencia'] }; // fallback si no hay nada en la BD
   var ACCESOS={}; // tabla accesos (email -> [vistas]); pisa a ROLES
   var TRAB_USER={}; // email -> nombre de trabajador vinculado (para "Mis horas")
   function accesoDe(email){ email=(email||'').toLowerCase(); if(email===OWNER_EMAIL) return null; return (ACCESOS[email]!==undefined)?ACCESOS[email]:ROLES[email]; }
@@ -2072,6 +2081,7 @@
   tabsEl.addEventListener("click",function(ev){
     var b=ev.target.closest("button"); if(!b)return;
     state.view=b.dataset.view;
+    if(b.dataset.seg) state.rrhhSeg=b.dataset.seg;
     tabsEl.querySelectorAll("button").forEach(function(x){x.classList.toggle("active",x===b);});
     document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
     document.getElementById("view-"+state.view).classList.add("active");
@@ -2090,266 +2100,17 @@
     else if(v==="panel") renderPanel();
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
-    else if(v==="quimicos") renderQuimicos();
     else if(v==="asistencia") renderAsistencia();
     else if(v==="mishoras") renderMisHoras();
     else if(v==="cotizaciones") renderCotizaciones();
     else if(v==="solicitudes") renderSolicitudes();
-    else if(v==="plan") renderPlan();
+    else if(v==="rrhh") renderRrhh();
+    else if(v==="remu") renderRemu();
     else if(v==="movimientos") renderMovimientosLibro();
     else if(v==="gerencia") renderGerencia();
     else if(v==="admin") renderAdmin();
   }
 
-  // ---------- PLANIFICACIÓN (plan maestro) ----------
-  var _plan=[]; var _planEstado="ACTIVAS";
-  var PLAN_PRIOS=[["ALTA","Alta prioridad"],["MEDIA","Media prioridad"],["BAJA","Baja prioridad"]];
-  var PLAN_ESTLBL={PENDIENTE:"Sin iniciar",PROCESO:"En proceso",HECHO:"Hecha"};
-  var PLAN_SEED=[
-    {titulo:"Brochure corporativo de servicios",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-08-16",costo:150000,descripcion:"enviare varias propuestas diseño-contenido"},
-    {titulo:"Potenciar Instagram y Facebook",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Ideal tener control total de redes (Con mi número de telefono) para poder gestionarlas mejor"},
-    {titulo:"Programa de comisiones por referidos",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-23",costo:0,descripcion:""},
-    {titulo:"Capacitación de representantes",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-13",costo:50000,descripcion:""},
-    {titulo:"Visitas comerciales (rutina semanal)",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2027-01-31",costo:80000,descripcion:""},
-    {titulo:"Convenios con empresas y flotas",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-15",costo:0,descripcion:""},
-    {titulo:"Convenios con aseguradoras y automotoras",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-29",costo:0,descripcion:""},
-    {titulo:"Convenios talleres, desabolladura y pintura",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-11-29",costo:0,descripcion:""},
-    {titulo:"Convenios vulcanizaciones y transporte",area:"1. Desarrollo Comercial",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-12-13",costo:0,descripcion:""},
-    {titulo:"Participación en eventos automotrices",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:400000,descripcion:""},
-    {titulo:"Captación de vehículos de alta gama",area:"1. Desarrollo Comercial",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Optimizar Google Business Profile",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-08-16",costo:0,descripcion:"Ideal tener control total de redes (Con mi número de telefono) para poder gestionarlas mejor"},
-    {titulo:"Potenciar la página web",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-20",costo:350000,descripcion:""},
-    {titulo:"WhatsApp Business y automatizaciones",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:50000,descripcion:"Tengo que revisar en conjunto con Jorge de nuevo para actualizar a Meta Bussines; sino contactar a soporte para darle fin al tema"},
-    {titulo:"Contenido diario (rutina)",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Planifiación en proceso"},
-    {titulo:"Antes y después",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Planifiación en proceso"},
-    {titulo:"Campañas Google Ads",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:250000,descripcion:""},
-    {titulo:"Campañas Meta Ads",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:250000,descripcion:""},
-    {titulo:"Reels",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Testimonios en video",area:"2. Marketing y Posicionamiento",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Fotografía profesional de entrega",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:200000,descripcion:""},
-    {titulo:"Video de entrega",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:""},
-    {titulo:"Programa de referidos (cliente final)",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:""},
-    {titulo:"Ficha digital del cliente",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
-    {titulo:"Registro de datos del vehículo",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PROCESO",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
-    {titulo:"Repositorio fotos antes y después",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-06",costo:0,descripcion:""},
-    {titulo:"Historial de servicios por cliente",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-20",costo:0,descripcion:"Ideal integrarlo en WEB/APP en desarrollo"},
-    {titulo:"Programa de influencers",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:300000,descripcion:""},
-    {titulo:"Programa de embajadores",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-15",costo:150000,descripcion:""},
-    {titulo:"Seguir e interactuar con perfiles relacionados",area:"3. Redes y Comunidad",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Alianzas con clubes 4x4",area:"3. Redes y Comunidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
-    {titulo:"Alianzas con clubes de marcas",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:0,descripcion:""},
-    {titulo:"Alianzas Rent a Car",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:0,descripcion:""},
-    {titulo:"Alianzas empresas automotrices",area:"3. Redes y Comunidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-08",costo:0,descripcion:""},
-    {titulo:"Alianzas empresas de accesorios",area:"3. Redes y Comunidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:0,descripcion:""},
-    {titulo:"Protocolo de recepción profesional",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:0,descripcion:""},
-    {titulo:"Protocolo de entrega impecable",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:0,descripcion:""},
-    {titulo:"Explicación del trabajo al cliente",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
-    {titulo:"Control de garantías",area:"8. Historial y Trazabilidad",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-27",costo:0,descripcion:"Como se llevaria? que abarca?"},
-    {titulo:"Agenda próxima revisión",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:"post/venta - en conjunto con historial y trazabilidad?"},
-    {titulo:"Agenda próxima mantención",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-13",costo:0,descripcion:"post/venta - en conjunto con historial y trazabilidad?"},
-    {titulo:"Sobre personalizado",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:80000,descripcion:""},
-    {titulo:"Certificado de servicio",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:40000,descripcion:""},
-    {titulo:"Certificado de coating",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:40000,descripcion:""},
-    {titulo:"Seguimiento postventa",area:"4. Experiencia del Cliente",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Encuesta de satisfacción",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Bolsa corporativa",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-13",costo:250000,descripcion:""},
-    {titulo:"Aromatizante corporativo",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:120000,descripcion:""},
-    {titulo:"Pino personalizado",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:100000,descripcion:""},
-    {titulo:"Stickers",area:"5. Kit de Entrega",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:50000,descripcion:""},
-    {titulo:"Tarjeta de agradecimiento",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:60000,descripcion:""},
-    {titulo:"Cupón de descuento",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:40000,descripcion:""},
-    {titulo:"QR para reseñas",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:20000,descripcion:""},
-    {titulo:"QR para agendar",area:"5. Kit de Entrega",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-23",costo:20000,descripcion:""},
-    {titulo:"Recomendaciones de cuidado (impreso)",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:50000,descripcion:""},
-    {titulo:"Microfibra Premium",area:"5. Kit de Entrega",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-27",costo:180000,descripcion:""},
-    {titulo:"Chocolate o dulce",area:"5. Kit de Entrega",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:40000,descripcion:""},
-    {titulo:"Definir categorías (Nuevo a VIP)",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-30",costo:0,descripcion:""},
-    {titulo:"Diseñar beneficios exclusivos por categoría",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-06",costo:0,descripcion:""},
-    {titulo:"Tarjeta de fidelización",area:"6. Fidelización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:120000,descripcion:""},
-    {titulo:"Recordatorios 30 / 90 / 180 / 365 días",area:"10. Automatización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:80000,descripcion:"a que se refiere?"},
-    {titulo:"Automatización de mantenciones",area:"10. Automatización",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:0,descripcion:"es lo mismo que  filas 41 y 42?"},
-    {titulo:"Declaración de Meta Ads",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-24",costo:0,descripcion:"Gastos? lo manejaria yo?"},
-    {titulo:"Placas QR en el local",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-30",costo:60000,descripcion:""},
-    {titulo:"QR en recepción, factura y bolsa",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:20000,descripcion:""},
-    {titulo:"Rutina de solicitar reseñas a todo cliente",area:"7. Reseñas y Promociones",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Ruleta de premios",area:"7. Reseñas y Promociones",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-11-15",costo:150000,descripcion:""},
-    {titulo:"Cronómetro con premios",area:"7. Reseñas y Promociones",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-11-29",costo:100000,descripcion:""},
-    {titulo:"Declaración de Google Ads",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-24",costo:0,descripcion:"Gastos? lo manejaria yo?"},
-    {titulo:"Email Marketing",area:"2. Marketing y Posicionamiento",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:30000,descripcion:"Se puede automatizar-tambien pedir en ficha cliente correo"},
-    {titulo:"Cliente del mes",area:"6. Fidelización",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:50000,descripcion:"Ficha cliente"},
-    {titulo:"Tienda online",area:"15. Expansión",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:400000,descripcion:"solo equipamento- detailling solo agendamiento(en proceso)"},
-    {titulo:"App IS Performance",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Portal del cliente",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:"Lo mismo que ficha de cliente?"},
-    {titulo:"Campo de observaciones",area:"8. Historial y Trazabilidad",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-20",costo:0,descripcion:""},
-    {titulo:"Ficha de coating: marca y producto",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
-    {titulo:"Registro de número de lote",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
-    {titulo:"Registro de fecha y técnico",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-08-30",costo:0,descripcion:""},
-    {titulo:"Registro de garantía",area:"9. Registro de Coatings",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2026-09-06",costo:0,descripcion:""},
-    {titulo:"Pasaporte del vehículo",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-03",costo:60000,descripcion:"Lo mismo que ficha de cliente?"},
-    {titulo:"Brochure para representantes",area:"1. Desarrollo Comercial",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-08-30",costo:120000,descripcion:"lo mismo al brochure del inicio?"},
-    {titulo:"Potenciar TikTok",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"SEO local",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-12-06",costo:100000,descripcion:""},
-    {titulo:"Remarketing",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:80000,descripcion:""},
-    {titulo:"Videos de servicios",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Casos de éxito",area:"2. Marketing y Posicionamiento",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Aromatizantes",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:120000,descripcion:""},
-    {titulo:"Pinos",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:100000,descripcion:""},
-    {titulo:"Stickers",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:50000,descripcion:""},
-    {titulo:"Lanyards",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:80000,descripcion:""},
-    {titulo:"Llaveros",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:90000,descripcion:""},
-    {titulo:"Gorras",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-22",costo:200000,descripcion:""},
-    {titulo:"Poleras",area:"11. Productos Corporativos",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-25",costo:300000,descripcion:""},
-    {titulo:"Tazas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:90000,descripcion:""},
-    {titulo:"Botellas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:120000,descripcion:""},
-    {titulo:"Bolsas",area:"11. Productos Corporativos",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-13",costo:250000,descripcion:""},
-    {titulo:"Tarjetas de presentación",area:"11. Productos Corporativos",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-08-23",costo:60000,descripcion:""},
-    {titulo:"Carpetas",area:"11. Productos Corporativos",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-08",costo:80000,descripcion:""},
-    {titulo:"Impresión de fotografía",area:"4. Experiencia del Cliente",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-04",costo:150000,descripcion:""},
-    {titulo:"Beneficios por cumpleaños",area:"6. Fidelización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-11",costo:0,descripcion:"podria ir en ficha cliente tambien- o poner en algun lugar de web-redes"},
-    {titulo:"Proceso de compras AliExpress",area:"12. Administración",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Proceso de compras Alibaba",area:"12. Administración",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Control de inventario",area:"12. Administración",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Grecia",vence:"2027-01-17",costo:50000,descripcion:""},
-    {titulo:"Manual de atención",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
-    {titulo:"Manual de ventas",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-27",costo:0,descripcion:""},
-    {titulo:"Manual de detailing",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-04",costo:0,descripcion:""},
-    {titulo:"Manual de PPF",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
-    {titulo:"Manual de coating",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
-    {titulo:"Manual de pulido",area:"14. Manuales",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
-    {titulo:"Manual de garantías",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-04",costo:0,descripcion:""},
-    {titulo:"Manual de entrega",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
-    {titulo:"Manual de recepción",area:"14. Manuales",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-09-20",costo:0,descripcion:""},
-    {titulo:"Manual de WhatsApp",area:"14. Manuales",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-10-18",costo:0,descripcion:""},
-    {titulo:"Definir nuevos servicios",area:"15. Expansión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-01",costo:0,descripcion:""},
-    {titulo:"Línea de equipamiento 4x4",area:"15. Expansión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-13",costo:0,descripcion:""},
-    {titulo:"Venta de accesorios",area:"15. Expansión",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-27",costo:0,descripcion:""},
-    {titulo:"Evaluar importaciones",area:"15. Expansión",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-27",costo:0,descripcion:""},
-    {titulo:"Registro de productos utilizados",area:"8. Historial y Trazabilidad",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-09-27",costo:0,descripcion:"conjunto con app-ideal"},
-    {titulo:"Modelo de distribución",area:"15. Expansión",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Membresía mensual",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-11-29",costo:0,descripcion:""},
-    {titulo:"Automatización de promociones",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-01",costo:50000,descripcion:""},
-    {titulo:"Automatización de cumpleaños",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-10-18",costo:0,descripcion:""},
-    {titulo:"Automatización de encuestas",area:"10. Automatización",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-01",costo:0,descripcion:""},
-    {titulo:"Programa de puntos",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Jorge",vence:"2026-12-13",costo:0,descripcion:""},
-    {titulo:"Vehículo de cortesía",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-10",costo:0,descripcion:""},
-    {titulo:"Línea propia de productos",area:"16. Ideas Futuras",prioridad:"BAJA",estado:"PENDIENTE",asignado:"Jorge",vence:"2027-01-17",costo:0,descripcion:""},
-    {titulo:"Impresora fotográfica",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-10-25",costo:250000,descripcion:""},
-    {titulo:"Gift Cards",area:"16. Ideas Futuras",prioridad:"MEDIA",estado:"PENDIENTE",asignado:"Enzo",vence:"2026-11-29",costo:80000,descripcion:""},
-    {titulo:"Difundir misión, visión y valores al equipo",area:"17. Cultura y Visión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2026-08-16",costo:0,descripcion:""},
-    {titulo:"Reunión semanal de seguimiento del plan",area:"17. Cultura y Visión",prioridad:"ALTA",estado:"PENDIENTE",asignado:"Cristopher",vence:"2027-01-17",costo:0,descripcion:""}
-  ];
-  function planPersonas(){ var s={}; (reloj||[]).forEach(function(r){ if(r.trab)s[r.trab]=1; }); Object.keys(VH||{}).forEach(function(k){ if(k)s[k]=1; }); _plan.forEach(function(x){ if(x.asignado)s[x.asignado]=1; }); return Object.keys(s).sort(); }
-  function planVencClass(v,estado){ if(estado==="HECHO"||!v) return ""; var d=(new Date(v+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/86400000; if(d<0) return "venc"; if(d<=10) return "pronto"; return ""; }
-  function renderPlan(){
-    var per=planPersonas();
-    var dl=document.getElementById("plan-persona-list"); if(dl) dl.innerHTML=per.map(function(p){return '<option>'+av(p)+'</option>';}).join("");
-    var fp=document.getElementById("plan-fpersona"); if(fp){ var cur=fp.value; fp.innerHTML='<option value="">Todos los responsables</option>'+per.map(function(p){return '<option'+(cur===p?' selected':'')+'>'+av(p)+'</option>';}).join(""); }
-    document.querySelectorAll("#plan-festado button").forEach(function(b){ b.classList.toggle("on",b.dataset.e===_planEstado); });
-    var impB=document.getElementById("plan-import"); if(impB) impB.style.display=_plan.length?"none":"";
-    var syncB=document.getElementById("plan-sync"); if(syncB) syncB.style.display=_plan.length?"":"none";
-    var total=_plan.length;
-    var pend=_plan.filter(function(x){return (x.estado||"PENDIENTE")==="PENDIENTE";}).length;
-    var proc=_plan.filter(function(x){return x.estado==="PROCESO";}).length;
-    var venc=_plan.filter(function(x){return x.estado!=="HECHO"&&x.vence&&x.vence<todayISO();}).length;
-    var costoTot=_plan.filter(function(x){return x.estado!=="HECHO";}).reduce(function(a,x){return a+(+x.costo||0);},0);
-    document.getElementById("plan-kpis").innerHTML='<div class="kpis" style="margin-bottom:14px">'+kstat("Total",total,"tareas")+kstat("En proceso",proc,"activas")+kstat("Sin iniciar",pend,"pendientes")+kstat("Vencidas",venc,"atrasadas")+kstat("Inversión estim.",clp(costoTot),"CLP pendiente")+'</div>';
-    var fPers=fp?fp.value:"";
-    var list=_plan.filter(function(x){ var e=x.estado||"PENDIENTE";
-      if(_planEstado==="ACTIVAS"){ if(e==="HECHO")return false; } else if(_planEstado!=="TODAS"){ if(e!==_planEstado)return false; }
-      if(fPers && (x.asignado||"")!==fPers) return false; return true; });
-    var pOrd={ALTA:0,MEDIA:1,BAJA:2};
-    list.sort(function(a,b){ var pa=pOrd[a.prioridad]==null?3:pOrd[a.prioridad], pb=pOrd[b.prioridad]==null?3:pOrd[b.prioridad]; if(pa!==pb)return pa-pb; var va=a.vence||"9999", vb=b.vence||"9999"; return va<vb?-1:(va>vb?1:0); });
-    var el=document.getElementById("plan-list");
-    if(!list.length){ el.innerHTML='<div class="col-empty">Sin tareas. Usa <b>＋ Importar plan maestro</b> para traer el plan de Obsidian, o crea una nueva.</div>'; return; }
-    var html="", lastP="__";
-    list.forEach(function(x){
-      if(x.prioridad!==lastP){ lastP=x.prioridad; var pl=(PLAN_PRIOS.filter(function(p){return p[0]===lastP;})[0]||["","Otras"])[1]; html+='<div class="plan-prio p-'+(lastP||"NA")+'">'+escH(pl)+'</div>'; }
-      var e=x.estado||"PENDIENTE"; var vc=planVencClass(x.vence,e);
-      html+='<div class="plan-card'+(e==="HECHO"?" done":"")+'">'
-        +'<div class="plan-main"><div class="plan-tit">'+escH(x.titulo||"")+'</div>'
-        +'<div class="plan-meta">'+(x.area?'<span class="plan-tag">'+escH(x.area)+'</span>':'')
-        +(x.asignado?'<span class="plan-who">'+escH(x.asignado)+'</span>':'<span class="plan-who none">Sin responsable</span>')
-        +(x.vence?'<span class="plan-venc '+vc+'">'+fFecha(x.vence)+(vc==="venc"?' · vencida':'')+'</span>':'')
-        +((+x.costo>0)?'<span class="plan-costo">'+clp(x.costo)+'</span>':'')+'</div>'
-        +(x.descripcion?'<div class="plan-desc">'+escH(x.descripcion)+'</div>':'')+'</div>'
-        +'<div class="plan-actions"><div class="plan-estados">'+["PENDIENTE","PROCESO","HECHO"].map(function(s){return '<button class="pe'+(e===s?" on":"")+'" data-pe="'+s+'" data-id="'+x.id+'">'+PLAN_ESTLBL[s]+'</button>';}).join("")+'</div>'
-        +'<button class="plan-edit" data-id="'+x.id+'" title="Editar">✎</button><button class="plan-del" data-id="'+x.id+'" title="Eliminar">✕</button></div></div>';
-    });
-    el.innerHTML=html;
-    el.querySelectorAll(".pe").forEach(function(b){ b.onclick=function(){ planSetEstado(b.dataset.id,b.dataset.pe); }; });
-    el.querySelectorAll(".plan-del").forEach(function(b){ b.onclick=function(){ var t=_plan.filter(function(x){return x.id===b.dataset.id;})[0]; if(t&&confirm("¿Eliminar “"+t.titulo+"”?")) planDel(b.dataset.id); }; });
-    el.querySelectorAll(".plan-edit").forEach(function(b){ b.onclick=function(){ planEditar(b.dataset.id); }; });
-  }
-  function planSetEstado(id,next){ var t=_plan.filter(function(x){return x.id===id;})[0]; if(!t)return; t.estado=next; var sb=sbc(); if(sb) sb.from("planificacion").update({estado:next}).eq("id",id).then(function(){}); renderPlan(); }
-  function planDel(id){ var sb=sbc(); if(sb) sb.from("planificacion").delete().eq("id",id).then(function(){}); _plan=_plan.filter(function(x){return x.id!==id;}); renderPlan(); }
-  function planEditar(id){ var t=_plan.filter(function(x){return x.id===id;})[0]; if(!t)return;
-    var nt=prompt("Tarea:",t.titulo); if(nt===null)return; if(nt.trim())t.titulo=nt.trim();
-    var na=prompt("Responsable (deja vacío para nadie):",t.asignado||""); if(na!==null)t.asignado=na.trim();
-    var nv=prompt("Vence (AAAA-MM-DD, vacío = sin fecha):",t.vence||""); if(nv!==null)t.vence=nv.trim()||null;
-    var sb=sbc(); if(sb) sb.from("planificacion").update({titulo:t.titulo,asignado:t.asignado,vence:t.vence}).eq("id",id).then(function(r){ if(r&&r.error)toast("⚠ No se pudo guardar"); }); renderPlan();
-  }
-  function importarPlanMaestro(){
-    var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
-    var ya={}; _plan.forEach(function(x){ ya[(x.titulo||"").trim().toUpperCase()]=1; });
-    var nuevos=PLAN_SEED.filter(function(x){ return !ya[(x.titulo||"").trim().toUpperCase()]; });
-    if(!nuevos.length){ toast("El plan maestro ya está importado ✓"); return; }
-    if(!confirm("Se agregarán "+nuevos.length+" tareas del plan maestro (con prioridad y fecha). ¿Continuar?"))return;
-    var imp=document.getElementById("plan-import"); if(imp){imp.disabled=true;imp.textContent="Importando…";}
-    sb.from("planificacion").insert(nuevos).select().then(function(r){ if(imp){imp.disabled=false;imp.textContent="＋ Importar plan maestro";}
-      if(r.error){ toast("⚠ Error (¿corriste el SQL 21?)"); return; }
-      (r.data||[]).forEach(function(row){ _plan.push(row); }); renderPlan(); toast("✓ "+((r.data||[]).length)+" tareas importadas");
-    });
-  }
-  function sincronizarPlanMaestro(){
-    var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
-    var porTit={}; _plan.forEach(function(x){ porTit[(x.titulo||"").trim().toUpperCase()]=x; });
-    var filas=PLAN_SEED.map(function(s){
-      var ex=porTit[(s.titulo||"").trim().toUpperCase()];
-      var row={titulo:s.titulo,area:s.area,prioridad:s.prioridad,asignado:s.asignado,vence:s.vence,costo:s.costo,descripcion:s.descripcion};
-      if(ex){ row.id=ex.id; row.estado=ex.estado; } else { row.estado=s.estado; }
-      return row;
-    });
-    if(!confirm("Se rellenarán montos, responsables, áreas y notas en "+filas.length+" tareas del plan maestro (se conserva el estado que ya les pusiste). ¿Continuar?"))return;
-    var b=document.getElementById("plan-sync"); if(b){b.disabled=true;b.textContent="Sincronizando…";}
-    sb.from("planificacion").upsert(filas).select().then(function(r){ if(b){b.disabled=false;b.textContent="↻ Sincronizar montos/responsables";}
-      if(r.error){ toast("⚠ Error (¿corriste el ALTER de la columna costo?)"); return; }
-      (r.data||[]).forEach(function(nr){ var i=-1; for(var k=0;k<_plan.length;k++){ if(String(_plan[k].id)===String(nr.id)){i=k;break;} } if(i>=0)_plan[i]=nr; else _plan.push(nr); });
-      renderPlan(); toast("✓ Plan sincronizado ("+((r.data||[]).length)+" tareas)");
-    });
-  }
-  (function(){
-    var f=document.getElementById("plan-form");
-    if(f) f.addEventListener("submit",function(ev){ ev.preventDefault();
-      var row={titulo:f.titulo.value.trim(),area:f.area.value.trim(),prioridad:f.prioridad.value,asignado:f.asignado.value.trim(),vence:f.vence.value||null,descripcion:f.descripcion.value.trim(),estado:"PENDIENTE"};
-      if(!row.titulo)return; var sb=sbc(); if(!sb){ toast("Sin conexión"); return; }
-      sb.from("planificacion").insert(row).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿corriste el SQL 21?)"); return; } _plan.push(r.data); f.reset(); renderPlan(); toast("✓ Tarea agregada"); });
-    });
-    var fe=document.getElementById("plan-festado"); if(fe) fe.addEventListener("click",function(ev){ var b=ev.target.closest("button"); if(b){ _planEstado=b.dataset.e; renderPlan(); } });
-    var fp=document.getElementById("plan-fpersona"); if(fp) fp.addEventListener("change",renderPlan);
-    var imp=document.getElementById("plan-import"); if(imp) imp.addEventListener("click",importarPlanMaestro);
-    var syn=document.getElementById("plan-sync"); if(syn) syn.addEventListener("click",sincronizarPlanMaestro);
-  })();
-var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX","uso":"Limpiar llantas aluminio y carrocería con óxido adherido","dilN":"1:9","dilA":"1:3","apl":"Rociador o espumadora","nota":"No dejar secar sobre pintura. Enjuagar inmediatamente.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"LIMPIADOR MULTI","uso":"Primer prelav de carrocería antes del champú","dilN":"1:133","dilA":"—","apl":"Espumadora o rociador","nota":"Siempre como paso 1 antes del champú.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"WINKLER","uso":"Champú alcalino concentrado para carrocería sucia","dilN":"1:150","dilA":"1:16","apl":"Espumadora","nota":"No dejar sobre vidrios sin enjuagar.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ZIOX","uso":"Champú ácido desincrustante para pintura y llantas","dilN":"1:24","dilA":"1:16","apl":"Espumadora o rociador","nota":"Terminar siempre con champú neutro después.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"THICK","uso":"Champú neutro muy concentrado para lavado estándar","dilN":"1:500","dilA":"1:16","apl":"Espumadora","nota":"Muy concentrado: medir con exactitud.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"EOX","uso":"Champú neutro estándar para carrocería","dilN":"1:4","dilA":"1:4","apl":"Espumadora","nota":"Proporción fija 1:4 siempre.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"VONIX","prod":"V-MOL","uso":"Prelav desengrasante para motor, llantas y pickup","dilN":"1:20","dilA":"1:16","apl":"Espumadora o rociador","nota":"Ideal como paso previo al champú en servicios completos.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"DESENGRASANTE IND.","uso":"Quitar grasa de motor, llantas, pisaderas, pisos y neumáticos","dilN":"1:9","dilA":"1:1 / PURO (extremo)","apl":"Rociador directo, dejar actuar","nota":"PURO solo en motor extremo. Nunca sobre pintura.","dur":"—"},{"cat":"PRELAV / LAVADO EXTERIOR","marca":"—","prod":"ALCANCE BIO-W","uso":"Lavado en seco: limpieza + encerado en un solo paso","dilN":"1:50","dilA":"1:10 / PURO insectos","apl":"Rociador + paño microfibra","nota":"Un solo producto que limpia, encera y protege.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"REVELAX","uso":"Preparar pintura post-pulido antes de sellar","dilN":"70:30 (alc:agua)","dilA":"—","apl":"Paño microfibra","nota":"SIEMPRE antes de cualquier sellado. Reemplazable por IPA 70%.","dur":"—"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"CERA EXPRESS","uso":"Brillo rápido de mantenimiento","dilN":"PURO","dilA":"—","apl":"Microfibra sin bordes, retirar 2 min","nota":"No usar bajo sol directo ni superficie caliente.","dur":"6–8 días"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"CHERRY WAX","prod":"CHERRY WAX","uso":"Cera 4 en 1: alto brillo + repelente agua + protección","dilN":"PURO","dilA":"—","apl":"Pad de finish","nota":"Máximo 50 ml por vehículo.","dur":"2–4 semanas"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"VONIX","prod":"SINERGY PAINT","uso":"Sellado cerámico — brillo intenso y larga duración","dilN":"PURO","dilA":"—","apl":"Paño microfibra, 2 pasadas uniformes, retirar con parte seca","nota":"Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"SENSORY","prod":"SENSORY SIO1-TIO2","uso":"Sellado cerámico máxima protección UV, lluvia ácida y oxidación","dilN":"PURO","dilA":"—","apl":"Esponja grande azul, retirar con paño a los 2 min","nota":"Máxima protección. Siempre post-REVELAX.","dur":"12 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"WINTEX","prod":"GLAZOX / CERA","uso":"Mantenimiento cerámico de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra uniforme","nota":"Mantenimiento periódico sobre sellado cerámico.","dur":"3 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"MEGUIAR\u0027S","prod":"CERAMIC COATING","uso":"Tratamiento cerámico profesional de pintura","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Aplicar en ambiente controlado, sin polvo ni viento.","dur":"6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"KOCH CHEMIE","prod":"SO.03 HIDRO FOAM","uso":"Sellador húmedo de mantenimiento cerámico — se aplica en mojado","dilN":"1:150","dilA":"1:50","apl":"Espumadora sobre carrocería húmeda, enjuagar con agua","nota":"Aplicar con auto mojado. Menor dilución = mayor protección.","dur":"3–6 meses"},{"cat":"SELLADO Y PROTECCIÓN DE PINTURA","marca":"BIO-W","prod":"BIO-W CERA","uso":"Sellado cerámico mantenimiento — también actúa como champú","dilN":"1:10","dilA":"—","apl":"Rociador + microfibra","nota":"Combinación limpieza + encerado en uno.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"GLASS PREP","uso":"Limpiar vidrios y quitar restos de pasta de pulimento","dilN":"PURO","dilA":"—","apl":"Paño microfibra, dejar actuar y retirar","nota":"Usar ANTES de sellar vidrios.","dur":"—"},{"cat":"VIDRIOS","marca":"MOTOR CLEAN","prod":"TAR","uso":"Quitar asfalto, adhesivos e insectos de carrocería y vidrios","dilN":"PURO","dilA":"—","apl":"Aplicar, dejar 2–3 min, retirar con microfibra","nota":"Seguro en pintura, vidrio, plástico y metal.","dur":"—"},{"cat":"VIDRIOS","marca":"VINOX","prod":"PRIZM","uso":"Restaurar vidrios con gotas ácidas / lluvia ácida","dilN":"PURO","dilA":"—","apl":"Pincel rápido uniforme, retirar con agua a presión","nota":"Retirar SIEMPRE con agua a presión.","dur":"3 meses"},{"cat":"VIDRIOS","marca":"—","prod":"SIO03 WATER OFF","uso":"Sellado cerámico para todos los vidrios","dilN":"PURO","dilA":"—","apl":"Esponja + paño microfibra","nota":"Aplicar sobre vidrio limpio y seco.","dur":"6 meses"},{"cat":"VIDRIOS","marca":"GLACO","prod":"GLACO","uso":"Sellado repelente agua y suciedad — mayor duración en vidrios","dilN":"PURO","dilA":"—","apl":"Esponja interna del envase, retirar con paño","nota":"Aplicar sobre vidrio completamente seco.","dur":"12 meses"},{"cat":"NEUMÁTICOS","marca":"VONIX","prod":"SHINY","uso":"Revitalizar y dar brillo a neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha, varias pasadas en la cara del neumático","nota":"Limpiar bien el neumático antes.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"VINTEX","prod":"PNEU PRETINHO","uso":"Brillo intenso + protección para neumáticos","dilN":"PURO","dilA":"—","apl":"Pistola de alta presión, retirar exceso con paño","nota":"Retirar exceso o queda pegajoso.","dur":"1–2 meses"},{"cat":"NEUMÁTICOS","marca":"MOTO CLEAN","prod":"RENOU","uso":"Renovar y sellar neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"NEUMÁTICOS","marca":"WZT","prod":"RENOVADOR WZT","uso":"Renovador y sellador para neumáticos","dilN":"PURO","dilA":"—","apl":"Brocha","nota":"Aplicar en neumático limpio y seco.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX BLACK","uso":"Restaurar plásticos exteriores quemados o muy grises","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos muy dañados. Limpiar antes con APC.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"WINTEX","prod":"REJUVEX","uso":"Renovar y acondicionar plásticos exteriores en buen estado","dilN":"PURO","dilA":"—","apl":"Esponja pequeña, aplicación uniforme","nota":"Para plásticos que solo necesitan renovarse.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"EOX","prod":"EOX DRESSING","uso":"Acondicionar motor, guardabarro, pickup y neumáticos","dilN":"1:4","dilA":"—","apl":"Pistola de aire o paño microfibra","nota":"No aplicar sobre pinturas.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"VONIX","prod":"VERSE","uso":"Proteger y renovar plásticos, gomas y compartimiento motor","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"NO usar en volante, pedales ni superficies calientes.","dur":"—"},{"cat":"PLÁSTICOS Y MOTOR EXTERIOR","marca":"MOTOR CLEAN","prod":"PLASTIC1","uso":"Acondicionar plásticos exteriores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 2–4 meses.","dur":"2–4 meses"},{"cat":"INTERIOR · LIMPIEZA","marca":"WINTEX","prod":"LIMPIADOR APC","uso":"Limpieza general interior: plásticos, tablero, puertas, gomas","dilN":"1:4","dilA":"1:4","apl":"Rociador + paño microfibra o esponja","nota":"Producto polivalente para todo el interior.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"VONIX","prod":"SINTRA PRO","uso":"Desinfectar plásticos, gomas, telas, alfombras y cuero","dilN":"1:5","dilA":"1:1","apl":"Rociador + microfibra","nota":"1:5 plásticos/cuero · 1:1 tapiz/techo · 1:10 paneles.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"—","prod":"LIMPIA ESTOFADOS","uso":"Lavar asientos y tapicería sucia a fondo","dilN":"1:16","dilA":"—","apl":"Rociar abundante + frotar con escobilla o taladro","nota":"Alta suciedad: mezclar con desengrasante puro.","dur":"—"},{"cat":"INTERIOR · LIMPIEZA","marca":"KOCH CHEMIE","prod":"POL STAR","uso":"Limpiar y acondicionar cuero y alcántara interior","dilN":"1:20","dilA":"—","apl":"Rociador + paño suave","nota":"Usar SIEMPRE antes de HIDRACURO.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"HIDRACURO","uso":"Nutrir, acondicionar y proteger cuero interior","dilN":"PURO","dilA":"—","apl":"Esponja o paño, repetir si el cuero absorbe","nota":"Solo cuero. SIEMPRE después de POL STAR.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"KOCHCHEMIE","prod":"TOP STAR TS","uso":"Acondicionar plásticos y gomas interiores — acabado mate","dilN":"PURO","dilA":"—","apl":"Paño microfibra","nota":"Acabado mate. No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"MOTOR CLEAN","prod":"PLASTICI 2","uso":"Acondicionar y proteger plásticos interiores","dilN":"1:3","dilA":"—","apl":"Esponja + retirar exceso con microfibra","nota":"Duración 3 meses.","dur":"3 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"RESTAURAX","uso":"Restaurar plásticos degradados (parachoques, paneles, laterales)","dilN":"PURO","dilA":"—","apl":"Esponja, pasada uniforme con poco producto","nota":"Duración 6 meses. No empapar.","dur":"6 meses"},{"cat":"INTERIOR · ACONDICIONADO","marca":"VONIX","prod":"VERSE (interior)","uso":"Proteger plásticos y gomas interiores","dilN":"1:30","dilA":"—","apl":"Esponja + retirar exceso","nota":"No usar en volante ni pedales.","dur":"—"},{"cat":"INTERIOR · ACONDICIONADO","marca":"WINTEX","prod":"NEUTRALIZADOR OLORES","uso":"Eliminar olores y ambientar el interior del vehículo","dilN":"PURO","dilA":"—","apl":"Pistola o rociador","nota":"Último paso del servicio interior.","dur":"—"}];
-  function renderQuimicos(){
-    var inp=document.getElementById("qui-search"); var q=(inp&&inp.value||"").toLowerCase().trim();
-    var list=QUIMICOS.filter(function(x){ if(!q)return true; return (x.prod+" "+x.marca+" "+x.uso+" "+x.cat).toLowerCase().indexOf(q)>=0; });
-    var el=document.getElementById("qui-list"); if(!el)return;
-    if(!list.length){ el.innerHTML='<div class="col-empty">Sin resultados.</div>'; return; }
-    var html="", lastCat="", open=false;
-    list.forEach(function(x){
-      if(x.cat!==lastCat){ if(open)html+='</div>'; html+='<div class="qui-cat">'+escH(x.cat)+'</div><div class="qui-grid">'; open=true; lastCat=x.cat; }
-      var d="";
-      if(x.dilN && x.dilN!=="—") d+='<span class="qui-dil n">Normal '+escH(x.dilN)+'</span>';
-      if(x.dilA && x.dilA!=="—") d+='<span class="qui-dil a">Alta '+escH(x.dilA)+'</span>';
-      if(x.dur && x.dur!=="—") d+='<span class="qui-dil dur">Dura '+escH(x.dur)+'</span>';
-      html+='<div class="qui-card"><div class="top"><span class="prod">'+escH(x.prod)+'</span>'+(x.marca&&x.marca!=="—"?'<span class="marca">'+escH(x.marca)+'</span>':'')+'</div>'
-        +'<div class="uso">'+escH(x.uso)+'</div>'
-        +(d?'<div class="qui-dils">'+d+'</div>':'')
-        +'<div class="qui-meta">'+(x.apl?'<span><b>Aplicar:</b> '+escH(x.apl)+'</span>':'')+(x.nota?'<span class="nota"><b>Ojo:</b> '+escH(x.nota)+'</span>':'')+'</div>'
-        +'</div>';
-    });
-    if(open)html+='</div>';
-    el.innerHTML=html;
-  }
   // ---------- Nucleo compartido RRHH + Remuneraciones ----------
   var _cargos=[]; // catalogo de cargos {id,nombre,trato}
   // Title Case respetando acentos: "juan PÉREZ" -> "Juan Pérez"
@@ -2392,6 +2153,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         fld('Talla botas','<input id="ft-tbotas" value="'+av(t.talla_botas||'')+'" '+inS+'>')+
         '<div style="grid-column:1/-1">'+fld('Contacto de emergencia','<input id="ft-emer" value="'+av(t.emergencia||'')+'" '+inS+'>')+'</div>'+
         '<div style="grid-column:1/-1">'+fld('Notas','<textarea id="ft-notas" rows="2" '+inS+'>'+escH(t.notas||'')+'</textarea>')+'</div>'+
+        '<div id="ft-docs" style="grid-column:1/-1">'+fichaDocsHTML(t)+'</div>'+
       '</div></div>';
     function close(){ try{document.body.removeChild(ov);}catch(e){} }
     ov.addEventListener('click',function(ev){ if(ev.target===ov)close(); });
@@ -2414,7 +2176,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     g('#ft-tropa').onchange=function(){ t.talla_ropa=this.value.trim(); save(); };
     g('#ft-tbotas').onchange=function(){ t.talla_botas=this.value.trim(); save(); };
     g('#ft-emer').onchange=function(){ t.emergencia=this.value.trim(); save(); };
-    g('#ft-notas').onchange=function(){ t.notas=this.value.trim(); save(); }; }
+    g('#ft-notas').onchange=function(){ t.notas=this.value.trim(); save(); };
+    function bindDocs(){ var fd=g('#ft-docs'); if(!fd)return; fd.querySelectorAll('.rh-chip[data-s]').forEach(function(c){ c.onclick=function(){ abrirDocRrhh(t.id, c.dataset.s, function(){ fd.innerHTML=fichaDocsHTML(t); bindDocs(); }); }; }); }
+    bindDocs(); }
   function cargoUpsert(c){ var sb=sbc(); if(!sb)return; var pay={nombre:(c.nombre||''),trato:(+c.trato||0)};
     if(c.id){ sb.from('cargo').update(pay).eq('id',c.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); return; }
     if(c._ins)return; c._ins=true; sb.from('cargo').insert(pay).select().single().then(function(r){ c._ins=false; if(r&&r.data){ c.id=r.data.id; } else toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); }
@@ -2441,6 +2205,327 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     function close(){ try{document.body.removeChild(ov);}catch(e){} }
     ov.addEventListener('click',function(ev){ if(ev.target===ov)close(); });
     document.body.appendChild(ov); render(); }
+  // ================= RRHH (Trabajadores · Documentación · Capacitaciones · Finiquitos) =================
+  // Adaptado de InnovaGestión. Adjuntos por R2 (abrirGaleria). Tablas: rrhh_docs, finiquitos (SQL 54).
+  var RRHH_TIPOS=[
+    {slug:'cedula',nombre:'Cédula de identidad',corto:'Cédula',vence:true},
+    {slug:'contrato',nombre:'Contrato de trabajo',corto:'Contrato',vence:false},
+    {slug:'anexo',nombre:'Anexo de contrato',corto:'Anexo',vence:false},
+    {slug:'datos',nombre:'Ficha de datos del trabajador',corto:'Datos',vence:false},
+    {slug:'riohs',nombre:'Recepción RIOHS',corto:'RIOHS',vence:false},
+    {slug:'epp',nombre:'Registro entrega EPP',corto:'Entrega EPP',vence:false},
+    {slug:'odi',nombre:'ODI (Obligación de informar)',corto:'ODI',vence:false},
+    {slug:'salud',nombre:'Declaración de salud',corto:'Salud',vence:false},
+    {slug:'induccion',nombre:'Inducción laboral',corto:'Inducción',vence:false},
+    {slug:'pts_quimicos',nombre:'Procedimiento manejo de químicos',corto:'PTS químicos',vence:false},
+    {slug:'licencia',nombre:'Licencia de conducir',corto:'Licencia',vence:true},
+    {slug:'antecedentes',nombre:'Certificado de antecedentes',corto:'Antecedentes',vence:true}
+  ];
+  var CAP_TIPOS=[
+    {slug:'cap_epp',nombre:'Capacitación uso de EPP',corto:'Uso EPP',vence:false},
+    {slug:'cap_quimicos',nombre:'Manejo seguro de químicos',corto:'Químicos',vence:false},
+    {slug:'cap_funciones',nombre:'Acorde a sus funciones',corto:'Funciones',vence:false},
+    {slug:'cap_primeros',nombre:'Primeros auxilios',corto:'1° auxilios',vence:true},
+    {slug:'cap_extintores',nombre:'Uso de extintores',corto:'Extintores',vence:true},
+    {slug:'cap_karin',nombre:'Difusión Ley Karin',corto:'Ley Karin',vence:false}
+  ];
+  function rrhhTipo(s){ var L=RRHH_TIPOS.concat(CAP_TIPOS); for(var i=0;i<L.length;i++) if(L[i].slug===s) return L[i]; return {slug:s,nombre:s,corto:s,vence:false}; }
+  var RRHH_D={}, RRHH_LOADED=false, RRHH_FILTRO='activo', RRHH_VISTA='doc', RRHH_CAT=RRHH_TIPOS, _fin=[], _trabFil='activo', _trabQ='';
+  function rhFaltaSQL(err){ return /relation|does not exist|schema cache|PGRST20/i.test(((err&&err.message)||'')+((err&&err.details)||'')); }
+  // modal simple reutilizable (z-index bajo la galería de adjuntos para poder abrirla encima)
+  function rhModal(titulo,html,maxw){ var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:210;display:flex;align-items:center;justify-content:center;padding:16px';
+    ov.innerHTML='<div style="font-family:var(--sans);background:var(--surface,#fff);color:var(--ink,#111);border-radius:12px;max-width:'+(maxw||560)+'px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
+      '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--surface,#fff);z-index:1"><b style="font-size:15px">'+titulo+'</b><button type="button" class="btn sm rh-x" style="margin-left:auto">Cerrar</button></div>'+
+      '<div class="rh-body" style="padding:14px 16px 18px">'+html+'</div></div>';
+    function close(){ try{document.body.removeChild(ov);}catch(e){} }
+    ov.addEventListener('click',function(ev){ if(ev.target===ov)close(); });
+    document.body.appendChild(ov); ov.querySelector('.rh-x').onclick=close;
+    return {ov:ov, body:ov.querySelector('.rh-body'), close:close, q:function(s){ return ov.querySelector(s); }}; }
+  function diffDiasV(v){ if(!v) return null; return Math.floor((new Date(v+'T12:00:00')-new Date())/86400000); }
+  function rrhhTrabs(){ return (_trab||[]).filter(function(t){ return RRHH_FILTRO==='todos' || trabActivo(t); }).sort(function(a,b){ return normNom(a.nombre)<normNom(b.nombre)?-1:1; }); }
+  // estado calculado de un documento: pend | ok | prox | venc
+  function estadoDoc(tid,s){ var d=RRHH_D[String(tid)+'|'+s]; if(!d||d.estado!=='entregado') return {k:'pend',txt:'Pendiente',doc:d};
+    var tp=rrhhTipo(s);
+    if(tp.vence && d.vencimiento){ var n=diffDiasV(d.vencimiento); if(n<0) return {k:'venc',txt:'Vencido',doc:d}; if(n<=30) return {k:'prox',txt:'Vence en '+n+'d',doc:d}; }
+    return {k:'ok',txt:'Entregado',doc:d}; }
+  function dchip(k,txt,extra){ var c={pend:['var(--surface-2)','var(--ink-muted)'],ok:['var(--ok-soft)','var(--ok)'],prox:['var(--warn-soft)','var(--warn)'],venc:['var(--crit-soft)','var(--crit)']}[k]||['var(--surface-2)','var(--ink-muted)'];
+    return '<span class="rh-chip" style="background:'+c[0]+';color:'+c[1]+'"'+(extra||'')+'>'+txt+'</span>'; }
+  function docPct(t){ if(!RRHH_LOADED||!t) return null; var ok=0; RRHH_TIPOS.forEach(function(tp){ var e=estadoDoc(t.id,tp.slug); if(e.k==='ok'||e.k==='prox')ok++; }); return Math.round(ok/RRHH_TIPOS.length*100); }
+  function cargarRrhh(cb){ var sb=sbc(); if(!sb){ if(cb)cb(); return; }
+    Promise.all([
+      sb.from('rrhh_docs').select('*').then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('finiquitos').select('*').order('fecha',{ascending:false}).then(function(r){return r;},function(){return {data:[]};})
+    ]).then(function(rs){
+      RRHH_D={}; ((rs[0]&&rs[0].data)||[]).forEach(function(d){ RRHH_D[String(d.trabajador_id)+'|'+d.tipo]=d; });
+      RRHH_LOADED=!(rs[0]&&rs[0].error); if(rs[0]&&rs[0].error&&rhFaltaSQL(rs[0].error)) toast('⚠ Falta correr el SQL 54 (RRHH) en Supabase');
+      _fin=(rs[1]&&rs[1].data)||[];
+      if(cb)cb(); }); }
+  function renderRrhh(){ var seg=state.rrhhSeg||'trab'; rrhhSeg(seg); cargarAsistencia(function(){ cargarRrhh(function(){ rrhhSeg(state.rrhhSeg||'trab'); }); }); }
+  function rrhhSeg(seg){ state.rrhhSeg=seg;
+    document.querySelectorAll('#rrhh-seg button').forEach(function(x){ x.classList.toggle('on',x.dataset.seg===seg); });
+    tabsEl.querySelectorAll('button[data-view="rrhh"]').forEach(function(x){ x.classList.toggle('active', state.view==='rrhh' && x.dataset.seg===seg); });
+    var P={trab:'rrhh-trab',doc:'rrhh-doc',capacit:'rrhh-doc',finiquito:'rrhh-fin'};
+    ['rrhh-trab','rrhh-doc','rrhh-fin'].forEach(function(id){ var el=document.getElementById(id); if(el) el.hidden=(P[seg]!==id); });
+    var note=document.getElementById('rrhh-panel-note');
+    if(seg==='doc'){ RRHH_CAT=RRHH_TIPOS; if(note) note.innerHTML='Documentación estándar por trabajador. Marca lo entregado, adjunta el archivo y su vencimiento. <span id="rrhh-cnt"></span>'; pintarRrhhDocs(); }
+    else if(seg==='capacit'){ RRHH_CAT=CAP_TIPOS; if(note) note.innerHTML='Capacitaciones por trabajador: fecha, vencimiento y registro firmado. <span id="rrhh-cnt"></span>'; pintarRrhhDocs(); }
+    else if(seg==='finiquito') pintarFin();
+    else pintarTrabList(); }
+  // ---- Trabajadores (lista con búsqueda / filtro / avance de documentación) ----
+  function pintarTrabList(){ var tl=document.getElementById('trab-list'); if(!tl)return;
+    document.querySelectorAll('#trab-fil button').forEach(function(b){ b.classList.toggle('on',b.dataset.f===_trabFil); });
+    var q=normNom(_trabQ);
+    var arr=(_trab||[]).filter(function(t){ if(_trabFil==='activo'&&!trabActivo(t))return false; if(_trabFil==='inactivo'&&trabActivo(t))return false;
+      if(!q)return true; return normNom((t.nombre||'')+' '+(t.rut||'')+' '+(t.cargo||'')).indexOf(q)>=0; })
+      .sort(function(a,b){ var ai=trabActivo(a)?0:1, bi=trabActivo(b)?0:1; if(ai!==bi)return ai-bi; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
+    var cnt=document.getElementById('trab-cnt'); if(cnt){ var act=(_trab||[]).filter(trabActivo).length; cnt.textContent='— '+act+' activo'+(act===1?'':'s')+' de '+(_trab||[]).length; }
+    tl.innerHTML=arr.length?arr.map(function(t){ var vh=valorHoraDe(t), pct=docPct(t);
+      var badges=(esFijo(t)?tbadge('Fijo','#7c3aed'):tbadge('Spot','#0d3b66'))+(t.chofer?tbadge('🚚','#e8e8e8','#333'):'')+(trabActivo(t)?'':tbadge('inactivo','#9aa0a6'));
+      var meta=(t.cargo?escH(t.cargo)+' · ':'')+(vh?clp(vh)+'/h':'sin valor hora')+' · marca ••'+escH(t.rut4);
+      var docs=(pct==null)?'':'<span class="rh-chip" style="margin-left:6px;background:'+(pct===100?'var(--ok-soft)':'var(--surface-2)')+';color:'+(pct===100?'var(--ok)':'var(--ink-muted)')+'" title="Documentación entregada">📋 '+pct+'%</span>';
+      return '<div class="asis-row"'+(trabActivo(t)?'':' style="opacity:.55"')+'><span class="trab-open" data-tid="'+av(t.id)+'" style="cursor:pointer;flex:1"><b>'+escH(t.nombre)+'</b> '+badges+docs+'<br><span class="rut" style="font-size:11px">'+meta+'</span></span><button class="ldel" data-tid="'+av(t.id)+'" aria-label="Borrar">×</button></div>'; }).join(''):'<div class="col-empty">'+((_trab||[]).length?'Nadie coincide con el filtro':'Aún no agregas trabajadores')+'</div>';
+    tl.querySelectorAll('.trab-open').forEach(function(s){ s.addEventListener('click',function(){ abrirFichaTrab(s.dataset.tid); }); });
+    tl.querySelectorAll('.ldel').forEach(function(b){ b.addEventListener('click',function(){ var id=b.dataset.tid, t=(_trab||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!t)return;
+      if(!puede('asis_trab')){ toast('Sin permiso para dar de baja trabajadores'); return; }
+      if(!confirm('¿Eliminar a «'+t.nombre+'»?\n\nSi ya no trabaja, mejor márcalo INACTIVO en su ficha (o registra su finiquito) para no perder su historial.'))return;
+      var sb=sbc(); if(sb) sb.from('trabajadores').delete().eq('id',id).then(function(){}); _trab=_trab.filter(function(x){return String(x.id)!==String(id);}); pintarTrabList(); }); }); }
+  // bloque de documentación dentro de la ficha del trabajador
+  function fichaDocsHTML(t){ if(!RRHH_LOADED) return '';
+    var chips=RRHH_TIPOS.concat(CAP_TIPOS).map(function(tp){ var e=estadoDoc(t.id,tp.slug); var ic=(e.k==='ok'?'✔':(e.k==='venc'?'⛔':(e.k==='prox'?'⏰':'○'))); return dchip(e.k,escH(tp.corto)+' '+ic,' data-s="'+tp.slug+'" style="cursor:pointer"'); }).join(' ');
+    return '<div style="grid-column:1/-1;border-top:1px solid var(--line,#eee);padding-top:10px;margin-top:4px"><span class="lab" style="display:block;margin-bottom:6px">Documentación y capacitaciones</span><div class="rh-chips">'+chips+'</div></div>'; }
+  // ---- Documentación / Capacitaciones ----
+  function pintarRrhhDocs(){ var cont=document.getElementById('rrhh-list'); if(!cont)return;
+    document.querySelectorAll('#rrhh-fil button').forEach(function(b){ b.classList.toggle('on',b.dataset.f===RRHH_FILTRO); });
+    document.querySelectorAll('#rrhh-vis button').forEach(function(b){ b.classList.toggle('on',b.dataset.v===RRHH_VISTA); });
+    var trabs=rrhhTrabs(), N=trabs.length, cnt=document.getElementById('rrhh-cnt'); if(cnt) cnt.textContent='('+N+(N===1?' persona':' personas')+')';
+    var venc=0,prox=0,pend=0;
+    trabs.forEach(function(t){ RRHH_CAT.forEach(function(tp){ var e=estadoDoc(t.id,tp.slug); if(e.k==='pend')pend++; else if(e.k==='venc')venc++; else if(e.k==='prox')prox++; }); });
+    var al=document.getElementById('rrhh-alert'); if(al) al.innerHTML=(venc||prox||pend)?('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+(venc?dchip('venc','⛔ '+venc+' vencidos'):'')+(prox?dchip('prox','⏰ '+prox+' por vencer'):'')+(pend?dchip('pend','⏳ '+pend+' pendientes'):'')+'</div>'):'';
+    if(!RRHH_LOADED){ cont.innerHTML='<div class="col-empty">Falta correr el SQL 54 (RRHH) en Supabase.</div>'; return; }
+    if(!N){ cont.innerHTML='<div class="col-empty">No hay trabajadores.</div>'; return; }
+    if(RRHH_VISTA==='doc'){
+      cont.innerHTML=RRHH_CAT.map(function(tp,ti){
+        var ok=0,vc=0; trabs.forEach(function(t){ var e=estadoDoc(t.id,tp.slug); if(e.k==='ok'||e.k==='prox')ok++; if(e.k==='venc')vc++; });
+        var pct=Math.round(ok/N*100);
+        var rows=trabs.map(function(t){ var e=estadoDoc(t.id,tp.slug), nm=((e.doc&&e.doc.media)||[]).length;
+          return '<div class="rh-pers" data-t="'+av(t.id)+'" data-s="'+tp.slug+'"><span class="rh-pnm">'+escH(t.nombre||'—')+'</span>'+(nm?'<span class="rh-clip" title="'+nm+' archivo(s)">📎'+nm+'</span>':'')+(e.doc&&e.doc.vencimiento&&tp.vence?'<span class="rh-sub">vence '+fFecha(e.doc.vencimiento)+'</span>':'')+dchip(e.k,e.txt)+'</div>'; }).join('');
+        return '<div class="rh-doc"><div class="rh-top" data-exp="rhd'+ti+'"><span class="rh-nm">'+escH(tp.nombre)+(tp.vence?' <span class="rh-sub">(vence)</span>':'')+'</span>'+dchip(pct===100?'ok':'pend',ok+'/'+N)+(vc?' '+dchip('venc',vc+' venc.'):'')+'</div><div class="rh-bar"><i style="width:'+pct+'%"></i></div><div hidden id="rhd'+ti+'" style="margin-top:8px">'+rows+'</div></div>'; }).join('');
+      cont.querySelectorAll('.rh-top').forEach(function(el){ el.addEventListener('click',function(){ var b=document.getElementById(el.dataset.exp); if(b) b.hidden=!b.hidden; }); });
+      cont.querySelectorAll('.rh-pers').forEach(function(el){ el.addEventListener('click',function(){ abrirDocRrhh(el.dataset.t, el.dataset.s); }); });
+    } else {
+      cont.innerHTML=trabs.map(function(t){
+        var ok=0; var chips=RRHH_CAT.map(function(tp){ var e=estadoDoc(t.id,tp.slug); if(e.k==='ok'||e.k==='prox')ok++; var ic=(e.k==='ok'?'✔':(e.k==='venc'?'⛔':(e.k==='prox'?'⏰':'○'))); return dchip(e.k,escH(tp.corto)+' '+ic,' data-t="'+av(t.id)+'" data-s="'+tp.slug+'" style="cursor:pointer"'); }).join(' ');
+        var pct=Math.round(ok/RRHH_CAT.length*100);
+        return '<div class="rh-doc"><div class="rh-top" style="cursor:default"><span class="rh-nm">'+escH(t.nombre||'—')+(trabActivo(t)?'':' <span class="rh-sub">(inactivo)</span>')+'</span>'+dchip(pct===100?'ok':'pend',ok+'/'+RRHH_CAT.length)+'</div><div class="rh-bar"><i style="width:'+pct+'%"></i></div><div class="rh-chips">'+chips+'</div></div>'; }).join('');
+      cont.querySelectorAll('.rh-chip[data-t]').forEach(function(el){ el.addEventListener('click',function(){ abrirDocRrhh(el.dataset.t, el.dataset.s); }); });
+    } }
+  function abrirDocRrhh(tid, ts, onDone){
+    var t=(_trab||[]).filter(function(x){return String(x.id)===String(tid);})[0]; if(!t) return;
+    var tp=rrhhTipo(ts), key=String(tid)+'|'+ts, d=RRHH_D[key]||{trabajador_id:String(tid),tipo:ts,estado:'pendiente',media:[]};
+    d.media=d.media||[];
+    var M=rhModal(escH(t.nombre||'')+' · '+escH(tp.nombre),
+      '<div class="row c2" style="gap:10px 12px">'+
+        '<label class="f"><span class="lab">Estado</span><select id="rd-estado"><option value="pendiente"'+(d.estado!=='entregado'?' selected':'')+'>Pendiente</option><option value="entregado"'+(d.estado==='entregado'?' selected':'')+'>Entregado / realizado</option></select></label>'+
+        '<label class="f"><span class="lab">Fecha</span><input type="date" id="rd-fecha" value="'+av(d.fecha||'')+'"></label>'+
+        (tp.vence?'<label class="f"><span class="lab">Vence</span><input type="date" id="rd-venc" value="'+av(d.vencimiento||'')+'"></label>':'')+
+        '<label class="f" style="grid-column:1/-1"><span class="lab">Nota</span><input id="rd-nota" value="'+av(d.nota||'')+'" placeholder="Opcional"></label>'+
+        '<div style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn ghost" id="rd-adj"><span>📎 Archivos (<span id="rd-nadj">'+d.media.length+'</span>)</span></button><span class="hint" style="font-size:11.5px;color:var(--ink-faint)">PDF o foto del documento firmado</span></div>'+
+        '<div style="grid-column:1/-1"><button type="button" class="btn primary" id="rd-save" style="width:100%">Guardar</button></div>'+
+      '</div>',460);
+    function leer(){ d.estado=M.q('#rd-estado').value; d.fecha=M.q('#rd-fecha').value||null; d.vencimiento=tp.vence?(M.q('#rd-venc').value||null):null; d.nota=M.q('#rd-nota').value.trim()||null; }
+    function guardar(cerrar){ leer(); var sb=sbc(); if(!sb)return;
+      var row={trabajador_id:String(tid),tipo:ts,estado:d.estado,fecha:d.fecha,vencimiento:d.vencimiento,nota:d.nota,media:d.media,autor:(window.ISP_EMAIL||null)};
+      sb.from('rrhh_docs').upsert(row,{onConflict:'trabajador_id,tipo'}).select().single().then(function(r){
+        if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 (RRHH) en Supabase':('⚠ No se pudo guardar: '+r.error.message)); return; }
+        RRHH_D[key]=r.data||row; if(cerrar){ toast('✓ Guardado'); M.close(); } rrhhSeg(state.rrhhSeg||'doc'); if(onDone)onDone(); }); }
+    // al subir un archivo: se marca entregado (si no hay fecha, hoy) y se guarda
+    M.q('#rd-adj').onclick=function(){ abrirGaleria('Archivos — '+(t.nombre||'')+' · '+tp.corto, d.media, 'rrhh/'+tid+'/'+ts, 'image/*,application/pdf', function(){
+      var n=M.q('#rd-nadj'); if(n)n.textContent=d.media.length;
+      if(d.media.length && M.q('#rd-estado').value!=='entregado'){ M.q('#rd-estado').value='entregado'; if(!M.q('#rd-fecha').value) M.q('#rd-fecha').value=isoLocal(new Date()); }
+      guardar(false); }); };
+    M.q('#rd-save').onclick=function(){ guardar(true); }; }
+  // ---- Finiquitos ----
+  var FIN_MOTIVOS=['Renuncia voluntaria','Mutuo acuerdo','Término de contrato (plazo fijo)','Conclusión del trabajo o servicio','Necesidades de la empresa','Otro'];
+  function pintarFin(){ var c=document.getElementById('fin-list'); if(!c)return;
+    var fc=document.getElementById('fin-cnt'); if(fc) fc.textContent=_fin.length?('('+_fin.length+')'):'';
+    if(!_fin.length){ c.innerHTML='<div class="col-empty">Sin finiquitos registrados. Toca «＋ Nuevo finiquito».</div>'; return; }
+    c.innerHTML='<div class="tablewrap" style="margin-top:0"><table><thead><tr><th>Trabajador</th><th>Fecha</th><th>Motivo</th><th class="r">Monto</th><th class="r">Docs</th></tr></thead><tbody>'+
+      _fin.map(function(f,i){ var nm=(f.media||[]).length; return '<tr class="fin-row" data-i="'+i+'" style="cursor:pointer"><td><b>'+escH(f.nombre||'—')+'</b>'+(f.nota?'<br><span class="rh-sub">'+escH(f.nota)+'</span>':'')+'</td><td>'+fFecha(f.fecha)+'</td><td>'+escH(f.motivo||'')+'</td><td class="r">'+(f.monto?clp(f.monto):'—')+'</td><td class="r">'+(nm?'📎'+nm:'—')+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    c.querySelectorAll('.fin-row').forEach(function(el){ el.addEventListener('click',function(){ abrirFin(_fin[+el.dataset.i]); }); }); }
+  function abrirFin(f){ f=f||{media:[]}; f.media=f.media||[]; var nuevo=!f.id;
+    var opts=(_trab||[]).slice().sort(function(a,b){ return normNom(a.nombre)<normNom(b.nombre)?-1:1; }).map(function(t){ return '<option value="'+av(t.id)+'"'+(String(f.trabajador_id)===String(t.id)?' selected':'')+'>'+escH(t.nombre||'')+(trabActivo(t)?'':' (inactivo)')+'</option>'; }).join('');
+    var M=rhModal(nuevo?'Nuevo finiquito':'Finiquito · '+escH(f.nombre||''),
+      '<div class="row c2" style="gap:10px 12px">'+
+        '<label class="f" style="grid-column:1/-1"><span class="lab">Trabajador</span><select id="fn-trab"><option value="">— elige —</option>'+opts+'</select></label>'+
+        '<label class="f"><span class="lab">Fecha de término</span><input type="date" id="fn-fecha" value="'+av(f.fecha||isoLocal(new Date()))+'"></label>'+
+        '<label class="f"><span class="lab">Monto ($)</span><input type="number" min="0" id="fn-monto" value="'+(f.monto!=null?f.monto:'')+'"></label>'+
+        '<label class="f" style="grid-column:1/-1"><span class="lab">Motivo</span><select id="fn-motivo">'+FIN_MOTIVOS.map(function(m){ return '<option'+(f.motivo===m?' selected':'')+'>'+m+'</option>'; }).join('')+'</select></label>'+
+        '<label class="f" style="grid-column:1/-1"><span class="lab">Nota</span><input id="fn-nota" value="'+av(f.nota||'')+'" placeholder="Opcional"></label>'+
+        '<div style="grid-column:1/-1"><button type="button" class="btn ghost" id="fn-adj"><span>📎 Documento (<span id="fn-nadj">'+f.media.length+'</span>)</span></button></div>'+
+        (nuevo?'<label style="grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="fn-inact" checked> Marcar al trabajador como inactivo</label>':'')+
+        '<div style="grid-column:1/-1;display:flex;gap:8px"><button type="button" class="btn primary" id="fn-save">Guardar</button>'+(nuevo?'':'<button type="button" class="btn ghost" id="fn-del" style="color:var(--crit);border-color:var(--crit)">Eliminar</button>')+'</div>'+
+      '</div>',480);
+    M.q('#fn-adj').onclick=function(){ abrirGaleria('Finiquito — '+(f.nombre||'documento'), f.media, 'rrhh/finiquitos', 'image/*,application/pdf', function(){ var n=M.q('#fn-nadj'); if(n)n.textContent=f.media.length; if(f.id) guardar(false); }); };
+    function guardar(cerrar){ var sb=sbc(); if(!sb)return;
+      var tid=M.q('#fn-trab').value, t=(_trab||[]).filter(function(x){return String(x.id)===String(tid);})[0];
+      if(!t && !f.nombre){ toast('Elige el trabajador'); return; }
+      var row={trabajador_id:(tid||f.trabajador_id||null), nombre:(t?t.nombre:f.nombre), fecha:(M.q('#fn-fecha').value||null), motivo:M.q('#fn-motivo').value, monto:(M.q('#fn-monto').value===''?null:+M.q('#fn-monto').value), nota:(M.q('#fn-nota').value.trim()||null), media:f.media, autor:(window.ISP_EMAIL||null)};
+      var inact=!!(M.q('#fn-inact')&&M.q('#fn-inact').checked);
+      var q=f.id?sb.from('finiquitos').update(row).eq('id',f.id).select().single():sb.from('finiquitos').insert(row).select().single();
+      q.then(function(r){ if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 (RRHH) en Supabase':('⚠ No se pudo guardar: '+r.error.message)); return; }
+        Object.assign(f,r.data||row); if(nuevo){ _fin.unshift(f); nuevo=false; }
+        if(inact && t){ t.estado='inactivo'; sb.from('trabajadores').update({estado:'inactivo'}).eq('id',t.id).then(function(){}); }
+        if(cerrar){ toast('✓ Finiquito guardado'); M.close(); } pintarFin(); }); }
+    M.q('#fn-save').onclick=function(){ guardar(true); };
+    var del=M.q('#fn-del'); if(del) del.onclick=function(){ if(!confirm('¿Eliminar este finiquito?'))return; var sb=sbc(); if(sb) sb.from('finiquitos').delete().eq('id',f.id).then(function(){}); _fin=_fin.filter(function(x){return x!==f;}); M.close(); pintarFin(); }; }
+  (function(){
+    var sg=document.getElementById('rrhh-seg'); if(sg) sg.addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(b) rrhhSeg(b.dataset.seg); });
+    var rf=document.getElementById('rrhh-fil'); if(rf) rf.addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(b){ RRHH_FILTRO=b.dataset.f; pintarRrhhDocs(); } });
+    var rv=document.getElementById('rrhh-vis'); if(rv) rv.addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(b){ RRHH_VISTA=b.dataset.v; pintarRrhhDocs(); } });
+    var tf=document.getElementById('trab-fil'); if(tf) tf.addEventListener('click',function(ev){ var b=ev.target.closest('button'); if(b){ _trabFil=b.dataset.f; pintarTrabList(); } });
+    var ts=document.getElementById('trab-search'); if(ts) ts.addEventListener('input',function(){ _trabQ=ts.value; pintarTrabList(); });
+    var fn=document.getElementById('fin-nuevo'); if(fn) fn.addEventListener('click',function(){ abrirFin(null); });
+    var ir=document.getElementById('asis-ir-rrhh'); if(ir) ir.addEventListener('click',function(ev){ ev.preventDefault(); var b=tabsEl.querySelector('button[data-view="rrhh"][data-seg="trab"]'); if(b&&b.style.display!=='none') b.click(); else toast('No tienes acceso a RRHH'); });
+  })();
+
+  // ================= REMUNERACIONES (semanal) =================
+  // Horas = asistencia (marcajes ENTRADA/SALIDA) + reloj (horas manuales). Se unen por trabajador+día (sin contar dos veces).
+  // Spot: todas las horas × valor hora. Fijo: solo lo que pasa de su jornada (sáb/dom completo). Tablas: remuneracion_items, remu_ajuste_dia (SQL 54).
+  var REMU_LUNES=null, REMU_DATA=null;
+  function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function lunesDe(f){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return isoLocal(d); }
+  function sumarDias(f,n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); }
+  function numSemana(f){ var d=new Date(Date.UTC(+f.slice(0,4),+f.slice(5,7)-1,+f.slice(8,10))); var day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day+3); var th=d.getTime(); d.setUTCMonth(0,1); if(d.getUTCDay()!==4){ d.setUTCMonth(0,1+((4-d.getUTCDay())+7)%7); } return 1+Math.round((th-d.getTime())/604800000); }
+  function hm(min){ min=Math.round(min||0); return Math.floor(min/60)+'h'+(min%60?(' '+String(min%60).padStart(2,'0')+'m'):''); }
+  function esFinde(f){ var g=new Date(f+'T12:00:00').getDay(); return g===0||g===6; }
+  var DIAS3=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], DIASL=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  function diaLargo(f){ var d=new Date(f+'T12:00:00'); return DIASL[d.getDay()]+' '+d.getDate(); }
+  function hm2min(s){ var p=String(s||'').split(':'); return p.length<2?null:(+p[0]*60+(+p[1]||0)); }
+  function renderRemu(){ if(!REMU_LUNES) REMU_LUNES=lunesDe(isoLocal(new Date())); cargarRemu(); }
+  function cargarRemu(){ var lun=REMU_LUNES, fin=sumarDias(lun,6);
+    var sl=document.getElementById('remu-semlbl'), rg=document.getElementById('remu-rango');
+    if(sl) sl.textContent='Semana '+numSemana(lun); if(rg) rg.textContent=fFecha(lun)+' – '+fFecha(fin);
+    var sb=sbc(); if(!sb)return;
+    var t0=new Date(lun+'T00:00:00'), t1=new Date(sumarDias(lun,7)+'T00:00:00');
+    Promise.all([
+      sb.from('trabajadores').select('*').order('nombre'),
+      sb.from('asistencia').select('*').gte('ts',t0.toISOString()).lt('ts',t1.toISOString()).order('ts'),
+      sb.from('reloj').select('*').gte('fecha',lun).lte('fecha',fin),
+      sb.from('remuneracion_items').select('*').eq('semana',lun).then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('remu_ajuste_dia').select('*').gte('fecha',lun).lte('fecha',fin).then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('cargo').select('*').then(function(r){return r;},function(){return {data:[]};})
+    ]).then(function(rs){
+      if(rs[0].data) _trab=rs[0].data; if(rs[5]&&rs[5].data) _cargos=rs[5].data;
+      var faltaSQL=(rs[3]&&rs[3].error&&rhFaltaSQL(rs[3].error))||(rs[4]&&rs[4].error&&rhFaltaSQL(rs[4].error));
+      if(faltaSQL) toast('⚠ Falta correr el SQL 54 (Remuneraciones) en Supabase');
+      var aj={}; ((rs[4]&&rs[4].data)||[]).forEach(function(a){ aj[String(a.trabajador_id)+'|'+a.fecha]={monto:+a.monto||0,obs:a.obs||''}; });
+      REMU_DATA={lun:lun,fin:fin,marks:(rs[1].data||[]),reloj:(rs[2].data||[]),items:((rs[3]&&rs[3].data)||[]),aj:aj,faltaSQL:!!faltaSQL};
+      computarRemu(); }); }
+  // minutos a pagar de un día: spot = todo; fijo = lo que excede la jornada (sáb/dom completo)
+  function pagoMinDia(t,f,min){ if(!esFijo(t)||esFinde(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
+  function computarRemu(){ var D=REMU_DATA; if(!D)return;
+    var byRut={}, byNom={}; (_trab||[]).forEach(function(t){ if(t.rut4) byRut[String(t.rut4)]=t; byNom[normNom(t.nombre)]=t; });
+    var P={}; // key -> {t, nombre, iv:{fecha:[[s,e,src,txt]]}, desc:{fecha:min}}
+    function slot(t,nombre){ var k=t?('t:'+t.id):('n:'+normNom(nombre)); if(!P[k]) P[k]={t:t,nombre:(t?t.nombre:titleCase(nombre)),iv:{},desc:{}}; return P[k]; }
+    // 1) asistencia: pares ENTRADA→SALIDA por persona
+    var porPer={}; D.marks.forEach(function(a){ var k=a.rut4?('r'+a.rut4):('n'+normNom(a.nombre)); (porPer[k]=porPer[k]||[]).push(a); });
+    Object.keys(porPer).forEach(function(k){ var arr=porPer[k].slice().sort(_cmpMark), a0=arr[0], t=(a0.rut4&&byRut[String(a0.rut4)])||byNom[normNom(a0.nombre)]||null, S=slot(t,a0.nombre||('••'+a0.rut4)), inA=null;
+      arr.forEach(function(a){ if(a.tipo==='ENTRADA') inA=a; else if(a.tipo==='SALIDA'&&inA){ var di=new Date(inA.ts), dur=Math.round((new Date(a.ts)-di)/60000); if(dur>0&&dur<24*60){ var f=isoLocal(di), s=di.getHours()*60+di.getMinutes(); (S.iv[f]=S.iv[f]||[]).push([s,s+dur,'asis',hhmm(inA.ts)+'→'+hhmm(a.ts)]); } inA=null; } }); });
+    // 2) reloj (horas manuales)
+    D.reloj.forEach(function(r){ if(!r.trabajador||!r.h_in||!r.h_out)return; var t=byNom[normNom(r.trabajador)]||null, S=slot(t,r.trabajador), s=hm2min(r.h_in), e=hm2min(r.h_out); if(s==null||e==null)return; if(e<=s)e+=1440;
+      (S.iv[r.fecha]=S.iv[r.fecha]||[]).push([s,e,'reloj',r.h_in+'→'+r.h_out+' (manual)']); if(+r.descanso) S.desc[r.fecha]=(S.desc[r.fecha]||0)+(+r.descanso); });
+    // fichas activas sin horas igual aparecen si tienen montos en la semana
+    D.items.forEach(function(it){ var t=(_trab||[]).filter(function(x){return String(x.id)===String(it.trabajador_id);})[0]; if(t) slot(t,t.nombre); });
+    var filas=[], total=0, porDiaMonto={}, porDiaMin={}, solapes=0, vhG=+VH['__SPOT__']||0;
+    Object.keys(P).forEach(function(k){ var S=P[k], t=S.t, vh=t?valorHoraDe(t):vhG, dias={}, totMin=0, pagMin=0, real=0, cont=0, hayAj=false;
+      Object.keys(S.iv).forEach(function(f){ var ivs=S.iv[f].slice().sort(function(a,b){return a[0]-b[0];}), union=0, raw=0, cs=null, ce=null;
+        ivs.forEach(function(iv){ raw+=iv[1]-iv[0]; if(ce===null){cs=iv[0];ce=iv[1];} else if(iv[0]<=ce){ if(iv[1]>ce)ce=iv[1]; } else { union+=ce-cs; cs=iv[0]; ce=iv[1]; } });
+        if(ce!==null) union+=ce-cs; if(raw>union) solapes++;
+        var min=Math.max(0,union-(S.desc[f]||0)), pm=t?pagoMinDia(t,f,min):min, dReal=Math.round(pm/60*vh), a=t?D.aj[String(t.id)+'|'+f]:null, dCont=a?a.monto:dReal; if(a)hayAj=true;
+        dias[f]={min:min,pagMin:pm,real:dReal,cont:dCont,aj:a,ivs:ivs}; totMin+=min; pagMin+=pm; real+=dReal; cont+=dCont;
+        porDiaMin[f]=(porDiaMin[f]||0)+min; porDiaMonto[f]=(porDiaMonto[f]||0)+dCont; });
+      var bono=0, desc=0, its=t?D.items.filter(function(it){ return String(it.trabajador_id)===String(t.id); }):[];
+      its.forEach(function(it){ if(it.tipo==='descuento') desc+=(+it.monto||0); else bono+=(+it.monto||0); });
+      if(t && !trabActivo(t) && !totMin && !bono && !desc) return;
+      var x={t:t,nombre:S.nombre,fijo:!!(t&&esFijo(t)),vh:vh,dias:dias,nDias:Object.keys(dias).length,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bono:bono,desc:desc,items:its,real:real+bono-desc,contable:cont+bono-desc};
+      filas.push(x); total+=x.contable; });
+    filas.sort(function(a,b){ if(!!a.t!==!!b.t) return a.t?-1:1; if(a.fijo!==b.fijo) return a.fijo?1:-1; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
+    D.filas=filas; D.porDiaMonto=porDiaMonto; D.porDiaMin=porDiaMin;
+    var tv=document.getElementById('remu-total-val'); if(tv) tv.textContent=clp(total);
+    var cn=document.getElementById('remu-cnt'); if(cn) cn.innerHTML='· '+filas.length+(filas.length===1?' trabajador':' trabajadores')+(solapes?(' · <span style="color:var(--warn);font-weight:700">'+solapes+' día'+(solapes>1?'s':'')+' con horas que se pisaban (contadas una vez)</span>'):'');
+    var hoy=isoLocal(new Date()), cards='';
+    for(var i=0;i<7;i++){ var f=sumarDias(D.lun,i), mo=porDiaMonto[f]||0, mi=porDiaMin[f]||0;
+      cards+='<div class="rd-card'+(f===hoy?' hoy':'')+(mo||mi?'':' cero')+'" data-f="'+f+'"><div class="d">'+DIAS3[i]+' <b>'+new Date(f+'T12:00:00').getDate()+'</b></div><div class="v">'+(mo?clp(mo):'—')+'</div>'+(mi?'<div class="h">'+hm(mi)+'</div>':'')+'</div>'; }
+    var dd=document.getElementById('remu-dias'); if(dd){ dd.innerHTML=cards; dd.querySelectorAll('.rd-card').forEach(function(el){ el.onclick=function(){ abrirRemuDia(el.dataset.f); }; }); }
+    var cont=document.getElementById('remu-list'); if(!cont)return;
+    if(!filas.length){ cont.innerHTML='<div class="col-empty" style="padding:26px">Sin horas ni montos esta semana.</div>'; return; }
+    var m=function(v,neg){ return v?((neg?'−':'')+clp(v)):'<span style="color:var(--ink-faint)">—</span>'; };
+    cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Base</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
+      filas.map(function(x,i){ var sub=x.t?((x.t.cargo?escH(x.t.cargo)+' · ':'')+(x.fijo?('fijo'+(x.t.jornada_horas?(' '+x.t.jornada_horas+'h/día'):' <span style="color:var(--crit)">sin jornada</span>')):'spot')):'<span style="color:var(--warn);font-weight:700">⚠ sin ficha en RRHH</span>';
+        var hrs=x.fijo?(hm(x.totMin)+'<div class="rh-sub">'+hm(x.pagMin)+' extra</div>'):hm(x.totMin);
+        return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+m(x.baseCont)+'</td><td class="r" style="color:var(--ok)">'+m(x.bono)+'</td><td class="r" style="color:var(--crit)">'+m(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
+      '</tbody></table></div>';
+    cont.querySelectorAll('tbody tr[data-i]').forEach(function(el){ el.onclick=function(){ abrirRemuTrab(REMU_DATA.filas[+el.dataset.i]); }; }); }
+  function remuRefrescar(){ cargarRemu(); }
+  function persistAjDia(tid,f,real,monto,obs){ var sb=sbc(); if(!sb)return;
+    if(monto===real && !obs){ sb.from('remu_ajuste_dia').delete().eq('trabajador_id',String(tid)).eq('fecha',f).then(function(){}); return; }
+    sb.from('remu_ajuste_dia').upsert({trabajador_id:String(tid),fecha:f,monto:monto,obs:obs||null,autor:(window.ISP_EMAIL||null)},{onConflict:'trabajador_id,fecha'}).then(function(r){ if(r&&r.error) toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ '+r.error.message)); }); }
+  // detalle de un trabajador en la semana: días (real vs contable editable), desglose y extras/descuentos
+  function abrirRemuTrab(x){ if(!x)return; var D=REMU_DATA, dirty=false;
+    var fechas=Object.keys(x.dias).sort();
+    var diasHtml=fechas.length?fechas.map(function(f){ var d=x.dias[f];
+      var tramos=d.ivs.map(function(iv){ return '<span class="rh-sub" style="display:block">'+escH(iv[3])+'</span>'; }).join('');
+      var fijoTxt=(x.fijo&&!esFinde(f))?'<span class="rh-sub" style="display:block;color:var(--info)">fijo: '+hm(d.min)+' − jornada '+hm(d.min-d.pagMin)+' = '+hm(d.pagMin)+' extra</span>':(x.fijo?'<span class="rh-sub" style="display:block;color:var(--info)">fin de semana: cuenta completo</span>':'');
+      var right=x.t?('<div class="rm-dcol"><span class="rh-sub rm-real'+(d.cont!==d.real?' aj':'')+'">real '+clp(d.real)+'</span><input type="number" min="0" class="rm-dcont" data-f="'+f+'" data-real="'+d.real+'" value="'+d.cont+'" title="Monto a pagar este día (editable)"><input class="rm-dobs" data-f="'+f+'" value="'+av(d.aj?d.aj.obs:'')+'" placeholder="motivo si ajustas"></div>'):('<b>'+clp(d.real)+'</b>');
+      return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas esta semana.</div>';
+    var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
+    var desg=lin((x.fijo?'Horas extra pagadas':'Horas')+' ('+hm(x.pagMin)+(x.vh?' × '+clp(x.vh):'')+')',clp(x.base));
+    if(x.bono) desg+=lin('Extras / bonos',clp(x.bono),'color:var(--ok)'); if(x.desc) desg+=lin('Descuentos / anticipos','− '+clp(x.desc),'color:var(--crit)');
+    desg+=lin('Total real (por horas)',clp(x.real))+'<div class="rm-lin tot"><span>Total a pagar (contable)</span><b id="rm-live">'+clp(x.contable)+'</b></div>';
+    var TIPOL={bono:'Extra / bono',otro:'Monto adicional',descuento:'Descuento / anticipo'};
+    var itemsHtml=x.t?('<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Extras y descuentos</h3>'+
+      (x.items.length?x.items.map(function(it){ var neg=it.tipo==='descuento'; return '<div class="rm-it"><div style="flex:1"><b style="color:'+(neg?'var(--crit)':'var(--ok)')+'">'+(neg?'− ':'')+clp(+it.monto||0)+'</b> <span class="rh-sub">'+escH(TIPOL[it.tipo]||it.tipo)+'</span><div class="rh-sub">'+escH(it.concepto||'—')+'</div></div><button type="button" class="stk-btn rm-idel" data-id="'+av(it.id)+'" title="Quitar" style="color:var(--crit);border-color:var(--crit)">✕</button></div>'; }).join(''):'<div class="col-empty" style="text-align:left;padding:4px 0 8px">Sin montos adicionales esta semana.</div>')+
+      '<div class="row c3" style="gap:8px;margin-top:8px"><label class="f"><span class="lab">Tipo</span><select id="rm-tipo"><option value="bono">Extra / bono</option><option value="descuento">Descuento / anticipo</option><option value="otro">Monto adicional</option></select></label><label class="f"><span class="lab">Monto ($)</span><input id="rm-monto" type="number" min="0"></label><label class="f"><span class="lab">Motivo *</span><input id="rm-concepto" placeholder="Ej: anticipo, vuelta, colación…"></label></div>'+
+      '<button type="button" class="btn primary" id="rm-add" style="margin-top:8px;width:100%">Agregar</button></div>'):
+      '<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Nombre sin ficha</b><p class="hint" style="display:block;margin:4px 0 0">Estas horas vienen de «'+escH(x.nombre)+'», que no calza con ningún trabajador de RRHH. Se pagan con el valor hora general. Crea su ficha en <b>RRHH → Trabajadores</b> con el mismo nombre (o corrige el nombre en el reloj) para usar su cargo y jornada.</p></div>';
+    var M=rhModal(escH(x.nombre)+' · Semana '+numSemana(D.lun),
+      '<div class="card"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· el monto de cada día es editable</span>':'')+'</h3>'+diasHtml+'</div>'+
+      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Desglose</h3>'+desg+'</div>'+itemsHtml, 620);
+    var close0=M.close; M.close=function(){ close0(); if(dirty) remuRefrescar(); };
+    M.q('.rh-x').onclick=M.close; M.ov.addEventListener('click',function(ev){ if(ev.target===M.ov && dirty) remuRefrescar(); });
+    if(!x.t)return;
+    function live(){ var s=0; M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ s+=(+i.value||0); }); var el=M.q('#rm-live'); if(el) el.textContent=clp(s+x.bono-x.desc); }
+    function persist(f){ var i=M.q('.rm-dcont[data-f="'+f+'"]'), o=M.q('.rm-dobs[data-f="'+f+'"]'); dirty=true; persistAjDia(x.t.id,f,+i.dataset.real,(+i.value||0),(o?o.value.trim():'')); }
+    M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ i.addEventListener('input',function(){ var r=i.closest('.rm-dcol').querySelector('.rm-real'); if(r) r.classList.toggle('aj',(+i.value||0)!==+i.dataset.real); live(); }); i.addEventListener('change',function(){ persist(i.dataset.f); }); });
+    M.ov.querySelectorAll('.rm-dobs').forEach(function(o){ o.addEventListener('change',function(){ persist(o.dataset.f); }); });
+    M.q('#rm-add').onclick=function(){ var b=this; if(b.disabled)return; var monto=+(M.q('#rm-monto').value||0), obs=M.q('#rm-concepto').value.trim(), tipo=M.q('#rm-tipo').value;
+      if(!monto){ toast('Pon el monto'); return; } if(!obs){ toast('Escribe el motivo del monto'); M.q('#rm-concepto').focus(); return; }
+      if(x.items.some(function(it){ return it.tipo===tipo && (+it.monto||0)===monto && normNom(it.concepto)===normNom(obs); }) && !confirm('Ya hay un monto igual esta semana ('+clp(monto)+' · '+obs+'). ¿Agregar otro igual?')) return;
+      var sb=sbc(); if(!sb)return; b.disabled=true;
+      sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),semana:D.lun,tipo:tipo,concepto:obs,monto:monto,autor:(window.ISP_EMAIL||null)}).then(function(r){ b.disabled=false;
+        if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ No se pudo: '+r.error.message)); return; }
+        toast('✓ Agregado'); dirty=true; M.close(); }); };
+    M.ov.querySelectorAll('.rm-idel').forEach(function(b){ b.onclick=function(){ if(!confirm('¿Quitar este monto?'))return; var sb=sbc(); if(!sb)return; sb.from('remuneracion_items').delete().eq('id',b.dataset.id).then(function(r){ if(r&&r.error){ toast('⚠ No se pudo quitar'); return; } toast('✓ Quitado'); dirty=true; M.close(); }); }; }); }
+  // detalle de un día: quién trabajó, horas y monto por persona
+  function abrirRemuDia(f){ var D=REMU_DATA; if(!D)return;
+    var rows=(D.filas||[]).filter(function(x){ return x.dias[f]; });
+    var html=rows.length?rows.map(function(x){ var d=x.dias[f]; return '<div class="rm-day" data-i="'+D.filas.indexOf(x)+'" style="cursor:pointer"><div style="flex:1"><b>'+escH(x.nombre)+'</b> <span class="rh-sub">'+(x.t?(x.fijo?'fijo':'spot'):'⚠ sin ficha')+'</span><span class="rh-sub" style="display:block">'+d.ivs.map(function(iv){return escH(iv[3]);}).join(' · ')+' · '+hm(d.min)+(x.fijo&&!esFinde(f)?(' → '+hm(d.pagMin)+' extra'):'')+'</span></div><b>'+clp(d.cont)+'</b></div>'; }).join(''):'<div class="col-empty">Nadie registró horas este día.</div>';
+    var M=rhModal('<span style="text-transform:capitalize">'+diaLargo(f)+'</span> · Semana '+numSemana(D.lun),
+      '<div class="card">'+html+'<div class="rm-lin tot"><span>Total horas</span><b>'+hm(D.porDiaMin[f]||0)+'</b></div><div class="rm-lin tot"><span>Total pago del día</span><b>'+clp(D.porDiaMonto[f]||0)+'</b></div></div>',520);
+    M.ov.querySelectorAll('.rm-day[data-i]').forEach(function(el){ el.onclick=function(){ M.close(); abrirRemuTrab(D.filas[+el.dataset.i]); }; }); }
+  function remuCSV(){ var D=REMU_DATA; if(!D||!D.filas){ toast('Sin datos'); return; }
+    var q=function(v){ v=(v==null?'':String(v)); return /[";\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; };
+    var L=[['Semana','Desde','Hasta','Trabajador','RUT','Cargo','Tipo','Dias','Horas','Horas pagadas','Valor hora','Base','Extras','Descuentos','Total real','Total a pagar'].join(';')];
+    D.filas.forEach(function(x){ L.push([numSemana(D.lun),D.lun,D.fin,x.nombre,(x.t&&x.t.rut)||'',(x.t&&x.t.cargo)||'',x.t?(x.fijo?'Fijo':'Spot'):'Sin ficha',x.nDias,(x.totMin/60).toFixed(2).replace('.',','),(x.pagMin/60).toFixed(2).replace('.',','),x.vh,x.baseCont,x.bono,x.desc,x.real,x.contable].map(q).join(';')); });
+    var blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='remuneraciones-semana-'+numSemana(D.lun)+'-'+D.lun+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+  (function(){
+    var g=function(id){ return document.getElementById(id); };
+    if(g('remu-prev')) g('remu-prev').onclick=function(){ REMU_LUNES=sumarDias(REMU_LUNES||lunesDe(isoLocal(new Date())),-7); cargarRemu(); };
+    if(g('remu-next')) g('remu-next').onclick=function(){ REMU_LUNES=sumarDias(REMU_LUNES||lunesDe(isoLocal(new Date())),7); cargarRemu(); };
+    if(g('remu-hoy')) g('remu-hoy').onclick=function(){ REMU_LUNES=lunesDe(isoLocal(new Date())); cargarRemu(); };
+    if(g('remu-cfg-btn')) g('remu-cfg-btn').onclick=function(){ abrirCargos(); };
+    if(g('remu-csv')) g('remu-csv').onclick=remuCSV;
+  })();
   // ---------- Asistencia (reloj entrada/salida por RUT) ----------
   var _trab=[], _asis=[], _kioBuf="";
   function cargarAsistencia(cb){
@@ -2455,14 +2540,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   function esHoy(ts){ var d=new Date(ts), n=new Date(); return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate(); }
   function hhmm(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
   function pintarAsistencia(){
-    var tl=document.getElementById("trab-list");
-    if(tl){ var arr=_trab.slice().sort(function(a,b){ var ai=trabActivo(a)?0:1, bi=trabActivo(b)?0:1; if(ai!==bi)return ai-bi; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
-      tl.innerHTML=arr.length?arr.map(function(t){ var vh=valorHoraDe(t);
-        var badges=(esFijo(t)?tbadge('Fijo','#7c3aed'):tbadge('Spot','#0d3b66'))+(t.chofer?tbadge('🚚','#e8e8e8','#333'):'')+(trabActivo(t)?'':tbadge('inactivo','#9aa0a6'));
-        var meta=(t.cargo?escH(t.cargo)+' · ':'')+(vh?clp(vh)+'/h':'sin valor hora')+' · marca ••'+escH(t.rut4);
-        return '<div class="asis-row"'+(trabActivo(t)?'':' style="opacity:.55"')+'><span class="trab-open" data-tid="'+t.id+'" style="cursor:pointer;flex:1"><b>'+escH(t.nombre)+'</b> '+badges+'<br><span class="rut" style="font-size:11px">'+meta+'</span></span><button class="ldel" data-tid="'+t.id+'" aria-label="Borrar">×</button></div>'; }).join(""):'<div class="col-empty">Aún no agregas trabajadores</div>'; }
-    document.querySelectorAll("#trab-list .trab-open").forEach(function(s){ s.addEventListener("click",function(){ abrirFichaTrab(s.dataset.tid); }); });
-    document.querySelectorAll("#trab-list .ldel").forEach(function(b){ b.addEventListener("click",function(){ var id=b.dataset.tid, sb=sbc(); if(sb) sb.from("trabajadores").delete().eq("id",id).then(function(){}); _trab=_trab.filter(function(x){return x.id!==id;}); pintarAsistencia(); }); });
+    pintarTrabList();
     cargarAsisResumen(); cargarAsisIncompletos();
   }
   function diaKey(ts){ var d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -2741,7 +2819,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["mishoras","Mis horas"],["clientes","Clientes"],["cobro","Cobro / Ventas"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["gm","Cierre GM"],["cc","Cierres cliente"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["quimicos","Químicos"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["mishoras","Mis horas"],["clientes","Clientes"],["cobro","Cobro / Ventas"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["gm","Cierre GM"],["cc","Cierres cliente"],["solicitudes","Solicitudes"],["costos","Costos"],["rrhh","RRHH"],["remu","Remuneraciones"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
@@ -2751,15 +2829,14 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     {v:"cotizaciones",l:"Cotizaciones",a:[["cot_crear","Crear / editar cotización"],["cot_borrar","Eliminar cotización"]]},
     {v:"stock",l:"Inventario",a:[["stock_mover","Ingresos / salidas"],["stock_agregar","Agregar productos"],["stock_borrar","Eliminar productos"]]},
     {v:"solicitudes",l:"Solicitudes",a:[["sol_gestionar","Aprobar / recibir / eliminar"]]},
-    {v:"plan",l:"Planificación",a:[["plan_editar","Crear / editar / eliminar tareas"]]},
     {v:"asistencia",l:"Asistencia",a:[["asis_trab","Alta / baja de trabajadores"],["asis_editar","Corregir marcajes"]]}
   ];
   function permAll(){ var arr=[]; PERM_CAT.forEach(function(g){ g.a.forEach(function(p){ arr.push(p[0]); }); }); return arr; }
   var ROLES_PRESET=[
     {nombre:"Recepcionista",vistas:["recepcion","agenda","seguimiento","clientes","asistencia"],permisos:["seg_avanzar","seg_trabajos","cli_editar"]},
     {nombre:"Vendedor",vistas:["recepcion","agenda","seguimiento","clientes","cotizaciones","cobro"],permisos:["seg_avanzar","seg_trabajos","cli_editar","cot_crear","cobro_registrar"]},
-    {nombre:"Técnico / Mecánico",vistas:["seguimiento","stock","quimicos","asistencia"],permisos:["seg_avanzar","seg_trabajos","stock_mover"]},
-    {nombre:"Administrativa",vistas:["recepcion","agenda","seguimiento","tareas","clientes","cobro","asistencia","quimicos"],permisos:["seg_avanzar","seg_trabajos","cli_editar","cobro_registrar","asis_editar","asis_trab"]},
+    {nombre:"Técnico / Mecánico",vistas:["seguimiento","stock","asistencia"],permisos:["seg_avanzar","seg_trabajos","stock_mover"]},
+    {nombre:"Administrativa",vistas:["recepcion","agenda","seguimiento","tareas","clientes","cobro","asistencia"],permisos:["seg_avanzar","seg_trabajos","cli_editar","cobro_registrar","asis_editar","asis_trab"]},
     {nombre:"Solo tablet (marca asistencia)",vistas:["kiosco"],permisos:[]}
   ];
   var PERMISOS_MAP={}; // email -> array de permisos (undefined = todos)
@@ -5704,7 +5781,6 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
   var _appEl=document.querySelector(".app"), _deskT=document.getElementById("desk-toggle");
   function setWide(on){ if(_appEl) _appEl.classList.toggle("wide", on); }
   if(_deskT) _deskT.addEventListener("click",function(){ if(_appEl) _appEl.classList.toggle("wide"); });
-  var _quiSearch=document.getElementById("qui-search"); if(_quiSearch) _quiSearch.addEventListener("input", renderQuimicos);
   if(_ovl) _ovl.addEventListener("click",function(){ sideOpen(false); });
   tabsEl.addEventListener("click",function(ev){ if(ev.target.closest("button")) sideOpen(false); });
 
