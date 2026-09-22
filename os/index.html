@@ -3101,8 +3101,9 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
         var vsub=0, dets=[];
         its.forEach(function(it){ vsub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); var q=(+it.cant||0); dets.push((q>1?(q+"× "):"")+(it.desc||"")); });
         sub+=vsub;
-        rows+='<tr><td>'+n+'</td><td class="cp-desc"><b>'+escH(v.veh||("Vehículo "+n))+'</b></td><td>'+escH(v.patente||"—")+'</td><td>'+escH(v.talla||"M")+'</td><td class="cp-desc">'+escH(dets.join(", "))+'</td><td class="r"><b>'+clp(vsub)+'</b></td></tr>'; });
-      tablaHTML='<table class="cp-table"><colgroup><col style="width:5%"><col style="width:26%"><col style="width:13%"><col style="width:7%"><col style="width:35%"><col style="width:14%"></colgroup><thead><tr><th>#</th><th>Vehículo</th><th>Patente</th><th>Talla</th><th>Detalle</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
+        var _veh=(v.veh||("Vehículo "+n)).trim(), _sp=_veh.indexOf(" "), _marca=_sp>0?_veh.slice(0,_sp):_veh, _modelo=_sp>0?_veh.slice(_sp+1):"";
+        rows+='<tr><td>'+n+'</td><td class="cp-desc" style="padding-right:2px"><b>'+escH(_marca)+'</b>'+(_modelo?('<br><span style="color:#555;font-size:11.5px">'+escH(_modelo)+'</span>'):"")+'</td><td style="padding-left:2px;white-space:nowrap">'+escH(v.patente||"—")+'</td><td class="cp-desc">'+escH(dets.join(", "))+'</td><td class="r"><b>'+clp(vsub)+'</b></td></tr>'; });
+      tablaHTML='<table class="cp-table"><colgroup><col style="width:5%"><col style="width:19%"><col style="width:12%"><col style="width:50%"><col style="width:14%"></colgroup><thead><tr><th>#</th><th>Vehículo</th><th>Patente</th><th>Detalle</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
     } else { var filasHTML="", _idx=0;
       var _fila=function(it){ var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*(+it.descPct||0)/100); _idx++;
         return '<tr><td>'+_idx+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+((+it.descPct||0)?(+it.descPct+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>'; };
