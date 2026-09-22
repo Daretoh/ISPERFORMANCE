@@ -592,7 +592,9 @@
   .remu-sem{flex:1;min-width:150px;text-align:center;display:flex;flex-direction:column;gap:3px;} .remu-sem b{font:800 13px/1 var(--mono);color:var(--accent-ink);text-transform:uppercase;letter-spacing:.06em;} .remu-sem span{font-size:13px;color:var(--ink-2);}
   .remu-total{display:flex;justify-content:space-between;align-items:center;background:var(--accent-soft,rgba(255,107,0,.1));border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:12px;} .remu-total span{font-weight:650;color:var(--accent-ink);} .remu-total b{font:800 21px/1 var(--sans);color:var(--accent-ink);}
   .remu-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:14px;}
-  @media (max-width:640px){.remu-dias{grid-template-columns:repeat(4,1fr);}}
+  .rd-hd{font:700 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);text-align:center;padding:2px 0;}
+  .remu-autos{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;background:var(--ok-soft);color:var(--ok);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:13px;}
+  @media (max-width:640px){.remu-dias{gap:4px;} .rd-card{padding:6px 2px;} .rd-card .v{font-size:10.5px;} .rd-card .h{display:none;}}
   .rd-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 8px;text-align:center;cursor:pointer;} .rd-card:hover{border-color:var(--accent);}
   .rd-card.hoy{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;} .rd-card.cero{opacity:.55;}
   .rd-card .d{font-size:11.5px;color:var(--ink-muted);} .rd-card .v{font-weight:800;font-size:13px;margin-top:4px;} .rd-card .h{font-size:11px;color:var(--ink-muted);margin-top:2px;}
@@ -1322,21 +1324,22 @@
       </div>
     </section>
 
-    <!-- ============ REMUNERACIONES (semanal: asistencia + reloj -> pago) ============ -->
+    <!-- ============ REMUNERACIONES (mensual: asistencia + reloj -> pago, + bono por autos) ============ -->
     <section class="view" id="view-remu">
       <div class="vhead"><div class="eye">Remuneraciones</div><h1>Remuneraciones <span id="remu-cnt" style="font-size:.8rem;font-weight:500;color:var(--ink-muted)"></span></h1></div>
       <div class="remu-bar">
         <button type="button" class="btn ghost" id="remu-prev">‹</button>
-        <div class="remu-sem"><b id="remu-semlbl">Semana</b><span id="remu-rango"></span></div>
+        <div class="remu-sem"><b id="remu-semlbl">Mes</b><span id="remu-rango"></span></div>
         <button type="button" class="btn ghost" id="remu-hoy">Hoy</button>
         <button type="button" class="btn ghost" id="remu-next">›</button>
         <button type="button" class="btn ghost" id="remu-cfg-btn">💼 Cargos y tratos</button>
         <button type="button" class="btn ghost" id="remu-csv">⬇ CSV</button>
       </div>
       <div class="remu-total"><span>Total a pagar (contable)</span><b id="remu-total-val">$0</b></div>
-      <div id="remu-dias" class="remu-dias"></div>
+      <div id="remu-autos" class="remu-autos"></div>
       <div id="remu-list"></div>
-      <p class="hint" style="display:block;margin-top:12px;font-size:11.5px;color:var(--ink-faint)">Horas = marcajes de <b>Asistencia</b> (tablet) + horas manuales del <b>reloj</b> (Costos). Si se pisan, se cuentan una sola vez. <b>Spot</b>: se pagan todas las horas × valor hora. <b>Fijo</b>: solo lo que pasa de su jornada diaria (fin de semana cuenta completo). Valor hora = trato del cargo ÷ 8 (o el propio de la persona).</p>
+      <details class="fsec" style="margin-top:14px"><summary>Calendario del mes · horas y pago por día</summary><div id="remu-dias" class="remu-dias" style="margin-top:10px"></div></details>
+      <p class="hint" style="display:block;margin-top:12px;font-size:11.5px;color:var(--ink-faint)">Horas = marcajes de <b>Asistencia</b> (tablet) + horas manuales del <b>reloj</b> (Costos). Si se pisan, se cuentan una sola vez. <b>Spot</b>: se pagan todas las horas × valor hora. <b>Fijo</b>: solo lo que pasa de su jornada diaria (fin de semana cuenta completo). Valor hora = trato del cargo ÷ 8 (o el propio de la persona). <b>Bono por autos</b>: cada persona que trabajó en el mes recibe $ por auto × autos del mes.</p>
     </section>
 
     <!-- ============ ADMIN (accesos/permisos — solo dueño) ============ -->
@@ -2388,42 +2391,49 @@
     var ir=document.getElementById('asis-ir-rrhh'); if(ir) ir.addEventListener('click',function(ev){ ev.preventDefault(); var b=tabsEl.querySelector('button[data-view="rrhh"][data-seg="trab"]'); if(b&&b.style.display!=='none') b.click(); else toast('No tienes acceso a RRHH'); });
   })();
 
-  // ================= REMUNERACIONES (semanal) =================
+  // ================= REMUNERACIONES (mensual) =================
   // Horas = asistencia (marcajes ENTRADA/SALIDA) + reloj (horas manuales). Se unen por trabajador+día (sin contar dos veces).
-  // Spot: todas las horas × valor hora. Fijo: solo lo que pasa de su jornada (sáb/dom completo). Tablas: remuneracion_items, remu_ajuste_dia (SQL 54).
-  var REMU_LUNES=null, REMU_DATA=null;
+  // Spot: todas las horas × valor hora. Fijo: solo lo que pasa de su jornada (sáb/dom completo).
+  // Bono por autos: $ por auto (config 'bono_auto', default 1.000) × autos del mes, a cada persona que trabajó en el mes.
+  // Tablas: remuneracion_items (periodo = 1er día del mes), remu_ajuste_dia (SQL 54).
+  var REMU_MES=null, REMU_DATA=null;
+  var MES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-  function lunesDe(f){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()-((d.getDay()+6)%7)); return isoLocal(d); }
-  function sumarDias(f,n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); }
-  function numSemana(f){ var d=new Date(Date.UTC(+f.slice(0,4),+f.slice(5,7)-1,+f.slice(8,10))); var day=(d.getUTCDay()+6)%7; d.setUTCDate(d.getUTCDate()-day+3); var th=d.getTime(); d.setUTCMonth(0,1); if(d.getUTCDay()!==4){ d.setUTCMonth(0,1+((4-d.getUTCDay())+7)%7); } return 1+Math.round((th-d.getTime())/604800000); }
+  function mesLabel(m){ return MES_NOM[+m.slice(5,7)-1]+' '+m.slice(0,4); }
+  function mesMas(m,n){ var d=new Date(+m.slice(0,4),+m.slice(5,7)-1+n,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function finDeMes(m){ var d=new Date(+m.slice(0,4),+m.slice(5,7),0); return isoLocal(d); }
   function hm(min){ min=Math.round(min||0); return Math.floor(min/60)+'h'+(min%60?(' '+String(min%60).padStart(2,'0')+'m'):''); }
   function esFinde(f){ var g=new Date(f+'T12:00:00').getDay(); return g===0||g===6; }
   var DIAS3=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], DIASL=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   function diaLargo(f){ var d=new Date(f+'T12:00:00'); return DIASL[d.getDay()]+' '+d.getDate(); }
   function hm2min(s){ var p=String(s||'').split(':'); return p.length<2?null:(+p[0]*60+(+p[1]||0)); }
-  function renderRemu(){ if(!REMU_LUNES) REMU_LUNES=lunesDe(isoLocal(new Date())); cargarRemu(); }
-  function cargarRemu(){ var lun=REMU_LUNES, fin=sumarDias(lun,6);
+  function bonoAutoValor(){ var v=(typeof CONFIG!=='undefined'&&CONFIG)?CONFIG['bono_auto']:null; return (v===undefined||v===null||v==='')?1000:(+v||0); }
+  // autos del mes: los que se trabajaron (en proceso / terminado / entregado) con ingreso (o agenda) en ese mes
+  function autosDelMes(m){ return (data||[]).filter(function(e){ return ['EN PROCESO','TERMINADO','ENTREGADO'].indexOf(e.estado)>=0 && (e.fIngreso||e.fCoord||'').slice(0,7)===m; }); }
+  function renderRemu(){ if(!REMU_MES) REMU_MES=isoLocal(new Date()).slice(0,7); cargarRemu(); }
+  function cargarRemu(){ var m=REMU_MES, ini=m+'-01', fin=finDeMes(m);
     var sl=document.getElementById('remu-semlbl'), rg=document.getElementById('remu-rango');
-    if(sl) sl.textContent='Semana '+numSemana(lun); if(rg) rg.textContent=fFecha(lun)+' – '+fFecha(fin);
+    if(sl) sl.textContent=mesLabel(m); if(rg) rg.textContent=fFecha(ini)+' – '+fFecha(fin);
     var sb=sbc(); if(!sb)return;
-    var t0=new Date(lun+'T00:00:00'), t1=new Date(sumarDias(lun,7)+'T00:00:00');
+    var t0=new Date(ini+'T00:00:00'), t1=new Date(mesMas(m,1)+'-01T00:00:00');
     Promise.all([
       sb.from('trabajadores').select('*').order('nombre'),
       sb.from('asistencia').select('*').gte('ts',t0.toISOString()).lt('ts',t1.toISOString()).order('ts'),
-      sb.from('reloj').select('*').gte('fecha',lun).lte('fecha',fin),
-      sb.from('remuneracion_items').select('*').eq('semana',lun).then(function(r){return r;},function(){return {data:[]};}),
-      sb.from('remu_ajuste_dia').select('*').gte('fecha',lun).lte('fecha',fin).then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('reloj').select('*').gte('fecha',ini).lte('fecha',fin),
+      sb.from('remuneracion_items').select('*').eq('periodo',ini).then(function(r){return r;},function(){return {data:[]};}),
+      sb.from('remu_ajuste_dia').select('*').gte('fecha',ini).lte('fecha',fin).then(function(r){return r;},function(){return {data:[]};}),
       sb.from('cargo').select('*').then(function(r){return r;},function(){return {data:[]};})
     ]).then(function(rs){
       if(rs[0].data) _trab=rs[0].data; if(rs[5]&&rs[5].data) _cargos=rs[5].data;
       var faltaSQL=(rs[3]&&rs[3].error&&rhFaltaSQL(rs[3].error))||(rs[4]&&rs[4].error&&rhFaltaSQL(rs[4].error));
       if(faltaSQL) toast('⚠ Falta correr el SQL 54 (Remuneraciones) en Supabase');
       var aj={}; ((rs[4]&&rs[4].data)||[]).forEach(function(a){ aj[String(a.trabajador_id)+'|'+a.fecha]={monto:+a.monto||0,obs:a.obs||''}; });
-      REMU_DATA={lun:lun,fin:fin,marks:(rs[1].data||[]),reloj:(rs[2].data||[]),items:((rs[3]&&rs[3].data)||[]),aj:aj,faltaSQL:!!faltaSQL};
+      REMU_DATA={mes:m,ini:ini,fin:fin,marks:(rs[1].data||[]),reloj:(rs[2].data||[]),items:((rs[3]&&rs[3].data)||[]),aj:aj,faltaSQL:!!faltaSQL};
       computarRemu(); }); }
   // minutos a pagar de un día: spot = todo; fijo = lo que excede la jornada (sáb/dom completo)
   function pagoMinDia(t,f,min){ if(!esFijo(t)||esFinde(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
   function computarRemu(){ var D=REMU_DATA; if(!D)return;
+    D.autos=autosDelMes(D.mes); D.valorAuto=bonoAutoValor();
     var byRut={}, byNom={}; (_trab||[]).forEach(function(t){ if(t.rut4) byRut[String(t.rut4)]=t; byNom[normNom(t.nombre)]=t; });
     var P={}; // key -> {t, nombre, iv:{fecha:[[s,e,src,txt]]}, desc:{fecha:min}}
     function slot(t,nombre){ var k=t?('t:'+t.id):('n:'+normNom(nombre)); if(!P[k]) P[k]={t:t,nombre:(t?t.nombre:titleCase(nombre)),iv:{},desc:{}}; return P[k]; }
@@ -2434,9 +2444,9 @@
     // 2) reloj (horas manuales)
     D.reloj.forEach(function(r){ if(!r.trabajador||!r.h_in||!r.h_out)return; var t=byNom[normNom(r.trabajador)]||null, S=slot(t,r.trabajador), s=hm2min(r.h_in), e=hm2min(r.h_out); if(s==null||e==null)return; if(e<=s)e+=1440;
       (S.iv[r.fecha]=S.iv[r.fecha]||[]).push([s,e,'reloj',r.h_in+'→'+r.h_out+' (manual)']); if(+r.descanso) S.desc[r.fecha]=(S.desc[r.fecha]||0)+(+r.descanso); });
-    // fichas activas sin horas igual aparecen si tienen montos en la semana
-    D.items.forEach(function(it){ var t=(_trab||[]).filter(function(x){return String(x.id)===String(it.trabajador_id);})[0]; if(t) slot(t,t.nombre); });
-    var filas=[], total=0, porDiaMonto={}, porDiaMin={}, solapes=0, vhG=+VH['__SPOT__']||0;
+    // fichas con montos en el mes igual aparecen aunque no tengan horas
+    D.items.forEach(function(it){ if(it.tipo==='sin_bono_auto')return; var t=(_trab||[]).filter(function(x){return String(x.id)===String(it.trabajador_id);})[0]; if(t) slot(t,t.nombre); });
+    var filas=[], total=0, totBonoAutos=0, porDiaMonto={}, porDiaMin={}, solapes=0, vhG=+VH['__SPOT__']||0, nAutos=D.autos.length;
     Object.keys(P).forEach(function(k){ var S=P[k], t=S.t, vh=t?valorHoraDe(t):vhG, dias={}, totMin=0, pagMin=0, real=0, cont=0, hayAj=false;
       Object.keys(S.iv).forEach(function(f){ var ivs=S.iv[f].slice().sort(function(a,b){return a[0]-b[0];}), union=0, raw=0, cs=null, ce=null;
         ivs.forEach(function(iv){ raw+=iv[1]-iv[0]; if(ce===null){cs=iv[0];ce=iv[1];} else if(iv[0]<=ce){ if(iv[1]>ce)ce=iv[1]; } else { union+=ce-cs; cs=iv[0]; ce=iv[1]; } });
@@ -2444,65 +2454,83 @@
         var min=Math.max(0,union-(S.desc[f]||0)), pm=t?pagoMinDia(t,f,min):min, dReal=Math.round(pm/60*vh), a=t?D.aj[String(t.id)+'|'+f]:null, dCont=a?a.monto:dReal; if(a)hayAj=true;
         dias[f]={min:min,pagMin:pm,real:dReal,cont:dCont,aj:a,ivs:ivs}; totMin+=min; pagMin+=pm; real+=dReal; cont+=dCont;
         porDiaMin[f]=(porDiaMin[f]||0)+min; porDiaMonto[f]=(porDiaMonto[f]||0)+dCont; });
-      var bono=0, desc=0, its=t?D.items.filter(function(it){ return String(it.trabajador_id)===String(t.id); }):[];
-      its.forEach(function(it){ if(it.tipo==='descuento') desc+=(+it.monto||0); else bono+=(+it.monto||0); });
+      var bono=0, desc=0, sinBono=false, its=t?D.items.filter(function(it){ return String(it.trabajador_id)===String(t.id); }):[];
+      its.forEach(function(it){ if(it.tipo==='sin_bono_auto') sinBono=true; else if(it.tipo==='descuento') desc+=(+it.monto||0); else bono+=(+it.monto||0); });
+      its=its.filter(function(it){ return it.tipo!=='sin_bono_auto'; });
       if(t && !trabActivo(t) && !totMin && !bono && !desc) return;
-      var x={t:t,nombre:S.nombre,fijo:!!(t&&esFijo(t)),vh:vh,dias:dias,nDias:Object.keys(dias).length,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bono:bono,desc:desc,items:its,real:real+bono-desc,contable:cont+bono-desc};
-      filas.push(x); total+=x.contable; });
+      // bono por autos: a cada persona con ficha que trabajó al menos un día en el mes
+      var nD=Object.keys(dias).length, bAutos=(t && nD && !sinBono)?nAutos*D.valorAuto:0;
+      var x={t:t,nombre:S.nombre,fijo:!!(t&&esFijo(t)),vh:vh,dias:dias,nDias:nD,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bonoAutos:bAutos,sinBono:sinBono,bono:bono,desc:desc,items:its,real:real+bAutos+bono-desc,contable:cont+bAutos+bono-desc};
+      filas.push(x); total+=x.contable; totBonoAutos+=bAutos; });
     filas.sort(function(a,b){ if(!!a.t!==!!b.t) return a.t?-1:1; if(a.fijo!==b.fijo) return a.fijo?1:-1; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
     D.filas=filas; D.porDiaMonto=porDiaMonto; D.porDiaMin=porDiaMin;
     var tv=document.getElementById('remu-total-val'); if(tv) tv.textContent=clp(total);
     var cn=document.getElementById('remu-cnt'); if(cn) cn.innerHTML='· '+filas.length+(filas.length===1?' trabajador':' trabajadores')+(solapes?(' · <span style="color:var(--warn);font-weight:700">'+solapes+' día'+(solapes>1?'s':'')+' con horas que se pisaban (contadas una vez)</span>'):'');
-    var hoy=isoLocal(new Date()), cards='';
-    for(var i=0;i<7;i++){ var f=sumarDias(D.lun,i), mo=porDiaMonto[f]||0, mi=porDiaMin[f]||0;
-      cards+='<div class="rd-card'+(f===hoy?' hoy':'')+(mo||mi?'':' cero')+'" data-f="'+f+'"><div class="d">'+DIAS3[i]+' <b>'+new Date(f+'T12:00:00').getDate()+'</b></div><div class="v">'+(mo?clp(mo):'—')+'</div>'+(mi?'<div class="h">'+hm(mi)+'</div>':'')+'</div>'; }
+    var ba=document.getElementById('remu-autos'); if(ba) ba.innerHTML='<span>🚗 Bono por autos: <b>'+nAutos+' auto'+(nAutos===1?'':'s')+'</b> en '+escH(mesLabel(D.mes))+' × <b>'+clp(D.valorAuto)+'</b> = <b>'+clp(nAutos*D.valorAuto)+'</b> por persona</span><span style="color:var(--ink-muted)">Total bono: '+clp(totBonoAutos)+'</span><span style="display:flex;gap:6px;margin-left:auto"><button type="button" class="stk-btn" id="remu-autos-ver">Ver autos</button><button type="button" class="stk-btn" id="remu-autos-val">$ por auto</button></span>';
+    var bv=document.getElementById('remu-autos-ver'); if(bv) bv.onclick=abrirAutosMes;
+    var bval=document.getElementById('remu-autos-val'); if(bval) bval.onclick=function(){ var v=prompt('Bono por auto ($) que recibe cada persona:',String(D.valorAuto)); if(v===null)return; v=Math.max(0,parseInt(String(v).replace(/[^0-9]/g,''),10)||0); guardarConfig('bono_auto',v); computarRemu(); toast('✓ Bono por auto: '+clp(v)); };
+    // calendario del mes (lunes a domingo)
+    var hoy=isoLocal(new Date()), ini=D.ini, lead=(new Date(ini+'T12:00:00').getDay()+6)%7, cards=DIAS3.map(function(d){ return '<div class="rd-hd">'+d+'</div>'; }).join('');
+    for(var i=0;i<lead;i++) cards+='<div></div>';
+    for(var f=ini; f<=D.fin; f=isoLocal(new Date(new Date(f+'T12:00:00').getTime()+86400000))){ var mo=porDiaMonto[f]||0, mi=porDiaMin[f]||0;
+      cards+='<div class="rd-card'+(f===hoy?' hoy':'')+(mo||mi?'':' cero')+'" data-f="'+f+'"><div class="d"><b>'+new Date(f+'T12:00:00').getDate()+'</b></div><div class="v">'+(mo?clp(mo):'—')+'</div>'+(mi?'<div class="h">'+hm(mi)+'</div>':'')+'</div>'; }
     var dd=document.getElementById('remu-dias'); if(dd){ dd.innerHTML=cards; dd.querySelectorAll('.rd-card').forEach(function(el){ el.onclick=function(){ abrirRemuDia(el.dataset.f); }; }); }
     var cont=document.getElementById('remu-list'); if(!cont)return;
-    if(!filas.length){ cont.innerHTML='<div class="col-empty" style="padding:26px">Sin horas ni montos esta semana.</div>'; return; }
-    var m=function(v,neg){ return v?((neg?'−':'')+clp(v)):'<span style="color:var(--ink-faint)">—</span>'; };
-    cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Base</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
+    if(!filas.length){ cont.innerHTML='<div class="col-empty" style="padding:26px">Sin horas ni montos este mes.</div>'; return; }
+    var mm=function(v,neg){ return v?((neg?'−':'')+clp(v)):'<span style="color:var(--ink-faint)">—</span>'; };
+    cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Base</th><th class="r">Bono autos</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
       filas.map(function(x,i){ var sub=x.t?((x.t.cargo?escH(x.t.cargo)+' · ':'')+(x.fijo?('fijo'+(x.t.jornada_horas?(' '+x.t.jornada_horas+'h/día'):' <span style="color:var(--crit)">sin jornada</span>')):'spot')):'<span style="color:var(--warn);font-weight:700">⚠ sin ficha en RRHH</span>';
         var hrs=x.fijo?(hm(x.totMin)+'<div class="rh-sub">'+hm(x.pagMin)+' extra</div>'):hm(x.totMin);
-        return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+m(x.baseCont)+'</td><td class="r" style="color:var(--ok)">'+m(x.bono)+'</td><td class="r" style="color:var(--crit)">'+m(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
+        return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+mm(x.baseCont)+'</td><td class="r">'+(x.sinBono?'<span class="rh-sub">excluido</span>':mm(x.bonoAutos))+'</td><td class="r" style="color:var(--ok)">'+mm(x.bono)+'</td><td class="r" style="color:var(--crit)">'+mm(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
       '</tbody></table></div>';
     cont.querySelectorAll('tbody tr[data-i]').forEach(function(el){ el.onclick=function(){ abrirRemuTrab(REMU_DATA.filas[+el.dataset.i]); }; }); }
+  function abrirAutosMes(){ var D=REMU_DATA; if(!D)return; var A=D.autos.slice().sort(function(a,b){ return (a.fIngreso||a.fCoord||'')<(b.fIngreso||b.fCoord||'')?-1:1; });
+    rhModal('Autos de '+escH(mesLabel(D.mes))+' ('+A.length+')',
+      '<p class="hint" style="display:block;margin:0 0 10px;color:var(--ink-muted)">Cuentan los vehículos <b>en proceso, terminados o entregados</b> con fecha de ingreso (o de agenda) en el mes. Cada auto suma '+clp(D.valorAuto)+' al bono de cada persona que trabajó en el mes.</p>'+
+      (A.length?'<div class="tablewrap" style="margin-top:0"><table><thead><tr><th>Fecha</th><th>Vehículo</th><th>Cliente</th><th>Estado</th></tr></thead><tbody>'+A.map(function(e){ return '<tr><td>'+fFecha(e.fIngreso||e.fCoord)+'</td><td><b>'+escH((e.marca+' '+(e.modelo||'')).trim())+'</b>'+(e.patente?' <span class="rh-sub">'+escH(e.patente)+'</span>':'')+'</td><td>'+escH(e.cliente||'')+'</td><td class="rh-sub">'+escH(e.estado)+'</td></tr>'; }).join('')+'</tbody></table></div>':'<div class="col-empty">Sin autos este mes.</div>'),620); }
   function remuRefrescar(){ cargarRemu(); }
   function persistAjDia(tid,f,real,monto,obs){ var sb=sbc(); if(!sb)return;
     if(monto===real && !obs){ sb.from('remu_ajuste_dia').delete().eq('trabajador_id',String(tid)).eq('fecha',f).then(function(){}); return; }
     sb.from('remu_ajuste_dia').upsert({trabajador_id:String(tid),fecha:f,monto:monto,obs:obs||null,autor:(window.ISP_EMAIL||null)},{onConflict:'trabajador_id,fecha'}).then(function(r){ if(r&&r.error) toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ '+r.error.message)); }); }
-  // detalle de un trabajador en la semana: días (real vs contable editable), desglose y extras/descuentos
+  // detalle de un trabajador en el mes: días (real vs contable editable), desglose, bono autos y extras/descuentos
   function abrirRemuTrab(x){ if(!x)return; var D=REMU_DATA, dirty=false;
     var fechas=Object.keys(x.dias).sort();
     var diasHtml=fechas.length?fechas.map(function(f){ var d=x.dias[f];
       var tramos=d.ivs.map(function(iv){ return '<span class="rh-sub" style="display:block">'+escH(iv[3])+'</span>'; }).join('');
       var fijoTxt=(x.fijo&&!esFinde(f))?'<span class="rh-sub" style="display:block;color:var(--info)">fijo: '+hm(d.min)+' − jornada '+hm(d.min-d.pagMin)+' = '+hm(d.pagMin)+' extra</span>':(x.fijo?'<span class="rh-sub" style="display:block;color:var(--info)">fin de semana: cuenta completo</span>':'');
       var right=x.t?('<div class="rm-dcol"><span class="rh-sub rm-real'+(d.cont!==d.real?' aj':'')+'">real '+clp(d.real)+'</span><input type="number" min="0" class="rm-dcont" data-f="'+f+'" data-real="'+d.real+'" value="'+d.cont+'" title="Monto a pagar este día (editable)"><input class="rm-dobs" data-f="'+f+'" value="'+av(d.aj?d.aj.obs:'')+'" placeholder="motivo si ajustas"></div>'):('<b>'+clp(d.real)+'</b>');
-      return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas esta semana.</div>';
+      return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas este mes.</div>';
     var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
     var desg=lin((x.fijo?'Horas extra pagadas':'Horas')+' ('+hm(x.pagMin)+(x.vh?' × '+clp(x.vh):'')+')',clp(x.base));
+    if(x.t) desg+=x.sinBono?lin('Bono por autos','excluido este mes','color:var(--ink-muted)'):lin('Bono por autos ('+D.autos.length+' × '+clp(D.valorAuto)+')',clp(x.bonoAutos),'color:var(--ok)');
     if(x.bono) desg+=lin('Extras / bonos',clp(x.bono),'color:var(--ok)'); if(x.desc) desg+=lin('Descuentos / anticipos','− '+clp(x.desc),'color:var(--crit)');
     desg+=lin('Total real (por horas)',clp(x.real))+'<div class="rm-lin tot"><span>Total a pagar (contable)</span><b id="rm-live">'+clp(x.contable)+'</b></div>';
+    if(x.t && x.nDias) desg+='<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:8px"><input type="checkbox" id="rm-sinbono"'+(x.sinBono?' checked':'')+'> No pagarle bono por autos este mes</label>';
     var TIPOL={bono:'Extra / bono',otro:'Monto adicional',descuento:'Descuento / anticipo'};
-    var itemsHtml=x.t?('<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Extras y descuentos</h3>'+
-      (x.items.length?x.items.map(function(it){ var neg=it.tipo==='descuento'; return '<div class="rm-it"><div style="flex:1"><b style="color:'+(neg?'var(--crit)':'var(--ok)')+'">'+(neg?'− ':'')+clp(+it.monto||0)+'</b> <span class="rh-sub">'+escH(TIPOL[it.tipo]||it.tipo)+'</span><div class="rh-sub">'+escH(it.concepto||'—')+'</div></div><button type="button" class="stk-btn rm-idel" data-id="'+av(it.id)+'" title="Quitar" style="color:var(--crit);border-color:var(--crit)">✕</button></div>'; }).join(''):'<div class="col-empty" style="text-align:left;padding:4px 0 8px">Sin montos adicionales esta semana.</div>')+
+    var itemsHtml=x.t?('<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Extras y descuentos del mes</h3>'+
+      (x.items.length?x.items.map(function(it){ var neg=it.tipo==='descuento'; return '<div class="rm-it"><div style="flex:1"><b style="color:'+(neg?'var(--crit)':'var(--ok)')+'">'+(neg?'− ':'')+clp(+it.monto||0)+'</b> <span class="rh-sub">'+escH(TIPOL[it.tipo]||it.tipo)+'</span><div class="rh-sub">'+escH(it.concepto||'—')+'</div></div><button type="button" class="stk-btn rm-idel" data-id="'+av(it.id)+'" title="Quitar" style="color:var(--crit);border-color:var(--crit)">✕</button></div>'; }).join(''):'<div class="col-empty" style="text-align:left;padding:4px 0 8px">Sin montos adicionales este mes.</div>')+
       '<div class="row c3" style="gap:8px;margin-top:8px"><label class="f"><span class="lab">Tipo</span><select id="rm-tipo"><option value="bono">Extra / bono</option><option value="descuento">Descuento / anticipo</option><option value="otro">Monto adicional</option></select></label><label class="f"><span class="lab">Monto ($)</span><input id="rm-monto" type="number" min="0"></label><label class="f"><span class="lab">Motivo *</span><input id="rm-concepto" placeholder="Ej: anticipo, vuelta, colación…"></label></div>'+
       '<button type="button" class="btn primary" id="rm-add" style="margin-top:8px;width:100%">Agregar</button></div>'):
-      '<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Nombre sin ficha</b><p class="hint" style="display:block;margin:4px 0 0">Estas horas vienen de «'+escH(x.nombre)+'», que no calza con ningún trabajador de RRHH. Se pagan con el valor hora general. Crea su ficha en <b>RRHH → Trabajadores</b> con el mismo nombre (o corrige el nombre en el reloj) para usar su cargo y jornada.</p></div>';
-    var M=rhModal(escH(x.nombre)+' · Semana '+numSemana(D.lun),
-      '<div class="card"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· el monto de cada día es editable</span>':'')+'</h3>'+diasHtml+'</div>'+
-      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Desglose</h3>'+desg+'</div>'+itemsHtml, 620);
+      '<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Nombre sin ficha</b><p class="hint" style="display:block;margin:4px 0 0">Estas horas vienen de «'+escH(x.nombre)+'», que no calza con ningún trabajador de RRHH. Se pagan con el valor hora general y sin bono por autos. Crea su ficha en <b>RRHH → Trabajadores</b> con el mismo nombre (o corrige el nombre en el reloj).</p></div>';
+    var M=rhModal(escH(x.nombre)+' · '+escH(mesLabel(D.mes)),
+      '<div class="card"><h3 style="margin:0 0 8px">Desglose del mes</h3>'+desg+'</div>'+
+      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· el monto de cada día es editable</span>':'')+'</h3>'+diasHtml+'</div>'+itemsHtml, 620);
     var close0=M.close; M.close=function(){ close0(); if(dirty) remuRefrescar(); };
     M.q('.rh-x').onclick=M.close; M.ov.addEventListener('click',function(ev){ if(ev.target===M.ov && dirty) remuRefrescar(); });
     if(!x.t)return;
-    function live(){ var s=0; M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ s+=(+i.value||0); }); var el=M.q('#rm-live'); if(el) el.textContent=clp(s+x.bono-x.desc); }
+    var sbx=M.q('#rm-sinbono'); if(sbx) sbx.onchange=function(){ var sb=sbc(); if(!sb)return; dirty=true;
+      var q=sbx.checked? sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),periodo:D.ini,tipo:'sin_bono_auto',concepto:'Excluido del bono por autos',monto:0,autor:(window.ISP_EMAIL||null)})
+                       : sb.from('remuneracion_items').delete().eq('trabajador_id',String(x.t.id)).eq('periodo',D.ini).eq('tipo','sin_bono_auto');
+      q.then(function(r){ if(r&&r.error) toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ '+r.error.message)); else toast(sbx.checked?'Sin bono por autos este mes':'✓ Bono por autos incluido'); }); };
+    function live(){ var s=0; M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ s+=(+i.value||0); }); var el=M.q('#rm-live'); if(el) el.textContent=clp(s+x.bonoAutos+x.bono-x.desc); }
     function persist(f){ var i=M.q('.rm-dcont[data-f="'+f+'"]'), o=M.q('.rm-dobs[data-f="'+f+'"]'); dirty=true; persistAjDia(x.t.id,f,+i.dataset.real,(+i.value||0),(o?o.value.trim():'')); }
     M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ i.addEventListener('input',function(){ var r=i.closest('.rm-dcol').querySelector('.rm-real'); if(r) r.classList.toggle('aj',(+i.value||0)!==+i.dataset.real); live(); }); i.addEventListener('change',function(){ persist(i.dataset.f); }); });
     M.ov.querySelectorAll('.rm-dobs').forEach(function(o){ o.addEventListener('change',function(){ persist(o.dataset.f); }); });
     M.q('#rm-add').onclick=function(){ var b=this; if(b.disabled)return; var monto=+(M.q('#rm-monto').value||0), obs=M.q('#rm-concepto').value.trim(), tipo=M.q('#rm-tipo').value;
       if(!monto){ toast('Pon el monto'); return; } if(!obs){ toast('Escribe el motivo del monto'); M.q('#rm-concepto').focus(); return; }
-      if(x.items.some(function(it){ return it.tipo===tipo && (+it.monto||0)===monto && normNom(it.concepto)===normNom(obs); }) && !confirm('Ya hay un monto igual esta semana ('+clp(monto)+' · '+obs+'). ¿Agregar otro igual?')) return;
+      if(x.items.some(function(it){ return it.tipo===tipo && (+it.monto||0)===monto && normNom(it.concepto)===normNom(obs); }) && !confirm('Ya hay un monto igual este mes ('+clp(monto)+' · '+obs+'). ¿Agregar otro igual?')) return;
       var sb=sbc(); if(!sb)return; b.disabled=true;
-      sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),semana:D.lun,tipo:tipo,concepto:obs,monto:monto,autor:(window.ISP_EMAIL||null)}).then(function(r){ b.disabled=false;
+      sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),periodo:D.ini,tipo:tipo,concepto:obs,monto:monto,autor:(window.ISP_EMAIL||null)}).then(function(r){ b.disabled=false;
         if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ No se pudo: '+r.error.message)); return; }
         toast('✓ Agregado'); dirty=true; M.close(); }); };
     M.ov.querySelectorAll('.rm-idel').forEach(function(b){ b.onclick=function(){ if(!confirm('¿Quitar este monto?'))return; var sb=sbc(); if(!sb)return; sb.from('remuneracion_items').delete().eq('id',b.dataset.id).then(function(r){ if(r&&r.error){ toast('⚠ No se pudo quitar'); return; } toast('✓ Quitado'); dirty=true; M.close(); }); }; }); }
@@ -2510,19 +2538,20 @@
   function abrirRemuDia(f){ var D=REMU_DATA; if(!D)return;
     var rows=(D.filas||[]).filter(function(x){ return x.dias[f]; });
     var html=rows.length?rows.map(function(x){ var d=x.dias[f]; return '<div class="rm-day" data-i="'+D.filas.indexOf(x)+'" style="cursor:pointer"><div style="flex:1"><b>'+escH(x.nombre)+'</b> <span class="rh-sub">'+(x.t?(x.fijo?'fijo':'spot'):'⚠ sin ficha')+'</span><span class="rh-sub" style="display:block">'+d.ivs.map(function(iv){return escH(iv[3]);}).join(' · ')+' · '+hm(d.min)+(x.fijo&&!esFinde(f)?(' → '+hm(d.pagMin)+' extra'):'')+'</span></div><b>'+clp(d.cont)+'</b></div>'; }).join(''):'<div class="col-empty">Nadie registró horas este día.</div>';
-    var M=rhModal('<span style="text-transform:capitalize">'+diaLargo(f)+'</span> · Semana '+numSemana(D.lun),
-      '<div class="card">'+html+'<div class="rm-lin tot"><span>Total horas</span><b>'+hm(D.porDiaMin[f]||0)+'</b></div><div class="rm-lin tot"><span>Total pago del día</span><b>'+clp(D.porDiaMonto[f]||0)+'</b></div></div>',520);
+    var M=rhModal('<span style="text-transform:capitalize">'+diaLargo(f)+'</span> · '+escH(mesLabel(D.mes)),
+      '<div class="card">'+html+'<div class="rm-lin tot"><span>Total horas</span><b>'+hm(D.porDiaMin[f]||0)+'</b></div><div class="rm-lin tot"><span>Total pago del día (sin bonos)</span><b>'+clp(D.porDiaMonto[f]||0)+'</b></div></div>',520);
     M.ov.querySelectorAll('.rm-day[data-i]').forEach(function(el){ el.onclick=function(){ M.close(); abrirRemuTrab(D.filas[+el.dataset.i]); }; }); }
   function remuCSV(){ var D=REMU_DATA; if(!D||!D.filas){ toast('Sin datos'); return; }
     var q=function(v){ v=(v==null?'':String(v)); return /[";\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; };
-    var L=[['Semana','Desde','Hasta','Trabajador','RUT','Cargo','Tipo','Dias','Horas','Horas pagadas','Valor hora','Base','Extras','Descuentos','Total real','Total a pagar'].join(';')];
-    D.filas.forEach(function(x){ L.push([numSemana(D.lun),D.lun,D.fin,x.nombre,(x.t&&x.t.rut)||'',(x.t&&x.t.cargo)||'',x.t?(x.fijo?'Fijo':'Spot'):'Sin ficha',x.nDias,(x.totMin/60).toFixed(2).replace('.',','),(x.pagMin/60).toFixed(2).replace('.',','),x.vh,x.baseCont,x.bono,x.desc,x.real,x.contable].map(q).join(';')); });
-    var blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='remuneraciones-semana-'+numSemana(D.lun)+'-'+D.lun+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
+    var L=[['Mes','Trabajador','RUT','Cargo','Tipo','Dias','Horas','Horas pagadas','Valor hora','Base','Bono autos','Extras','Descuentos','Total real','Total a pagar'].join(';')];
+    D.filas.forEach(function(x){ L.push([D.mes,x.nombre,(x.t&&x.t.rut)||'',(x.t&&x.t.cargo)||'',x.t?(x.fijo?'Fijo':'Spot'):'Sin ficha',x.nDias,(x.totMin/60).toFixed(2).replace('.',','),(x.pagMin/60).toFixed(2).replace('.',','),x.vh,x.baseCont,x.bonoAutos,x.bono,x.desc,x.real,x.contable].map(q).join(';')); });
+    var blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='remuneraciones-'+D.mes+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
   (function(){
     var g=function(id){ return document.getElementById(id); };
-    if(g('remu-prev')) g('remu-prev').onclick=function(){ REMU_LUNES=sumarDias(REMU_LUNES||lunesDe(isoLocal(new Date())),-7); cargarRemu(); };
-    if(g('remu-next')) g('remu-next').onclick=function(){ REMU_LUNES=sumarDias(REMU_LUNES||lunesDe(isoLocal(new Date())),7); cargarRemu(); };
-    if(g('remu-hoy')) g('remu-hoy').onclick=function(){ REMU_LUNES=lunesDe(isoLocal(new Date())); cargarRemu(); };
+    var cur=function(){ return REMU_MES||isoLocal(new Date()).slice(0,7); };
+    if(g('remu-prev')) g('remu-prev').onclick=function(){ REMU_MES=mesMas(cur(),-1); cargarRemu(); };
+    if(g('remu-next')) g('remu-next').onclick=function(){ REMU_MES=mesMas(cur(),1); cargarRemu(); };
+    if(g('remu-hoy')) g('remu-hoy').onclick=function(){ REMU_MES=isoLocal(new Date()).slice(0,7); cargarRemu(); };
     if(g('remu-cfg-btn')) g('remu-cfg-btn').onclick=function(){ abrirCargos(); };
     if(g('remu-csv')) g('remu-csv').onclick=remuCSV;
   })();
