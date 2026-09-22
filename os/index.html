@@ -1352,7 +1352,10 @@
         <datalist id="cot-serv-list"></datalist>
         <label class="f" id="cot-pend-wrap" style="margin:14px 0 0;display:none"><span class="lab">Pendientes de cotización <span class="hint" style="text-transform:none;letter-spacing:0">— busca y elige; se agrega como vehículo</span></span><input id="cot-pend" list="cot-pend-list" placeholder="Busca patente, marca o modelo…" autocomplete="off"><datalist id="cot-pend-list"></datalist></label>
         <div id="cot-vehiculos" style="margin-top:14px"></div>
-        <button type="button" class="btn" id="cot-add-veh" style="margin:8px 0">+ Agregar vehículo</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+          <button type="button" class="btn" id="cot-add-veh">+ Agregar vehículo</button>
+          <button type="button" class="btn ghost" id="cot-gm-import">📋 Traer de Cierre GM (por mes)</button>
+        </div>
         <div class="cotiz-tot">
           <div style="display:flex;flex-direction:column;gap:10px">
             <label class="f cotiz-descadic"><span class="lab">Descuento adicional %</span><input id="cot-descadic" type="number" min="0" step="0.1" value="0"></label>
@@ -2909,6 +2912,47 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var bs=cotBlocks(); if(bs.length===1){ var d=cotVehData(bs[0]); if(!d.veh && !d.patente && !d.items.some(function(x){return x.desc||x.precio;})) bs[0].remove(); }
     cotAddVeh({ veh:limpiaBasura((e.marca||"")+" "+(e.modelo||"")).trim(), patente:limpiaBasura(e.patente||""), anio:e.anioVeh||"", talla:(e.talla||"M"), vehiculo_id:e.id, items:cotItemsDeVeh(e) }, true);
     cotRefreshPendientes(); toast("✓ Vehículo agregado a la cotización"); }
+  // convierte una fila del Cierre GM (servicios con talla + extra) en líneas de cotización
+  function cotItemsDeGMRow(r){ var t=r.talla||"M", out=[];
+    (typeof GM_SERV!=="undefined"?GM_SERV:[]).forEach(function(s){ var v=(r.items&&r.items[s.k])||0; if(!v)return;
+      if(s.manual){ out.push({ desc:(r.notas?("Extra: "+r.notas):(s.n||"Extra")), cant:1, precio:(+v||0), descPct:0 }); }
+      else { out.push({ desc:s.n, cant:(+v||1), precio:((s.p&&s.p[t])||0), descPct:0 }); } });
+    out.push({ desc:"Retiro / entrega", cant:1, precio:((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000), descPct:0 });
+    return out; }
+  var _gmiRows=[];
+  // modal: traer autos del Cierre GM de un mes elegido
+  function abrirGMImport(){
+    if(typeof gmRows!=="function"){ toast("Cierre GM no disponible"); return; }
+    var mesDef=(function(){ var mx=""; (data||[]).forEach(function(e){ if(typeof gmEsGM==="function"&&gmEsGM(e)){ var m=(e.fIngreso||e.fCoord||"").slice(0,7); if(m>mx)mx=m; } }); return mx||todayISO().slice(0,7); })();
+    var ov=document.createElement("div"); ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+    function lista(mes){ _gmiRows=gmRows(mes).filter(function(r){ return r.vehiculo_id||r.marca||r.patente; });
+      if(!_gmiRows.length) return '<div style="color:#888;padding:14px;text-align:center">Sin vehículos de GM en '+escH(gmMesNom(mes))+'.</div>';
+      return _gmiRows.map(function(r){ var val=(typeof gmValor==="function")?gmValor(r):0; var nom=((r.marca||"")+" "+(r.modelo||"")).trim()||"Vehículo";
+        return '<label style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line,#f0f0f0);font-size:13px;cursor:pointer"><input type="checkbox" class="gmi-chk" data-rid="'+av(r._rid)+'" checked><span style="flex:1"><b>'+escH(nom)+'</b> · '+escH(r.patente||"—")+' · Talla '+escH(r.talla||"M")+'</span><b>'+clp(val)+'</b></label>'; }).join(""); }
+    function render(mes){ ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:600px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
+        '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">📋 Traer autos de Cierre GM</b><button id="gmi-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
+        '<div style="padding:12px 16px 16px">'+
+          '<label class="f" style="display:block;margin-bottom:10px"><span class="lab">Mes del cierre</span><input type="month" id="gmi-mes" value="'+mes+'" style="width:100%;box-sizing:border-box"></label>'+
+          '<div id="gmi-list">'+lista(mes)+'</div>'+
+          '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="gmi-add" class="btn primary">Agregar seleccionados</button><button id="gmi-all" class="btn ghost">Marcar/desmarcar todos</button></div>'+
+        '</div></div>';
+      ov.querySelector("#gmi-x").onclick=close;
+      ov.querySelector("#gmi-mes").onchange=function(){ render(this.value); };
+      ov.querySelector("#gmi-all").onclick=function(){ var cs=ov.querySelectorAll(".gmi-chk"), any=Array.prototype.some.call(cs,function(c){return !c.checked;}); cs.forEach(function(c){ c.checked=any; }); };
+      ov.querySelector("#gmi-add").onclick=function(){ var rids=Array.prototype.slice.call(ov.querySelectorAll(".gmi-chk:checked")).map(function(c){return c.dataset.rid;});
+        if(!rids.length){ toast("Marca al menos un vehículo"); return; }
+        var bs=cotBlocks(); if(bs.length===1){ var d=cotVehData(bs[0]); if(!d.veh&&!d.patente&&!d.items.some(function(x){return x.desc||x.precio;})) bs[0].remove(); }
+        var added=0, cliName="";
+        rids.forEach(function(rid){ var r=(_gmiRows||[]).filter(function(x){return x._rid===rid;})[0]; if(!r)return;
+          var e=r.vehiculo_id?(data||[]).filter(function(x){return String(x.id)===String(r.vehiculo_id);})[0]:null;
+          if(!cliName && e) cliName=nomCliVeh(e)||e.cliente||"";
+          cotAddVeh({ veh:((r.marca||"")+" "+(r.modelo||"")).trim(), patente:r.patente||"", anio:(e&&e.anioVeh)||"", talla:r.talla||"M", vehiculo_id:r.vehiculo_id||null, items:cotItemsDeGMRow(r) }); added++; });
+        var nomI=document.getElementById("cot-nom"); if(nomI && !(nomI.value||"").trim()) nomI.value=cliName||"Guillermo Morales";
+        cotCalc(); cotRefreshPendientes(); close(); toast("✓ "+added+" vehículo(s) traídos de Cierre GM"); };
+    }
+    function close(){ try{document.body.removeChild(ov);}catch(e){} }
+    ov.addEventListener("click",function(ev){ if(ev.target===ov)close(); });
+    document.body.appendChild(ov); render(mesDef); }
   // buscador de pendientes de cotización (P.C), filtrado por el cliente elegido
   function cotRefreshPendientes(){
     var inp=document.getElementById("cot-pend"), wrap=document.getElementById("cot-pend-wrap"), dl=document.getElementById("cot-pend-list"); if(!inp||!wrap||!dl)return;
@@ -2956,6 +3000,7 @@ var QUIMICOS=[{"cat":"PRELAV / LAVADO EXTERIOR","marca":"WINTEX","prod":"ALUMAX"
     var _cotIva=document.getElementById("cot-iva"); if(_cotIva)_cotIva.onchange=cotCalc;
     cotFillDatalists(); var _nom=document.getElementById("cot-nom"); _nom.onchange=cotCliFill; _nom.oninput=cotRefreshPendientes;
     var _av=document.getElementById("cot-add-veh"); if(_av && !_av.dataset.b){ _av.dataset.b="1"; _av.onclick=function(){ cotAddVeh({}, true); }; }
+    var _gmi=document.getElementById("cot-gm-import"); if(_gmi && !_gmi.dataset.b){ _gmi.dataset.b="1"; _gmi.onclick=abrirGMImport; }
     cotRefreshPendientes();
     var bs=document.getElementById("cot-buscar"); if(bs && !bs.dataset.done){ bs.oninput=pintarCotList; bs.dataset.done="1"; }
     if(sb){ sb.from("cotizaciones").select("*").order("numero",{ascending:false}).then(function(r){ if(r.data)_cotiz=r.data; pintarCotList(); cotRefreshPendientes(); document.getElementById("cot-num-tag").textContent="N° "+cotProxNum(); }); } else { pintarCotList(); }
