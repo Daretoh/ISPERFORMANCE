@@ -5191,51 +5191,77 @@
   function ccAvanceBadge(v){ var c=CC_AV[v||'pendiente']||CC_AV.pendiente; return '<span style="display:inline-block;font:700 10px/1 sans-serif;padding:2px 7px;border-radius:20px;background:'+c[1]+';color:'+c[0]+'">'+c[2]+'</span>'; }
   // Avance de una cotización según sus ítems marcados como hechos.
   function ccAvanceDe(c){ var its=(c&&c.items)||[]; var tot=its.length, d=0; its.forEach(function(it){ if(it.done)d++; }); var k=(!tot)?'pendiente':(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
+  // Cuerpo de correo para el cliente: resumen por cotización (total, abonado, saldo, avance).
+  function ccCorreoTexto(cc){ var t=ccTotales(cc); var L=[];
+    L.push('Estimado/a '+(cc.cliente||cc.nombre||'')+',');
+    L.push('');
+    L.push('Le compartimos el estado de cuenta de los trabajos en su(s) vehículo(s):');
+    L.push('');
+    (cc.cotiz||[]).forEach(function(l){ var c=ccCot(l.numero), mt=ccMontoLinea(l), abn=ccAbonadoCot(cc,l.numero), sld=mt-abn, av=ccAvanceDe(c);
+      L.push('• Cotización N°'+l.numero+(c&&c.vehiculo?(' — '+c.vehiculo):''));
+      L.push('   Total: '+clp(mt)+'   |   Abonado: '+clp(abn)+'   |   Saldo: '+clp(sld)+(av.total?('   |   Avance: '+av.done+'/'+av.total+' trabajos'):''));
+      L.push('');
+    });
+    L.push('TOTALES');
+    L.push('   Total aprobado: '+clp(t.total));
+    L.push('   Total abonado: '+clp(t.abonado));
+    L.push('   Saldo pendiente: '+clp(t.saldo));
+    L.push('');
+    L.push('Adjuntamos el detalle con los trabajos realizados y pendientes por vehículo (PDF).');
+    L.push('');
+    L.push('Saludos,');
+    L.push((typeof miNombre==='function'?miNombre():'')+' · IS Performance');
+    return L.join('\n'); }
+  function ccCorreoModal(cc){ var txt=ccCorreoTexto(cc);
+    var ov=document.createElement('div'); ov.id='cc-mail-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:20px';
+    ov.innerHTML='<div style="background:#fff;border-radius:12px;width:100%;max-width:680px;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:17px">Cuerpo del correo</b><button class="mail-x" style="border:none;background:#eee;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
+      '<div style="font-size:12.5px;color:#666;margin-bottom:8px">Puedes editarlo. Cópialo, pégalo en tu correo y adjunta el PDF (botón "Estado de cuenta").</div>'+
+      '<textarea class="mail-txt" style="width:100%;height:330px;font:13px/1.5 ui-monospace,monospace;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;color:#111">'+escH(txt)+'</textarea>'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px"><button class="mail-copy" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:11px 24px;font-weight:800;cursor:pointer">Copiar</button></div>'+
+    '</div>';
+    document.body.appendChild(ov);
+    function cerrar(){ var e=document.getElementById('cc-mail-ov'); if(e)e.remove(); }
+    ov.addEventListener('click',function(e){ if(e.target===ov)cerrar(); });
+    ov.querySelector('.mail-x').onclick=cerrar;
+    ov.querySelector('.mail-copy').onclick=function(){ var ta=ov.querySelector('.mail-txt'); ta.focus(); ta.select(); var ok=false; try{ ok=document.execCommand('copy'); }catch(e){} if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(ta.value).then(function(){ toast('✓ Correo copiado'); }, function(){ toast(ok?'✓ Correo copiado':'Selecciónalo y copia manual'); }); } else { toast(ok?'✓ Correo copiado':'Selecciónalo y copia manual'); } };
+  }
   // Editar una cotización SIN salir del cierre (abre el panel in-place por N°).
   function ccEditarCot(n){ var cc=ccActual(); if(!cc)return; var i=-1; (cc.cotiz||[]).forEach(function(l,k){ if(+l.numero===+n) i=k; }); if(i<0){ toast('No está en el cierre'); return; } ccAvanceModal(cc,i); }
   // Panel in-place: editar ítems (descripción/precio/descuento) y marcar lo hecho. Guarda en la cotización.
   function ccAvanceModal(cc, i){ var l=cc&&cc.cotiz&&cc.cotiz[+i]; if(!l)return; var c=ccCot(l.numero); if(!c){ toast('La cotización N°'+l.numero+' no existe'); return; }
     var items=(c.items||[]).map(function(it){ return {desc:it.desc||'', cant:(it.cant!=null?(+it.cant):1), precio:+it.precio||0, descPct:cotDescNorm(it.descPct), done:!!it.done}; });
     function gtOf(its){ return cotTotalDe({items:its, desc_adic_pct:c.desc_adic_pct, con_iva:c.con_iva}); }
-    function itemHTML(it){ var tot=cotLineaTotal(it); var ist='padding:6px;border:1px solid #ddd;border-radius:7px;text-align:right';
-      return '<tr class="ce-item"'+(it.done?' style="background:#f0fbf5"':'')+'>'+
-        '<td style="text-align:center"><input type="checkbox" class="ce-done"'+(it.done?' checked':'')+' style="width:20px;height:20px;cursor:pointer"></td>'+
-        '<td><textarea class="ce-desc" rows="1" placeholder="Descripción del trabajo" style="width:100%;min-height:36px;resize:vertical;font:500 13px/1.45 inherit;padding:7px 8px;border:1px solid #ddd;border-radius:7px">'+escH(it.desc)+'</textarea></td>'+
-        '<td><input class="ce-cant" type="number" min="0" step="1" value="'+it.cant+'" style="width:100%;'+ist+'"></td>'+
-        '<td><input class="ce-precio" type="number" min="0" step="1" value="'+it.precio+'" style="width:100%;'+ist+'"></td>'+
-        '<td><input class="ce-dp" type="number" min="0" max="100" step="0.1" value="'+it.descPct+'" style="width:100%;'+ist+'"></td>'+
-        '<td class="r"><b class="ce-tot">'+clp(tot)+'</b></td>'+
-        '<td style="text-align:center"><button class="ce-del" type="button" title="Quitar" style="border:none;background:#fdecec;color:#c0392b;border-radius:7px;padding:6px 9px;cursor:pointer;font-weight:700">×</button></td>'+
+    function rowHTML(it,k){ var tot=cotLineaTotal(it);
+      return '<tr'+(it.done?' style="background:#f0fbf5"':'')+'>'+
+        '<td style="text-align:center"><input type="checkbox" class="ce-done" data-k="'+k+'"'+(it.done?' checked':'')+' style="width:20px;height:20px;cursor:pointer"></td>'+
+        '<td style="white-space:normal;line-height:1.45">'+escH(it.desc||'—')+'</td>'+
+        '<td class="r"><b>'+clp(tot)+'</b></td>'+
       '</tr>'; }
-    var ov=document.createElement('div'); ov.id='cc-av-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:14px';
-    ov.innerHTML='<div style="background:#fff;border-radius:12px;width:100%;max-width:1200px;min-height:calc(100vh - 28px);display:flex;flex-direction:column;padding:16px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><b style="font-size:18px">N°'+escH(l.numero)+' · '+escH(c.vehiculo||'')+'</b><button class="cc-av-x" style="border:none;background:#eee;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
-      '<div style="font-size:12.5px;color:#666;margin-bottom:10px">Edita descripción, precio y descuento (%). Marca lo que ya está hecho.</div>'+
+    var ov=document.createElement('div'); ov.id='cc-av-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:16px';
+    ov.innerHTML='<div style="background:#fff;border-radius:12px;width:100%;max-width:820px;display:flex;flex-direction:column;padding:18px 20px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:2px"><b style="font-size:18px">N°'+escH(l.numero)+' · '+escH(c.vehiculo||'')+'</b><button class="cc-av-x" style="border:none;background:#eee;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
+      '<div style="font-size:12.5px;color:#666;margin-bottom:12px">Marca los trabajos que ya están hechos.</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="cc-av-all" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:7px 12px;cursor:pointer">Marcar todo hecho</button><button class="cc-av-none" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:7px 12px;cursor:pointer">Desmarcar</button></div>'+
-      '<div style="flex:1;overflow:auto"><table class="cc-table" style="width:100%"><colgroup><col style="width:60px"><col><col style="width:80px"><col style="width:130px"><col style="width:96px"><col style="width:120px"><col style="width:60px"></colgroup><thead><tr><th style="text-align:center">Hecho</th><th>Descripción</th><th class="r">Cant</th><th class="r">Precio</th><th class="r">Desc %</th><th class="r">Total</th><th></th></tr></thead><tbody id="ce-list">'+items.map(itemHTML).join('')+'</tbody></table>'+
-      '<button class="ce-add" type="button" style="border:1px dashed #bbb;background:#fafafa;border-radius:8px;padding:10px;width:100%;cursor:pointer;font-weight:700;color:#444;margin-top:10px">+ Agregar ítem</button></div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px;flex-wrap:wrap;border-top:1px solid #eee;padding-top:12px"><span style="font-weight:800;font-size:15px">Total cotización: <b class="ce-gt">'+clp(gtOf(items))+'</b></span><button class="cc-av-save" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:12px 26px;font-weight:800;cursor:pointer;font-size:15px">Guardar</button></div>'+
+      '<table class="cc-table" style="width:100%"><colgroup><col style="width:70px"><col><col style="width:150px"></colgroup><thead><tr><th style="text-align:center">Hecho</th><th>Trabajo</th><th class="r">Monto</th></tr></thead><tbody>'+items.map(rowHTML).join('')+'</tbody>'+
+        '<tfoot><tr><td></td><td style="font-weight:800">Total cotización</td><td class="r"><b>'+clp(gtOf(items))+'</b></td></tr></tfoot></table>'+
+      '<div style="font-size:11.5px;color:#888;margin-top:10px">¿Cambió un precio o descuento? Edítalo en la sección <b>Cotizaciones</b>.</div>'+
+      '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="cc-av-save" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:12px 28px;font-weight:800;cursor:pointer;font-size:15px">Guardar</button></div>'+
     '</div>';
     document.body.appendChild(ov);
-    var list=ov.querySelector('#ce-list');
     function cerrar(){ var e=document.getElementById('cc-av-ov'); if(e)e.remove(); }
-    function readRow(el){ return { desc:(el.querySelector('.ce-desc').value||'').trim(), cant:+el.querySelector('.ce-cant').value||0, precio:+el.querySelector('.ce-precio').value||0, descPct:cotDescNorm(el.querySelector('.ce-dp').value), done:el.querySelector('.ce-done').checked }; }
-    function readAll(){ return Array.prototype.map.call(list.querySelectorAll('.ce-item'), readRow); }
-    function recalc(){ Array.prototype.forEach.call(list.querySelectorAll('.ce-item'),function(el){ var it=readRow(el); el.querySelector('.ce-tot').textContent=clp(cotLineaTotal(it)); el.style.background=it.done?'#f0fbf5':'#fff'; }); ov.querySelector('.ce-gt').textContent=clp(gtOf(readAll())); }
-    function bind(){ list.querySelectorAll('.ce-cant,.ce-precio,.ce-dp').forEach(function(inp){ inp.oninput=recalc; }); list.querySelectorAll('.ce-done').forEach(function(chk){ chk.onchange=recalc; }); list.querySelectorAll('.ce-del').forEach(function(b){ b.onclick=function(){ b.closest('.ce-item').remove(); recalc(); }; }); }
-    bind();
+    function setDone(chk){ var k=+chk.dataset.k; if(items[k])items[k].done=chk.checked; var tr=chk.closest('tr'); if(tr)tr.style.background=chk.checked?'#f0fbf5':'#fff'; }
     ov.addEventListener('click',function(e){ if(e.target===ov)cerrar(); });
     ov.querySelector('.cc-av-x').onclick=cerrar;
-    ov.querySelector('.cc-av-all').onclick=function(){ list.querySelectorAll('.ce-done').forEach(function(x){x.checked=true;}); recalc(); };
-    ov.querySelector('.cc-av-none').onclick=function(){ list.querySelectorAll('.ce-done').forEach(function(x){x.checked=false;}); recalc(); };
-    ov.querySelector('.ce-add').onclick=function(){ list.insertAdjacentHTML('beforeend', itemHTML({desc:'',cant:1,precio:0,descPct:0,done:false})); bind(); recalc(); };
+    ov.querySelectorAll('.ce-done').forEach(function(chk){ chk.onchange=function(){ setDone(chk); }; });
+    ov.querySelector('.cc-av-all').onclick=function(){ ov.querySelectorAll('.ce-done').forEach(function(x){ x.checked=true; setDone(x); }); };
+    ov.querySelector('.cc-av-none').onclick=function(){ ov.querySelectorAll('.ce-done').forEach(function(x){ x.checked=false; setDone(x); }); };
     ov.querySelector('.cc-av-save').onclick=function(){
-      var out=readAll().filter(function(it){ return it.desc||it.precio; });
-      var payload={items:out}; if((c.vehiculos||[]).length===1){ var vv=c.vehiculos.slice(); vv[0]=Object.assign({},vv[0],{items:out}); payload.vehiculos=vv; }
+      var payload={items:items}; if((c.vehiculos||[]).length===1){ var vv=c.vehiculos.slice(); vv[0]=Object.assign({},vv[0],{items:items}); payload.vehiculos=vv; }
       var sb=sbc(); if(sb){ sb.from('cotizaciones').update(payload).eq('id',c.id).then(function(r){ if(r&&r.error) toast('No se pudo guardar: '+r.error.message); }); }
-      c.items=out; if(payload.vehiculos) c.vehiculos=payload.vehiculos;
-      var idx=_cotiz.map(function(x){return x.id;}).indexOf(c.id); if(idx>=0){ _cotiz[idx].items=out; if(payload.vehiculos)_cotiz[idx].vehiculos=payload.vehiculos; }
-      cerrar(); renderCierreCli(); toast('✓ Cotización actualizada');
+      c.items=items; if(payload.vehiculos) c.vehiculos=payload.vehiculos;
+      var idx=_cotiz.map(function(x){return x.id;}).indexOf(c.id); if(idx>=0){ _cotiz[idx].items=items; if(payload.vehiculos)_cotiz[idx].vehiculos=payload.vehiculos; }
+      cerrar(); renderCierreCli(); toast('✓ Avance guardado');
     };
   }
   function renderCierreCli(){ var root=document.getElementById('cc-root'); if(!root)return;
@@ -5243,7 +5269,7 @@
     ['cc-ab-fecha','cc-ab-monto','cc-ab-dest','cc-ab-medio','cc-ab-ref','cc-ab-nota','cc-add-num'].forEach(function(k){ var el=document.getElementById(k); if(el)_ccDraft[k]=el.value; });
     var cc=ccActual();
     var sel='<label class="f" style="margin:0"><span class="lab">Cierre</span><select id="cc-sel" style="min-width:220px;font-weight:800">'+(_ccList||[]).map(function(x){ return '<option value="'+av(x.id)+'"'+(cc&&x.id===cc.id?' selected':'')+'>'+escH(x.nombre||'—')+(x.cerrado?' (cerrado)':'')+'</option>'; }).join('')+'</select></label>';
-    var bar='<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+((_ccList||[]).length?sel:'')+'<button class="btn" id="cc-new">+ Nuevo cierre</button>'+(cc?'<button class="btn" id="cc-hist">🕑 Historial</button><button class="btn" id="cc-pdf">📄 Estado de cuenta (PDF)</button>':'')+'</div>';
+    var bar='<div class="stock-bar" style="align-items:flex-end;gap:10px;flex-wrap:wrap">'+((_ccList||[]).length?sel:'')+'<button class="btn" id="cc-new">+ Nuevo cierre</button>'+(cc?'<button class="btn" id="cc-hist">🕑 Historial</button><button class="btn" id="cc-pdf">📄 Estado de cuenta (PDF)</button><button class="btn" id="cc-correo">Copiar correo</button>':'')+'</div>';
     if(!cc){ root.innerHTML=bar+'<div class="cc-card"><div class="col-empty" style="padding:22px">Aún no hay cierres por cliente. Corre el <b>SQL 52</b> (crea el de Catatumbo con las cotizaciones 155, 156 y 163) o usa <b>+ Nuevo cierre</b>.</div></div>'; ccWire(root,null); return; }
     var t=ccTotales(cc), est=ccEstado(cc,t), pct=t.total>0?Math.min(100,Math.round(t.abonado*100/t.total)):0;
     var abGen=0; (cc.abonos||[]).forEach(function(a){ if(!ccEnCierre(cc,a.cot)) abGen+=(+a.monto||0); }); // abonos sin cotizacion (o de una que se quito del cierre)
@@ -5257,7 +5283,7 @@
         '<td class="r" style="color:#1e9e6a">'+clp(abn)+'</td>'+
         '<td class="r"><b'+(sld<=0?' style="color:#1e9e6a"':'')+'>'+(sld<=0&&ccMontoLinea(l)>0?'Pagada':clp(sld))+'</b></td>'+
         '<td><input class="cc-cnota" data-i="'+i+'" value="'+av(l.nota||'')+'" placeholder="Nota…" style="width:160px"></td>'+
-        '<td class="r" style="white-space:nowrap">'+(c?'<button class="btn sm cc-editcot" data-n="'+av(l.numero)+'">Editar</button> <button class="btn sm cc-verpdf" data-n="'+av(l.numero)+'">PDF</button>':'')+' <button class="cc-x cc-qcot" data-i="'+i+'" title="Quitar del cierre">×</button></td></tr>'; }).join('');
+        '<td class="r" style="white-space:nowrap">'+(c?'<button class="btn sm cc-editcot" data-n="'+av(l.numero)+'">Ítems</button> <button class="btn sm cc-verpdf" data-n="'+av(l.numero)+'">PDF</button>':'')+' <button class="cc-x cc-qcot" data-i="'+i+'" title="Quitar del cierre">×</button></td></tr>'; }).join('');
     var cl0=(cc.cliente||cc.nombre||'').toLowerCase().split(' ')[0]; var tels={}; (cc.cotiz||[]).forEach(function(l){ var c=ccCot(l.numero), t=ccTel(c&&c.cliente_tel); if(t)tels[t]=1; });
     var sug=(_cotiz||[]).filter(function(c){ return !(cc.cotiz||[]).some(function(l){return +l.numero===+c.numero;}); }).sort(function(a,b){ var ma=ccEsDelCli(a,cl0,tels)?0:1, mb=ccEsDelCli(b,cl0,tels)?0:1; return (ma-mb)||((+b.numero)-(+a.numero)); });
     var dl='<datalist id="cc-cot-list">'+sug.slice(0,300).map(function(c){ return '<option value="'+av(c.numero)+'">'+(ccEsDelCli(c,cl0,tels)?'★ ':'')+escH((c.cliente_nombre||'—')+' · '+(c.vehiculo||'')+' · '+clp(cotTotalDe(c)))+'</option>'; }).join('')+'</datalist>';
@@ -5305,6 +5331,7 @@
     function save(){ ccSave(cc); }
     var hs=document.getElementById('cc-hist'); if(hs)hs.onclick=function(){ gmHistModal(ccKey(cc),'Cierre '+(cc.nombre||'')); };
     var pd=document.getElementById('cc-pdf'); if(pd)pd.onclick=function(){ ccImprimir(cc); };
+    var co=document.getElementById('cc-correo'); if(co)co.onclick=function(){ ccCorreoModal(cc); };
     var no=document.getElementById('cc-nombre'); if(no)no.onchange=function(){ cc.nombre=no.value.trim()||cc.nombre; save(); renderCierreCli(); };
     var cl=document.getElementById('cc-cliente'); if(cl)cl.onchange=function(){ cc.cliente=cl.value.trim(); save(); renderCierreCli(); };
     var nt=document.getElementById('cc-notas'); if(nt)nt.onchange=function(){ cc.notas=nt.value; save(); };
