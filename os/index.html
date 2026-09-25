@@ -5189,6 +5189,36 @@
   var CC_AV={pendiente:['#b91c1c','#fee2e2','Pendiente'],proceso:['#9a5b00','#ffedcc','En proceso'],hecho:['#0f6e56','#dcfce7','Hecho']};
   function ccAvanceOpts(v){ v=v||'pendiente'; return Object.keys(CC_AV).map(function(k){ return '<option value="'+k+'"'+(k===v?' selected':'')+'>'+CC_AV[k][2]+'</option>'; }).join(''); }
   function ccAvanceBadge(v){ var c=CC_AV[v||'pendiente']||CC_AV.pendiente; return '<span style="display:inline-block;font:700 10px/1 sans-serif;padding:2px 7px;border-radius:20px;background:'+c[1]+';color:'+c[0]+'">'+c[2]+'</span>'; }
+  // Avance de una cotización según sus ítems marcados como hechos.
+  function ccAvanceDe(c){ var its=(c&&c.items)||[]; var tot=its.length, d=0; its.forEach(function(it){ if(it.done)d++; }); var k=(!tot)?'pendiente':(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
+  // Panel para marcar, por ítem, qué está hecho. Guarda item.done en la cotización.
+  function ccAvanceModal(cc, i){ var l=cc&&cc.cotiz&&cc.cotiz[+i]; if(!l)return; var c=ccCot(l.numero); if(!c){ toast('La cotización N°'+l.numero+' no existe'); return; }
+    var its=(c.items||[]); if(!its.length){ toast('La cotización no tiene ítems'); return; }
+    var rows=its.map(function(it,k){ var tot=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0});
+      return '<label style="display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid #eee;cursor:pointer">'+
+        '<input type="checkbox" class="cc-avck" data-k="'+k+'"'+(it.done?' checked':'')+' style="width:18px;height:18px;margin-top:1px;flex:none">'+
+        '<span style="flex:1"><span style="font-weight:600">'+escH(it.desc||'—')+'</span><br><span style="font-size:11.5px;color:#777">'+((+it.cant||0)>1?((+it.cant)+'× '):'')+clp(tot)+'</span></span></label>'; }).join('');
+    var ov=document.createElement('div'); ov.id='cc-av-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px';
+    ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;padding:16px 18px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><b style="font-size:16px">Avance · N°'+escH(l.numero)+' · '+escH(c.vehiculo||'')+'</b><button class="cc-av-x" style="border:none;background:#eee;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
+      '<div style="font-size:12.5px;color:#666;margin-bottom:8px">Marca los trabajos ya realizados.</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:8px"><button class="cc-av-all" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Marcar todo</button><button class="cc-av-none" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Desmarcar todo</button></div>'+
+      rows+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="cc-av-save" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer">Guardar</button></div>'+
+    '</div>';
+    document.body.appendChild(ov);
+    function cerrar(){ var e=document.getElementById('cc-av-ov'); if(e)e.remove(); }
+    ov.addEventListener('click',function(e){ if(e.target===ov)cerrar(); });
+    ov.querySelector('.cc-av-x').onclick=cerrar;
+    ov.querySelector('.cc-av-all').onclick=function(){ ov.querySelectorAll('.cc-avck').forEach(function(x){x.checked=true;}); };
+    ov.querySelector('.cc-av-none').onclick=function(){ ov.querySelectorAll('.cc-avck').forEach(function(x){x.checked=false;}); };
+    ov.querySelector('.cc-av-save').onclick=function(){
+      ov.querySelectorAll('.cc-avck').forEach(function(chk){ var k=+chk.dataset.k; if(its[k]) its[k].done=chk.checked; });
+      var sb=sbc(); if(sb){ sb.from('cotizaciones').update({items:its}).eq('id',c.id).then(function(r){ if(r&&r.error) toast('No se pudo guardar el avance'); }); }
+      var idx=_cotiz.map(function(x){return x.id;}).indexOf(c.id); if(idx>=0)_cotiz[idx].items=its;
+      cerrar(); renderCierreCli(); toast('✓ Avance guardado');
+    };
+  }
   function renderCierreCli(){ var root=document.getElementById('cc-root'); if(!root)return;
     // conserva lo que se estaba escribiendo en los formularios (el tiempo real re-dibuja la vista)
     ['cc-ab-fecha','cc-ab-monto','cc-ab-dest','cc-ab-medio','cc-ab-ref','cc-ab-nota','cc-add-num'].forEach(function(k){ var el=document.getElementById(k); if(el)_ccDraft[k]=el.value; });
@@ -5203,7 +5233,7 @@
       return '<tr><td><b>N°'+escH(l.numero)+'</b></td>'+
         '<td>'+(c?ccFecha(c.fecha):'—')+'</td>'+
         '<td>'+(c?escH(c.vehiculo||'—'):'<span style="color:var(--crit)">No existe en Cotizaciones</span>')+'</td>'+
-        '<td><select class="cc-avance" data-i="'+i+'" style="font-weight:700;min-width:110px">'+ccAvanceOpts(l.avance)+'</select></td>'+
+        '<td>'+(c?('<button class="btn sm cc-avbtn" data-i="'+i+'" title="Marcar ítems hechos" style="white-space:nowrap">'+ccAvanceBadge(ccAvanceDe(c).k)+' <span style="font-size:11px;color:#666">'+ccAvanceDe(c).done+'/'+ccAvanceDe(c).total+'</span></button>'):'—')+'</td>'+
         '<td class="r">'+clp(tc)+'</td>'+
         '<td class="r"><input class="cc-monto" data-i="'+i+'" type="number" min="0" step="1" value="'+(l.monto!=null&&l.monto!==''?(+l.monto):'')+'" placeholder="= cotización" style="width:120px;text-align:right" title="Vacío = se cobra el total de la cotización"></td>'+
         '<td class="r" style="color:#1e9e6a">'+clp(abn)+'</td>'+
@@ -5263,7 +5293,7 @@
     var ce=document.getElementById('cc-cerrar'); if(ce)ce.onclick=function(){ var t=ccTotales(cc); if(!cc.cerrado && t.saldo>0 && !confirm('Aún queda saldo de '+clp(t.saldo)+'. ¿Cerrar la cuenta igual?'))return; cc.cerrado=!cc.cerrado; save(); ccLog(cc,cc.cerrado?'cerró la cuenta':'reabrió la cuenta','Saldo '+clp(t.saldo)); renderCierreCli(); };
     root.querySelectorAll('.cc-monto').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; var v=x.value.trim(); l.monto=(v===''?null:Math.max(0,parseInt(v,10)||0)); save(); ccLog(cc,'cambió monto a cobrar','N°'+l.numero+' → '+(l.monto==null?'total cotización':clp(l.monto))); renderCierreCli(); }; });
     root.querySelectorAll('.cc-cnota').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; l.nota=x.value; save(); }; });
-    root.querySelectorAll('.cc-avance').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; l.avance=x.value; save(); ccLog(cc,'cambió avance','N°'+l.numero+' → '+(CC_AV[x.value]?CC_AV[x.value][2]:x.value)); renderCierreCli(); }; });
+    root.querySelectorAll('.cc-avbtn').forEach(function(b){ b.onclick=function(){ ccAvanceModal(cc, +b.dataset.i); }; });
     root.querySelectorAll('.cc-verpdf').forEach(function(b){ b.onclick=function(){ var c=ccCot(b.dataset.n); if(c) cotImprimir(c); }; });
     root.querySelectorAll('.cc-qcot').forEach(function(b){ b.onclick=function(){ var l=cc.cotiz[+b.dataset.i]; if(!l||!confirm('¿Quitar la cotización N°'+l.numero+' de este cierre?\n(La cotización no se borra.)'))return; cc.cotiz.splice(+b.dataset.i,1); save(); ccLog(cc,'quitó cotización','N°'+l.numero); renderCierreCli(); }; });
     var ac=document.getElementById('cc-add-cot'); if(ac)ac.onclick=function(){ var n=parseInt((document.getElementById('cc-add-num')||{}).value,10); if(!n){ toast('Escribe el N° de cotización'); return; }
@@ -5297,7 +5327,16 @@
   function ccImprimir(cc){ var t=ccTotales(cc);
     var abOrd=(cc.abonos||[]).slice().sort(function(x,y){return String(x.fecha||'').localeCompare(String(y.fecha||''));});
     // 1) resumen: una fila por cotizacion aprobada con lo abonado y su saldo
-    var fc=(cc.cotiz||[]).map(function(l,i){ var c=ccCot(l.numero), mt=ccMontoLinea(l), abn=ccAbonadoCot(cc,l.numero), sld=mt-abn; return '<tr><td>'+(i+1)+'</td><td class="r">N°'+escH(l.numero)+'</td><td class="cp-desc">'+escH(c?(c.vehiculo||'—'):'—')+' '+ccAvanceBadge(l.avance)+(l.nota?('<br><span style="font-size:10.5px;color:#555">'+escH(l.nota)+'</span>'):'')+'</td><td class="r">'+clp(mt)+'</td><td class="r">'+clp(abn)+'</td><td class="r"><b>'+(sld<=0&&mt>0?'Pagada':clp(sld))+'</b></td></tr>'; }).join('');
+    var fc=(cc.cotiz||[]).map(function(l,i){ var c=ccCot(l.numero), mt=ccMontoLinea(l), abn=ccAbonadoCot(cc,l.numero), sld=mt-abn, av=ccAvanceDe(c);
+      var its=(c&&c.items)||[], hechos=[], pend=[];
+      its.forEach(function(it){ (it.done?hechos:pend).push(it.desc||''); });
+      var avTxt='';
+      if(its.length){ avTxt='<div style="font-size:10.5px;color:#333;margin-top:3px">'
+        +(hechos.length?('<span style="color:#0f6e56">✓ Hecho:</span> '+escH(hechos.filter(Boolean).join(', '))):'')
+        +((hechos.length&&pend.length)?'<br>':'')
+        +(pend.length?('<span style="color:#b91c1c">○ Pendiente:</span> '+escH(pend.filter(Boolean).join(', '))):'')
+        +'</div>'; }
+      return '<tr><td>'+(i+1)+'</td><td class="r">N°'+escH(l.numero)+'</td><td class="cp-desc">'+escH(c?(c.vehiculo||'—'):'—')+' '+ccAvanceBadge(av.k)+(av.total?(' <span style="font-size:10px;color:#666">'+av.done+'/'+av.total+'</span>'):'')+avTxt+(l.nota?('<br><span style="font-size:10.5px;color:#555">'+escH(l.nota)+'</span>'):'')+'</td><td class="r">'+clp(mt)+'</td><td class="r">'+clp(abn)+'</td><td class="r"><b>'+(sld<=0&&mt>0?'Pagada':clp(sld))+'</b></td></tr>'; }).join('');
     var abGen=abOrd.filter(function(a){ return !ccEnCierre(cc,a.cot); });
     var sumGen=0; abGen.forEach(function(a){ sumGen+=(+a.monto||0); });
     // 2) detalle: los abonos agrupados bajo su cotizacion / vehiculo
