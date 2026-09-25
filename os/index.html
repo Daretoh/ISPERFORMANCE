@@ -5191,6 +5191,10 @@
   function ccAvanceBadge(v){ var c=CC_AV[v||'pendiente']||CC_AV.pendiente; return '<span style="display:inline-block;font:700 10px/1 sans-serif;padding:2px 7px;border-radius:20px;background:'+c[1]+';color:'+c[0]+'">'+c[2]+'</span>'; }
   // Avance de una cotización según sus ítems marcados como hechos.
   function ccAvanceDe(c){ var its=(c&&c.items)||[]; var tot=its.length, d=0; its.forEach(function(it){ if(it.done)d++; }); var k=(!tot)?'pendiente':(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
+  // Ir a editar una cotización (salta a la sección Cotizaciones y la carga).
+  function ccEditarCot(n){ var c=ccCot(n); if(!c){ toast('La cotización N°'+n+' no está en Cotizaciones'); return; }
+    var b=document.querySelector('#tabs button[data-view="cotizaciones"]'); if(b) b.click();
+    if(typeof cotCargar==='function') cotCargar(c); }
   // Panel para marcar, por ítem, qué está hecho. Guarda item.done en la cotización.
   function ccAvanceModal(cc, i){ var l=cc&&cc.cotiz&&cc.cotiz[+i]; if(!l)return; var c=ccCot(l.numero); if(!c){ toast('La cotización N°'+l.numero+' no existe'); return; }
     var its=(c.items||[]); if(!its.length){ toast('La cotización no tiene ítems'); return; }
@@ -5239,7 +5243,7 @@
         '<td class="r" style="color:#1e9e6a">'+clp(abn)+'</td>'+
         '<td class="r"><b'+(sld<=0?' style="color:#1e9e6a"':'')+'>'+(sld<=0&&ccMontoLinea(l)>0?'Pagada':clp(sld))+'</b></td>'+
         '<td><input class="cc-cnota" data-i="'+i+'" value="'+av(l.nota||'')+'" placeholder="Nota…" style="width:160px"></td>'+
-        '<td class="r" style="white-space:nowrap">'+(c?'<button class="btn sm cc-verpdf" data-n="'+av(l.numero)+'">PDF</button>':'')+' <button class="cc-x cc-qcot" data-i="'+i+'" title="Quitar del cierre">×</button></td></tr>'; }).join('');
+        '<td class="r" style="white-space:nowrap">'+(c?'<button class="btn sm cc-editcot" data-n="'+av(l.numero)+'">Editar</button> <button class="btn sm cc-verpdf" data-n="'+av(l.numero)+'">PDF</button>':'')+' <button class="cc-x cc-qcot" data-i="'+i+'" title="Quitar del cierre">×</button></td></tr>'; }).join('');
     var cl0=(cc.cliente||cc.nombre||'').toLowerCase().split(' ')[0]; var tels={}; (cc.cotiz||[]).forEach(function(l){ var c=ccCot(l.numero), t=ccTel(c&&c.cliente_tel); if(t)tels[t]=1; });
     var sug=(_cotiz||[]).filter(function(c){ return !(cc.cotiz||[]).some(function(l){return +l.numero===+c.numero;}); }).sort(function(a,b){ var ma=ccEsDelCli(a,cl0,tels)?0:1, mb=ccEsDelCli(b,cl0,tels)?0:1; return (ma-mb)||((+b.numero)-(+a.numero)); });
     var dl='<datalist id="cc-cot-list">'+sug.slice(0,300).map(function(c){ return '<option value="'+av(c.numero)+'">'+(ccEsDelCli(c,cl0,tels)?'★ ':'')+escH((c.cliente_nombre||'—')+' · '+(c.vehiculo||'')+' · '+clp(cotTotalDe(c)))+'</option>'; }).join('')+'</datalist>';
@@ -5294,6 +5298,7 @@
     root.querySelectorAll('.cc-monto').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; var v=x.value.trim(); l.monto=(v===''?null:Math.max(0,parseInt(v,10)||0)); save(); ccLog(cc,'cambió monto a cobrar','N°'+l.numero+' → '+(l.monto==null?'total cotización':clp(l.monto))); renderCierreCli(); }; });
     root.querySelectorAll('.cc-cnota').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; l.nota=x.value; save(); }; });
     root.querySelectorAll('.cc-avbtn').forEach(function(b){ b.onclick=function(){ ccAvanceModal(cc, +b.dataset.i); }; });
+    root.querySelectorAll('.cc-editcot').forEach(function(b){ b.onclick=function(){ ccEditarCot(b.dataset.n); }; });
     root.querySelectorAll('.cc-verpdf').forEach(function(b){ b.onclick=function(){ var c=ccCot(b.dataset.n); if(c) cotImprimir(c); }; });
     root.querySelectorAll('.cc-qcot').forEach(function(b){ b.onclick=function(){ var l=cc.cotiz[+b.dataset.i]; if(!l||!confirm('¿Quitar la cotización N°'+l.numero+' de este cierre?\n(La cotización no se borra.)'))return; cc.cotiz.splice(+b.dataset.i,1); save(); ccLog(cc,'quitó cotización','N°'+l.numero); renderCierreCli(); }; });
     var ac=document.getElementById('cc-add-cot'); if(ac)ac.onclick=function(){ var n=parseInt((document.getElementById('cc-add-num')||{}).value,10); if(!n){ toast('Escribe el N° de cotización'); return; }
