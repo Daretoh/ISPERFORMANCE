@@ -5157,7 +5157,7 @@
   var _ccList=[], _ccSel=null, _ccDraft={};
   var CC_MEDIOS=["TRANSFERENCIA","EFECTIVO","CHEQUE","TARJETA","OTRO"];
   function ccCot(n){ return (_cotiz||[]).filter(function(c){return +c.numero===+n;})[0]||null; }
-  function ccMontoLinea(l){ if(l.monto!=null && l.monto!=="") return +l.monto||0; var c=ccCot(l.numero); return c?cotTotalDe(c):0; } // monto acordado, o el total de la cotizacion
+  function ccMontoLinea(l){ if(l.monto!=null && l.monto!=="" && +l.monto>0) return +l.monto; var c=ccCot(l.numero); return c?cotTotalDe(c):0; } // total de la cotizacion (0/vacío = total)
   function ccTotales(cc){ var tot=0,ab=0; (cc.cotiz||[]).forEach(function(l){ tot+=ccMontoLinea(l); }); (cc.abonos||[]).forEach(function(a){ ab+=(+a.monto||0); }); return { total:tot, abonado:ab, saldo:tot-ab }; }
   function ccActual(){ var l=_ccList||[]; var c=l.filter(function(x){return x.id===_ccSel;})[0]; if(!c && l.length){ c=l[0]; _ccSel=c.id; } return c||null; }
   function ccKey(cc){ return 'cc:'+cc.id; } // historial compartido en gm_log
@@ -5239,7 +5239,6 @@
         '<td>'+(c?escH(c.vehiculo||'—'):'<span style="color:var(--crit)">No existe en Cotizaciones</span>')+'</td>'+
         '<td>'+(c?('<button class="btn sm cc-avbtn" data-i="'+i+'" title="Marcar ítems hechos" style="white-space:nowrap">'+ccAvanceBadge(ccAvanceDe(c).k)+' <span style="font-size:11px;color:#666">'+ccAvanceDe(c).done+'/'+ccAvanceDe(c).total+'</span></button>'):'—')+'</td>'+
         '<td class="r">'+clp(tc)+'</td>'+
-        '<td class="r"><input class="cc-monto" data-i="'+i+'" type="number" min="0" step="1" value="'+(l.monto!=null&&l.monto!==''?(+l.monto):'')+'" placeholder="= cotización" style="width:120px;text-align:right" title="Vacío = se cobra el total de la cotización"></td>'+
         '<td class="r" style="color:#1e9e6a">'+clp(abn)+'</td>'+
         '<td class="r"><b'+(sld<=0?' style="color:#1e9e6a"':'')+'>'+(sld<=0&&ccMontoLinea(l)>0?'Pagada':clp(sld))+'</b></td>'+
         '<td><input class="cc-cnota" data-i="'+i+'" value="'+av(l.nota||'')+'" placeholder="Nota…" style="width:160px"></td>'+
@@ -5264,7 +5263,7 @@
       '</div></div>'+
       '<div class="gasto-resumen" style="margin:10px 0"><div><span>Cotizaciones</span><b>'+(cc.cotiz||[]).length+'</b></div><div><span>Total cotizado</span><b>'+clp(t.total)+'</b></div><div><span>Abonado</span><b style="color:#1e9e6a">'+clp(t.abonado)+'</b></div><div class="tot"><span>Saldo</span><b>'+clp(t.saldo)+'</b></div></div>'+
       '<div class="cc-bar" title="'+pct+'% pagado"><i style="width:'+pct+'%"></i></div><div style="font-size:12px;color:var(--ink-muted);margin-bottom:6px">'+pct+'% pagado</div>'+
-      '<div class="cc-card"><h3>Cotizaciones</h3><div class="cc-tw"><table class="cc-table"><thead><tr><th>N°</th><th>Fecha</th><th>Vehículo</th><th>Avance</th><th class="r">Total cotización</th><th class="r">A cobrar</th><th class="r">Abonado</th><th class="r">Saldo</th><th>Nota</th><th></th></tr></thead><tbody>'+(cotRows||'<tr><td colspan="10" class="col-empty">Sin cotizaciones. Agrega por N°.</td></tr>')+'</tbody>'+(cotRows?('<tfoot><tr><td colspan="5">Total</td><td class="r">'+clp(t.total)+'</td><td class="r">'+clp(t.abonado-abGen)+'</td><td class="r">'+clp(t.total-(t.abonado-abGen))+'</td><td colspan="2"></td></tr>'+(abGen?('<tr><td colspan="6">Abonos generales (sin asignar a una cotización)</td><td class="r">'+clp(abGen)+'</td><td class="r">'+clp(t.saldo)+'</td><td colspan="2"></td></tr>'):'')+'</tfoot>'):'')+'</table></div>'+
+      '<div class="cc-card"><h3>Cotizaciones</h3><div class="cc-tw"><table class="cc-table"><thead><tr><th>N°</th><th>Fecha</th><th>Vehículo</th><th>Avance</th><th class="r">Total cotización</th><th class="r">Abonado</th><th class="r">Saldo</th><th>Nota</th><th></th></tr></thead><tbody>'+(cotRows||'<tr><td colspan="9" class="col-empty">Sin cotizaciones. Agrega por N°.</td></tr>')+'</tbody>'+(cotRows?('<tfoot><tr><td colspan="4">Total</td><td class="r">'+clp(t.total)+'</td><td class="r">'+clp(t.abonado-abGen)+'</td><td class="r">'+clp(t.total-(t.abonado-abGen))+'</td><td colspan="2"></td></tr>'+(abGen?('<tr><td colspan="5">Abonos generales (sin asignar a una cotización)</td><td class="r">'+clp(abGen)+'</td><td class="r">'+clp(t.saldo)+'</td><td colspan="2"></td></tr>'):'')+'</tfoot>'):'')+'</table></div>'+
         '<div class="cc-add"><label>Agregar cotización N°<input id="cc-add-num" list="cc-cot-list" type="number" min="1" value="'+av(dr('cc-add-num',''))+'" style="width:130px"></label><button class="btn sm primary" id="cc-add-cot">+ Agregar</button>'+dl+'</div></div>'+
       '<div class="cc-card"><h3>Abonos</h3><div class="cc-tw"><table class="cc-table"><thead><tr><th>Fecha</th><th class="r">Monto</th><th>Cotización / vehículo</th><th>Medio</th><th>Comprobante / ref.</th><th>Nota</th><th class="r">Saldo total</th><th></th></tr></thead><tbody>'+(abRows||'<tr><td colspan="8" class="col-empty">Sin abonos registrados.</td></tr>')+'</tbody>'+(abRows?('<tfoot><tr><td>Total abonado</td><td class="r">'+clp(t.abonado)+'</td><td colspan="4"></td><td class="r">'+clp(t.saldo)+'</td><td></td></tr></tfoot>'):'')+'</table></div>'+
         '<div class="cc-add">'+
@@ -5295,7 +5294,6 @@
     var cl=document.getElementById('cc-cliente'); if(cl)cl.onchange=function(){ cc.cliente=cl.value.trim(); save(); renderCierreCli(); };
     var nt=document.getElementById('cc-notas'); if(nt)nt.onchange=function(){ cc.notas=nt.value; save(); };
     var ce=document.getElementById('cc-cerrar'); if(ce)ce.onclick=function(){ var t=ccTotales(cc); if(!cc.cerrado && t.saldo>0 && !confirm('Aún queda saldo de '+clp(t.saldo)+'. ¿Cerrar la cuenta igual?'))return; cc.cerrado=!cc.cerrado; save(); ccLog(cc,cc.cerrado?'cerró la cuenta':'reabrió la cuenta','Saldo '+clp(t.saldo)); renderCierreCli(); };
-    root.querySelectorAll('.cc-monto').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; var v=x.value.trim(); l.monto=(v===''?null:Math.max(0,parseInt(v,10)||0)); save(); ccLog(cc,'cambió monto a cobrar','N°'+l.numero+' → '+(l.monto==null?'total cotización':clp(l.monto))); renderCierreCli(); }; });
     root.querySelectorAll('.cc-cnota').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; l.nota=x.value; save(); }; });
     root.querySelectorAll('.cc-avbtn').forEach(function(b){ b.onclick=function(){ ccAvanceModal(cc, +b.dataset.i); }; });
     root.querySelectorAll('.cc-editcot').forEach(function(b){ b.onclick=function(){ ccEditarCot(b.dataset.n); }; });
