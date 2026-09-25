@@ -5191,36 +5191,55 @@
   function ccAvanceBadge(v){ var c=CC_AV[v||'pendiente']||CC_AV.pendiente; return '<span style="display:inline-block;font:700 10px/1 sans-serif;padding:2px 7px;border-radius:20px;background:'+c[1]+';color:'+c[0]+'">'+c[2]+'</span>'; }
   // Avance de una cotización según sus ítems marcados como hechos.
   function ccAvanceDe(c){ var its=(c&&c.items)||[]; var tot=its.length, d=0; its.forEach(function(it){ if(it.done)d++; }); var k=(!tot)?'pendiente':(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
-  // Ir a editar una cotización (salta a la sección Cotizaciones y la carga).
-  function ccEditarCot(n){ var c=ccCot(n); if(!c){ toast('La cotización N°'+n+' no está en Cotizaciones'); return; }
-    var b=document.querySelector('#tabs button[data-view="cotizaciones"]'); if(b) b.click();
-    if(typeof cotCargar==='function') cotCargar(c); }
-  // Panel para marcar, por ítem, qué está hecho. Guarda item.done en la cotización.
+  // Editar una cotización SIN salir del cierre (abre el panel in-place por N°).
+  function ccEditarCot(n){ var cc=ccActual(); if(!cc)return; var i=-1; (cc.cotiz||[]).forEach(function(l,k){ if(+l.numero===+n) i=k; }); if(i<0){ toast('No está en el cierre'); return; } ccAvanceModal(cc,i); }
+  // Panel in-place: editar ítems (descripción/precio/descuento) y marcar lo hecho. Guarda en la cotización.
   function ccAvanceModal(cc, i){ var l=cc&&cc.cotiz&&cc.cotiz[+i]; if(!l)return; var c=ccCot(l.numero); if(!c){ toast('La cotización N°'+l.numero+' no existe'); return; }
-    var its=(c.items||[]); if(!its.length){ toast('La cotización no tiene ítems'); return; }
-    var rows=its.map(function(it,k){ var tot=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0});
-      return '<label style="display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid #eee;cursor:pointer">'+
-        '<input type="checkbox" class="cc-avck" data-k="'+k+'"'+(it.done?' checked':'')+' style="width:18px;height:18px;margin-top:1px;flex:none">'+
-        '<span style="flex:1"><span style="font-weight:600">'+escH(it.desc||'—')+'</span><br><span style="font-size:11.5px;color:#777">'+((+it.cant||0)>1?((+it.cant)+'× '):'')+clp(tot)+'</span></span></label>'; }).join('');
+    var items=(c.items||[]).map(function(it){ return {desc:it.desc||'', cant:(it.cant!=null?(+it.cant):1), precio:+it.precio||0, descPct:cotDescNorm(it.descPct), done:!!it.done}; });
+    function gtOf(its){ return cotTotalDe({items:its, desc_adic_pct:c.desc_adic_pct, con_iva:c.con_iva}); }
+    function itemHTML(it){ var tot=cotLineaTotal(it);
+      return '<div class="ce-item" style="border:1px solid #e6e6e6;border-radius:10px;padding:10px 11px;margin-bottom:9px;background:'+(it.done?'#f0fbf5':'#fff')+'">'+
+        '<div style="display:flex;gap:10px;align-items:flex-start">'+
+          '<label style="flex:none;display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#0f6e56;cursor:pointer;padding-top:7px"><input type="checkbox" class="ce-done"'+(it.done?' checked':'')+' style="width:20px;height:20px">Hecho</label>'+
+          '<textarea class="ce-desc" rows="2" placeholder="Descripción del trabajo" style="flex:1;min-width:0;width:100%;resize:vertical;font:500 13px/1.45 inherit;padding:8px 9px;border:1px solid #ddd;border-radius:8px">'+escH(it.desc)+'</textarea>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;align-items:center;font-size:12px">'+
+          '<label style="display:flex;align-items:center;gap:5px">Cant <input class="ce-cant" type="number" min="0" step="1" value="'+it.cant+'" style="width:56px;text-align:right;padding:6px;border:1px solid #ddd;border-radius:7px"></label>'+
+          '<label style="display:flex;align-items:center;gap:5px">Precio $ <input class="ce-precio" type="number" min="0" step="1" value="'+it.precio+'" style="width:108px;text-align:right;padding:6px;border:1px solid #ddd;border-radius:7px"></label>'+
+          '<label style="display:flex;align-items:center;gap:5px">Desc % <input class="ce-dp" type="number" min="0" max="100" step="0.1" value="'+it.descPct+'" style="width:66px;text-align:right;padding:6px;border:1px solid #ddd;border-radius:7px"></label>'+
+          '<span style="margin-left:auto;font-weight:700">Total: <b class="ce-tot">'+clp(tot)+'</b></span>'+
+          '<button class="ce-del" type="button" style="border:none;background:#fdecec;color:#c0392b;border-radius:7px;padding:6px 10px;cursor:pointer;font-weight:700">Quitar</button>'+
+        '</div>'+
+      '</div>'; }
     var ov=document.createElement('div'); ov.id='cc-av-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px';
-    ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:520px;width:100%;padding:16px 18px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><b style="font-size:16px">Avance · N°'+escH(l.numero)+' · '+escH(c.vehiculo||'')+'</b><button class="cc-av-x" style="border:none;background:#eee;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
-      '<div style="font-size:12.5px;color:#666;margin-bottom:8px">Marca los trabajos ya realizados.</div>'+
-      '<div style="display:flex;gap:8px;margin-bottom:8px"><button class="cc-av-all" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Marcar todo</button><button class="cc-av-none" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Desmarcar todo</button></div>'+
-      rows+
-      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="cc-av-save" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer">Guardar</button></div>'+
+    ov.innerHTML='<div style="background:#fff;border-radius:12px;max-width:640px;width:100%;padding:16px 18px;box-shadow:0 12px 40px rgba(0,0,0,.3);color:#111">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px"><b style="font-size:16px">N°'+escH(l.numero)+' · '+escH(c.vehiculo||'')+'</b><button class="cc-av-x" style="border:none;background:#eee;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700">Cerrar</button></div>'+
+      '<div style="font-size:12.5px;color:#666;margin-bottom:10px">Edita descripción, precio y descuento (%). Marca lo que ya está hecho.</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="cc-av-all" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Marcar todo hecho</button><button class="cc-av-none" style="font-size:12px;border:1px solid #ddd;background:#fafafa;border-radius:7px;padding:6px 10px;cursor:pointer">Desmarcar</button></div>'+
+      '<div id="ce-list">'+items.map(itemHTML).join('')+'</div>'+
+      '<button class="ce-add" type="button" style="border:1px dashed #bbb;background:#fafafa;border-radius:8px;padding:9px;width:100%;cursor:pointer;font-weight:700;color:#444">+ Agregar item</button>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px;flex-wrap:wrap"><span style="font-weight:800">Total cotización: <b class="ce-gt">'+clp(gtOf(items))+'</b></span><button class="cc-av-save" style="background:#FF6B00;color:#fff;border:none;border-radius:9px;padding:11px 18px;font-weight:800;cursor:pointer">Guardar</button></div>'+
     '</div>';
     document.body.appendChild(ov);
+    var list=ov.querySelector('#ce-list');
     function cerrar(){ var e=document.getElementById('cc-av-ov'); if(e)e.remove(); }
+    function readRow(el){ return { desc:(el.querySelector('.ce-desc').value||'').trim(), cant:+el.querySelector('.ce-cant').value||0, precio:+el.querySelector('.ce-precio').value||0, descPct:cotDescNorm(el.querySelector('.ce-dp').value), done:el.querySelector('.ce-done').checked }; }
+    function readAll(){ return Array.prototype.map.call(list.querySelectorAll('.ce-item'), readRow); }
+    function recalc(){ Array.prototype.forEach.call(list.querySelectorAll('.ce-item'),function(el){ var it=readRow(el); el.querySelector('.ce-tot').textContent=clp(cotLineaTotal(it)); el.style.background=it.done?'#f0fbf5':'#fff'; }); ov.querySelector('.ce-gt').textContent=clp(gtOf(readAll())); }
+    function bind(){ list.querySelectorAll('.ce-cant,.ce-precio,.ce-dp').forEach(function(inp){ inp.oninput=recalc; }); list.querySelectorAll('.ce-done').forEach(function(chk){ chk.onchange=recalc; }); list.querySelectorAll('.ce-del').forEach(function(b){ b.onclick=function(){ b.closest('.ce-item').remove(); recalc(); }; }); }
+    bind();
     ov.addEventListener('click',function(e){ if(e.target===ov)cerrar(); });
     ov.querySelector('.cc-av-x').onclick=cerrar;
-    ov.querySelector('.cc-av-all').onclick=function(){ ov.querySelectorAll('.cc-avck').forEach(function(x){x.checked=true;}); };
-    ov.querySelector('.cc-av-none').onclick=function(){ ov.querySelectorAll('.cc-avck').forEach(function(x){x.checked=false;}); };
+    ov.querySelector('.cc-av-all').onclick=function(){ list.querySelectorAll('.ce-done').forEach(function(x){x.checked=true;}); recalc(); };
+    ov.querySelector('.cc-av-none').onclick=function(){ list.querySelectorAll('.ce-done').forEach(function(x){x.checked=false;}); recalc(); };
+    ov.querySelector('.ce-add').onclick=function(){ list.insertAdjacentHTML('beforeend', itemHTML({desc:'',cant:1,precio:0,descPct:0,done:false})); bind(); recalc(); };
     ov.querySelector('.cc-av-save').onclick=function(){
-      ov.querySelectorAll('.cc-avck').forEach(function(chk){ var k=+chk.dataset.k; if(its[k]) its[k].done=chk.checked; });
-      var sb=sbc(); if(sb){ sb.from('cotizaciones').update({items:its}).eq('id',c.id).then(function(r){ if(r&&r.error) toast('No se pudo guardar el avance'); }); }
-      var idx=_cotiz.map(function(x){return x.id;}).indexOf(c.id); if(idx>=0)_cotiz[idx].items=its;
-      cerrar(); renderCierreCli(); toast('✓ Avance guardado');
+      var out=readAll().filter(function(it){ return it.desc||it.precio; });
+      var payload={items:out}; if((c.vehiculos||[]).length===1){ var vv=c.vehiculos.slice(); vv[0]=Object.assign({},vv[0],{items:out}); payload.vehiculos=vv; }
+      var sb=sbc(); if(sb){ sb.from('cotizaciones').update(payload).eq('id',c.id).then(function(r){ if(r&&r.error) toast('No se pudo guardar: '+r.error.message); }); }
+      c.items=out; if(payload.vehiculos) c.vehiculos=payload.vehiculos;
+      var idx=_cotiz.map(function(x){return x.id;}).indexOf(c.id); if(idx>=0){ _cotiz[idx].items=out; if(payload.vehiculos)_cotiz[idx].vehiculos=payload.vehiculos; }
+      cerrar(); renderCierreCli(); toast('✓ Cotización actualizada');
     };
   }
   function renderCierreCli(){ var root=document.getElementById('cc-root'); if(!root)return;

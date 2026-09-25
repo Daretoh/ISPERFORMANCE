@@ -1,5 +1,5 @@
 /* IS Performance OS — Service Worker (PWA) */
-var CACHE = 'isp-os-v8';
+var CACHE = 'isp-os-v9';
 
 // Notificaciones push (para cuando la app esté cerrada) + al hacer clic, abrir la app
 self.addEventListener('push', function (e) {
