@@ -5,6 +5,10 @@
 -- Pegar en Supabase > SQL Editor > Run. Seguro de re-ejecutar.
 -- ============================================================
 
+-- (Por si no se corrió el SQL 47: campos que usa este script. No hace nada si ya existen.)
+alter table trabajadores add column if not exists tipo_pago     text default 'hora';  -- hora (spot) | contrato (fijo)
+alter table trabajadores add column if not exists jornada_horas numeric;              -- horas/día de jornada normal (solo contrato)
+
 alter table trabajadores add column if not exists sueldo_base  numeric;  -- sueldo base mensual (solo fijos)
 alter table trabajadores add column if not exists sueldo_desde date;     -- desde qué mes rige (1er día del mes)
 
