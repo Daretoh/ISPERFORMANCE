@@ -2131,6 +2131,7 @@
   function esFijo(t){ return (t&&t.tipo_pago)==='contrato'; }
   function tbadge(txt,bg,fg){ return '<span style="display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:'+bg+';color:'+(fg||'#fff')+';margin-left:4px;vertical-align:middle">'+txt+'</span>'; }
   function trabUpsert(t){ var sb=sbc(); if(!sb)return; var pay={ nombre:t.nombre, cargo:t.cargo||null, estado:t.estado||'activo', tipo_pago:t.tipo_pago||'hora', jornada_horas:((t.jornada_horas!=null&&t.jornada_horas!=='')?+t.jornada_horas:null), chofer:!!t.chofer, fecha_ingreso:t.fecha_ingreso||null, telefono:t.telefono||null, email:t.email||null, talla_botas:t.talla_botas||null, talla_ropa:t.talla_ropa||null, afp:t.afp||null, salud:t.salud||null, direccion:t.direccion||null, emergencia:t.emergencia||null, notas:t.notas||null };
+    if('sueldo_base' in t){ pay.sueldo_base=(t.sueldo_base!=null&&t.sueldo_base!=='')?+t.sueldo_base:null; pay.sueldo_desde=t.sueldo_desde||null; }
     sb.from('trabajadores').update(pay).eq('id',t.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo guardar (¿corriste el SQL 47?)'); }); }
   function abrirFichaTrab(id){ var t=(_trab||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!t)return;
     var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -2144,7 +2145,10 @@
         fld('Cargo','<select id="ft-cargo" '+inS+'>'+opCargos(t.cargo)+'</select>')+
         fld('Estado','<select id="ft-estado" '+inS+'><option value="activo"'+(trabActivo(t)?' selected':'')+'>Activo</option><option value="inactivo"'+(!trabActivo(t)?' selected':'')+'>Inactivo</option></select>')+
         fld('Tipo de pago','<select id="ft-tipo" '+inS+'><option value="hora"'+(!esFijo(t)?' selected':'')+'>Spot (por hora)</option><option value="contrato"'+(esFijo(t)?' selected':'')+'>Contrato fijo</option></select>')+
-        '<div id="ft-jornada-row"'+(esFijo(t)?'':' hidden')+'>'+fld('Jornada normal (h/día)','<input id="ft-jornada" type="number" min="0" step="0.5" value="'+(t.jornada_horas!=null?t.jornada_horas:'')+'" placeholder="9" '+inS+'>')+'</div>'+
+        '<div id="ft-jornada-row"'+(esFijo(t)?'':' hidden')+'>'+fld('Jornada normal (h/día)','<input id="ft-jornada" type="number" min="0" step="0.5" value="'+(t.jornada_horas!=null?t.jornada_horas:'')+'" placeholder="9" '+inS+'>')+
+          fld('Sueldo base mensual ($)','<input id="ft-sueldo" type="number" min="0" step="1000" value="'+(t.sueldo_base!=null?t.sueldo_base:'')+'" placeholder="750000" '+inS+'>')+
+          fld('Sueldo vigente desde (mes)','<input id="ft-sueldo-desde" type="month" value="'+av(t.sueldo_desde?String(t.sueldo_desde).slice(0,7):'')+'" '+inS+'>')+
+          (('sueldo_base' in t)?'':'<div class="rh-sub" style="color:var(--warn)">Para guardar el sueldo hay que correr el SQL 55 en Supabase.</div>')+'</div>'+
         '<div style="grid-column:1/-1"><label style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><input id="ft-chofer" type="checkbox"'+(t.chofer?' checked':'')+'> Es chofer (habilita vueltas en Remuneraciones)</label></div>'+
         fld('Fecha de ingreso','<input id="ft-fing" type="date" value="'+av(t.fecha_ingreso||'')+'" '+inS+'>')+
         fld('Teléfono','<input id="ft-tel" value="'+av(t.telefono||'')+'" '+inS+'>')+
@@ -2169,6 +2173,8 @@
     g('#ft-estado').onchange=function(){ t.estado=this.value; save(); pintarAsistencia(); };
     g('#ft-tipo').onchange=function(){ t.tipo_pago=this.value; g('#ft-jornada-row').hidden=(this.value!=='contrato'); save(); pintarAsistencia(); };
     g('#ft-jornada').onchange=function(){ t.jornada_horas=(this.value===''?null:Math.max(0,parseFloat(this.value)||0)); save(); };
+    g('#ft-sueldo').onchange=function(){ if(!('sueldo_base' in t)){ toast('⚠ Falta correr el SQL 55 (sueldo) en Supabase'); return; } t.sueldo_base=(this.value===''?null:Math.max(0,parseInt(this.value,10)||0)); save(); };
+    g('#ft-sueldo-desde').onchange=function(){ if(!('sueldo_base' in t)){ toast('⚠ Falta correr el SQL 55 (sueldo) en Supabase'); return; } t.sueldo_desde=this.value?(this.value+'-01'):null; save(); };
     g('#ft-chofer').onchange=function(){ t.chofer=this.checked; save(); pintarAsistencia(); };
     g('#ft-fing').onchange=function(){ t.fecha_ingreso=this.value||null; save(); };
     g('#ft-tel').onchange=function(){ t.telefono=this.value.trim(); save(); };
@@ -2431,6 +2437,8 @@
       REMU_DATA={mes:m,ini:ini,fin:fin,marks:(rs[1].data||[]),reloj:(rs[2].data||[]),items:((rs[3]&&rs[3].data)||[]),aj:aj,faltaSQL:!!faltaSQL};
       computarRemu(); }); }
   // minutos a pagar de un día: spot = todo; fijo = lo que excede la jornada (sáb/dom completo)
+  // Sueldo base del mes (solo fijos, desde el mes de vigencia).
+  function sueldoMes(t,m){ if(!t||!esFijo(t)||!(+t.sueldo_base)) return 0; if(t.sueldo_desde && m<String(t.sueldo_desde).slice(0,7)) return 0; return +t.sueldo_base; }
   function pagoMinDia(t,f,min){ if(!esFijo(t)||esFinde(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
   function computarRemu(){ var D=REMU_DATA; if(!D)return;
     D.autos=autosDelMes(D.mes); D.valorAuto=bonoAutoValor();
@@ -2446,6 +2454,7 @@
       (S.iv[r.fecha]=S.iv[r.fecha]||[]).push([s,e,'reloj',r.h_in+'→'+r.h_out+' (manual)']); if(+r.descanso) S.desc[r.fecha]=(S.desc[r.fecha]||0)+(+r.descanso); });
     // fichas con montos en el mes igual aparecen aunque no tengan horas
     D.items.forEach(function(it){ if(it.tipo==='sin_bono_auto')return; var t=(_trab||[]).filter(function(x){return String(x.id)===String(it.trabajador_id);})[0]; if(t) slot(t,t.nombre); });
+    (_trab||[]).forEach(function(t){ if(trabActivo(t) && sueldoMes(t,D.mes)) slot(t,t.nombre); });
     var filas=[], total=0, totBonoAutos=0, porDiaMonto={}, porDiaMin={}, solapes=0, vhG=+VH['__SPOT__']||0, nAutos=D.autos.length;
     Object.keys(P).forEach(function(k){ var S=P[k], t=S.t, vh=t?valorHoraDe(t):vhG, dias={}, totMin=0, pagMin=0, real=0, cont=0, hayAj=false;
       Object.keys(S.iv).forEach(function(f){ var ivs=S.iv[f].slice().sort(function(a,b){return a[0]-b[0];}), union=0, raw=0, cs=null, ce=null;
@@ -2457,10 +2466,11 @@
       var bono=0, desc=0, sinBono=false, its=t?D.items.filter(function(it){ return String(it.trabajador_id)===String(t.id); }):[];
       its.forEach(function(it){ if(it.tipo==='sin_bono_auto') sinBono=true; else if(it.tipo==='descuento') desc+=(+it.monto||0); else bono+=(+it.monto||0); });
       its=its.filter(function(it){ return it.tipo!=='sin_bono_auto'; });
-      if(t && !trabActivo(t) && !totMin && !bono && !desc) return;
+      var sueldo=sueldoMes(t,D.mes);
+      if(t && !trabActivo(t) && !totMin && !bono && !desc && !sueldo) return;
       // bono por autos: a cada persona con ficha que trabajó al menos un día en el mes
       var nD=Object.keys(dias).length, bAutos=(t && nD && !sinBono)?nAutos*D.valorAuto:0;
-      var x={t:t,nombre:S.nombre,fijo:!!(t&&esFijo(t)),vh:vh,dias:dias,nDias:nD,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bonoAutos:bAutos,sinBono:sinBono,bono:bono,desc:desc,items:its,real:real+bAutos+bono-desc,contable:cont+bAutos+bono-desc};
+      var x={t:t,nombre:S.nombre,fijo:!!(t&&esFijo(t)),vh:vh,dias:dias,nDias:nD,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bonoAutos:bAutos,sinBono:sinBono,bono:bono,desc:desc,items:its,sueldo:sueldo,real:sueldo+real+bAutos+bono-desc,contable:sueldo+cont+bAutos+bono-desc};
       filas.push(x); total+=x.contable; totBonoAutos+=bAutos; });
     filas.sort(function(a,b){ if(!!a.t!==!!b.t) return a.t?-1:1; if(a.fijo!==b.fijo) return a.fijo?1:-1; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
     D.filas=filas; D.porDiaMonto=porDiaMonto; D.porDiaMin=porDiaMin;
@@ -2478,10 +2488,10 @@
     var cont=document.getElementById('remu-list'); if(!cont)return;
     if(!filas.length){ cont.innerHTML='<div class="col-empty" style="padding:26px">Sin horas ni montos este mes.</div>'; return; }
     var mm=function(v,neg){ return v?((neg?'−':'')+clp(v)):'<span style="color:var(--ink-faint)">—</span>'; };
-    cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Base</th><th class="r">Bono autos</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
+    cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Sueldo</th><th class="r">Base</th><th class="r">Bono autos</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
       filas.map(function(x,i){ var sub=x.t?((x.t.cargo?escH(x.t.cargo)+' · ':'')+(x.fijo?('fijo'+(x.t.jornada_horas?(' '+x.t.jornada_horas+'h/día'):' <span style="color:var(--crit)">sin jornada</span>')):'spot')):'<span style="color:var(--warn);font-weight:700">⚠ sin ficha en RRHH</span>';
         var hrs=x.fijo?(hm(x.totMin)+'<div class="rh-sub">'+hm(x.pagMin)+' extra</div>'):hm(x.totMin);
-        return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+mm(x.baseCont)+'</td><td class="r">'+(x.sinBono?'<span class="rh-sub">excluido</span>':mm(x.bonoAutos))+'</td><td class="r" style="color:var(--ok)">'+mm(x.bono)+'</td><td class="r" style="color:var(--crit)">'+mm(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
+        return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+mm(x.sueldo)+'</td><td class="r">'+mm(x.baseCont)+'</td><td class="r">'+(x.sinBono?'<span class="rh-sub">excluido</span>':mm(x.bonoAutos))+'</td><td class="r" style="color:var(--ok)">'+mm(x.bono)+'</td><td class="r" style="color:var(--crit)">'+mm(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
       '</tbody></table></div>';
     cont.querySelectorAll('tbody tr[data-i]').forEach(function(el){ el.onclick=function(){ abrirRemuTrab(REMU_DATA.filas[+el.dataset.i]); }; }); }
   function abrirAutosMes(){ var D=REMU_DATA; if(!D)return; var A=D.autos.slice().sort(function(a,b){ return (a.fIngreso||a.fCoord||'')<(b.fIngreso||b.fCoord||'')?-1:1; });
@@ -2501,7 +2511,7 @@
       var right=x.t?('<div class="rm-dcol"><span class="rh-sub rm-real'+(d.cont!==d.real?' aj':'')+'">real '+clp(d.real)+'</span><input type="number" min="0" class="rm-dcont" data-f="'+f+'" data-real="'+d.real+'" value="'+d.cont+'" title="Monto a pagar este día (editable)"><input class="rm-dobs" data-f="'+f+'" value="'+av(d.aj?d.aj.obs:'')+'" placeholder="motivo si ajustas"></div>'):('<b>'+clp(d.real)+'</b>');
       return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas este mes.</div>';
     var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
-    var desg=lin((x.fijo?'Horas extra pagadas':'Horas')+' ('+hm(x.pagMin)+(x.vh?' × '+clp(x.vh):'')+')',clp(x.base));
+    var desg=(x.sueldo?lin('Sueldo base',clp(x.sueldo)):'')+lin((x.fijo?'Horas extra pagadas':'Horas')+' ('+hm(x.pagMin)+(x.vh?' × '+clp(x.vh):'')+')',clp(x.base));
     if(x.t) desg+=x.sinBono?lin('Bono por autos','excluido este mes','color:var(--ink-muted)'):lin('Bono por autos ('+D.autos.length+' × '+clp(D.valorAuto)+')',clp(x.bonoAutos),'color:var(--ok)');
     if(x.bono) desg+=lin('Extras / bonos',clp(x.bono),'color:var(--ok)'); if(x.desc) desg+=lin('Descuentos / anticipos','− '+clp(x.desc),'color:var(--crit)');
     desg+=lin('Total real (por horas)',clp(x.real))+'<div class="rm-lin tot"><span>Total a pagar (contable)</span><b id="rm-live">'+clp(x.contable)+'</b></div>';
@@ -2522,7 +2532,7 @@
       var q=sbx.checked? sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),periodo:D.ini,tipo:'sin_bono_auto',concepto:'Excluido del bono por autos',monto:0,autor:(window.ISP_EMAIL||null)})
                        : sb.from('remuneracion_items').delete().eq('trabajador_id',String(x.t.id)).eq('periodo',D.ini).eq('tipo','sin_bono_auto');
       q.then(function(r){ if(r&&r.error) toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ '+r.error.message)); else toast(sbx.checked?'Sin bono por autos este mes':'✓ Bono por autos incluido'); }); };
-    function live(){ var s=0; M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ s+=(+i.value||0); }); var el=M.q('#rm-live'); if(el) el.textContent=clp(s+x.bonoAutos+x.bono-x.desc); }
+    function live(){ var s=0; M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ s+=(+i.value||0); }); var el=M.q('#rm-live'); if(el) el.textContent=clp((x.sueldo||0)+s+x.bonoAutos+x.bono-x.desc); }
     function persist(f){ var i=M.q('.rm-dcont[data-f="'+f+'"]'), o=M.q('.rm-dobs[data-f="'+f+'"]'); dirty=true; persistAjDia(x.t.id,f,+i.dataset.real,(+i.value||0),(o?o.value.trim():'')); }
     M.ov.querySelectorAll('.rm-dcont').forEach(function(i){ i.addEventListener('input',function(){ var r=i.closest('.rm-dcol').querySelector('.rm-real'); if(r) r.classList.toggle('aj',(+i.value||0)!==+i.dataset.real); live(); }); i.addEventListener('change',function(){ persist(i.dataset.f); }); });
     M.ov.querySelectorAll('.rm-dobs').forEach(function(o){ o.addEventListener('change',function(){ persist(o.dataset.f); }); });
@@ -2543,8 +2553,8 @@
     M.ov.querySelectorAll('.rm-day[data-i]').forEach(function(el){ el.onclick=function(){ M.close(); abrirRemuTrab(D.filas[+el.dataset.i]); }; }); }
   function remuCSV(){ var D=REMU_DATA; if(!D||!D.filas){ toast('Sin datos'); return; }
     var q=function(v){ v=(v==null?'':String(v)); return /[";\n]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; };
-    var L=[['Mes','Trabajador','RUT','Cargo','Tipo','Dias','Horas','Horas pagadas','Valor hora','Base','Bono autos','Extras','Descuentos','Total real','Total a pagar'].join(';')];
-    D.filas.forEach(function(x){ L.push([D.mes,x.nombre,(x.t&&x.t.rut)||'',(x.t&&x.t.cargo)||'',x.t?(x.fijo?'Fijo':'Spot'):'Sin ficha',x.nDias,(x.totMin/60).toFixed(2).replace('.',','),(x.pagMin/60).toFixed(2).replace('.',','),x.vh,x.baseCont,x.bonoAutos,x.bono,x.desc,x.real,x.contable].map(q).join(';')); });
+    var L=[['Mes','Trabajador','RUT','Cargo','Tipo','Dias','Horas','Horas pagadas','Valor hora','Sueldo base','Base','Bono autos','Extras','Descuentos','Total real','Total a pagar'].join(';')];
+    D.filas.forEach(function(x){ L.push([D.mes,x.nombre,(x.t&&x.t.rut)||'',(x.t&&x.t.cargo)||'',x.t?(x.fijo?'Fijo':'Spot'):'Sin ficha',x.nDias,(x.totMin/60).toFixed(2).replace('.',','),(x.pagMin/60).toFixed(2).replace('.',','),x.vh,(x.sueldo||0),x.baseCont,x.bonoAutos,x.bono,x.desc,x.real,x.contable].map(q).join(';')); });
     var blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='remuneraciones-'+D.mes+'.csv'; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); }
   (function(){
     var g=function(id){ return document.getElementById(id); };
