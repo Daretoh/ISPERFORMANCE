@@ -2680,6 +2680,9 @@
     var hs=prompt("Hora de SALIDA de "+d.nombre+" (día "+d.dia+", entró "+d.ent+") — HH:MM:","18:00"); if(hs===null)return;
     hs=(hs||"").trim(); if(!/^\d{1,2}:\d{2}$/.test(hs)){ toast("Hora inválida — usa HH:MM"); return; }
     var pz=hs.split(":"), dt=new Date(d.dia+"T00:00:00"); dt.setHours(+pz[0],+pz[1],0,0);
+    // turno que cruza medianoche: si la salida cae antes/igual que la entrada, es de la madrugada del día siguiente
+    var ep=(d.ent||"0:0").split(":"), ed=new Date(d.dia+"T00:00:00"); ed.setHours(+ep[0]||0,+ep[1]||0,0,0);
+    if(dt<=ed) dt.setDate(dt.getDate()+1);
     var motivo=prompt("Motivo (queda registrado):","Salida agregada por administración"); if(motivo===null)return;
     var sb=sbc(); if(!sb){toast("Sin conexión");return;}
     sb.from("asistencia").insert({nombre:d.nombre,rut4:d.rut4,tipo:"SALIDA",ts:dt.toISOString(),motivo_edicion:(motivo||"Salida agregada por administración"),editado_por:(window.ISP_EMAIL||"")}).select().single().then(function(r){ if(r.error){ toast("⚠ No se pudo (¿SQL 23?)"); return; } toast("✓ Salida agregada"); refrescarAsistencia(); });
