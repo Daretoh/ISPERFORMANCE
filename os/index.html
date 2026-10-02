@@ -2151,7 +2151,7 @@
         '<div id="ft-jornada-row"'+(esFijo(t)?'':' hidden')+'>'+fld('Jornada normal (h/día)','<input id="ft-jornada" type="number" min="0" step="0.5" value="'+(t.jornada_horas!=null?t.jornada_horas:'')+'" placeholder="9" '+inS+'>')+
           fld('Contrato fijo desde (mes)','<input id="ft-contrato-desde" type="month" value="'+av(t.contrato_desde?String(t.contrato_desde).slice(0,7):'')+'" '+inS+'>')+
           '<div class="rh-sub" style="margin:-4px 0 6px">Los meses anteriores se pagan como spot (no cambia lo ya cerrado). Vacío = siempre fijo.</div>'+
-          fld('Sueldo base mensual ($)','<input id="ft-sueldo" type="number" min="0" step="1000" value="'+(t.sueldo_base!=null?t.sueldo_base:'')+'" placeholder="750000" '+inS+'>')+
+          fld('Sueldo base mensual ($)','<input id="ft-sueldo" type="number" min="0" step="1000" value="'+(t.sueldo_base!=null?t.sueldo_base:'')+'" placeholder="'+(sueldoCargo(t.cargo)?('del cargo: '+sueldoCargo(t.cargo)):'750000')+'" '+inS+'>')+
           fld('Sueldo vigente desde (mes)','<input id="ft-sueldo-desde" type="month" value="'+av(t.sueldo_desde?String(t.sueldo_desde).slice(0,7):'')+'" '+inS+'>')+
           ((('sueldo_base' in t)&&('contrato_desde' in t))?'':'<div class="rh-sub" style="color:var(--warn)">Para guardar sueldo y fecha de contrato hay que correr los SQL 55 y 56 en Supabase.</div>')+'</div>'+
         '<div style="grid-column:1/-1"><label style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><input id="ft-chofer" type="checkbox"'+(t.chofer?' checked':'')+'> Es chofer (habilita vueltas en Remuneraciones)</label></div>'+
@@ -2194,9 +2194,11 @@
     g('#ft-notas').onchange=function(){ t.notas=this.value.trim(); save(); };
     function bindDocs(){ var fd=g('#ft-docs'); if(!fd)return; fd.querySelectorAll('.rh-chip[data-s]').forEach(function(c){ c.onclick=function(){ abrirDocRrhh(t.id, c.dataset.s, function(){ fd.innerHTML=fichaDocsHTML(t); bindDocs(); }); }; }); }
     bindDocs(); }
-  function cargoUpsert(c){ var sb=sbc(); if(!sb)return; var pay={nombre:(c.nombre||''),trato:(+c.trato||0)};
-    if(c.id){ sb.from('cargo').update(pay).eq('id',c.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); return; }
-    if(c._ins)return; c._ins=true; sb.from('cargo').insert(pay).select().single().then(function(r){ c._ins=false; if(r&&r.data){ c.id=r.data.id; } else toast('⚠ No se pudo (¿corriste el SQL 47?)'); }); }
+  function cargoSueldoOk(){ return (_cargos||[]).some(function(x){ return x.id && ('sueldo' in x); }); }
+  function sueldoCargo(nombre){ var n=normNom(nombre||''); var c=(_cargos||[]).filter(function(x){ return normNom(x.nombre)===n; })[0]; return c?(+c.sueldo||0):0; }
+  function cargoUpsert(c){ var sb=sbc(); if(!sb)return; var pay={nombre:(c.nombre||''),trato:(+c.trato||0)}; if(cargoSueldoOk()||('sueldo' in c && c.id)) pay.sueldo=(+c.sueldo||0);
+    if(c.id){ sb.from('cargo').update(pay).eq('id',c.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo guardar el cargo (¿corriste los SQL 47 y 57?)'); }); return; }
+    if(c._ins)return; c._ins=true; sb.from('cargo').insert(pay).select().single().then(function(r){ c._ins=false; if(r&&r.data){ c.id=r.data.id; if('sueldo' in r.data) c.sueldo=r.data.sueldo; } else toast('⚠ No se pudo crear el cargo (¿corriste los SQL 47 y 57?)'); }); }
   function abrirCargos(){
     var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     function findC(rid){ return (_cargos||[]).filter(function(x){return x._rid===rid;})[0]; }
@@ -2205,15 +2207,17 @@
         '<td style="padding:4px 6px"><input class="cg-nom" value="'+av(c.nombre||'')+'" placeholder="Ej: Lavador" style="width:100%;box-sizing:border-box"></td>'+
         '<td style="padding:4px 6px"><input class="cg-trato" type="number" min="0" step="1000" value="'+(+c.trato||0)+'" style="width:110px" title="Pago por jornada de 8h"></td>'+
         '<td style="padding:4px 6px;white-space:nowrap;color:#666;font-size:12px">= '+clp(Math.round((+c.trato||0)/8))+'/h</td>'+
+        '<td style="padding:4px 6px"><input class="cg-sueldo" type="number" min="0" step="1000" value="'+(+c.sueldo||'')+'" placeholder="—" style="width:110px" title="Sueldo base mensual de los fijos de este cargo (opcional)"></td>'+
         '<td style="padding:4px 6px"><button class="btn sm cg-del" title="Quitar">✕</button></td></tr>'; }).join(''); }
     function render(){ ov.innerHTML='<div style="background:var(--card,#fff);color:var(--ink,#111);border-radius:12px;max-width:560px;width:100%;max-height:82vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)">'+
         '<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line,#eee);position:sticky;top:0;background:var(--card,#fff)"><b style="font-size:15px">💼 Cargos y tratos</b><button id="cg-x" class="btn sm" style="margin-left:auto">Cerrar</button></div>'+
-        '<div style="padding:10px 16px 16px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#888;font-size:11px"><th style="padding:0 6px">Cargo</th><th style="padding:0 6px">Trato (8h)</th><th style="padding:0 6px">Valor hora</th><th></th></tr></thead><tbody id="cg-body">'+(filas()||'<tr><td colspan="4" style="color:#888;padding:12px;text-align:center">Sin cargos. Agrega el primero.</td></tr>')+'</tbody></table>'+
+        '<div style="padding:10px 16px 16px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="text-align:left;color:#888;font-size:11px"><th style="padding:0 6px">Cargo</th><th style="padding:0 6px">Trato (8h)</th><th style="padding:0 6px">Valor hora</th><th style="padding:0 6px">Sueldo fijo (mes)</th><th></th></tr></thead><tbody id="cg-body">'+(filas()||'<tr><td colspan="5" style="color:#888;padding:12px;text-align:center">Sin cargos. Agrega el primero.</td></tr>')+'</tbody></table>'+
         '<button id="cg-add" class="btn sm" style="margin-top:10px">+ Agregar cargo</button>'+
-        '<p class="hint" style="display:block;margin-top:10px;font-size:11.5px;color:var(--ink-faint)">El <b>trato</b> es el pago por una jornada de 8h. El <b>valor hora</b> se calcula solo (trato ÷ 8) y alimenta Remuneraciones.</p></div></div>';
+        '<p class="hint" style="display:block;margin-top:10px;font-size:11.5px;color:var(--ink-faint)">El <b>trato</b> es el pago por una jornada de 8h. El <b>valor hora</b> se calcula solo (trato ÷ 8) y alimenta Remuneraciones. El <b>sueldo fijo</b> lo reciben los trabajadores con contrato fijo de ese cargo (si su ficha no tiene un sueldo propio).</p></div></div>';
       ov.querySelector('#cg-x').onclick=close;
       ov.querySelector('#cg-add').onclick=function(){ _cargos.push({_rid:'c'+Math.random().toString(36).slice(2),nombre:'',trato:0}); render(); var ins=ov.querySelectorAll('.cg-nom'); if(ins.length)ins[ins.length-1].focus(); };
       ov.querySelectorAll('.cg-nom').forEach(function(i){ i.onchange=function(){ var c=findC(i.closest('tr').dataset.rid); if(!c)return; c.nombre=titleCase(i.value.trim()); cargoUpsert(c); render(); }; });
+      ov.querySelectorAll('.cg-sueldo').forEach(function(i){ i.onchange=function(){ var c=findC(i.closest('tr').dataset.rid); if(!c)return; if(!c.id||!('sueldo' in c)){ if(!cargoSueldoOk()){ toast('⚠ Falta correr el SQL 57 (sueldo por cargo) en Supabase'); render(); return; } } c.sueldo=Math.max(0,parseInt(i.value,10)||0); cargoUpsert(c); render(); }; });
       ov.querySelectorAll('.cg-trato').forEach(function(i){ i.onchange=function(){ var c=findC(i.closest('tr').dataset.rid); if(!c)return; c.trato=Math.max(0,parseInt(i.value,10)||0); cargoUpsert(c); render(); }; });
       ov.querySelectorAll('.cg-del').forEach(function(b){ b.onclick=function(){ var c=findC(b.closest('tr').dataset.rid); if(!c)return; if(c.nombre && !confirm('¿Quitar el cargo «'+c.nombre+'»?'))return; var sb=sbc(); if(sb&&c.id)sb.from('cargo').delete().eq('id',c.id).then(function(){}); _cargos=_cargos.filter(function(x){return x!==c;}); render(); }; });
     }
@@ -2444,7 +2448,7 @@
       computarRemu(); }); }
   // minutos a pagar de un día: spot = todo; fijo = lo que excede la jornada (sáb/dom completo)
   // Sueldo base del mes (solo fijos, desde el mes de vigencia).
-  function sueldoMes(t,m){ if(!t||!fijoEnMes(t,m)||!(+t.sueldo_base)) return 0; if(t.sueldo_desde && m<String(t.sueldo_desde).slice(0,7)) return 0; return +t.sueldo_base; }
+  function sueldoMes(t,m){ if(!t||!fijoEnMes(t,m)) return 0; var sb=(+t.sueldo_base)||sueldoCargo(t.cargo); if(!sb) return 0; if(t.sueldo_desde && m<String(t.sueldo_desde).slice(0,7)) return 0; return sb; }
   function pagoMinDia(t,f,min){ if(!fijoEnMes(t,String(f).slice(0,7))||esFinde(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
   function computarRemu(){ var D=REMU_DATA; if(!D)return;
     D.autos=autosDelMes(D.mes); D.valorAuto=bonoAutoValor();
@@ -2495,7 +2499,7 @@
     if(!filas.length){ cont.innerHTML='<div class="col-empty" style="padding:26px">Sin horas ni montos este mes.</div>'; return; }
     var mm=function(v,neg){ return v?((neg?'−':'')+clp(v)):'<span style="color:var(--ink-faint)">—</span>'; };
     cont.innerHTML='<div class="tablewrap" style="margin-top:0"><table class="remu-tbl"><thead><tr><th>Trabajador</th><th class="r">Días</th><th class="r">Horas</th><th class="r">Valor h</th><th class="r">Sueldo</th><th class="r">Base</th><th class="r">Bono autos</th><th class="r">Extras</th><th class="r">Desc.</th><th class="r">Total</th></tr></thead><tbody>'+
-      filas.map(function(x,i){ var sub=x.t?((x.t.cargo?escH(x.t.cargo)+' · ':'')+(x.fijo?('fijo'+(x.t.jornada_horas?(' '+x.t.jornada_horas+'h/día'):' <span style="color:var(--crit)">sin jornada</span>')):'spot')):'<span style="color:var(--warn);font-weight:700">⚠ sin ficha en RRHH</span>';
+      filas.map(function(x,i){ var sub=x.t?((x.t.cargo?escH(x.t.cargo)+' · ':'')+(x.fijo?('fijo'+(x.t.jornada_horas?(' '+x.t.jornada_horas+'h/día'):' <span style="color:var(--ink-muted)">sin jornada: todas sus horas</span>')):'spot')):'<span style="color:var(--warn);font-weight:700">⚠ sin ficha en RRHH</span>';
         var hrs=x.fijo?(hm(x.totMin)+'<div class="rh-sub">'+hm(x.pagMin)+' extra</div>'):hm(x.totMin);
         return '<tr data-i="'+i+'" style="cursor:pointer'+(x.fijo?';background:var(--surface-2)':'')+'"><td><b>'+escH(x.nombre)+'</b><div class="rh-sub">'+sub+'</div></td><td class="r">'+x.nDias+'</td><td class="r">'+hrs+'</td><td class="r">'+(x.vh?clp(x.vh):'<span style="color:var(--crit)">$0</span>')+'</td><td class="r">'+mm(x.sueldo)+'</td><td class="r">'+mm(x.baseCont)+'</td><td class="r">'+(x.sinBono?'<span class="rh-sub">excluido</span>':mm(x.bonoAutos))+'</td><td class="r" style="color:var(--ok)">'+mm(x.bono)+'</td><td class="r" style="color:var(--crit)">'+mm(x.desc,true)+'</td><td class="r"><b>'+clp(x.contable)+'</b>'+(x.aj?'<div class="rh-sub" title="Ajustado a mano; el real es por horas">real '+clp(x.real)+'</div>':'')+'</td></tr>'; }).join('')+
       '</tbody></table></div>';
