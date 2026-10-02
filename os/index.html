@@ -2626,9 +2626,9 @@
     sb.from("asistencia").delete().eq("id",d.id).then(function(r){ if(r&&r.error){ toast("⚠ No se pudo eliminar"); return; } toast("✓ Marcaje eliminado"); refrescarAsistencia(); });
   }
   // ids de entradas que quedaron sin su salida (por persona + día)
-  function asisEntradasAbiertas(marks){ var byPD={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre)+"|"+diaKey(a.ts); (byPD[k]=byPD[k]||[]).push(a); });
-    var open={}; Object.keys(byPD).forEach(function(k){ var arr=byPD[k].slice().sort(_cmpMark), openIn=null;
-      arr.forEach(function(a){ if(a.tipo==="ENTRADA"){ openIn=a; } else if(a.tipo==="SALIDA"){ openIn=null; } }); if(openIn)open[openIn.id]=true; }); return open; }
+  function asisEntradasAbiertas(marks){ var byP={}; (marks||[]).forEach(function(a){ var k=(a.rut4||a.nombre); (byP[k]=byP[k]||[]).push(a); }); // por persona (no por día) para que un turno nocturno cierre con la salida de madrugada
+    var open={}; Object.keys(byP).forEach(function(k){ var arr=byP[k].slice().sort(_cmpMark), openIn=null;
+      arr.forEach(function(a){ if(a.tipo==="ENTRADA"){ if(openIn)open[openIn.id]=true; openIn=a; } else if(a.tipo==="SALIDA"){ openIn=null; } }); if(openIn)open[openIn.id]=true; }); return open; }
   // tabla de marcajes con estado + acciones (editar hora, cambiar tipo, agregar salida, borrar). Reutilizada por "hoy" y por el historial mensual.
   function asisMarcajesTablaHTML(marks){
     var owner=puede('asis_editar'), abiertas=asisEntradasAbiertas(marks), hoy=diaKey(new Date().toISOString());
