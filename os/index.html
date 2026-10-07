@@ -756,6 +756,8 @@
   .cot-items .xl-drop-before::after,.cot-items .xl-drop-after::after{content:"";position:absolute;left:0;right:0;height:4px;border-radius:2px;background:var(--accent);z-index:6;pointer-events:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
   .cot-items .xl-drop-before::after{top:-2px} .cot-items .xl-drop-after::after{bottom:-2px}
   .cot-sec{cursor:grab} .cot-sec input,.cot-sec button{cursor:auto} .cot-sec button{cursor:pointer}
+  .xl-sheet .cotiz-item.xl-pick>input,.xl-sheet .cotiz-item.xl-pick>.cot-tot,.xl-sheet .cotiz-item.xl-pick>.cot-costbtn{background-color:color-mix(in srgb,var(--accent) 14%,transparent)!important}
+  .xl-sheet .cotiz-item.xl-pick>.xl-rn{background:var(--accent)!important;color:#fff!important}
   body.xl-dragmode,body.xl-dragmode *{cursor:grabbing!important;user-select:none!important}
   .cot-items .xl-dragging{opacity:.4}
   @media (max-width:720px){ .cot-sec{grid-template-columns:24px 1fr auto;border-radius:8px;margin:8px 0} .cot-sec .cs-sum{grid-column:1/-1;justify-content:center;flex-wrap:wrap} }
@@ -3102,7 +3104,7 @@
       '</div>'+
       '<div class="xl-sheet"><div class="cotiz-items-head"><span class="xl-rn">#</span><span>Descripción</span><span>Cant.</span><span>Precio $</span><span>Desc %</span><span>Total</span><span>Costo</span><span></span></div>'+
       '<div class="cot-items"></div></div>'+
-      '<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd> bajar / nueva fila · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección · <kbd>Alt</kbd>+<kbd>↑↓</kbd> o arrastrar el N° de fila: mover línea</div>'+
+      '<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd> bajar / nueva fila · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección · <kbd>Alt</kbd>+<kbd>↑↓</kbd> o arrastrar el N° de fila: mover línea · <kbd>Ctrl</kbd>+click / <kbd>Shift</kbd>+click en el N°: marcar varias y arrastrarlas juntas</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost cvb-additem">+ Agregar línea</button><button type="button" class="btn ghost cvb-addsec" title="Título para agrupar líneas, ej. INSTALACIÓN DE PPF">+ Sección</button></span><span style="font-size:12px;color:var(--ink-muted)">Subtotal: <b class="cvb-sub">$0</b></span></div>'+
     '</div>'; }
   function cotBlocks(){ return Array.prototype.slice.call(document.querySelectorAll('#cot-vehiculos .cot-veh-block')); }
@@ -3145,21 +3147,29 @@
   function cotDropClear(){ document.querySelectorAll('#cot-vehiculos .xl-drop-before,#cot-vehiculos .xl-drop-after').forEach(function(x){ x.classList.remove('xl-drop-before','xl-drop-after'); }); }
   document.addEventListener('mousedown',function(ev){ if(ev.button!==0)return; var t=ev.target; if(!t||!t.closest||!t.closest('#cot-vehiculos'))return;
     var el=null, sec=false;
-    if(t.classList.contains('xl-rn') && t.closest('.cotiz-item')) el=[t.closest('.cotiz-item')];
+    if(t.classList.contains('xl-rn') && t.closest('.cotiz-item')){ var row=t.closest('.cotiz-item');
+      if(ev.ctrlKey||ev.metaKey){ ev.preventDefault(); row.classList.toggle('xl-pick'); _cotPickAnc=row; return; } // Ctrl+click: agrega/quita de la seleccion
+      if(ev.shiftKey && _cotPickAnc && document.contains(_cotPickAnc)){ ev.preventDefault(); var rs=xlRows(), i0=rs.indexOf(_cotPickAnc), i1=rs.indexOf(row); cotPickClear(); for(var q=Math.min(i0,i1);q<=Math.max(i0,i1);q++) rs[q].classList.add('xl-pick'); return; } // Shift+click: rango
+      var picks=cotPicks(); el=(row.classList.contains('xl-pick')&&picks.length>1)?picks:[row]; } // arrastrar una fila marcada mueve todas las marcadas
     else if(t.closest('.cot-sec') && !t.closest('input,button')){ var h=t.closest('.cot-sec'); el=[h].concat(cotSecRowsAll(h)); sec=true; }
+    if(!el && !t.closest('.cot-costos') && !ev.ctrlKey && !ev.metaKey) cotPickClear();
     if(!el)return;
     ev.preventDefault(); _cotDrag={el:el,sec:sec,y0:ev.clientY,on:false,drop:null}; });
   document.addEventListener('mousemove',function(ev){ if(!_cotDrag)return; if(!(ev.buttons&1)){ cotDragEnd(false); return; }
     if(!_cotDrag.on){ if(Math.abs(ev.clientY-_cotDrag.y0)<4)return; _cotDrag.on=true; document.body.classList.add('xl-dragmode'); _cotDrag.el.forEach(function(x){ x.classList.add('xl-dragging'); }); }
     ev.preventDefault(); cotDropClear(); var d=cotDropCalc(ev.clientX,ev.clientY); _cotDrag.drop=d; if(d) d.ref.classList.add(d.after?'xl-drop-after':'xl-drop-before');
     var m=60; if(ev.clientY<m) window.scrollBy(0,-14); else if(ev.clientY>window.innerHeight-m) window.scrollBy(0,14); }); // auto-scroll cerca de los bordes
+  var _cotPickAnc=null; // filas marcadas con Ctrl/Shift+click en su N° (para moverlas juntas)
+  function cotPicks(){ return Array.prototype.slice.call(document.querySelectorAll('#cot-vehiculos .cotiz-item.xl-pick')); }
+  function cotPickClear(){ cotPicks().forEach(function(x){ x.classList.remove('xl-pick'); }); }
   function cotDragEnd(aplicar){ var g=_cotDrag; _cotDrag=null; cotDropClear(); document.body.classList.remove('xl-dragmode'); if(!g)return; g.el.forEach(function(x){ x.classList.remove('xl-dragging'); });
+    if(aplicar && !g.on && !g.sec){ cotPickClear(); g.el[0].classList.add('xl-pick'); _cotPickAnc=g.el[0]; return; } // click simple en el N°: marca solo esa fila
     if(!aplicar||!g.on||!g.drop)return; var d=g.drop;
     if(d.after){ var ref=d.ref; g.el.forEach(function(x){ ref.parentNode.insertBefore(x, ref.nextSibling); ref=x; }); }
     else g.el.forEach(function(x){ d.ref.parentNode.insertBefore(x, d.ref); });
     cotCalc(); }
   document.addEventListener('mouseup',function(){ if(_cotDrag) cotDragEnd(true); });
-  document.addEventListener('keydown',function(ev){ if(_cotDrag&&ev.key==='Escape') cotDragEnd(false); });
+  document.addEventListener('keydown',function(ev){ if(ev.key!=='Escape')return; if(_cotDrag) cotDragEnd(false); else cotPickClear(); });
   function cotBindBlock(block){ block.querySelector('.cvb-del').onclick=function(){ block.remove(); if(!cotBlocks().length)cotAddVeh({}); cotCalc(); };
     block.querySelector('.cvb-additem').onclick=function(){ cotAddRow(null, cotItemsOf(block)); };
     var as=block.querySelector('.cvb-addsec'); if(as)as.onclick=function(){ var it=cotItemsOf(block); it.insertAdjacentHTML('beforeend', cotSecHTML('')+cotRowHTML(null)); cotBind(); cotCalc(); var hs=it.querySelectorAll('.cs-title'); var t=hs[hs.length-1]; if(t)t.focus(); };
