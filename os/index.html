@@ -738,6 +738,19 @@
     .xl-sheet .cotiz-item>.xl-sel,.xl-sheet .cotiz-item>input.xl-sel:not(:focus){background:color-mix(in srgb,var(--accent) 24%,transparent)!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent)}
   }
   @media (max-width:720px){ .xl-hint{display:none} }
+  /* Secciones dentro de un vehiculo (ej. INSTALACION DE PPF) */
+  .cot-sec{display:grid;grid-template-columns:30px 1fr auto auto;align-items:center;gap:8px;padding:6px 8px;background:color-mix(in srgb,var(--accent) 10%,var(--surface-2));border-top:2px solid var(--accent);border-bottom:1px solid var(--line-strong)}
+  .cot-sec .cs-grip{cursor:grab;color:var(--ink-faint);text-align:center;user-select:none;font-size:15px;letter-spacing:-2px}
+  .cot-sec .cs-title{font:800 13px/1.2 var(--sans);text-transform:uppercase;letter-spacing:.06em;text-align:center;border:1px solid transparent;border-radius:6px;background:transparent;padding:6px;color:var(--ink);width:100%;box-sizing:border-box}
+  .cot-sec .cs-title:hover{border-color:var(--line)} .cot-sec .cs-title:focus{border-color:var(--accent);background:var(--surface);outline:none}
+  .cot-sec .cs-sum{display:flex;gap:10px;font-size:11.5px;color:var(--ink-muted);white-space:nowrap;user-select:none}
+  .cot-sec .cs-sum b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .cot-sec .cs-acts{display:flex;gap:4px} .cot-sec .cs-acts button{font:600 11.5px var(--sans);padding:4px 8px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);cursor:pointer;color:var(--ink)}
+  .cot-sec .cs-acts .cs-del{border-color:transparent;background:none;color:var(--crit);font-size:15px;padding:2px 6px}
+  .xl-sheet .cotiz-item .xl-rn{cursor:grab}
+  .cot-items .xl-drop-before{box-shadow:inset 0 3px 0 var(--accent)} .cot-items .xl-drop-after{box-shadow:inset 0 -3px 0 var(--accent)}
+  .cot-items .xl-dragging{opacity:.4}
+  @media (max-width:720px){ .cot-sec{grid-template-columns:24px 1fr auto;border-radius:8px;margin:8px 0} .cot-sec .cs-sum{grid-column:1/-1;justify-content:center;flex-wrap:wrap} }
   /* Registro de cotizaciones como tabla */
   .xl-list-wrap{overflow:auto;max-height:520px;border:1px solid var(--line-strong);border-radius:8px}
   .xl-list{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
@@ -3079,19 +3092,53 @@
       '</div>'+
       '<div class="xl-sheet"><div class="cotiz-items-head"><span class="xl-rn">#</span><span>Descripción</span><span>Cant.</span><span>Precio $</span><span>Desc %</span><span>Total</span><span>Costo</span><span></span></div>'+
       '<div class="cot-items"></div></div>'+
-      '<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd> bajar / nueva fila · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección</div>'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><button type="button" class="btn ghost cvb-additem">+ Agregar línea</button><span style="font-size:12px;color:var(--ink-muted)">Subtotal: <b class="cvb-sub">$0</b></span></div>'+
+      '<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd> bajar / nueva fila · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección · <kbd>Alt</kbd>+<kbd>↑↓</kbd> o arrastrar el N° de fila: mover línea</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn ghost cvb-additem">+ Agregar línea</button><button type="button" class="btn ghost cvb-addsec" title="Título para agrupar líneas, ej. INSTALACIÓN DE PPF">+ Sección</button></span><span style="font-size:12px;color:var(--ink-muted)">Subtotal: <b class="cvb-sub">$0</b></span></div>'+
     '</div>'; }
   function cotBlocks(){ return Array.prototype.slice.call(document.querySelectorAll('#cot-vehiculos .cot-veh-block')); }
   function cotItemsOf(block){ return block.querySelector('.cot-items'); }
   function cotAddRow(it,cont){ cont=cont||(cotBlocks()[0]&&cotItemsOf(cotBlocks()[0])); if(!cont)return; cont.insertAdjacentHTML('beforeend', cotRowHTML(it)); cotBind(); cotCalc(); }
   function cotAddVeh(v,focus){ var cont=document.getElementById('cot-vehiculos'); if(!cont)return null; cont.insertAdjacentHTML('beforeend', cotVehHTML(v)); var block=cont.lastElementChild;
-    var items=cotItemsOf(block); (v&&v.items&&v.items.length?v.items:[null]).forEach(function(it){ items.insertAdjacentHTML('beforeend', cotRowHTML(it)); });
+    cotItemsOf(block).innerHTML=cotItemsHTML(v);
     cotBindBlock(block); cotBind(); cotCalc(); if(focus){ var f=block.querySelector('.cvb-veh'); if(f){ f.focus(); try{block.scrollIntoView({block:'center'});}catch(e){} } } return block; }
+  // ---- Secciones: un titulo (ej. INSTALACION DE PPF) y debajo sus lineas; resumen de precio/costo/margen ----
+  function cotSecHTML(t){ return '<div class="cot-sec"><span class="cs-grip" draggable="true" title="Arrastra para mover la sección con sus líneas">⋮⋮</span><input class="cs-title" placeholder="TÍTULO DE LA SECCIÓN (ej. INSTALACIÓN DE PPF)" value="'+av(t||'')+'"><span class="cs-sum"></span><span class="cs-acts"><button type="button" class="cs-add" title="Agregar línea a esta sección">+ línea</button><button type="button" class="cs-del" title="Quitar el título (las líneas quedan)">×</button></span></div>'; }
+  function cotSecDe(r){ var p=r.previousElementSibling; while(p && !p.classList.contains('cot-sec')) p=p.previousElementSibling; return p?(p.querySelector('.cs-title').value.trim()):''; }
+  function cotSecRows(h){ var out=[], n=h.nextElementSibling; while(n && !n.classList.contains('cot-sec')){ if(n.classList.contains('cotiz-item'))out.push(n); n=n.nextElementSibling; } return out; }
+  function cotItemsHTML(v){ v=v||{}; var its=(v.items&&v.items.length)?v.items:[null], secs=(v.secs||[]).slice(), html='';
+    its.forEach(function(it){ var sc=(it&&it.sec)||''; if(sc && secs.indexOf(sc)<0) secs.push(sc); });
+    its.filter(function(it){ return !(it&&it.sec); }).forEach(function(it){ html+=cotRowHTML(it); }); // lineas sin seccion: arriba
+    secs.forEach(function(sc){ html+=cotSecHTML(sc); its.filter(function(it){ return it && it.sec===sc; }).forEach(function(it){ html+=cotRowHTML(it); }); });
+    return html; }
+  function cotInsertRowAfter(ref,it){ ref.insertAdjacentHTML('afterend', cotRowHTML(it)); cotBind(); cotCalc(); return ref.nextElementSibling; }
+  function cotBindSecs(block){ cotItemsOf(block).querySelectorAll('.cot-sec').forEach(function(h){
+      h.querySelector('.cs-add').onclick=function(){ var rs=cotSecRows(h); var row=cotInsertRowAfter(rs.length?rs[rs.length-1]:h,null); var d=row&&row.querySelector('.cot-desc'); if(d)d.focus(); };
+      h.querySelector('.cs-del').onclick=function(){ var t=h.querySelector('.cs-title').value.trim(); if(!confirm('¿Quitar la sección '+(t?('"'+t+'"'):'')+'?\nSus líneas no se borran: quedan en la sección de arriba.'))return; h.remove(); cotCalc(); }; }); }
+  var _cotDrag=null; // fila o seccion que se esta arrastrando
+  document.addEventListener('dragstart',function(ev){ var t=ev.target; if(!t||!t.closest||!t.closest('#cot-vehiculos'))return;
+    if(t.classList.contains('xl-rn')) _cotDrag={el:[t.closest('.cotiz-item')]};
+    else if(t.classList.contains('cs-grip')){ var h=t.closest('.cot-sec'); _cotDrag={el:[h].concat(Array.prototype.filter.call(cotSecRowsAll(h),function(){return true;})), sec:true}; }
+    else return;
+    try{ ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain','fila'); ev.dataTransfer.setDragImage(_cotDrag.el[0],20,15); }catch(e){}
+    _cotDrag.el.forEach(function(x){ x.classList.add('xl-dragging'); }); });
+  function cotSecRowsAll(h){ var out=[], n=h.nextElementSibling; while(n && !n.classList.contains('cot-sec')){ out.push(n); n=n.nextElementSibling; } return out; }
+  function cotDropTarget(ev){ var t=ev.target&&ev.target.closest&&ev.target.closest('#cot-vehiculos .cotiz-item, #cot-vehiculos .cot-sec'); if(!t||!_cotDrag||_cotDrag.el.indexOf(t)>=0)return null; var r=t.getBoundingClientRect(); var after=(ev.clientY>r.top+r.height/2);
+    if(_cotDrag.sec){ if(after){ var nh=t.nextElementSibling; while(nh&&!nh.classList.contains('cot-sec'))nh=nh.nextElementSibling; if(!nh) var lc=t.parentNode.lastElementChild; return _cotDrag.el.indexOf(lc)>=0?null:{t:lc,after:true,sec:true}; } // bajo la ultima seccion: va al final
+      if(t.classList.contains('cotiz-item')){ var h=t.previousElementSibling; while(h&&!h.classList.contains('cot-sec'))h=h.previousElementSibling; if(!h) return {t:t.closest('.cot-items').firstElementChild,after:false}; t=h; } return {t:t,after:after && !cotSecRowsAll(t).length?true:false, sec:true}; } // una seccion solo cae antes de otra seccion (o al final si esta vacia)
+    if(t.classList.contains('cot-sec')) after=true; // soltar sobre un titulo: queda como primera linea de esa seccion
+    return {t:t,after:after}; }
+  function cotDropClear(){ document.querySelectorAll('#cot-vehiculos .xl-drop-before,#cot-vehiculos .xl-drop-after').forEach(function(x){ x.classList.remove('xl-drop-before','xl-drop-after'); }); }
+  document.addEventListener('dragover',function(ev){ if(!_cotDrag)return; var d=cotDropTarget(ev); cotDropClear(); if(!d)return; ev.preventDefault(); d.t.classList.add(d.after?'xl-drop-after':'xl-drop-before'); });
+  document.addEventListener('drop',function(ev){ if(!_cotDrag)return; var d=cotDropTarget(ev); cotDropClear(); if(!d)return; ev.preventDefault();
+    if(d.after){ var ref=d.t; _cotDrag.el.forEach(function(x){ ref.parentNode.insertBefore(x, ref.nextSibling); ref=x; }); }
+    else _cotDrag.el.forEach(function(x){ d.t.parentNode.insertBefore(x, d.t); });
+    cotCalc(); });
+  document.addEventListener('dragend',function(){ if(_cotDrag)_cotDrag.el.forEach(function(x){ x.classList.remove('xl-dragging'); }); _cotDrag=null; cotDropClear(); });
   function cotBindBlock(block){ block.querySelector('.cvb-del').onclick=function(){ block.remove(); if(!cotBlocks().length)cotAddVeh({}); cotCalc(); };
     block.querySelector('.cvb-additem').onclick=function(){ cotAddRow(null, cotItemsOf(block)); };
+    var as=block.querySelector('.cvb-addsec'); if(as)as.onclick=function(){ var it=cotItemsOf(block); it.insertAdjacentHTML('beforeend', cotSecHTML('')+cotRowHTML(null)); cotBind(); cotCalc(); var hs=it.querySelectorAll('.cs-title'); var t=hs[hs.length-1]; if(t)t.focus(); };
     var tl=block.querySelector('.cvb-talla'); if(tl)tl.onchange=cotCalc; }
-  function cotBind(){ cotBlocks().forEach(function(block){ cotItemsOf(block).querySelectorAll('input').forEach(function(i){ i.oninput=cotCalc; }); block.querySelectorAll('.cot-desc').forEach(function(i){ i.onchange=function(){ cotDescFill(i); }; }); block.querySelectorAll('.cot-del').forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; });
+  function cotBind(){ cotBlocks().forEach(function(block){ cotBindSecs(block); cotItemsOf(block).querySelectorAll('input').forEach(function(i){ i.oninput=cotCalc; }); block.querySelectorAll('.cot-desc').forEach(function(i){ i.onchange=function(){ cotDescFill(i); }; }); block.querySelectorAll('.cot-del').forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; });
     block.querySelectorAll('.cot-costbtn').forEach(function(b){ b.onclick=function(){ var p=b.parentNode.querySelector('.cot-costos'); p.classList.toggle('open'); if(p.classList.contains('open') && !p.querySelector('.ccs-row')){ p.querySelector('.ccs-add').click(); } }; });
     block.querySelectorAll('.ccs-add').forEach(function(b){ b.onclick=function(){ var l=b.parentNode.querySelector('.ccs-list'); l.insertAdjacentHTML('beforeend', cotCostoRowHTML()); cotBind(); var i=l.lastElementChild.querySelector('.ccs-desc'); if(i)i.focus(); }; });
     block.querySelectorAll('.ccs-del').forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; }); }); }
@@ -3207,8 +3254,8 @@
     if(!inp.dataset.b){ inp.dataset.b="1"; inp.addEventListener("change",function(){ var id=(inp._map||{})[inp.value]; var e=(data||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(e){ cotAgregarVehPend(e); inp.value=""; } }); }
   }
   function cotCliFill(){ var c=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]; if(c){ var tel=document.getElementById("cot-tel"); if(tel && !tel.value)tel.value=c.tel||""; var cc=document.getElementById("cot-correo"); if(cc && !cc.value)cc.value=c.correo||""; var cx=document.getElementById("cot-contacto"); if(cx && !cx.value)cx.value=c.contacto||""; } cotRefreshPendientes(); }
-  function cotFilasDe(block){ return Array.prototype.map.call(cotItemsOf(block).querySelectorAll(".cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:+r.querySelector(".cot-precio").value||0, descPct:+r.querySelector(".cot-descp").value||0, costos:cotCostosDe(r) }; }); }
-  function cotVehData(block){ return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:(block.querySelector(".cvb-pat").value||"").trim(), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), items:cotFilasDe(block) }; }
+  function cotFilasDe(block){ return Array.prototype.map.call(cotItemsOf(block).querySelectorAll(".cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:+r.querySelector(".cot-precio").value||0, descPct:+r.querySelector(".cot-descp").value||0, costos:cotCostosDe(r), sec:cotSecDe(r) }; }); }
+  function cotVehData(block){ return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:(block.querySelector(".cvb-pat").value||"").trim(), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), secs:Array.prototype.map.call(cotItemsOf(block).querySelectorAll('.cs-title'),function(x){ return x.value.trim(); }), items:cotFilasDe(block) }; }
   // El descuento es un porcentaje 0–100. Datos viejos vienen ×10.000 (ej: 150000 = 15%): se corrigen aquí.
   function cotDescNorm(d){ d=+d||0; if(d>100) d=d/10000; if(d<0)d=0; if(d>100)d=100; return d; }
   function _pctTxt(d){ d=Math.round((+d||0)*100)/100; return String(d).replace('.',','); }
@@ -3218,7 +3265,9 @@
       cotItemsOf(block).querySelectorAll(".cotiz-item").forEach(function(r,i){ var t=cotLineaTotal(filas[i]); r.querySelector(".cot-tot").textContent=clp(t); bs+=t;
         var ct=cotCostoTotal(filas[i]); costo+=ct; var cb=r.querySelector(".cot-costbtn"); if(cb){ var n=filas[i].costos.length; cb.textContent=ct?(clp(ct)+(n>1?(' ('+n+')'):'')):'+ Costo'; cb.classList.toggle('has',!!ct); }
         var mg=r.querySelector(".ccs-mg"); if(mg)mg.textContent=ct?('Margen línea: '+clp(t-ct)+(t>0?(' ('+Math.round((t-ct)*100/t)+'%)'):'')):''; });
-      var se=block.querySelector(".cvb-sub"); if(se)se.textContent=clp(bs); sub+=bs; });
+      var se=block.querySelector(".cvb-sub"); if(se)se.textContent=clp(bs); sub+=bs;
+      cotItemsOf(block).querySelectorAll(".cot-sec").forEach(function(h){ var pv=0, ct=0; cotSecRows(h).forEach(function(r){ var i=Array.prototype.indexOf.call(cotItemsOf(block).querySelectorAll(".cotiz-item"),r); if(i>=0){ pv+=cotLineaTotal(filas[i]); ct+=cotCostoTotal(filas[i]); } });
+        var m=pv-ct; h.querySelector(".cs-sum").innerHTML='<span>Precio <b>'+clp(pv)+'</b></span>'+(ct?('<span>Costo <b>'+clp(ct)+'</b></span><span>Margen <b style="color:'+(m<0?'var(--crit)':'#1e9e6a')+'">'+clp(m)+(pv>0?(' ('+Math.round(m*100/pv)+'%)'):'')+'</b></span>'):''); }); });
     var da=+document.getElementById("cot-descadic").value||0, dval=Math.round(sub*da/100), neto=sub-dval;
     var conIva=!!(document.getElementById("cot-iva")&&document.getElementById("cot-iva").checked);
     var ivaVal=conIva?Math.round(neto*0.19):0, total=neto+ivaVal;
@@ -3252,6 +3301,7 @@
     if(k==='Escape'){ _xl.a=_xl.b=p; xlPaint(); return; }
     if(mod&&(k==='a'||k==='A')&&xlMulti()){ ev.preventDefault(); return; }
     if((k==='Delete'||k==='Backspace')&&xlMulti()){ ev.preventDefault(); var g=xlRange(); for(var r=g.r0;r<=g.r1;r++) for(var c=g.c0;c<=Math.min(g.c1,3);c++) xlSet(xlCell(r,c),c,''); cotCalc(); return; }
+    if(ev.altKey&&(k==='ArrowUp'||k==='ArrowDown')){ ev.preventDefault(); var row=t.closest('.cotiz-item'); if(k==='ArrowUp'){ var pr=row.previousElementSibling; if(pr)row.parentNode.insertBefore(row,pr); } else { var nx=row.nextElementSibling; if(nx)row.parentNode.insertBefore(row,nx.nextSibling); } t.focus(); cotCalc(); return; }
     var dr=0,dc=0;
     if(k==='ArrowDown')dr=1; else if(k==='ArrowUp')dr=-1;
     else if(k==='ArrowLeft'&&(ev.shiftKey||xlCaret(t,-1)))dc=-1; else if(k==='ArrowRight'&&(ev.shiftKey||xlCaret(t,1)))dc=1;
@@ -3386,10 +3436,12 @@
     if(vehs){ var rows="", n=0;
       vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
         var vsub=0, dets=[];
-        its.forEach(function(it){ vsub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); var q=(+it.cant||0); dets.push((q>1?(q+"× "):"")+(it.desc||"")); });
+        var _secs=[], _bySec={}; its.forEach(function(it){ vsub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); var q=(+it.cant||0), sc=(it.sec||''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push((q>1?(q+"× "):"")+(it.desc||"")); });
+        var _orden=_secs.filter(function(x){return !x;}).concat((v.secs||[]).filter(function(x){return _bySec[x];})).concat(_secs.filter(function(x){ return x && (v.secs||[]).indexOf(x)<0; }));
+        var _detHTML=_orden.map(function(sc){ return (sc?('<b style="text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</b><br>'):'')+escH(_bySec[sc].join(", ")); }).join('<div style="height:5px"></div>');
         sub+=vsub;
         var _veh=(v.veh||("Vehículo "+n)).trim(), _sp=_veh.indexOf(" "), _marca=_sp>0?_veh.slice(0,_sp):_veh, _modelo=_sp>0?_veh.slice(_sp+1):"";
-        rows+='<tr><td>'+n+'</td><td class="cp-desc" style="padding-right:2px"><b>'+escH(_marca)+'</b>'+(_modelo?('<br><span style="color:#555;font-size:11.5px">'+escH(_modelo)+'</span>'):"")+'</td><td style="padding-left:2px;white-space:nowrap">'+escH(v.patente||"—")+'</td><td class="cp-desc">'+escH(dets.join(", "))+'</td><td class="r"><b>'+clp(vsub)+'</b></td></tr>'; });
+        rows+='<tr><td>'+n+'</td><td class="cp-desc" style="padding-right:2px"><b>'+escH(_marca)+'</b>'+(_modelo?('<br><span style="color:#555;font-size:11.5px">'+escH(_modelo)+'</span>'):"")+'</td><td style="padding-left:2px;white-space:nowrap">'+escH(v.patente||"—")+'</td><td class="cp-desc">'+_detHTML+'</td><td class="r"><b>'+clp(vsub)+'</b></td></tr>'; });
       tablaHTML='<table class="cp-table"><colgroup><col style="width:5%"><col style="width:19%"><col style="width:12%"><col style="width:50%"><col style="width:14%"></colgroup><thead><tr><th>#</th><th>Vehículo</th><th>Patente</th><th>Detalle</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
     } else { var filasHTML="", _idx=0;
       var _fila=function(it){ var dp=cotDescNorm(it.descPct); var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*dp/100); _idx++;
