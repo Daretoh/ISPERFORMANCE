@@ -3235,6 +3235,13 @@
     return out; }
   var _gmiRows=[];
   // modal: traer autos del Cierre GM de un mes elegido
+  function gmPreciosTablaHTML(){ var serv=(typeof GM_SERV!=="undefined"?GM_SERV:[]), tallas=["S","M","L","XL"];
+    var head='<tr style="text-align:left;color:#888;font-size:10.5px;text-transform:uppercase"><th style="padding:4px 6px">Servicio</th>'+tallas.map(function(t){return '<th style="padding:4px 6px;text-align:right">'+t+'</th>';}).join("")+'</tr>';
+    var rows=serv.filter(function(s){return !s.manual;}).map(function(s){ return '<tr style="border-top:1px solid var(--line,#f0f0f0)"><td style="padding:5px 6px">'+escH(s.n)+'</td>'+tallas.map(function(t){return '<td style="padding:5px 6px;text-align:right">'+clp((s.p&&s.p[t])||0)+'</td>';}).join("")+'</tr>'; }).join("");
+    var ret=(typeof GM_RETIRO!=="undefined"?GM_RETIRO:{S:5000,M:5000,L:5000,XL:5000});
+    rows+='<tr style="border-top:1px solid var(--line,#f0f0f0)"><td style="padding:5px 6px"><b>Retiro / entrega</b> (siempre)</td>'+tallas.map(function(t){return '<td style="padding:5px 6px;text-align:right">'+clp(ret[t]||0)+'</td>';}).join("")+'</tr>';
+    rows+='<tr style="border-top:1px solid var(--line,#f0f0f0)"><td style="padding:5px 6px;color:#888" colspan="5">Extra ($): monto manual según el trabajo (desab./pintura, etc.)</td></tr>';
+    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'; }
   function abrirGMImport(){
     if(typeof gmRows!=="function"){ toast("Cierre GM no disponible"); return; }
     var mesDef=(function(){ var mx=""; (data||[]).forEach(function(e){ if(typeof gmEsGM==="function"&&gmEsGM(e)){ var m=(e.fIngreso||e.fCoord||"").slice(0,7); if(m>mx)mx=m; } }); return mx||todayISO().slice(0,7); })();
@@ -3257,6 +3264,7 @@
         '<div style="padding:12px 16px 16px">'+
           '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px"><button id="gmi-prev" class="btn sm" style="padding:6px 12px">‹</button><b id="gmi-meslbl" style="min-width:160px;text-align:center;font-size:15px">'+escH(gmMesNom(mes))+'</b><button id="gmi-next" class="btn sm" style="padding:6px 12px">›</button></div>'+
           '<div id="gmi-list">'+lista(mes)+'</div>'+
+          '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700;font-size:13px">Ver tabla de precios (flota GM)</summary><div style="margin-top:8px">'+gmPreciosTablaHTML()+'</div></details>'+
           '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="gmi-add" class="btn primary">Agregar seleccionados</button><button id="gmi-all" class="btn ghost">Marcar/desmarcar todos</button></div>'+
         '</div></div>';
       ov.querySelector("#gmi-x").onclick=close;
