@@ -3490,9 +3490,9 @@
     if(vehs){ var rows="", n=0;
       vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
         var vsub=0, dets=[];
-        var _secs=[], _bySec={}; its.forEach(function(it){ vsub+=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); var q=(+it.cant||0), sc=(it.sec||''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push((q>1?(q+"× "):"")+(it.desc||"")); });
+        var _secs=[], _bySec={}; its.forEach(function(it){ var _lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); vsub+=_lt; var q=(+it.cant||0), sc=(it.sec||''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push('<span>'+escH((q>1?(q+"× "):"")+(it.desc||""))+'</span><span style="float:right;padding-left:10px;white-space:nowrap">'+clp(_lt)+'</span>'); });
         var _orden=_secs.filter(function(x){return !x;}).concat((v.secs||[]).filter(function(x){return _bySec[x];})).concat(_secs.filter(function(x){ return x && (v.secs||[]).indexOf(x)<0; }));
-        var _detHTML=_orden.map(function(sc){ return (sc?('<b style="text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</b><br>'):'')+escH(_bySec[sc].join(", ")); }).join('<div style="height:5px"></div>');
+        var _detHTML=_orden.map(function(sc){ return (sc?('<b style="text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</b>'):'')+'<div>'+_bySec[sc].map(function(x){return '<div style="overflow:hidden">'+x+'</div>';}).join('')+'</div>'; }).join('<div style="height:5px"></div>');
         sub+=vsub;
         var _veh=(v.veh||("Vehículo "+n)).trim(), _sp=_veh.indexOf(" "), _marca=_sp>0?_veh.slice(0,_sp):_veh, _modelo=_sp>0?_veh.slice(_sp+1):"";
         rows+='<tr><td>'+n+'</td><td class="cp-desc">'+_detHTML+'</td><td style="white-space:nowrap"><b>'+escH(_marca)+'</b></td><td class="cp-desc">'+escH(_modelo)+'</td><td style="white-space:nowrap">'+escH(v.patente||"—")+'</td><td class="r">1</td><td class="r"><b>'+clp(vsub)+'</b></td></tr>'; });
