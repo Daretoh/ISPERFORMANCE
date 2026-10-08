@@ -3507,7 +3507,7 @@
     var nom=(c.cliente_nombre||"").trim().toLowerCase(); if(!nom)return out;
     Object.keys(clientesInfo||{}).forEach(function(k){ var i=clientesInfo[k]||{}; var nm=((i.nombre_mostrar||i.razon_social||i.nombre||"")+"").trim().toLowerCase(); if(nm&&nm===nom){ if(!out.rut)out.rut=i.rut||""; if(!out.giro)out.giro=i.giro||""; } });
     return out; }
-  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c);
+  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor");
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
     if(vehs){ var rows="", n=0;
       vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
@@ -3519,10 +3519,10 @@
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="3" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
         _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="3" style="padding:5px 10px 1px 18px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</td></tr>';
-          _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+clp(it.lt)+'</td></tr>'; }); });
+          _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+clp(Math.round(it.lt*_iva))+'</td></tr>'; }); });
         // subtotal del vehículo
-        rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(vsub)+'</td></tr>'; });
-      tablaHTML='<table class="cp-table"><colgroup><col style="width:68%"><col style="width:12%"><col style="width:20%"></colgroup><thead><tr><th>Descripción de servicio</th><th class="r">Cant.</th><th class="r">Valor</th></tr></thead><tbody>'+rows+'</tbody></table>';
+        rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(Math.round(vsub*_iva))+'</td></tr>'; });
+      tablaHTML='<table class="cp-table"><colgroup><col style="width:68%"><col style="width:12%"><col style="width:20%"></colgroup><thead><tr><th>Descripción de servicio</th><th class="r">Cant.</th><th class="r">'+_valLbl+'</th></tr></thead><tbody>'+rows+'</tbody></table>';
     } else { var filasHTML="", _idx=0;
       var _fila=function(it){ var dp=cotDescNorm(it.descPct); var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*dp/100); _idx++;
         return '<tr><td>'+_idx+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+(dp?(_pctTxt(dp)+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>'; };
