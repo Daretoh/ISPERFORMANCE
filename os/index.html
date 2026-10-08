@@ -3523,11 +3523,11 @@
         // subtotal del vehículo
         rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(Math.round(vsub*_iva))+'</td></tr>'; });
       tablaHTML='<table class="cp-table"><colgroup><col style="width:68%"><col style="width:12%"><col style="width:20%"></colgroup><thead><tr><th>Descripción de servicio</th><th class="r">Cant.</th><th class="r">'+_valLbl+'</th></tr></thead><tbody>'+rows+'</tbody></table>';
-    } else { var filasHTML="", _idx=0;
+    } else { var filasHTML="", _idx=0, _su=(c.con_iva?" c/IVA":"");
       var _fila=function(it){ var dp=cotDescNorm(it.descPct); var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*dp/100); _idx++;
-        return '<tr><td>'+_idx+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(it.precio||0)+'</td><td class="r">'+(dp?(_pctTxt(dp)+"%"):"—")+'</td><td class="r">'+clp(dval)+'</td><td class="r">'+clp(lt)+'</td></tr>'; };
+        return '<tr><td>'+_idx+'</td><td class="cp-desc">'+escH(it.desc||"")+'</td><td class="r">'+(it.cant||0)+'</td><td class="r">'+clp(Math.round((+it.precio||0)*_iva))+'</td><td class="r">'+(dp?(_pctTxt(dp)+"%"):"—")+'</td><td class="r">'+clp(Math.round(dval*_iva))+'</td><td class="r">'+clp(Math.round(lt*_iva))+'</td></tr>'; };
       (c.items||[]).filter(function(it){ return it && (((it.desc||"").trim()) || (+it.precio||0) || (+it.cant||0)); }).forEach(function(it){ filasHTML+=_fila(it); });
-      tablaHTML='<table class="cp-table"><colgroup><col style="width:4%"><col style="width:42%"><col style="width:8%"><col style="width:13%"><col style="width:9%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'; }
+      tablaHTML='<table class="cp-table"><colgroup><col style="width:4%"><col style="width:42%"><col style="width:8%"><col style="width:13%"><col style="width:9%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio'+_su+'</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total'+_su+'</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'; }
     var da=+c.desc_adic_pct||0, daval=Math.round(sub*da/100), neto=sub-daval;
     var ivaVal=c.con_iva?Math.round(neto*0.19):0, total=neto+ivaVal;
     function _fFmt(s){ var p=(s||"").slice(0,10).split("-"); return (p[2]||"")+"/"+(p[1]||"")+"/"+(p[0]||""); }
