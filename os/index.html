@@ -3576,14 +3576,15 @@
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="'+_nc+'" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
         var _rsm=((v.resumen||"").trim());
-        if(_rsm){ // resumen para el cliente: una línea por ítem general, el detalle no sale
-          _rsm.split(/\r?\n+/).forEach(function(ln){ ln=ln.trim(); if(!ln)return; rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(ln)+'</td><td class="r"></td><td class="r"></td>'+(_hasIva?'<td class="r"></td>':'')+'</tr>'; });
+        if(_rsm){ // resumen para el cliente: el total va en la propia línea (no como subtotal aparte); el detalle no sale
+          var _ln=_rsm.split(/\r?\n+/).map(function(x){return x.trim();}).filter(Boolean).map(escH).join('<br>');
+          rows+='<tr><td class="cp-desc" style="padding:8px 10px 8px 18px">'+_ln+'</td><td class="r"></td><td class="r" style="font-weight:800">'+clp(vsub)+'</td>'+_ivaCell(vsub,true)+'</tr>';
         } else {
           _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="padding:5px 10px 1px 18px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</td></tr>';
             _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+clp(it.lt)+'</td>'+_ivaCell(it.lt)+'</tr>'; }); });
-        }
-        // subtotal del vehículo
-        rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(vsub)+'</td>'+_ivaCell(vsub,true)+'</tr>'; });
+          // subtotal del vehículo (solo en modo detallado)
+          rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(vsub)+'</td>'+_ivaCell(vsub,true)+'</tr>';
+        } });
       tablaHTML='<table class="cp-table"><colgroup>'+(_hasIva?'<col style="width:56%"><col style="width:10%"><col style="width:17%"><col style="width:17%">':'<col style="width:68%"><col style="width:12%"><col style="width:20%">')+'</colgroup><thead><tr><th>Descripción de servicio</th><th class="r">Cant.</th><th class="r">'+(_hasIva?'Neto':'Valor')+'</th>'+(_hasIva?'<th class="r">c/IVA</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>';
     } else { var filasHTML="", _idx=0, _su=(c.con_iva?" c/IVA":"");
       var _fila=function(it){ var dp=cotDescNorm(it.descPct); var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*dp/100); _idx++;
