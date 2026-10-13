@@ -3105,6 +3105,7 @@
         '<label class="f" style="width:74px"><span class="lab">Talla</span><select class="cvb-talla">'+tOpts+'</select></label>'+
         '<button type="button" class="btn ghost cvb-del" title="Quitar este vehículo" style="margin-left:auto">✕ Vehículo</button>'+
       '</div>'+
+      '<label class="f" style="display:block;margin-top:10px"><span class="lab">Resumen para el cliente <span class="hint" style="text-transform:none;letter-spacing:0">— opcional. Si lo llenás, el PDF muestra SOLO esto (una línea por ítem general). El detalle de abajo queda interno, pero igual define el total.</span></span><textarea class="cvb-resumen" rows="2" placeholder="Ej: Servicio preparación de venta y pulido de corrección de pintura / Pintura tapabarro trasero derecho" style="width:100%;box-sizing:border-box;font:500 13px var(--sans);padding:8px 9px;border:1px solid var(--line);border-radius:7px;background:var(--ground);color:var(--ink);resize:vertical">'+escH(v.resumen||'')+'</textarea></label>'+
       '<div class="xl-sheet"><div class="cotiz-items-head"><span class="xl-rn">#</span><span>Descripción</span><span>Cant.</span><span>Precio $</span><span>Desc %</span><span>Total</span><span>Costo</span><span></span></div>'+
       '<div class="cot-items"></div></div>'+
       '<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd> bajar / nueva fila · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección · <kbd>Alt</kbd>+<kbd>↑↓</kbd> o arrastrar el N° de fila: mover línea · <kbd>Ctrl</kbd>+click / <kbd>Shift</kbd>+click en el N°: marcar varias y arrastrarlas juntas</div>'+
@@ -3349,7 +3350,7 @@
   }
   function cotCliFill(){ var c=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]; if(c){ var tel=document.getElementById("cot-tel"); if(tel && !tel.value)tel.value=c.tel||""; var cc=document.getElementById("cot-correo"); if(cc && !cc.value)cc.value=c.correo||""; var cx=document.getElementById("cot-contacto"); if(cx && !cx.value)cx.value=c.contacto||""; } cotRefreshPendientes(); }
   function cotFilasDe(block){ return Array.prototype.map.call(cotItemsOf(block).querySelectorAll(".cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:(+xlNum(r.querySelector(".cot-precio").value)||0), descPct:+r.querySelector(".cot-descp").value||0, costos:cotCostosDe(r), sec:cotSecDe(r) }; }); }
-  function cotVehData(block){ return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:(block.querySelector(".cvb-pat").value||"").trim(), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), secs:Array.prototype.map.call(cotItemsOf(block).querySelectorAll('.cs-title'),function(x){ return x.value.trim(); }), items:cotFilasDe(block) }; }
+  function cotVehData(block){ var _rs=block.querySelector(".cvb-resumen"); return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:(block.querySelector(".cvb-pat").value||"").trim(), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), resumen:(_rs?_rs.value.trim():""), secs:Array.prototype.map.call(cotItemsOf(block).querySelectorAll('.cs-title'),function(x){ return x.value.trim(); }), items:cotFilasDe(block) }; }
   // El descuento es un porcentaje 0–100. Datos viejos vienen ×10.000 (ej: 150000 = 15%): se corrigen aquí.
   function cotDescNorm(d){ d=+d||0; if(d>100) d=d/10000; if(d<0)d=0; if(d>100)d=100; return d; }
   function _pctTxt(d){ d=Math.round((+d||0)*100)/100; return String(d).replace('.',','); }
@@ -3566,7 +3567,7 @@
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
     if(vehs){ var rows="", n=0, _hasIva=!!c.con_iva, _nc=(_hasIva?4:3);
       function _ivaCell(net,bold){ return _hasIva?('<td class="r"'+(bold?' style="font-weight:800"':'')+'>'+clp(Math.round(net*1.19))+'</td>'):''; }
-      vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
+      vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente && !((v.resumen||"").trim()))return; n++;
         var vsub=0, _secs=[], _bySec={};
         its.forEach(function(it){ var _lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); vsub+=_lt; var sc=(it.sec||''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push({d:(it.desc||""), c:((+it.cant||0)||1), lt:_lt}); });
         var _orden=_secs.filter(function(x){return !x;}).concat((v.secs||[]).filter(function(x){return _bySec[x];})).concat(_secs.filter(function(x){ return x && (v.secs||[]).indexOf(x)<0; }));
@@ -3574,8 +3575,13 @@
         var _veh=(v.veh||("Vehículo "+n)).trim();
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="'+_nc+'" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
-        _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="padding:5px 10px 1px 18px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</td></tr>';
-          _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+clp(it.lt)+'</td>'+_ivaCell(it.lt)+'</tr>'; }); });
+        var _rsm=((v.resumen||"").trim());
+        if(_rsm){ // resumen para el cliente: una línea por ítem general, el detalle no sale
+          _rsm.split(/\r?\n+/).forEach(function(ln){ ln=ln.trim(); if(!ln)return; rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(ln)+'</td><td class="r"></td><td class="r"></td>'+(_hasIva?'<td class="r"></td>':'')+'</tr>'; });
+        } else {
+          _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="padding:5px 10px 1px 18px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</td></tr>';
+            _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+clp(it.lt)+'</td>'+_ivaCell(it.lt)+'</tr>'; }); });
+        }
         // subtotal del vehículo
         rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(vsub)+'</td>'+_ivaCell(vsub,true)+'</tr>'; });
       tablaHTML='<table class="cp-table"><colgroup>'+(_hasIva?'<col style="width:56%"><col style="width:10%"><col style="width:17%"><col style="width:17%">':'<col style="width:68%"><col style="width:12%"><col style="width:20%">')+'</colgroup><thead><tr><th>Descripción de servicio</th><th class="r">Cant.</th><th class="r">'+(_hasIva?'Neto':'Valor')+'</th>'+(_hasIva?'<th class="r">c/IVA</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>';
