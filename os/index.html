@@ -706,6 +706,9 @@
   .cotiz-item{padding:6px 0;}
   .cotiz-item input{font:500 13px/1 var(--sans);padding:8px 9px;border:1px solid var(--line);border-radius:7px;background:var(--ground);color:var(--ink);width:100%;box-sizing:border-box;}
   .cotiz-item .cot-tot{font-weight:700;font-variant-numeric:tabular-nums;font-size:13px;}
+  .cotiz-item.done{background:rgba(30,158,106,.12);border-radius:8px;}
+  .cotiz-item.done .cot-desc{border-color:#1e9e6a;}
+  .cotiz-item.done .cot-tot::after{content:" ✓";color:#1e9e6a;font-weight:800;}
   .cotiz-item .cot-del{background:none;border:none;color:var(--crit);font-size:17px;cursor:pointer;}
   @media (max-width:720px){ .cotiz-items-head{display:none;} .cotiz-item{grid-template-columns:1fr 1fr;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;} .cotiz-item .cot-desc{grid-column:1/-1;} }
   /* Cotizaciones: lineas como planilla tipo Excel (en escritorio) */
@@ -3201,19 +3204,24 @@
       inp.onchange=function(){ var id=(inp._map||{})[inp.value]; if(!id){ return; } block.dataset.vehid=id; var ee=cotVehDe(block);
         if(ee){ var vi=block.querySelector('.cvb-veh'), pi=block.querySelector('.cvb-pat'); if(vi&&!vi.value.trim())vi.value=limpiaBasura((ee.marca||'')+' '+(ee.modelo||'')).trim(); if(pi&&!pi.value.trim())pi.value=limpiaBasura(ee.patente||''); }
         var add=cotPushTrabajos(block); cotRenderAvance(block); toast('✓ Vehículo vinculado'+(add?(' · '+add+' tarea(s) cargada(s) al checklist'):'')+'. Recordá Guardar para que el enlace quede.'); };
-      return; }
+      cotSyncDone(block); return; }
     var tr=e.trabajos||[], done=tr.filter(function(w){return w.ok;}).length, pct=tr.length?Math.round(done*100/tr.length):0;
     var col=pct>=75?'#1e9e6a':(pct>=40?'#d08700':'#c0392b');
-    var lista=tr.length?tr.map(function(w,i){ return '<label style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px;cursor:pointer"><input type="checkbox" class="cvb-trck" data-i="'+i+'"'+(w.ok?' checked':'')+'><span'+(w.ok?' style="text-decoration:line-through;color:var(--ink-faint)"':'')+'>'+escH(w.t||'')+'</span></label>'; }).join(''):'<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Este vehículo aún no tiene trabajos. Usá "Enviar ítems a trabajos" para crearlos desde la cotización.</div>';
-    el.innerHTML='<details class="cvb-avdet" open style="border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--surface-2)">'+
-      '<summary style="cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px">🔧 Trabajos / avance <span style="font-weight:800;color:'+col+'">'+done+'/'+tr.length+' · '+pct+'%</span><span style="flex:1;height:7px;border-radius:99px;background:var(--line);overflow:hidden;max-width:160px"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span></summary>'+
-      '<div style="margin-top:8px">'+lista+'</div>'+
-      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm cvb-push" title="Agrega las líneas de servicio de esta cotización como trabajos del vehículo">↑ Enviar ítems a trabajos</button><button type="button" class="btn ghost sm cvb-unlink" title="Desvincular de este vehículo">Desvincular</button></div>'+
-    '</details>';
-    el.querySelectorAll('.cvb-trck').forEach(function(ck){ ck.onchange=function(){ var i=+ck.dataset.i; var ee=cotVehDe(block); if(!ee||!ee.trabajos||!ee.trabajos[i])return; ee.trabajos[i].ok=ck.checked; persistVeh(ee); cotRenderAvance(block); }; });
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px">'+
+      '<b>🔧 Avance</b><span style="font-weight:800;color:'+col+'">'+done+'/'+tr.length+' · '+pct+'%</span>'+
+      '<span style="flex:1;min-width:100px;max-width:220px;height:7px;border-radius:99px;background:var(--line);overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
+      '<button type="button" class="btn ghost sm cvb-push" title="Agrega las líneas de esta cotización como trabajos del vehículo">↑ Enviar ítems a trabajos</button>'+
+      '<button type="button" class="btn ghost sm cvb-unlink" title="Desvincular de este vehículo">Desvincular</button>'+
+      '<span style="color:var(--ink-muted);font-size:11px;flex-basis:100%">Se tilda en <b>Seguimiento</b>; acá cada ítem completado se pinta <b style="color:#1e9e6a">verde ✓</b>.</span>'+
+    '</div>';
     var pb=el.querySelector('.cvb-push'); if(pb)pb.onclick=function(){ var add=cotPushTrabajos(block); if(add){ cotRenderAvance(block); toast('✓ '+add+' trabajo(s) agregado(s) al vehículo'); } else toast('Ya estaban todos como trabajos'); };
-    var ub=el.querySelector('.cvb-unlink'); if(ub)ub.onclick=function(){ block.dataset.vehid=''; cotRenderAvance(block); toast('Desvinculado. Guardá para aplicar.'); }; }
-  function cotBind(){ cotBlocks().forEach(function(block){ cotBindSecs(block); cotItemsOf(block).querySelectorAll('input').forEach(function(i){ i.oninput=cotCalc; }); block.querySelectorAll('.cot-desc').forEach(function(i){ i.onchange=function(){ cotDescFill(i); i.title=i.value; }; }); block.querySelectorAll('.cot-precio').forEach(function(i){ i.onblur=function(){ i.value=fmtMiles(i.value); }; }); block.querySelectorAll('.cot-del').forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; });
+    var ub=el.querySelector('.cvb-unlink'); if(ub)ub.onclick=function(){ block.dataset.vehid=''; cotRenderAvance(block); toast('Desvinculado. Guardá para aplicar.'); };
+    cotSyncDone(block); }
+  // pinta cada línea de la cotización en verde si su trabajo (mismo nombre) está hecho en Seguimiento
+  function cotSyncDone(block){ if(!block)return; var cont=cotItemsOf(block); if(!cont)return; var rows=cont.querySelectorAll('.cotiz-item'); var e=cotVehDe(block);
+    var doneMap={}; if(e&&e.trabajos){ e.trabajos.forEach(function(w){ if(w.ok){ var k=(w.t||'').trim().toLowerCase(); if(k)doneMap[k]=1; } }); }
+    rows.forEach(function(r){ var di=r.querySelector('.cot-desc'); var d=(di?di.value:'').trim().toLowerCase(); r.classList.toggle('done', !!(d && doneMap[d])); }); }
+  function cotBind(){ cotBlocks().forEach(function(block){ cotBindSecs(block); cotItemsOf(block).querySelectorAll('input').forEach(function(i){ i.oninput=cotCalc; }); block.querySelectorAll('.cot-desc').forEach(function(i){ i.onchange=function(){ cotDescFill(i); i.title=i.value; cotSyncDone(block); }; }); block.querySelectorAll('.cot-precio').forEach(function(i){ i.onblur=function(){ i.value=fmtMiles(i.value); }; }); block.querySelectorAll('.cot-del').forEach(function(b){ b.onclick=function(){ b.parentNode.remove(); cotCalc(); }; });
     block.querySelectorAll('.cot-costbtn').forEach(function(b){ b.onclick=function(){ var p=b.parentNode.querySelector('.cot-costos'); if(p.classList.contains('open')){ cotCostClose(p); return; } p.classList.add('open'); if(!p.querySelector('.ccs-row')){ p.querySelector('.ccs-add').click(); } }; });
     block.querySelectorAll('.ccs-close').forEach(function(b){ b.onclick=function(){ cotCostClose(b.closest('.cot-costos')); }; });
     block.querySelectorAll('.ccs-clear').forEach(function(b){ b.onclick=function(){ var p=b.closest('.cot-costos'), n=p.querySelectorAll('.ccs-row').length; if(n>1 && !confirm('¿Quitar los '+n+' costos de esta línea?'))return; p.querySelector('.ccs-list').innerHTML=''; cotCostClose(p); }; });
