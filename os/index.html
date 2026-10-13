@@ -3175,19 +3175,27 @@
     block.querySelector('.cvb-additem').onclick=function(){ cotAddRow(null, cotItemsOf(block)); };
     var as=block.querySelector('.cvb-addsec'); if(as)as.onclick=function(){ var it=cotItemsOf(block); it.insertAdjacentHTML('beforeend', cotSecHTML('')+cotRowHTML(null)); cotBind(); cotCalc(); var hs=it.querySelectorAll('.cs-title'); var t=hs[hs.length-1]; if(t)t.focus(); };
     var tl=block.querySelector('.cvb-talla'); if(tl)tl.onchange=cotCalc;
-    cotRenderAvance(block); }
+    var _pat=block.querySelector('.cvb-pat'); if(_pat)_pat.onchange=function(){ cotAutoLink(block,true); cotRenderAvance(block); }; // al escribir la patente, si coincide con un vehículo, se vincula solo
+    cotAutoLink(block,false); cotRenderAvance(block); }
   // Avance del vehículo = sus trabajos de Seguimiento (e.trabajos). Tildar acá sincroniza con Seguimiento.
   function cotVehDe(block){ var vid=block&&block.dataset&&block.dataset.vehid; if(!vid)return null; return (data||[]).filter(function(x){return String(x.id)===String(vid);})[0]||null; }
   // agrega las líneas de servicio de la cotización como trabajos del vehículo (dedup por nombre). Devuelve cuántos agregó.
   function cotPushTrabajos(block){ var ee=cotVehDe(block); if(!ee)return 0; var items=cotFilasDe(block).filter(function(f){return (f.desc||'').trim();}); ee.trabajos=ee.trabajos||[]; var add=0;
     items.forEach(function(it){ var nm=it.desc.trim(); if(nm && !ee.trabajos.some(function(w){return (w.t||'').trim().toLowerCase()===nm.toLowerCase();})){ ee.trabajos.push({t:nm, ok:false}); add++; } });
     if(add)persistVeh(ee); return add; }
+  function cotPatNorm(p){ return String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  // Si la patente del bloque coincide con un vehículo existente, lo vincula solo. doPush=true carga las tareas de la cotización si el vehículo aún no tiene checklist.
+  function cotAutoLink(block, doPush){ if(!block)return false; var pi=block.querySelector('.cvb-pat'); var pat=cotPatNorm(pi?pi.value:''); if(!pat)return false;
+    var match=(data||[]).filter(function(x){ return cotPatNorm(x.patente)===pat; })[0]; if(!match)return false;
+    var changed=(String(block.dataset.vehid||'')!==String(match.id)); block.dataset.vehid=String(match.id);
+    if(doPush && changed && !(match.trabajos&&match.trabajos.length)) cotPushTrabajos(block);
+    return true; }
   function cotRenderAvance(block){ var el=block&&block.querySelector('.cvb-avance'); if(!el)return;
     var e=cotVehDe(block);
     if(!e){ // sin vincular: buscador para enlazar a cualquier vehículo de Seguimiento
       var dlid='cvbll'+Math.random().toString(36).slice(2), map={};
       var ops=(data||[]).slice().sort(function(a,b){ var fa=a.fCoord||a.fIngreso||'', fb=b.fCoord||b.fIngreso||''; return fa<fb?1:-1; }).map(function(x){ var lbl=(limpiaBasura((x.marca||'')+' '+(x.modelo||'')).trim()||'Vehículo')+(x.patente?(' · '+limpiaBasura(x.patente)):'')+' · '+((typeof nomCliVeh==='function'?nomCliVeh(x):'')||x.cliente||''); if(map[lbl])lbl+=' #'+x.id; map[lbl]=x.id; return '<option value="'+av(lbl)+'">'; }).join('');
-      el.innerHTML='<div style="font-size:12.5px"><b>🔗 Enlazar a Seguimiento</b> <span style="color:var(--ink-muted)">— elegí el vehículo y se cargan las tareas de la cotización como checklist</span></div>'+
+      el.innerHTML='<div style="font-size:12.5px"><b>🔗 Sin vincular</b> <span style="color:var(--ink-muted)">— escribí la <b>patente</b> arriba y, si el vehículo ya existe, se vincula solo (y se cargan las tareas). Si no aparece, buscalo acá:</span></div>'+
         '<input class="cvb-link" list="'+dlid+'" placeholder="Busca patente, marca o modelo…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-top:6px;font:500 13px var(--sans);padding:8px 9px;border:1px solid var(--line-strong);border-radius:7px;background:var(--ground);color:var(--ink)"><datalist id="'+dlid+'">'+ops+'</datalist>';
       var inp=el.querySelector('.cvb-link'); inp._map=map;
       inp.onchange=function(){ var id=(inp._map||{})[inp.value]; if(!id){ return; } block.dataset.vehid=id; var ee=cotVehDe(block);
