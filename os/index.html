@@ -5362,7 +5362,7 @@
         '<td><select class="gm-talla" data-rid="'+av(r._rid)+'">'+GM_TALLAS.map(function(x){return '<option'+(x===t?' selected':'')+'>'+x+'</option>';}).join('')+'</select></td>'+
         cells+
         '<td><input class="gm-desc" data-rid="'+av(r._rid)+'" type="number" min="0" value="'+(+r.descuento||0)+'"></td>'+
-        '<td><input class="gm-notas" data-rid="'+av(r._rid)+'" value="'+av(r.notas||'')+'" placeholder="Detalle del extra…" style="width:170px;box-sizing:border-box"></td>'+
+        '<td><input class="gm-notas" data-rid="'+av(r._rid)+'" value="'+av(r.notas||'')+'" title="'+av(r.notas||'')+'" placeholder="Detalle del extra…" style="width:260px;min-width:170px;box-sizing:border-box"></td>'+
         '<td class="r gm-valor" data-rid="'+av(r._rid)+'"><b>'+clp(gmValor(r))+'</b></td>'+
         '<td class="c"><button class="gm-del" data-rid="'+av(r._rid)+'" title="Quitar del cierre" style="background:none;border:none;color:var(--crit);cursor:pointer;font-size:18px">×</button></td>'+
         '</tr>'; }).join('');
@@ -5430,7 +5430,7 @@
     root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ editLive(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
     root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ editLive(s.dataset.rid,function(r){ r.talla=s.value; }); }; });
     root.querySelectorAll('.gm-desc').forEach(function(d){ d.onchange=function(){ editLive(d.dataset.rid,function(r){ r.descuento=Math.max(0,parseInt(d.value,10)||0); }); }; });
-    root.querySelectorAll('.gm-notas').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.notas=x.value; }); }; });
+    root.querySelectorAll('.gm-notas').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.notas=x.value; }); x.title=x.value; }; });
     root.querySelectorAll('.gm-del').forEach(function(b){ b.onclick=function(){ var r=gmEnsure(b.dataset.rid,mes); if(!r)return; if(!confirm('¿Quitar este vehículo del cierre de '+gmMesNom(mes)+'?'))return;
       gmLog(mes,'quitó vehículo',gmRowLbl(r));
       if(r.vehiculo_id){ r.excluido=true; gmUpsert(r); } // vehiculo real de Seguimiento: se excluye del mes (no reaparece)
