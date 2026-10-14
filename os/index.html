@@ -1004,7 +1004,7 @@
         <button data-view="seguimiento"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Seguimiento</button>
         <button data-view="tareas"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tareas</button>
         <button data-view="asistencia"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Asistencia</button>
-        <button data-view="mishoras"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Mis horas</button>
+        <button data-view="reghoras"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>Registro de horas</button>
       </div>
       <div class="nav-group">
         <div class="nav-group-title">Gestión</div>
@@ -1131,9 +1131,9 @@
     </section>
 
     <!-- ============ MIS HORAS ============ -->
-    <section class="view" id="view-mishoras">
-      <div class="vhead"><div class="eye">Personal</div><h1>Mis horas</h1></div>
-      <div id="mishoras-root"></div>
+    <section class="view" id="view-reghoras">
+      <div class="vhead"><div class="eye">Personal</div><h1>Registro de horas</h1></div>
+      <div id="reghoras-root"></div>
     </section>
 
     <!-- ============ COSTOS ============ -->
@@ -2241,7 +2241,7 @@
     else if(v==="clientes") renderClientes();
     else if(v==="agenda") renderCal();
     else if(v==="asistencia") renderAsistencia();
-    else if(v==="mishoras") renderMisHoras();
+    else if(v==="reghoras") renderRegHoras();
     else if(v==="cotizaciones") renderCotizaciones();
     else if(v==="solicitudes") renderSolicitudes();
     else if(v==="rrhh") renderRrhh();
@@ -3152,27 +3152,46 @@
     mk.onclick=function(){ kioMarcar(t,next); };
   }
   function fmtDur(ms){ var min=Math.max(0,Math.round(ms/60000)); var h=Math.floor(min/60), m=min%60; return h+" h"+(m?(" "+m+" min"):""); }
-  // ---------- Mis horas (para el trabajador: solo ve las suyas) ----------
-  function misTrabajador(){ var em=(window.ISP_EMAIL||'').toLowerCase(); return ((TRAB_USER[em]||EQUIPO[em]||'')+'').trim(); }
-  function renderMisHoras(){ var root=document.getElementById('mishoras-root'); if(!root)return;
-    var nombre=misTrabajador();
-    if(!nombre){ root.innerHTML='<div class="col-empty" style="padding:26px">Tu cuenta aún no está vinculada a un trabajador.<br><span style="font-size:12px;color:var(--ink-muted)">Pídele al administrador que la vincule en <b>Admin → accesos → Trabajador vinculado</b>.</span></div>'; return; }
-    var sb=sbc(); if(!sb){ root.innerHTML='<div class="col-empty">Sin conexión</div>'; return; }
-    var mes=(state.misHorasMes||asisMesActual());
-    var m0=new Date(mes+'-01T00:00:00'), m1=new Date(m0); m1.setMonth(m1.getMonth()+1);
-    root.innerHTML='<div class="col-empty" style="padding:20px">Cargando…</div>';
-    sb.from('asistencia').select('*').gte('ts',m0.toISOString()).lt('ts',m1.toISOString()).order('ts').then(function(r){
-      var marks=(r.data||[]).filter(function(a){ return ((a.nombre||'')+'').trim().toLowerCase()===nombre.toLowerCase(); });
-      var ses=sesionesPersona(marks);
-      var now=new Date(), d0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
-      var dow=(now.getDay()+6)%7, w0=new Date(d0); w0.setDate(d0.getDate()-dow);
-      var esActual=(mes===asisMesActual());
-      var kpis='<div class="gasto-resumen" style="margin:8px 0 14px">'+(esActual?('<div><span>Hoy</span><b>'+fmtDur(hMsRango(ses,d0))+'</b></div><div><span>Semana</span><b>'+fmtDur(hMsRango(ses,w0))+'</b></div>'):'')+'<div class="tot"><span>Total del mes</span><b>'+fmtDur(hMsRango(ses,null))+'</b></div></div>';
-      var filas=marks.slice().sort(function(a,b){return a.ts<b.ts?1:-1;}).map(function(a){ return '<tr><td>'+fFecha((a.ts||'').slice(0,10))+'</td><td>'+(a.tipo==='ENTRADA'?'<span class="chip" style="background:var(--ok-soft);color:var(--ok)">Entrada</span>':'<span class="chip" style="background:var(--crit-soft);color:var(--crit)">Salida</span>')+'</td><td class="r">'+hhmm(a.ts)+'</td></tr>'; }).join('');
-      var tabla=marks.length?('<div class="tablewrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th class="r">Hora</th></tr></thead><tbody>'+filas+'</tbody></table></div>'):'<div class="col-empty">Sin marcajes en este mes.</div>';
-      root.innerHTML='<div class="stock-bar" style="align-items:flex-end;gap:12px;flex-wrap:wrap"><label class="f" style="margin:0"><span class="lab">Mes</span><input type="month" id="mh-mes" value="'+mes+'"></label><div style="font-weight:800;font-size:16px">'+escH(nombre)+'</div></div>'+kpis+'<h4 style="margin:12px 0 8px;font:700 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint)">Marcajes del mes</h4>'+tabla;
-      var mm=document.getElementById('mh-mes'); if(mm)mm.onchange=function(){ state.misHorasMes=mm.value; renderMisHoras(); };
-    }, function(){ root.innerHTML='<div class="col-empty">No se pudo cargar.</div>'; });
+  // ---------- Registro de horas (grilla semanal sobre la tabla reloj; alimenta Remuneraciones) ----------
+  function rhISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function rhLunesDe(iso){ var d=new Date((iso||todayISO())+'T00:00:00'); var dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return rhISO(d); }
+  function rhAddDias(iso,n){ var d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return rhISO(d); }
+  function renderRegHoras(){ var root=document.getElementById('reghoras-root'); if(!root)return;
+    if(!state.rhLunes) state.rhLunes=rhLunesDe(todayISO());
+    var L=state.rhLunes, D=rhAddDias(L,6);
+    var sem=(reloj||[]).filter(function(r){ return r.fecha>=L && r.fecha<=D; }).sort(function(a,b){ var ka=(a.fecha||'')+(a.trab||''), kb=(b.fecha||'')+(b.trab||''); return ka<kb?-1:(ka>kb?1:0); });
+    var nombres={}; (_trab||[]).forEach(function(t){ if(t.nombre)nombres[t.nombre]=1; }); (reloj||[]).forEach(function(r){ if(r.trab)nombres[r.trab]=1; });
+    var dl=Object.keys(nombres).sort().map(function(n){return '<option value="'+av(n)+'">';}).join('');
+    var porTrab={}; sem.forEach(function(r){ porTrab[r.trab]=(porTrab[r.trab]||0)+horasReloj(r); });
+    var totSem=Object.keys(porTrab).reduce(function(a,k){return a+porTrab[k];},0);
+    var rowsHTML=sem.length?sem.map(function(r){ var h=horasReloj(r); return '<tr><td>'+escH(r.trab||'')+'</td><td>'+fFecha(r.fecha)+'</td><td class="r">'+escH(r.hIn||'—')+'</td><td class="r">'+escH(r.hOut||'—')+'</td><td class="r">'+(r.desc?(r.desc+' min'):'—')+'</td><td class="r"><b>'+(h?h.toFixed(1)+' h':'—')+'</b></td><td class="r"><button class="rh-del cost-b del" data-id="'+av(r.id)+'" title="Borrar">×</button></td></tr>'; }).join(''):'<tr><td colspan="7" class="col-empty">Sin horas registradas esta semana.</td></tr>';
+    var resumen=Object.keys(porTrab).sort().map(function(k){ return '<div><span>'+escH(k)+'</span><b>'+porTrab[k].toFixed(1)+' h</b></div>'; }).join('');
+    root.innerHTML=
+      '<div class="stock-bar" style="align-items:center;gap:10px;flex-wrap:wrap">'+
+        '<button class="btn sm" id="rh-prev" style="padding:6px 12px">‹</button>'+
+        '<b style="min-width:230px;text-align:center">Semana '+fFecha(L)+' – '+fFecha(D)+'</b>'+
+        '<button class="btn sm" id="rh-next" style="padding:6px 12px">›</button>'+
+        '<button class="btn sm" id="rh-hoy">Hoy</button>'+
+        '<span style="margin-left:auto;font-size:12px;color:var(--ink-muted)">Estas horas alimentan <b>Remuneraciones</b>.</span>'+
+      '</div>'+
+      '<form id="rh-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:12px 0">'+
+        '<label class="f" style="flex:2;min-width:150px"><span class="lab">Trabajador</span><input id="rh-trab" list="rh-trab-list" required placeholder="Nombre"><datalist id="rh-trab-list">'+dl+'</datalist></label>'+
+        '<label class="f"><span class="lab">Fecha</span><input id="rh-fecha" type="date" value="'+todayISO()+'" min="'+L+'" max="'+D+'"></label>'+
+        '<label class="f"><span class="lab">Entrada</span><input id="rh-in" type="time"></label>'+
+        '<label class="f"><span class="lab">Salida</span><input id="rh-out" type="time"></label>'+
+        '<label class="f" style="width:110px"><span class="lab">Descanso (min)</span><input id="rh-desc" type="number" min="0" step="5" value="0"></label>'+
+        '<button class="btn primary" type="submit" style="align-self:end">+ Agregar</button>'+
+      '</form>'+
+      '<div class="gasto-resumen" style="margin:6px 0 12px">'+(resumen||'<div><span>Sin datos</span><b>0 h</b></div>')+'<div class="tot"><span>Total semana</span><b>'+totSem.toFixed(1)+' h</b></div></div>'+
+      '<div class="cost-wrap"><table class="cost-table"><thead><tr><th>Trabajador</th><th>Fecha</th><th class="r">Entrada</th><th class="r">Salida</th><th class="r">Desc.</th><th class="r">Horas</th><th class="r"></th></tr></thead><tbody>'+rowsHTML+'</tbody></table></div>';
+    var pv=document.getElementById('rh-prev'); if(pv)pv.onclick=function(){ state.rhLunes=rhAddDias(L,-7); renderRegHoras(); };
+    var nx=document.getElementById('rh-next'); if(nx)nx.onclick=function(){ state.rhLunes=rhAddDias(L,7); renderRegHoras(); };
+    var hy=document.getElementById('rh-hoy'); if(hy)hy.onclick=function(){ state.rhLunes=rhLunesDe(todayISO()); renderRegHoras(); };
+    var f=document.getElementById('rh-form'); if(f)f.onsubmit=function(ev){ ev.preventDefault();
+      var o={trab:document.getElementById('rh-trab').value.trim(), fecha:document.getElementById('rh-fecha').value||todayISO(), hIn:document.getElementById('rh-in').value, hOut:document.getElementById('rh-out').value, desc:parseFloat(document.getElementById('rh-desc').value)||0};
+      if(!o.trab){ toast('Falta el trabajador'); return; }
+      addRelojDB(o).then(function(){ renderRegHoras(); toast('✓ Horas registradas'); }); };
+    root.querySelectorAll('.rh-del').forEach(function(b){ b.onclick=function(){ var id=b.dataset.id; if(!confirm('¿Borrar este registro de horas?'))return; delRelojDB(id); reloj=(reloj||[]).filter(function(x){return String(x.id)!==String(id);}); renderRegHoras(); }; });
   }
   function horasHoyMs(rut4){ var marks=_asis.filter(function(a){return String(a.rut4)===String(rut4)&&esHoy(a.ts);}).sort(function(a,b){return new Date(a.ts)-new Date(b.ts);}); var total=0,inTs=null; marks.forEach(function(a){ if(a.tipo==="ENTRADA")inTs=new Date(a.ts); else if(a.tipo==="SALIDA"&&inTs){ total+=new Date(a.ts)-inTs; inTs=null; } }); return total; }
   function horaDe(ts){ var d=new Date(ts); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
@@ -3240,7 +3259,7 @@
     }
   })();
   // ---------- Admin: accesos/permisos (solo dueño) ----------
-  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["mishoras","Mis horas"],["clientes","Clientes"],["cobro","Cobro / Ventas"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["gm","Cierre GM"],["cc","Cierres cliente"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["rrhh","RRHH"],["remu","Remuneraciones"]];
+  var VISTAS_ADMIN=[["recepcion","Agendamiento"],["agenda","Calendario"],["seguimiento","Seguimiento"],["tareas","Tareas"],["asistencia","Asistencia"],["reghoras","Registro de horas"],["clientes","Clientes"],["cobro","Cobro / Ventas"],["cotizaciones","Cotizaciones"],["stock","Inventario"],["pos","POS / Ventas"],["gm","Cierre GM"],["cc","Cierres cliente"],["solicitudes","Solicitudes"],["plan","Planificación"],["costos","Costos"],["rrhh","RRHH"],["remu","Remuneraciones"]];
   // Permisos de acción granulares (tipo ERP), agrupados por pestaña.
   // Si un correo NO está listado, o no tiene 'permisos' definidos, puede TODO (retrocompatible).
   var PERM_CAT=[
