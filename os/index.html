@@ -6290,6 +6290,47 @@
     delete clientesInfo[cA];
     state.clienteSel=cB; renderClientes(); toast('✓ Clientes fusionados');
   }
+  // Mueve SOLO los vehiculos (por patente) y/o cotizaciones elegidos hacia otro cliente.
+  // Sirve para corregir cruces: ej. autos/cotizaciones de GM que quedaron bajo NGUERRA.
+  function moverSeleccionACliente(fromClave, toClave, pats, cotIds){
+    pats=pats||[]; cotIds=(cotIds||[]).map(String);
+    if(!toClave){ toast('Elige el cliente destino'); return; }
+    if(fromClave===toClave){ toast('Es el mismo cliente'); return; }
+    var gs=agruparClientes();
+    var A=gs.filter(function(x){return x.clave===fromClave;})[0];
+    var B=gs.filter(function(x){return x.clave===toClave;})[0];
+    if(!A||!B){ toast('No se pudo mover'); return; }
+    var usaTel=(toClave.indexOf('t:')===0);
+    var bInfo=clientesInfo[toClave]||{};
+    var bNom=cliNombre(B);
+    var movedVeh={}, nVeh=0;
+    // 1) re-etiquetar los registros (todas las visitas) de cada patente elegida
+    (A.items||[]).forEach(function(e){
+      if(pats.indexOf(normPat(e.patente))<0) return;
+      e.contacto = usaTel ? (B.contacto||'') : '';
+      e.cliente  = B.nombre;
+      persistVeh(e);
+      movedVeh[String(e.id)]=1; nVeh++;
+    });
+    // 2) cotizaciones: las elegidas + las que cuelgan de un vehiculo movido
+    var sb=sbc(), nCot=0;
+    (_cotiz||[]).forEach(function(ct){
+      var sel = cotIds.indexOf(String(ct.id))>=0 || (ct.vehiculo_id && movedVeh[String(ct.vehiculo_id)]);
+      if(!sel) return;
+      ct.cliente_nombre = bNom;
+      ct.cliente_tel      = bInfo.contacto || B.contacto || ct.cliente_tel || '';
+      ct.cliente_correo   = bInfo.email || ct.cliente_correo || '';
+      ct.cliente_contacto = bInfo.representante || B.nombre || ct.cliente_contacto || '';
+      ct.cliente_rut      = bInfo.rut || ct.cliente_rut || '';
+      ct.cliente_giro     = bInfo.giro || ct.cliente_giro || '';
+      if(sb){ var up={cliente_nombre:ct.cliente_nombre, cliente_tel:ct.cliente_tel, cliente_correo:ct.cliente_correo, cliente_contacto:ct.cliente_contacto, cliente_rut:ct.cliente_rut, cliente_giro:ct.cliente_giro};
+        (function(id,u){ sb.from('cotizaciones').update(u).eq('id',id).then(function(r){ if(r&&r.error){ sb.from('cotizaciones').update({cliente_nombre:u.cliente_nombre}).eq('id',id).then(function(){}); } }); })(ct.id, up); }
+      nCot++;
+    });
+    state.clienteSel = toClave;
+    renderClientes(); pintarCotList && pintarCotList();
+    toast('✓ Movido a '+bNom+': '+nVeh+' vehículo'+(nVeh===1?'':'s')+(nCot?(' y '+nCot+' cotización'+(nCot===1?'':'es')):''));
+  }
   // Niveles de reactivación por días sin venir (ajustables): <=60 al día, 61-120 atención, >120 crítico
   function nivelDias(dias){ if(dias==null) return {bg:'#ececec',fg:'#888',em:'⚪'}; if(dias<=60) return {bg:'#e6f4ea',fg:'#1e7d34',em:'🟢'}; if(dias<=120) return {bg:'#fff4e0',fg:'#b06a00',em:'🟡'}; return {bg:'#fde8e8',fg:'#c0392b',em:'🔴'}; }
   function chipDiasCorto(dias){ var n=nivelDias(dias); return '<span class="chip" style="background:'+n.bg+';color:'+n.fg+';font-weight:700">'+n.em+' '+textoDias(dias)+'</span>'; }
@@ -6396,6 +6437,15 @@
       '<details class="fsec"><summary>Vehículos ('+Object.keys(c.vehiculos).length+')</summary><div class="fchips" style="margin-top:8px">'+vehs+'</div></details>'+
       '<details class="fsec"><summary>Servicios usados ('+Object.keys(c.servicios).length+')</summary><div class="fchips" style="margin-top:8px">'+svcs+'</div></details>'+
       '<div class="fsec"><h4>Cotizaciones ('+misCots.length+')</h4>'+cotsHTML+'</div>'+
+      '<details class="fsec"><summary>⚠ Corregir cliente — mover vehículos / cotizaciones</summary>'+
+        '<div class="hint" style="text-transform:none;letter-spacing:0;margin:6px 0 10px">Si algún vehículo o cotización quedó bajo el cliente equivocado, elige el <b>cliente destino</b>, marca lo que pertenece a ese otro cliente y presiona Mover. Las cotizaciones enlazadas a un vehículo se mueven junto con él.</div>'+
+        '<label class="f" style="margin-bottom:10px"><span class="lab">Mover al cliente</span><select id="cli-move-target"><option value="">— elegir cliente destino —</option>'+otherClientsOptions(c.clave)+'</select></label>'+
+        '<div class="pv-h">Vehículos de este cliente</div>'+
+        '<div id="cli-move-vehs" style="margin:6px 0 12px">'+(Object.keys(c.vehiculos).length?Object.keys(c.vehiculos).map(function(k){var ve=c.vehiculos[k];return '<label style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;cursor:pointer"><input type="checkbox" class="cli-move-veh" value="'+av(ve.patente)+'"><span><b>'+escH(ve.label||"(sin modelo)")+'</b> · '+escH(ve.patente)+(ve.count>1?' <span style="opacity:.6">('+ve.count+' visitas)</span>':'')+'</span></label>';}).join(""):'<div class="hint" style="text-transform:none;letter-spacing:0">Sin vehículos con patente.</div>')+'</div>'+
+        '<div class="pv-h">Cotizaciones de este cliente</div>'+
+        '<div id="cli-move-cots" style="margin:6px 0 12px">'+(misCots.length?misCots.map(function(ct){return '<label style="display:flex;gap:8px;align-items:center;padding:5px 0;font-size:13px;cursor:pointer"><input type="checkbox" class="cli-move-cot" value="'+ct.id+'"'+(ct.vehiculo_id?' data-vehid="'+av(ct.vehiculo_id)+'"':'')+'><span><b>N°'+ct.numero+'</b> · '+escH(ct.vehiculo||"—")+' · '+clp(cotTotalDe(ct))+(ct.vehiculo_id?'':' <span style="opacity:.6">(sin vehículo enlazado)</span>')+'</span></label>';}).join(""):'<div class="hint" style="text-transform:none;letter-spacing:0">Sin cotizaciones.</div>')+'</div>'+
+        '<button class="btn primary" id="cli-move-do">Mover lo marcado al cliente destino</button>'+
+      '</details>'+
       '<details class="fsec"><summary>Datos y facturación</summary>'+
         '<label class="f" style="margin-bottom:10px"><span class="lab">Nombre a mostrar <span class="hint" style="text-transform:none;letter-spacing:0">— cómo se ve en todo el sistema (vacío = automático)</span></span><input id="cli-nombre" value="'+av(info.nombre_mostrar)+'" placeholder="'+av(cliNombre(c))+'"></label>'+
         '<div class="row c2">'+
@@ -6463,6 +6513,15 @@
     wrap.querySelectorAll(".cli-cot").forEach(function(b){ b.addEventListener("click",function(){ var ct=(_cotiz||[]).filter(function(x){return String(x.id)===String(b.dataset.cotid);})[0]; if(ct) cotImprimir(ct); }); });
     var _mergeBtn=wrap.querySelector("#cli-merge-btn");
     if(_mergeBtn) _mergeBtn.addEventListener("click",function(){ var tgt=wrap.querySelector("#cli-merge").value; if(!tgt){ toast("Elige el cliente destino"); return; } if(confirm("¿Fusionar «"+cliNombre(c)+"» dentro del cliente elegido? Se moverán sus vehículos y seguimiento.")){ fusionarCliente(c.clave, tgt); } });
+    var _moveBtn=wrap.querySelector("#cli-move-do");
+    if(_moveBtn) _moveBtn.addEventListener("click",function(){
+      var sel=wrap.querySelector("#cli-move-target"); var tgt=sel?sel.value:""; if(!tgt){ toast("Elige el cliente destino"); return; }
+      var pats=Array.prototype.map.call(wrap.querySelectorAll(".cli-move-veh:checked"),function(x){return normPat(x.value);});
+      var cotIds=Array.prototype.map.call(wrap.querySelectorAll(".cli-move-cot:checked"),function(x){return x.value;});
+      if(!pats.length && !cotIds.length){ toast("Marca al menos un vehículo o cotización"); return; }
+      var dest=sel.options[sel.selectedIndex].text;
+      if(confirm("¿Mover "+pats.length+" vehículo(s) y "+cotIds.length+" cotización(es) marcadas a «"+dest+"»?\nLas cotizaciones enlazadas a los vehículos movidos también se mueven.")){ moverSeleccionACliente(c.clave, tgt, pats, cotIds); }
+    });
     var _segSortBtn=wrap.querySelector("#cli-seg-sort");
     if(_segSortBtn) _segSortBtn.addEventListener("click",function(){ _segSort=(_segSort==='desc'?'asc':'desc'); _segSortBtn.textContent=(_segSort==='desc'?'↓ Más reciente':'↑ Más antiguo'); var list=document.getElementById('cli-seg-list'); if(list) list.innerHTML=segTimelineHTML(c.clave); });
     var _wspCopy=wrap.querySelector("#cli-wsp-copy");
