@@ -1919,10 +1919,16 @@
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
     var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),centro:(o.centro||null),patente:(o.patente||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
-    function ins(rw,retry){ return sb.from('gastos').insert(rw).select().single().then(function(r){
-      if(r.error){ if(retry && /referencia|centro|patente|mov_id|pagado|fecha_pago|column|schema cache|PGRST204/i.test((r.error.message||"")+(r.error.details||""))){ var rw2={}; Object.keys(rw).forEach(function(k){ if(["referencia","centro","patente","mov_id","pagado","fecha_pago"].indexOf(k)<0)rw2[k]=rw[k]; }); return ins(rw2,false); } toast('⚠ Error'); return; }
+    var GOPT=["referencia","centro","patente","mov_id","pagado","fecha_pago","media"];
+    function ins(rw,dropped){ dropped=dropped||[]; return sb.from('gastos').insert(rw).select().single().then(function(r){
+      if(r.error){ var em=(r.error.message||"")+" "+(r.error.details||"");
+        var faltan=GOPT.filter(function(k){ return (k in rw) && new RegExp("(^|[^a-z_])"+k+"([^a-z_]|$)","i").test(em); });
+        if(!faltan.length && /column|schema cache|PGRST204/i.test(em)) faltan=GOPT.filter(function(k){ return k in rw; }); // error de columna sin nombre: modo viejo
+        if(faltan.length){ var rw2={}; Object.keys(rw).forEach(function(k){ if(faltan.indexOf(k)<0)rw2[k]=rw[k]; }); return ins(rw2, dropped.concat(faltan)); }
+        toast('⚠ No se pudo (¿corriste el SQL 42?)'); return; }
+      if(dropped.length) toast('⚠ Guardado sin: '+dropped.join(', ')+'. Corré el SQL 42/58.');
       gastos.unshift(gastoFromDB(r.data)); }); }
-    return ins(row,true);
+    return ins(row,[]);
   }
   // Carga a Costos los ingresos de Inventario (movimientos ENTRADA con costo) que aún no estén, sin duplicar
   function costosDesdeMovimientos(){
