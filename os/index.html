@@ -3172,12 +3172,16 @@
   function rhISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function rhLunesDe(iso){ var d=new Date((iso||todayISO())+'T00:00:00'); var dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return rhISO(d); }
   function rhAddDias(iso,n){ var d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return rhISO(d); }
+  var _rhTrabLoaded=false;
   function renderRegHoras(){ var root=document.getElementById('reghoras-root'); if(!root)return;
+    var _sb=sbc();
+    if(_sb && !_rhTrabLoaded){ _rhTrabLoaded=true; _sb.from('trabajadores').select('*').order('nombre').then(function(r){ if(r&&r.data)_trab=r.data; renderRegHoras(); }, function(){ renderRegHoras(); }); return; }
     if(!state.rhLunes) state.rhLunes=rhLunesDe(todayISO());
     var L=state.rhLunes, D=rhAddDias(L,6);
     var sem=(reloj||[]).filter(function(r){ return r.fecha>=L && r.fecha<=D; }).sort(function(a,b){ var ka=(a.fecha||'')+(a.trab||''), kb=(b.fecha||'')+(b.trab||''); return ka<kb?-1:(ka>kb?1:0); });
-    var nombres={}; (_trab||[]).forEach(function(t){ if(t.nombre)nombres[t.nombre]=1; }); (reloj||[]).forEach(function(r){ if(r.trab)nombres[r.trab]=1; });
-    var dl=Object.keys(nombres).sort().map(function(n){return '<option value="'+av(n)+'">';}).join('');
+    var _mesSem=(L||'').slice(0,7);
+    var nombres={}, tipoDe={}; (_trab||[]).forEach(function(t){ if(t.nombre){ nombres[t.nombre]=1; tipoDe[t.nombre]=(fijoEnMes(t,_mesSem)?'contrato fijo':'spot'); } }); (reloj||[]).forEach(function(r){ if(r.trab)nombres[r.trab]=1; });
+    var dl=Object.keys(nombres).sort().map(function(n){ var tp=tipoDe[n]; return '<option value="'+av(n)+'"'+(tp?' label="'+av(n+' · '+tp)+'"':'')+'>'; }).join('');
     var porTrab={}; sem.forEach(function(r){ porTrab[r.trab]=(porTrab[r.trab]||0)+horasReloj(r); });
     var totSem=Object.keys(porTrab).reduce(function(a,k){return a+porTrab[k];},0);
     var rowsHTML=sem.length?sem.map(function(r){ var h=horasReloj(r); return '<tr><td>'+escH(r.trab||'')+'</td><td>'+fFecha(r.fecha)+'</td><td class="r">'+escH(r.hIn||'—')+'</td><td class="r">'+escH(r.hOut||'—')+'</td><td class="r">'+(r.desc?(r.desc+' min'):'—')+'</td><td class="r"><b>'+(h?h.toFixed(1)+' h':'—')+'</b></td><td class="r"><button class="rh-del cost-b del" data-id="'+av(r.id)+'" title="Borrar">×</button></td></tr>'; }).join(''):'<tr><td colspan="7" class="col-empty">Sin horas registradas esta semana.</td></tr>';
@@ -3190,6 +3194,7 @@
         '<button class="btn sm" id="rh-hoy">Hoy</button>'+
         '<span style="margin-left:auto;font-size:12px;color:var(--ink-muted)">Estas horas alimentan <b>Remuneraciones</b>.</span>'+
       '</div>'+
+      '<div class="rh-sub" style="margin:2px 0 0;color:var(--ink-muted)">Para los <b>fijos</b>, registra aquí las horas de los días que salieron más tarde: Remuneraciones les paga solo lo que excede su jornada (horas extra). Los <b>spot</b> cobran todas las horas.</div>'+
       '<form id="rh-form" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin:12px 0">'+
         '<label class="f" style="flex:2;min-width:150px"><span class="lab">Trabajador</span><input id="rh-trab" list="rh-trab-list" required placeholder="Nombre"><datalist id="rh-trab-list">'+dl+'</datalist></label>'+
         '<label class="f"><span class="lab">Fecha</span><input id="rh-fecha" type="date" value="'+todayISO()+'" min="'+L+'" max="'+D+'"></label>'+
