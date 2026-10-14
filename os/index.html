@@ -244,6 +244,16 @@
   .cost-b:hover{background:var(--surface-2);}
   .cost-b.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft);}
   .cost-b.del{color:var(--crit);border-color:transparent;background:none;font-size:15px;padding:2px 6px;}
+  /* Costos en modo edicion: celdas tipo planilla (flechas, Enter, copiar/pegar) */
+  .cost-table.ge td.ge-c{padding:0;}
+  .cost-table.ge .ge-in{display:block;width:100%;height:34px;box-sizing:border-box;border:none;border-radius:0;background:transparent;padding:0 10px;font:inherit;color:var(--ink);margin:0;}
+  .cost-table.ge select.ge-in{cursor:pointer;padding:0 6px;}
+  .cost-table.ge .ge-in.r{text-align:right;font-variant-numeric:tabular-nums;}
+  .cost-table.ge .ge-in:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface);position:relative;z-index:1;}
+  .cost-table.ge tbody tr:focus-within td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent);}
+  .cost-table.ge .ge-in.ge-sel:not(:focus){background:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 45%,transparent);}
+  .ge-bar{display:flex;align-items:center;gap:8px;margin-left:auto;}
+  .ge-bar .on{background:var(--accent);color:#fff;border-color:var(--accent);}
   .chip{display:inline-flex;align-items:center;gap:4px;font:700 10px/1 var(--mono);padding:4px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em;}
   .chip.agendado{background:var(--surface-3);color:var(--ink-muted);}
   .chip.espera{background:var(--accent-soft);color:var(--accent-ink);}
@@ -4750,6 +4760,85 @@
     var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),centro:(gastoForm.gCentro?gastoForm.gCentro.value:""),patente:(gastoForm.gPatente?gastoForm.gPatente.value.trim().toUpperCase():""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
     addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPatente)gastoForm.gPatente.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
   });
+  // ---- Costos: modo "Editar" (toda la tabla como planilla tipo Excel) ----
+  var GE_COLS=["fecha","con","centro","patente","tipo","ref","monto"];
+  var GE_CENTROS=["General","Pintura","Taller","Oficina","POS","Bodega"], GE_TIPOS=["FIJO","VARIABLE"];
+  function geOpts(arr,v){ var o=arr.slice(); if(v&&o.indexOf(v)<0)o.unshift(v); return (v?'':'<option value=""></option>')+o.map(function(x){ return '<option'+(x===v?' selected':'')+'>'+escH(x)+'</option>'; }).join(''); }
+  function gastoRowEditTR(g){
+    function inp(c,html){ return '<td class="ge-c">'+html.replace(/^<(\w+)/,'<$1 class="ge-in'+(c===6?' r':'')+'" data-c="'+c+'" data-id="'+av(g.id)+'"')+'</td>'; }
+    var est=g.pagado?'<span class="chip cobrado">✓ Pagado</span>':'<span class="chip pend">Por pagar</span>';
+    return '<tr>'+
+      inp(0,'<input type="date" value="'+av((g.fecha||"").slice(0,10))+'">')+
+      inp(1,'<input type="text" value="'+av(g.con||"")+'" title="'+av(g.con||"")+'">')+
+      inp(2,'<select>'+geOpts(GE_CENTROS,g.centro||"")+'</select>')+
+      inp(3,'<input type="text" list="gasto-pat-list" value="'+av(g.patente||"")+'">')+
+      inp(4,'<select>'+geOpts(GE_TIPOS,g.tipo||"")+'</select>')+
+      inp(5,'<input type="text" value="'+av(g.ref||"")+'">')+
+      inp(6,'<input type="text" inputmode="numeric" value="'+fmtMiles(g.monto||0)+'">')+
+      '<td>'+est+'</td><td class="cost-act"><span class="cost-mut">—</span></td></tr>';
+  }
+  var _ge={a:null,b:null,nav:false,drag:false}, _geSave={};
+  function geCells(){ return Array.prototype.slice.call(document.querySelectorAll('#gasto-list .cost-table.ge tbody tr')).map(function(tr){ return Array.prototype.slice.call(tr.querySelectorAll('.ge-in')); }).filter(function(r){ return r.length; }); }
+  function geCell(r,c){ var rs=geCells(); return (rs[r]&&rs[r][c])||null; }
+  function gePos(el){ if(!el||!el.classList||!el.classList.contains('ge-in')||!el.closest('#gasto-list'))return null; var rs=geCells(); for(var r=0;r<rs.length;r++){ var c=rs[r].indexOf(el); if(c>=0)return {r:r,c:c}; } return null; }
+  function geRange(){ if(!_ge.a||!_ge.b)return null; return {r0:Math.min(_ge.a.r,_ge.b.r),r1:Math.max(_ge.a.r,_ge.b.r),c0:Math.min(_ge.a.c,_ge.b.c),c1:Math.max(_ge.a.c,_ge.b.c)}; }
+  function geMulti(){ var g=geRange(); return !!(g&&(g.r0!==g.r1||g.c0!==g.c1)); }
+  function gePaint(){ document.querySelectorAll('#gasto-list .ge-sel').forEach(function(x){ x.classList.remove('ge-sel'); }); if(!geMulti())return; var g=geRange(); for(var r=g.r0;r<=g.r1;r++) for(var c=g.c0;c<=g.c1;c++){ var el=geCell(r,c); if(el)el.classList.add('ge-sel'); } }
+  function geFocus(r,c,keep){ var rs=geCells(); if(!rs.length)return; r=Math.max(0,Math.min(rs.length-1,r)); c=Math.max(0,Math.min(GE_COLS.length-1,c)); var el=rs[r][c]; if(!el)return; _ge.nav=true; el.focus(); _ge.nav=false; try{ if(el.select)el.select(); }catch(e){}
+    if(!keep)_ge.a={r:r,c:c}; _ge.b={r:r,c:c}; gePaint(); try{ el.scrollIntoView({block:'nearest'}); }catch(e){} }
+  function geFecha(v){ v=String(v||'').trim(); var m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/); if(m){ var y=m[3].length===2?('20'+m[3]):m[3]; return y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); } return /^\d{4}-\d{2}-\d{2}/.test(v)?v.slice(0,10):''; } // "14/10/2026" -> 2026-10-14
+  function geVal(el){ if(!el)return ''; var c=+el.dataset.c; if(c===0){ var m=(el.value||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):''; } return c===6?String(parseFloat(xlNum(el.value))||0):el.value; }
+  function geSet(el,v){ if(!el)return; var c=+el.dataset.c; v=(v==null?'':String(v)).trim();
+    if(c===0){ var f=geFecha(v); if(f) el.value=f; }
+    else if(c===6) el.value=fmtMiles(xlNum(v));
+    else if(el.tagName==='SELECT'){ var op=Array.prototype.filter.call(el.options,function(o){ return o.value.toLowerCase()===v.toLowerCase(); })[0]; if(op) el.value=op.value; }
+    else el.value=(c===3?v.toUpperCase():v);
+    geCommit(el); }
+  // pasa la celda al gasto (optimista) y agenda la escritura en la base
+  function geCommit(el){ var g=gastos.filter(function(x){ return String(x.id)===el.dataset.id; })[0]; if(!g)return; var c=+el.dataset.c, k=GE_COLS[c], v=el.value;
+    if(c===0){ if(!v)return; } else if(c===6){ v=parseFloat(xlNum(v))||0; } else if(c===3){ v=v.trim().toUpperCase(); } else v=v.trim();
+    if(c===1&&!v){ el.value=g.con||''; return; } // el concepto no puede quedar vacio
+    if(g[k]===v)return; g[k]=v; if(c===1)el.title=v;
+    clearTimeout(_geSave[g.id]); _geSave[g.id]=setTimeout(function(){ delete _geSave[g.id]; updateGastoCampos(g); },500); }
+  function updateGastoCampos(g){ var sb=sbc(); if(!sb)return;
+    var row={concepto:g.con,tipo:g.tipo,monto:+g.monto||0,fecha:g.fecha,referencia:(g.ref||null),centro:(g.centro||null),patente:(g.patente||null)};
+    function up(rw){ sb.from('gastos').update(rw).eq('id',g.id).then(function(r){ if(!r||!r.error)return; var em=(r.error.message||"")+" "+(r.error.details||"");
+      var faltan=["referencia","centro","patente"].filter(function(k){ return (k in rw)&&new RegExp("(^|[^a-z_])"+k+"([^a-z_]|$)","i").test(em); });
+      if(faltan.length){ var rw2={}; Object.keys(rw).forEach(function(k){ if(faltan.indexOf(k)<0)rw2[k]=rw[k]; }); toast('⚠ Guardado sin: '+faltan.join(', ')+'. Corré el SQL 58.'); return up(rw2); }
+      toast('⚠ No se pudo guardar el cambio'); }); }
+    up(row); }
+  function geFlush(){ Object.keys(_geSave).forEach(function(id){ clearTimeout(_geSave[id]); delete _geSave[id]; var g=gastos.filter(function(x){ return String(x.id)===String(id); })[0]; if(g)updateGastoCampos(g); }); }
+  document.addEventListener('change',function(ev){ if(gePos(ev.target)) geCommit(ev.target); });
+  document.addEventListener('focusout',function(ev){ var t=ev.target; if(gePos(t)){ geCommit(t); if(+t.dataset.c===6) t.value=fmtMiles(xlNum(t.value)); } });
+  document.addEventListener('keydown',function(ev){ var t=ev.target, p=gePos(t); if(!p)return; var k=ev.key, mod=ev.ctrlKey||ev.metaKey;
+    if(k==='Escape'){ _ge.a=_ge.b=p; gePaint(); return; }
+    if((k==='Delete'||k==='Backspace')&&geMulti()){ ev.preventDefault(); var g=geRange(); for(var r=g.r0;r<=g.r1;r++) for(var c=g.c0;c<=g.c1;c++){ if(c===3||c===5||c===6) geSet(geCell(r,c),''); } return; } // fecha, concepto, centro y tipo no se vacian
+    var txt=(t.tagName==='INPUT'&&t.type==='text'), dr=0, dc=0;
+    function borde(l){ if(!txt)return true; var s=t.selectionStart,e=t.selectionEnd,n=(t.value||'').length; if(s===0&&e===n)return true; return l<0?(s===0&&e===0):(s===n&&e===n); } // el cursor esta en el borde: la flecha cambia de celda
+    if(k==='ArrowDown')dr=1; else if(k==='ArrowUp')dr=-1;
+    else if(k==='ArrowLeft'&&(ev.shiftKey||borde(-1)))dc=-1; else if(k==='ArrowRight'&&(ev.shiftKey||borde(1)))dc=1;
+    else if(k==='Enter'&&!mod){ ev.preventDefault(); geCommit(t); geFocus(p.r+(ev.shiftKey?-1:1),p.c); return; }
+    else if(k==='Tab'){ ev.preventDefault(); geCommit(t); var n=GE_COLS.length, i=p.r*n+p.c+(ev.shiftKey?-1:1); if(i<0)i=0; geFocus(Math.floor(i/n),i%n); return; }
+    if(!dr&&!dc)return;
+    ev.preventDefault(); geCommit(t); // tambien evita que las flechas cambien la fecha o la opcion
+    if(ev.shiftKey){ if(!_ge.a)_ge.a=p; var b=_ge.b||p; geFocus(b.r+dr,b.c+dc,true); return; }
+    geFocus(p.r+dr,p.c+dc); });
+  document.addEventListener('focusin',function(ev){ if(_ge.nav)return; var p=gePos(ev.target); if(!p)return; _ge.a=_ge.b=p; gePaint(); });
+  document.addEventListener('mousedown',function(ev){ var p=gePos(ev.target); if(!p)return; if(ev.shiftKey&&_ge.a){ ev.preventDefault(); _ge.b=p; gePaint(); return; } _ge.drag=true; _ge.a=_ge.b=p; gePaint(); });
+  document.addEventListener('mouseover',function(ev){ if(!_ge.drag||!(ev.buttons&1))return; var p=gePos(ev.target); if(!p)return; if(!_ge.b||p.r!==_ge.b.r||p.c!==_ge.b.c){ _ge.b=p; gePaint(); if(geMulti()){ try{ window.getSelection().removeAllRanges(); }catch(e){} } } });
+  document.addEventListener('mouseup',function(){ _ge.drag=false; });
+  document.addEventListener('copy',function(ev){ var el=document.activeElement, p=gePos(el); if(!p)return; var txt;
+    if(geMulti()){ var g=geRange(), out=[]; for(var r=g.r0;r<=g.r1;r++){ var f=[]; for(var c=g.c0;c<=g.c1;c++) f.push(geVal(geCell(r,c))); out.push(f.join('\t')); } txt=out.join('\n'); }
+    else if(el.tagName!=='INPUT'||el.type!=='text'||el.selectionStart===el.selectionEnd||(el.selectionStart===0&&el.selectionEnd===el.value.length)) txt=geVal(el); // sin texto marcado: copia la celda completa
+    else return;
+    ev.preventDefault(); ev.clipboardData.setData('text/plain',txt); toast(geMulti()?'✓ Copiado':'✓ Celda copiada'); });
+  document.addEventListener('paste',function(ev){ var p=gePos(ev.target); if(!p)return; var txt=(ev.clipboardData&&ev.clipboardData.getData('text/plain'))||''; if(!txt)return;
+    var filas=txt.replace(/\r/g,'').replace(/\n+$/,'').split('\n').map(function(l){ return l.split('\t'); });
+    if(filas.length===1&&filas[0].length===1&&!geMulti()&&(p.c===1||p.c===3||p.c===5))return; // un solo texto: pegado normal
+    ev.preventDefault(); var g=geMulti()?geRange():null, r0=g?g.r0:p.r, c0=g?g.c0:p.c, nr=geCells().length;
+    filas.forEach(function(cols,i){ if(r0+i>=nr)return; cols.forEach(function(v,j){ if(c0+j<GE_COLS.length) geSet(geCell(r0+i,c0+j),v); }); });
+    _ge.a={r:r0,c:c0}; _ge.b={r:Math.min(nr-1,r0+filas.length-1),c:Math.min(GE_COLS.length-1,c0+Math.max.apply(null,filas.map(function(f){return f.length;}))-1)}; gePaint();
+    toast('✓ Pegado'+(r0+filas.length>nr?' (sobraban filas: no se crean gastos nuevos)':'')); });
   function gastoRowTR(g){
     var nm=(g.media&&g.media.length)?(' <b>'+g.media.length+'</b>'):'';
     var est=g.pagado?'<span class="chip cobrado">✓ Pagado</span>':'<span class="chip pend">Por pagar</span>';
@@ -4772,24 +4861,27 @@
   }
   function renderCostos(){
     // ---- gastos con pestañas Recientes | Todos ----
-    var gtab=state.costGTab||"recientes";
+    var gtab=state.costGTab||"recientes", gedit=!!state.costEdit;
     var totFijo=0,totVar=0,porPagar=0,nPP=0; gastos.forEach(function(g){ if((g.tipo||"")==="FIJO") totFijo+=(+g.monto||0); else totVar+=(+g.monto||0); if(!g.pagado){ porPagar+=(+g.monto||0); nPP++; } });
     var tabsHTML='<div class="cobro-tabs" style="padding:0 0 8px;top:0">'+
       '<button type="button" class="cbtab'+(gtab==="recientes"?" on":"")+'" data-gtab="recientes">Recientes</button>'+
       '<button type="button" class="cbtab'+(gtab==="porpagar"?" on":"")+'" data-gtab="porpagar">Por pagar <span class="cbtab-n">'+nPP+'</span></button>'+
       '<button type="button" class="cbtab'+(gtab==="todos"?" on":"")+'" data-gtab="todos">Todos <span class="cbtab-n">'+gastos.length+'</span></button>'+
+      '<span class="ge-bar"><button type="button" class="cost-b'+(gedit?' on':'')+'" id="gasto-edit" style="padding:6px 12px;font-size:12px" title="Editar la tabla como planilla">'+(gedit?'✓ Listo':'✎ Editar')+'</button></span>'+
     '</div>';
     var listaG=(gtab==="todos")?gastos.slice():(gtab==="porpagar")?gastos.filter(function(g){return !g.pagado;}):gastos.slice(0,15);
     var pdl=document.getElementById('gasto-pat-list'); if(pdl){ var pats={}; (data||[]).forEach(function(e){ if(e.patente)pats[e.patente]=1; }); pdl.innerHTML=Object.keys(pats).sort().map(function(p){return '<option value="'+av(p)+'">';}).join(''); }
     var colg='<colgroup><col style="width:74px"><col style="width:210px"><col style="width:92px"><col style="width:92px"><col style="width:82px"><col style="width:118px"><col style="width:104px"><col style="width:98px"><col style="width:150px"></colgroup>';
     var head='<thead><tr><th>Fecha</th><th>Concepto</th><th>Centro</th><th>Vehículo</th><th>Tipo</th><th>Referencia</th><th class="r">Monto</th><th>Estado</th><th class="cost-act">Acciones</th></tr></thead>';
-    var trs=listaG.map(gastoRowTR).join("")||'<tr><td colspan="9" class="col-empty">'+(gtab==="porpagar"?"No hay costos por pagar 🎉":"Sin gastos aún")+'</td></tr>';
-    var rowsHTML='<div class="cost-wrap"><table class="cost-table">'+colg+head+'<tbody>'+trs+'</tbody></table></div>';
+    var trs=listaG.map(gedit?gastoRowEditTR:gastoRowTR).join("")||'<tr><td colspan="9" class="col-empty">'+(gtab==="porpagar"?"No hay costos por pagar 🎉":"Sin gastos aún")+'</td></tr>';
+    var rowsHTML='<div class="cost-wrap"><table class="cost-table'+(gedit?' ge':'')+'">'+colg+head+'<tbody>'+trs+'</tbody></table></div>'+
+      (gedit?'<div class="xl-hint"><kbd>↑↓←→</kbd> moverse · <kbd>Enter</kbd>/<kbd>Tab</kbd> siguiente celda · <kbd>Shift</kbd>+flechas o arrastrar: seleccionar · <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copiar y pegar (también desde Excel) · <kbd>Supr</kbd> borrar selección · los cambios se guardan solos</div>':'');
     var resumenHTML=(gtab==="todos")?'<div class="gasto-resumen"><div><span>Fijos</span><b>'+clp(totFijo)+'</b></div><div><span>Variables</span><b>'+clp(totVar)+'</b></div><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div><div class="tot"><span>Total ('+gastos.length+')</span><b>'+clp(totFijo+totVar)+'</b></div></div>'
       :(gtab==="porpagar")?'<div class="gasto-resumen"><div class="tot" style="background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 35%,var(--line))"><span>Total por pagar ('+nPP+')</span><b style="color:var(--crit)">'+clp(porPagar)+'</b></div></div>':'';
     document.getElementById("gasto-list").innerHTML=tabsHTML+resumenHTML+rowsHTML;
     var imb=document.getElementById("costos-import-mov"); if(imb && !imb.dataset.b){ imb.dataset.b="1"; imb.addEventListener("click",costosDesdeMovimientos); }
-    document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ state.costGTab=b.dataset.gtab; renderCostos(); }); });
+    document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ var a=document.activeElement; if(gePos(a)) geCommit(a); state.costGTab=b.dataset.gtab; renderCostos(); }); });
+    var geb=document.getElementById("gasto-edit"); if(geb) geb.addEventListener("click",function(){ var a=document.activeElement; if(gePos(a)) geCommit(a); geFlush(); state.costEdit=!state.costEdit; _ge.a=_ge.b=null; renderCostos(); if(state.costEdit) geFocus(0,1); else toast("✓ Cambios guardados"); });
     document.querySelectorAll("#gasto-list .gpay").forEach(function(b){ b.addEventListener("click",function(){ gastoPagar(b.dataset.id, b.dataset.p==="1"); }); });
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
