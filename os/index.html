@@ -1532,7 +1532,7 @@
         </div>
         <div class="row c2" style="margin:10px 0 0">
           <label class="f"><span class="lab">Fecha</span><input id="cot-fecha" type="date"></label>
-          <label class="f"><span class="lab">Hasta <span class="hint" style="text-transform:none;letter-spacing:0">— opcional, para un rango/semana</span></span><input id="cot-fecha2" type="date"></label>
+          <label class="f"><span class="lab">Hasta <span class="hint" style="text-transform:none;letter-spacing:0">— vigencia de la cotización</span></span><input id="cot-fecha2" type="date"><span style="display:flex;gap:6px;margin-top:6px"><button type="button" class="btn ghost sm cot-vig" data-d="7">7 días</button><button type="button" class="btn ghost sm cot-vig" data-d="15">15 días</button><button type="button" class="btn ghost sm cot-vig" data-d="30">30 días</button></span></label>
         </div>
         <datalist id="cot-cli-list"></datalist>
         <datalist id="cot-serv-list"></datalist>
@@ -3766,6 +3766,7 @@
     var _fx=document.getElementById("cot-fecha"); if(_fx && !_fx.value)_fx.value=todayISO();
     document.getElementById("cot-descadic").oninput=cotCalc;
     var _cotIva=document.getElementById("cot-iva"); if(_cotIva)_cotIva.onchange=cotCalc;
+    document.querySelectorAll('.cot-vig').forEach(function(b){ if(b.dataset.b)return; b.dataset.b="1"; b.onclick=function(){ var base=(document.getElementById("cot-fecha")||{}).value||todayISO(); var f2=document.getElementById("cot-fecha2"); if(f2){ f2.value=rhAddDias(base, +b.dataset.d||0); } }; });
     cotFillDatalists(); var _nom=document.getElementById("cot-nom"); _nom.onchange=cotCliFill; _nom.oninput=cotRefreshPendientes;
     var _av=document.getElementById("cot-add-veh"); if(_av && !_av.dataset.b){ _av.dataset.b="1"; _av.onclick=function(){ cotAddVeh({}, true); }; }
     var _gmi=document.getElementById("cot-gm-import"); if(_gmi && !_gmi.dataset.b){ _gmi.dataset.b="1"; _gmi.onclick=abrirGMImport; }
@@ -3900,7 +3901,7 @@
         var _veh=(v.veh||("Vehículo "+n)).trim();
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="'+_nc+'" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
-        _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="padding:5px 10px 1px 18px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#FF6B00">'+escH(sc)+'</td></tr>';
+        _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px 6px 18px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00">'+escH(sc)+'</td></tr>';
           _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td><td class="r">'+(_showVal?clp(it.lt):'')+'</td>'+(_hasIva?('<td class="r">'+(_showVal?clp(Math.round(it.lt*1.19)):'')+'</td>'):'')+'</tr>'; }); });
         // subtotal del vehículo (siempre)
         rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td><td class="r" style="font-weight:800;padding:6px 10px">'+clp(vsub)+'</td>'+_ivaCell(vsub,true)+'</tr>'; });
