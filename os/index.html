@@ -243,6 +243,9 @@
   /* ---- Finanzas: pestañas comunes de Cobro, Costos, Movimientos y Gerencia ---- */
   .fin-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
   .fin-tabs:empty{display:none;}
+  .doc-nota{margin:-6px 0 12px;color:var(--ink-muted);font-size:13.5px;}
+  .doc-frame{display:block;width:100%;height:calc(100dvh - 210px);min-height:560px;border:1px solid var(--line);border-radius:var(--radius);background:var(--ground);box-shadow:var(--shadow);}
+  @media (max-width:640px){ .doc-frame{height:calc(100dvh - 190px);border:none;border-radius:0;box-shadow:none;margin:0 -20px;width:calc(100% + 40px);} .doc-nota{font-size:12.5px;} }
   .fin-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:7px 13px;font:650 13px/1 var(--sans);cursor:pointer;text-decoration:none;}
   .fin-tab:hover{border-color:var(--accent);color:var(--accent-ink);}
   .fin-tab.on{background:var(--accent);border-color:var(--accent);color:#fff;}
@@ -1068,6 +1071,7 @@
         <div class="nav-group-title">Finanzas</div>
         <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro / Ventas</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
+        <button data-view="documentos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Documentos</button>
         <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
       </div>
@@ -1403,6 +1407,12 @@
       </style>
       <div class="vhead"><div class="eye">Cuenta por cliente</div><h1>Cierres cliente</h1></div>
       <div id="cc-root"></div>
+    </section>
+
+    <section class="view" id="view-documentos">
+      <div class="vhead"><div class="eye">Finanzas · beta</div><h1>Documentos</h1><div class="fin-tabs" data-act="documentos"></div></div>
+      <p class="doc-nota">Saca fotos de boletas y facturas: las <b>compras</b> se guardan en Costos y nuestras <b>ventas</b> se adjuntan al cobro del vehículo.</p>
+      <iframe id="doc-frame" class="doc-frame" title="Lector de boletas y facturas" allow="camera; fullscreen"></iframe>
     </section>
 
     <section class="view" id="view-movimientos">
@@ -2223,13 +2233,11 @@
   // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
   var OWNER_EMAIL='ventas@isperformance.cl';
   var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com'], LECTOR_BETA=['ventas@isperformance.cl','enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl','jorge.castro@innovaservi.com','cristopher.ruiz@innovaservi.com'] /* lector de boletas en Costos (beta) = BETA en costos-lector.html */; // vista Gerencia (costos): solo estos correos
-  var FIN_VISTAS=[['cobro','Cobro / Ventas'],['costos','Costos'],['movimientos','Movimientos'],['gerencia','Gerencia']];
+  var FIN_VISTAS=[['cobro','Cobro / Ventas'],['costos','Costos'],['documentos','Documentos <span class="beta">BETA</span>'],['movimientos','Movimientos'],['gerencia','Gerencia']];
   function pintarFinTabs(email){
     var visible=function(v){ var b=document.querySelector('#tabs button[data-view="'+v+'"]'); return b && b.style.display!=='none'; };
-    var lector=LECTOR_BETA.indexOf((email||'').toLowerCase())>=0;
     document.querySelectorAll('.fin-tabs').forEach(function(box){ var act=box.dataset.act;
-      box.innerHTML=FIN_VISTAS.filter(function(x){ return visible(x[0]); }).map(function(x){ return '<button type="button" class="fin-tab'+(x[0]===act?' on':'')+'" data-fin="'+x[0]+'">'+x[1]+'</button>'; }).join('')+
-        (lector?'<a class="fin-tab" href="costos-lector.html">Documentos <span class="beta">BETA</span></a>':'');
+      box.innerHTML=FIN_VISTAS.filter(function(x){ return visible(x[0]); }).map(function(x){ return '<button type="button" class="fin-tab'+(x[0]===act?' on':'')+'" data-fin="'+x[0]+'">'+x[1]+'</button>'; }).join('');
       if(box.querySelectorAll('.fin-tab').length<2) box.innerHTML='';
     });
   }
@@ -2246,7 +2254,7 @@
     document.body.classList.toggle('kiosco-user',kiosco);
     permAll().forEach(function(p){ document.body.classList.toggle('perm-no-'+p, !puedeEmail(email,p)); }); // permisos de acción
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
-      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
+      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(v==='documentos')?(LECTOR_BETA.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
     pintarFinTabs(email); // pestañas de Finanzas según lo que ve este usuario
     ordenarNavPara(allowed); // orden personalizado del menú para este usuario
@@ -2299,6 +2307,7 @@
     else if(v==="cobro") renderCobro();
     else if(v==="plan"){ planCargar(renderPlan); }
     else if(v==="costos") renderCostos();
+    else if(v==="documentos"){ var fr=document.getElementById("doc-frame"); if(fr && !fr.getAttribute("src")) fr.setAttribute("src","costos-lector.html?embed=1"); }
     else if(v==="tareas") renderTareas();
     else if(v==="stock") renderStock();
     else if(v==="pos") renderPOS();

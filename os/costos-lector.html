@@ -8,8 +8,12 @@
 <title>Lector de documentos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.4/dist/iife/reader/index.js"></script>
-<script>try{var _th=localStorage.getItem('isp_theme');if(_th==='light'||_th==='dark')document.documentElement.setAttribute('data-theme',_th);}catch(e){}</script>
+<script>try{var _th=localStorage.getItem('isp_theme');if(_th==='light'||_th==='dark')document.documentElement.setAttribute('data-theme',_th);}catch(e){}
+/* Dentro del OS (Finanzas → Documentos) va sin su propio encabezado */ if(/[?&]embed=1/.test(location.search)) document.documentElement.classList.add('embed');</script>
 <style>
+  html.embed header{display:none;}
+  html.embed .wrap{padding:8px 10px 40px;}
+  html.embed #gateBtn{display:none !important;}
   /* Costos (beta) IS Performance: lee boletas y facturas (timbre SII, texto de la foto o XML), asigna vehículo y guarda en gastos. */
   /* Paleta del OS de IS Performance (sigue el tema del sistema o el elegido en el OS) */
   :root{
