@@ -1174,7 +1174,7 @@
       <div id="plan-list"></div>
     </section>
     <section class="view" id="view-costos">
-      <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1></div>
+      <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1><a id="btn-lector" class="btn primary" href="costos-lector.html" style="display:none;margin-top:10px;text-decoration:none;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Lector de boletas <span style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:1px 5px;border-radius:5px;background:#fff;color:var(--accent-ink)">BETA</span></a></div>
       <div class="dash-grid one">
         <div class="chart">
           <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Gastos del taller</span><button type="button" class="btn" id="costos-import-mov" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">↺ Cargar ingresos con precio</button></h3>
@@ -2183,7 +2183,7 @@
 
   // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
   var OWNER_EMAIL='ventas@isperformance.cl';
-  var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com']; // vista Gerencia (costos): solo estos correos
+  var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com'], LECTOR_BETA=['ventas@isperformance.cl','enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl','jorge.castro@innovaservi.com','cristopher.ruiz@innovaservi.com'] /* lector de boletas en Costos (beta) = BETA en costos-lector.html */; // vista Gerencia (costos): solo estos correos
   function esOwner(){ return (window.ISP_EMAIL||'').toLowerCase()===OWNER_EMAIL; }
   var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','asistencia'] }; // fallback si no hay nada en la BD
   var ACCESOS={}; // tabla accesos (email -> [vistas]); pisa a ROLES
@@ -2198,6 +2198,7 @@
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
       var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
+    var _bl=document.getElementById('btn-lector'); if(_bl) _bl.style.display=(LECTOR_BETA.indexOf(email)>=0)?'inline-flex':'none'; // lector de boletas (beta)
     ordenarNavPara(allowed); // orden personalizado del menú para este usuario
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
