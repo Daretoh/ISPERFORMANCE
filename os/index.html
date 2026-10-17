@@ -240,8 +240,14 @@
 
   /* ---- Costos en el teléfono: la tabla pasa a tarjetas y nada se sale de la pantalla ---- */
   .dash-grid > *{min-width:0;}
-  #btn-lector{align-items:center;gap:8px;margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font:700 13.5px/1 var(--sans);text-decoration:none;}
-  #btn-lector:hover{filter:brightness(1.06);}
+  /* ---- Finanzas: pestañas comunes de Cobro, Costos, Movimientos y Gerencia ---- */
+  .fin-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
+  .fin-tabs:empty{display:none;}
+  .fin-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:7px 13px;font:650 13px/1 var(--sans);cursor:pointer;text-decoration:none;}
+  .fin-tab:hover{border-color:var(--accent);color:var(--accent-ink);}
+  .fin-tab.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .fin-tab .beta{font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 5px;border-radius:5px;background:var(--accent-soft);color:var(--accent-ink);}
+  @media (max-width:640px){ .fin-tabs{flex-wrap:nowrap;overflow-x:auto;margin-right:-14px;padding-right:14px;scrollbar-width:none;} .fin-tab{flex:none;} }
   @media (max-width:640px){
     #view-costos .chart{padding:14px 12px;}
     #gasto-form{grid-template-columns:1fr 1fr;}
@@ -1049,7 +1055,6 @@
       <div class="nav-group">
         <div class="nav-group-title">Gestión</div>
         <button data-view="clientes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</button>
-        <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro / Ventas</button>
         <button data-view="cotizaciones"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Cotizaciones</button>
         <button data-view="stock"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>Inventario</button>
         <button data-view="pos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>POS</button>
@@ -1057,10 +1062,14 @@
         <button data-view="cc"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="2" y1="13" x2="22" y2="13"/></svg>Cierres cliente</button>
         <button data-view="solicitudes"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Solicitudes</button>
         <button data-view="plan"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6l1.5 1.5L7 5"/><path d="M3 12l1.5 1.5L7 11"/><path d="M3 18l1.5 1.5L7 17"/></svg>Planificación</button>
+        <button data-view="admin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-title">Finanzas</div>
+        <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro / Ventas</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
         <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
-        <button data-view="admin" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Admin</button>
       </div>
       <div class="nav-group">
         <div class="nav-group-title">RRHH</div>
@@ -1163,7 +1172,7 @@
 
     <!-- ============ COBRO ============ -->
     <section class="view" id="view-cobro">
-      <div class="vhead"><div class="eye">Facturación</div><h1>Cobro / Ventas</h1></div>
+      <div class="vhead"><div class="eye">Finanzas</div><h1>Cobro / Ventas</h1><div class="fin-tabs" data-act="cobro"></div></div>
       <div class="cobro-grid">
         <div class="panel pick" id="cobro-pick"></div>
         <div id="cobro-form-wrap"></div>
@@ -1204,7 +1213,7 @@
       <div id="plan-list"></div>
     </section>
     <section class="view" id="view-costos">
-      <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1><a id="btn-lector" href="costos-lector.html" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Lector de boletas <span style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:1px 5px;border-radius:5px;background:#fff;color:var(--accent-ink)">BETA</span></a></div>
+      <div class="vhead"><div class="eye">Finanzas</div><h1>Costos</h1><div class="fin-tabs" data-act="costos"></div></div>
       <div class="dash-grid one">
         <div class="chart">
           <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Gastos del taller</span><button type="button" class="btn" id="costos-import-mov" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">↺ Cargar ingresos con precio</button></h3>
@@ -1397,7 +1406,7 @@
     </section>
 
     <section class="view" id="view-movimientos">
-      <div class="vhead"><div class="eye">Trazabilidad</div><h1>Movimientos</h1></div>
+      <div class="vhead"><div class="eye">Finanzas · trazabilidad</div><h1>Movimientos</h1><div class="fin-tabs" data-act="movimientos"></div></div>
       <div class="card" style="margin-bottom:16px">
         <div class="lab" style="margin-bottom:10px">Registrar movimiento</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1416,7 +1425,7 @@
 
     <!-- ============ GERENCIA (costos — solo gerente) ============ -->
     <section class="view" id="view-gerencia">
-      <div class="vhead"><div class="eye">Solo gerencia · confidencial</div><h1>Costos y gastos</h1></div>
+      <div class="vhead"><div class="eye">Finanzas · solo gerencia · confidencial</div><h1>Costos y gastos</h1><div class="fin-tabs" data-act="gerencia"></div></div>
       <div class="pfilter" id="ger-mes" style="margin-bottom:12px"></div>
       <div id="ger-content"></div>
     </section>
@@ -2214,6 +2223,17 @@
   // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
   var OWNER_EMAIL='ventas@isperformance.cl';
   var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com'], LECTOR_BETA=['ventas@isperformance.cl','enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl','jorge.castro@innovaservi.com','cristopher.ruiz@innovaservi.com'] /* lector de boletas en Costos (beta) = BETA en costos-lector.html */; // vista Gerencia (costos): solo estos correos
+  var FIN_VISTAS=[['cobro','Cobro / Ventas'],['costos','Costos'],['movimientos','Movimientos'],['gerencia','Gerencia']];
+  function pintarFinTabs(email){
+    var visible=function(v){ var b=document.querySelector('#tabs button[data-view="'+v+'"]'); return b && b.style.display!=='none'; };
+    var lector=LECTOR_BETA.indexOf((email||'').toLowerCase())>=0;
+    document.querySelectorAll('.fin-tabs').forEach(function(box){ var act=box.dataset.act;
+      box.innerHTML=FIN_VISTAS.filter(function(x){ return visible(x[0]); }).map(function(x){ return '<button type="button" class="fin-tab'+(x[0]===act?' on':'')+'" data-fin="'+x[0]+'">'+x[1]+'</button>'; }).join('')+
+        (lector?'<a class="fin-tab" href="costos-lector.html">Documentos <span class="beta">BETA</span></a>':'');
+      if(box.querySelectorAll('.fin-tab').length<2) box.innerHTML='';
+    });
+  }
+  document.addEventListener('click',function(ev){ var t=ev.target.closest('.fin-tab[data-fin]'); if(!t)return; var b=document.querySelector('#tabs button[data-view="'+t.dataset.fin+'"]'); if(b){ b.click(); window.scrollTo(0,0); } });
   function esOwner(){ return (window.ISP_EMAIL||'').toLowerCase()===OWNER_EMAIL; }
   var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','asistencia'] }; // fallback si no hay nada en la BD
   var ACCESOS={}; // tabla accesos (email -> [vistas]); pisa a ROLES
@@ -2228,7 +2248,7 @@
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
       var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
-    var _bl=document.getElementById('btn-lector'); if(_bl) _bl.style.display=(LECTOR_BETA.indexOf(email)>=0)?'inline-flex':'none'; // lector de boletas (beta)
+    pintarFinTabs(email); // pestañas de Finanzas según lo que ve este usuario
     ordenarNavPara(allowed); // orden personalizado del menú para este usuario
     tabsEl.querySelectorAll('.nav-group').forEach(function(g){ var vis=Array.prototype.some.call(g.querySelectorAll('button'),function(b){return b.style.display!=='none';}); g.style.display=vis?'':'none'; });
     var curBtn=tabsEl.querySelector('button[data-view="'+state.view+'"]');
