@@ -237,6 +237,36 @@
   .cost-table tbody tr:nth-child(even) td{background:var(--surface-2);}
   .cost-table tbody tr:hover td{background:var(--surface-3);}
   .cost-table .col-empty{text-align:center;color:var(--ink-muted);padding:20px;}
+
+  /* ---- Costos en el teléfono: la tabla pasa a tarjetas y nada se sale de la pantalla ---- */
+  .dash-grid > *{min-width:0;}
+  #btn-lector{align-items:center;gap:8px;margin-top:10px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font:700 13.5px/1 var(--sans);text-decoration:none;}
+  #btn-lector:hover{filter:brightness(1.06);}
+  @media (max-width:640px){
+    #view-costos .chart{padding:14px 12px;}
+    #gasto-form{grid-template-columns:1fr 1fr;}
+    #gasto-form .f:first-child, #gasto-form button[type="submit"]{grid-column:1/-1;}
+    #gasto-list .cobro-tabs{flex-wrap:wrap;}
+    #gasto-list .ge-bar{display:none;}
+    #gasto-list .gasto-resumen{grid-template-columns:1fr 1fr;}
+    .cost-table:not(.ge){display:block;width:100%;min-width:0;table-layout:auto;}
+    .cost-table:not(.ge) colgroup, .cost-table:not(.ge) thead{display:none;}
+    .cost-table:not(.ge) tbody, .cost-table:not(.ge) tr{display:block;}
+    .cost-table:not(.ge) tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:11px 12px;border-bottom:1px solid var(--line);}
+    .cost-table:not(.ge) tbody tr:nth-child(even){background:var(--surface-2);}
+    .cost-table:not(.ge) td{display:block;border:none !important;padding:0;background:none !important;white-space:normal;overflow:visible;font-size:12px;color:var(--ink-muted);}
+    .cost-table:not(.ge) td:nth-child(2){order:1;flex:1 1 calc(100% - 120px);min-width:0;font-size:14px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .cost-table:not(.ge) td:nth-child(7){order:2;flex:0 0 auto;font-size:14px;font-weight:800;color:var(--ink);}
+    .cost-table:not(.ge) td:nth-child(1){order:3;flex-basis:auto;height:auto;}
+    .cost-table:not(.ge) td:nth-child(3){order:4;} .cost-table:not(.ge) td:nth-child(4){order:5;}
+    .cost-table:not(.ge) td:nth-child(5){order:6;} .cost-table:not(.ge) td:nth-child(6){order:7;}
+    .cost-table:not(.ge) td:nth-child(4)::before{content:"Vehículo ";} .cost-table:not(.ge) td:nth-child(6)::before{content:"Ref. ";}
+    .cost-table:not(.ge) td:has(> .cost-mut:only-child){display:none;}
+    .cost-table:not(.ge) td:nth-child(8){order:8;margin-left:auto;}
+    .cost-table:not(.ge) td:nth-child(9){order:9;flex-basis:100%;display:flex;justify-content:flex-end;gap:6px;margin-top:4px;}
+    .cost-table:not(.ge) td:nth-child(9) .cost-b{padding:7px 11px;font-size:12.5px;}
+    .cost-table:not(.ge) .col-empty{flex-basis:100%;text-align:center;}
+  }
   .cost-centro{display:inline-block;font:700 10px/1 var(--mono);padding:3px 7px;border-radius:20px;background:var(--accent-soft);color:var(--accent-ink);text-transform:uppercase;letter-spacing:.02em;}
   .cost-mut{color:var(--ink-faint);}
   .cost-act{overflow:visible!important;white-space:nowrap;text-align:right;}
@@ -1174,7 +1204,7 @@
       <div id="plan-list"></div>
     </section>
     <section class="view" id="view-costos">
-      <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1><a id="btn-lector" class="btn primary" href="costos-lector.html" style="display:none;margin-top:10px;text-decoration:none;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Lector de boletas <span style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:1px 5px;border-radius:5px;background:#fff;color:var(--accent-ink)">BETA</span></a></div>
+      <div class="vhead"><div class="eye">Empresa</div><h1>Costos</h1><a id="btn-lector" href="costos-lector.html" style="display:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Lector de boletas <span style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:1px 5px;border-radius:5px;background:#fff;color:var(--accent-ink)">BETA</span></a></div>
       <div class="dash-grid one">
         <div class="chart">
           <h3 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;color:var(--accent)"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Gastos del taller</span><button type="button" class="btn" id="costos-import-mov" style="margin-left:auto;white-space:nowrap;padding:6px 12px;font-size:12px">↺ Cargar ingresos con precio</button></h3>

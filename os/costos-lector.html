@@ -95,6 +95,13 @@
   td.n,th.n{text-align:right;white-space:nowrap;}
   td small{display:block;color:var(--muted);font-size:11.5px;}
   .tbl{overflow-x:auto;}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:12px;}
+  .seg label{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 6px;border-radius:9px;cursor:pointer;font:700 13.5px var(--font);color:var(--muted);text-align:center;}
+  .seg label small{font-weight:500;font-size:11px;}
+  .seg input{display:none;}
+  .seg label:has(input:checked){background:var(--orange);color:#fff;}
+  .seg label:has(input:checked) small{color:rgba(255,255,255,.85);}
+  .tag.venta{background:rgba(47,99,214,.14);color:var(--navy);}
   .row-end{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;}
   .muted{color:var(--muted);font-size:12px;}
   details{margin-top:10px;} summary{cursor:pointer;font-size:12px;color:var(--muted);}
@@ -133,6 +140,10 @@
 
   <div class="card">
     <h2>1. Vehículo y fotos del documento</h2>
+    <div class="seg" role="radiogroup" aria-label="Qué documento es">
+      <label><input type="radio" name="modo" value="compra" checked />Compra<small>Va a Costos</small></label>
+      <label><input type="radio" name="modo" value="venta" />Venta nuestra<small>Se adjunta al vehículo</small></label>
+    </div>
     <div class="fld"><label for="veh">Vehículo</label>
       <input id="vehQ" type="search" placeholder="Buscar: patente, marca, modelo o cliente…" autocomplete="off" style="margin-bottom:6px;" />
       <select id="veh"><option value="">Cargando vehículos…</option></select></div>
@@ -170,19 +181,20 @@
       <div class="fld"><label>Tipo de documento <span class="tag" data-src="td"></span></label><select id="td"></select></div>
       <div class="fld"><label>Folio <span class="tag" data-src="folio"></span></label><input id="folio" inputmode="numeric" /></div>
       <div class="fld"><label>Fecha de emisión <span class="tag" data-src="fecha"></span></label><input id="fecha" type="date" /></div>
-      <div class="fld"><label>RUT emisor <span class="tag" data-src="rut"></span></label><input id="rut" placeholder="76.123.456-7" /></div>
-      <div class="fld full"><label>Razón social del emisor <span class="tag" data-src="razon"></span></label><input id="razon" /></div>
+      <div class="fld"><label><span id="lRut">RUT emisor</span> <span class="tag" data-src="rut"></span></label><input id="rut" placeholder="76.123.456-7" /></div>
+      <div class="fld full"><label><span id="lRazon">Razón social del emisor</span> <span class="tag" data-src="razon"></span></label><input id="razon" /></div>
       <div class="fld"><label>Neto <span class="tag" data-src="neto"></span></label><input id="neto" inputmode="numeric" /></div>
       <div class="fld"><label>IVA <span class="tag" data-src="iva"></span></label><input id="iva" inputmode="numeric" /></div>
       <div class="fld"><label>Exento <span class="tag" data-src="exento"></span></label><input id="exento" inputmode="numeric" /></div>
       <div class="fld"><label>Otros impuestos <span class="tag" data-src="otros"></span></label><input id="otros" inputmode="numeric" /></div>
       <div class="fld full"><label>Total <span class="tag" data-src="total"></span></label><input id="total" inputmode="numeric" style="font-weight:800" /></div>
-      <div class="fld full"><label>Concepto <span class="muted" style="font-weight:500">— así se verá en Costos</span></label><input id="con" placeholder="Ej: Sodimac · Llave de impacto" /></div>
-      <div class="fld"><label>Centro</label>
+      <div class="fld full sCompra"><label>Concepto <span class="muted" style="font-weight:500">— así se verá en Costos</span></label><input id="con" placeholder="Ej: Sodimac · Llave de impacto" /></div>
+      <div class="fld sCompra"><label>Centro</label>
         <select id="cc"><option>General</option><option>Pintura</option><option>Taller</option><option>Oficina</option><option>POS</option><option>Bodega</option></select></div>
-      <div class="fld"><label>Tipo</label>
+      <div class="fld sCompra"><label>Tipo</label>
         <select id="cat"><option>VARIABLE</option><option>FIJO</option></select></div>
-      <div class="fld full"><label style="cursor:pointer;font-weight:500;font-size:14px;"><input type="checkbox" id="pagado" style="width:auto;" /> Ya pagado <span class="muted">(las boletas se marcan solas)</span></label></div>
+      <div class="fld full sCompra"><label style="cursor:pointer;font-weight:500;font-size:14px;"><input type="checkbox" id="pagado" style="width:auto;" /> Ya pagado <span class="muted">(las boletas se marcan solas)</span></label></div>
+      <div class="fld full sVenta hide"><div class="msg info" style="margin-top:0">El documento se adjunta al vehículo elegido (en Cobro → Documento) y queda registrado en Documentos electrónicos. No se suma a Costos.</div></div>
     </div>
     <div id="cuadre"></div>
 
@@ -278,7 +290,7 @@
     sb.from('vehiculos').select(VCOLS).order('created_at',{ascending:false}).limit(500).then(function(r){
       if (r.error) throw r.error;
       vehs = (r.data || []).filter(function(v){ return v.patente; });
-      pintarVehiculos();
+      pintarVehiculos(); if (docs.length) pintarLista();
     }).catch(function(){ $('veh').innerHTML = '<option value="">Sin vehículo (no se pudieron cargar)</option>'; });
   }
   function enTaller(v){ return v.estado && v.estado !== 'ENTREGADO'; }
@@ -291,18 +303,42 @@
     // Una patente puede tener varios ingresos: se muestra el más reciente
     var vistos = {}, unicos = lista.filter(function(v){ var k = v.patente.toUpperCase().replace(/[^A-Z0-9]/g,''); if (vistos[k]) return false; vistos[k] = 1; return true; });
     var taller = unicos.filter(enTaller), resto = unicos.filter(function(v){ return !enTaller(v); });
-    var opt = function(v){ return '<option value="'+esc(v.patente.toUpperCase())+'">'+esc(vehStr(v).toUpperCase())+(v.estado && v.estado !== 'ENTREGADO' ? ' · ' + esc(v.estado) : '')+'</option>'; };
+    var opt = function(v){ return '<option value="'+esc(v.id)+'">'+esc(vehStr(v).toUpperCase())+(v.estado && v.estado !== 'ENTREGADO' ? ' · ' + esc(v.estado) : '')+'</option>'; };
     var libre = palabras.length && !unicos.length && /^[a-z]{2,4}\s?\d{2,4}$/i.test(String(q).trim().replace(/[-·.]/g,''));
-    $('veh').innerHTML = (palabras.length ? '' : '<option value="">Sin vehículo (gasto general)</option>') +
+    $('veh').innerHTML = (palabras.length ? '' : '<option value="">'+(modo === 'venta' ? 'Elige el vehículo…' : 'Sin vehículo (gasto general)')+'</option>') +
       (taller.length ? '<optgroup label="En el taller">'+taller.map(opt).join('')+'</optgroup>' : '') +
       (resto.length ? '<optgroup label="'+(palabras.length ? 'Resultados' : 'Entregados (más recientes primero)')+'">'+resto.slice(0, 300).map(opt).join('')+'</optgroup>' : '') +
-      (libre ? '<option value="'+esc(String(q).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))+'">Usar la patente '+esc(String(q).trim().toUpperCase())+' (no está en el OS)</option>' : '') +
+      (libre ? '<option value="pat:'+esc(String(q).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))+'">Usar la patente '+esc(String(q).trim().toUpperCase())+' (no está en el OS)</option>' : '') +
       (palabras.length && !unicos.length && !libre ? '<option value="">No se encontró ningún vehículo con “'+esc(q)+'”</option>' : '') +
-      (palabras.length ? '<option value="">Sin vehículo (gasto general)</option>' : '');
+      (palabras.length ? '<option value="">'+(modo === 'venta' ? 'Elige el vehículo…' : 'Sin vehículo (gasto general)')+'</option>' : '');
     if ([].some.call($('veh').options, function(o){ return o.value && o.value === sel; })) $('veh').value = sel;
     else if (palabras.length) $('veh').selectedIndex = 0;
   }
   $('vehQ').addEventListener('input', function(){ pintarVehiculos(this.value.trim()); });
+  // Vehículo elegido: {id, patente} (id null si la patente se escribió a mano)
+  function vehElegido(){
+    var v = $('veh').value; if (!v) return null;
+    if (v.indexOf('pat:') === 0) return {id:null, patente:v.slice(4)};
+    var x = vehs.filter(function(e){ return String(e.id) === v; })[0];
+    return x ? {id:x.id, patente:(x.patente||'').toUpperCase(), media:x.media} : null;
+  }
+
+  // ---------- compra (costo) o venta nuestra ----------
+  var modo = 'compra', modoManual = false;
+  function esPropio(rut){ var c = limpioRut(rut); return !!c && PROPIOS.indexOf(c) >= 0; }
+  function ponerModo(m){
+    modo = m; document.querySelector('input[name="modo"][value="'+m+'"]').checked = true;
+    var v = m === 'venta';
+    document.querySelectorAll('.sCompra').forEach(function(x){ x.classList.toggle('hide', v); });
+    document.querySelectorAll('.sVenta').forEach(function(x){ x.classList.toggle('hide', !v); });
+    $('lRut').textContent = v ? 'RUT del cliente' : 'RUT emisor';
+    $('lRazon').textContent = v ? 'Cliente' : 'Razón social del emisor';
+    $('bGuardar').lastChild.textContent = v ? 'Adjuntar al vehículo' : 'Guardar documento';
+    var op = $('veh').options[0]; if (op && !op.value) op.textContent = v ? 'Elige el vehículo…' : 'Sin vehículo (gasto general)';
+  }
+  document.querySelectorAll('input[name="modo"]').forEach(function(r){ r.addEventListener('change', function(){
+    modoManual = true; ponerModo(this.value); ['rut','razon'].forEach(function(k){ editados[k] = false; }); if (partes.length) combinar();
+  }); });
 
   // ---------- timbre electrónico (PDF417) ----------
   function tag(xml, n){ var m = xml.match(new RegExp('<'+n+'(?:\\s[^>]*)?>([\\s\\S]*?)</'+n+'>')); return m ? m[1].trim() : null; }
@@ -310,7 +346,8 @@
   function parseTED(txt){
     if (!txt || !/<TED[\s>]/.test(txt) || !/<DD>/.test(txt)) return null;
     var dd = tag(txt,'DD') || '', dda = dd.replace(/<CAF[\s\S]*<\/CAF>/,''), caf = tag(txt,'DA') || '';
-    return { td:num(tag(dda,'TD')), folio:tag(dda,'F'), fecha:tag(dda,'FE'), rut:tag(dda,'RE'), razon:desXml(tag(caf,'RS')), total:num(tag(dda,'MNT')), item:desXml(tag(dda,'IT1')) };
+    return { td:num(tag(dda,'TD')), folio:tag(dda,'F'), fecha:tag(dda,'FE'), rut:tag(dda,'RE'), razon:desXml(tag(caf,'RS')), total:num(tag(dda,'MNT')), item:desXml(tag(dda,'IT1')),
+      rr:tag(dda,'RR'), rsr:desXml(tag(dda,'RSR')) };
   }
   var nativo = null;
   (async function(){ try { if ('BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats()).indexOf('pdf417') >= 0) nativo = new BarcodeDetector({formats:['pdf417']}); } catch(e){} })();
@@ -396,10 +433,11 @@
     var q = function(el, n){ var r = el.getElementsByTagNameNS('*', n); return r.length ? r[0] : null; };
     var t = function(el, n){ var r = el && q(el, n); return r ? r.textContent.trim() : null; };
     return [].slice.call(doc.getElementsByTagNameNS('*','Documento')).map(function(d){
-      var tot = q(d,'Totales') || d, em = q(d,'Emisor') || d, imp = 0;
+      var tot = q(d,'Totales') || d, em = q(d,'Emisor') || d, rc = q(d,'Receptor'), imp = 0;
       [].slice.call(tot.getElementsByTagNameNS('*','ImptoReten')).forEach(function(r){ imp += num(t(r,'MontoImp'))||0; });
       return { td:num(t(d,'TipoDTE')), folio:t(d,'Folio'), fecha:t(d,'FchEmis'), rut:t(em,'RUTEmisor'), razon:t(em,'RznSoc')||t(em,'RznSocEmisor'),
         neto:num(t(tot,'MntNeto')), iva:num(t(tot,'IVA')), exento:num(t(tot,'MntExe')), otros:imp||null, total:num(t(tot,'MntTotal')),
+        rr:t(rc,'RUTRecep'), rsr:t(rc,'RznSocRecep'),
         items:[].slice.call(d.getElementsByTagNameNS('*','Detalle')).map(function(l){ return {nombre:t(l,'NmbItem'), cant:parseFloat(t(l,'QtyItem'))||null, precio:parseFloat(t(l,'PrcItem'))||null, monto:num(t(l,'MontoItem'))}; }) };
     });
   }
@@ -579,9 +617,21 @@
     var d = {origen:{}, items:[]}, poner = function(k, v, o){ if (v != null && v !== '' && d[k] == null) { d[k] = v; d.origen[k] = o; } };
     var xml = partes.filter(function(p){ return p.xml; })[0], ted = partes.filter(function(p){ return p.ted; })[0];
     var texto = partes.map(function(p){ return p.texto; }).filter(Boolean).join('\n');
-    if (xml) { CAMPOS.forEach(function(k){ poner(k, xml.xml[k], 'xml'); }); d.items = xml.xml.items || []; }
-    if (ted) { ['td','folio','fecha','rut','razon','total'].forEach(function(k){ poner(k, ted.ted[k], 'sii'); }); if (!d.items.length && ted.ted.item) d.items = [{nombre:ted.ted.item}]; }
+    // ¿Lo emitimos nosotros? (el emisor del timbre o del XML es IS Performance, o nuestro RUT sale arriba en una boleta)
+    if (!modoManual) {
+      var nuestro = (ted && esPropio(ted.ted.rut)) || (xml && esPropio(xml.xml.rut));
+      if (!ted && !xml && texto) {
+        var lin = texto.split(/\r?\n/), iR = -1, iS = -1;
+        lin.forEach(function(l, i){ if (iR < 0 && /78[.,\s]?270[.,\s]?149/.test(l)) iR = i; if (iS < 0 && /SE[ÑN]OR|SRES|CLIENTE|RECEPTOR/i.test(l)) iS = i; });
+        nuestro = iR >= 0 && (iS < 0 || iR < iS) && iR < lin.length * 0.35;
+      }
+      ponerModo(nuestro ? 'venta' : 'compra');
+    }
+    var venta = modo === 'venta', KR = venta ? ['td','folio','fecha','total'] : ['td','folio','fecha','rut','razon','total'];
+    if (xml) { CAMPOS.forEach(function(k){ if (!venta || (k !== 'rut' && k !== 'razon')) poner(k, xml.xml[k], 'xml'); }); if (venta) { poner('rut', xml.xml.rr, 'xml'); poner('razon', xml.xml.rsr, 'xml'); } d.items = xml.xml.items || []; }
+    if (ted) { KR.forEach(function(k){ poner(k, ted.ted[k], 'sii'); }); if (venta && ted.ted.rr && limpioRut(ted.ted.rr) !== '666666666') { poner('rut', ted.ted.rr, 'sii'); poner('razon', ted.ted.rsr, 'sii'); } if (!d.items.length && ted.ted.item) d.items = [{nombre:ted.ted.item}]; }
     var o = texto ? extraer(texto) : {avisos:[]};
+    if (venta && o.razon && RECEPTOR_RE.test(o.razon)) o.razon = null;
     // El neto/IVA del texto solo sirve si cuadra con el total del timbre/XML
     if (d.total != null && o.total != null && o.total !== d.total) { o.neto = null; o.iva = null; }
     CAMPOS.forEach(function(k){ poner(k, o[k], 'ocr'); });
@@ -601,7 +651,7 @@
       tg.className = o ? 'tag ' + o : 'tag hide'; tg.textContent = o ? ETQ[o] : '';
     });
     // Sugiere centro, tipo y razón social según el último documento del mismo proveedor
-    var r = limpioRut($('rut').value), prev = r && docs.filter(function(x){ return limpioRut(x.rut_emisor) === r; })[0];
+    var r = limpioRut($('rut').value), prev = modo === 'compra' && r && docs.filter(function(x){ return !x.venta && limpioRut(x.rut_emisor) === r; })[0];
     if (prev) { if (!editados.cc && prev.centro) $('cc').value = prev.centro; if (!editados.cat && prev.tipo) $('cat').value = prev.tipo; if (!editados.razon && prev.razon_social) $('razon').value = prev.razon_social; }
     // Concepto para Costos: proveedor + primer ítem (se puede cambiar)
     if (!editados.con) $('con').value = [$('razon').value.trim(), d.items && d.items[0] && d.items[0].nombre].filter(Boolean).join(' · ');
@@ -622,12 +672,15 @@
   function validar(){
     var av = [], r = $('rut').value;
     $('rut').classList.toggle('err', !!r && !rutValido(r));
-    if (r && !rutValido(r)) av.push('El RUT del emisor no es válido (dígito verificador).');
+    if (r && !rutValido(r)) av.push('El RUT no es válido (dígito verificador).');
+    if (modo === 'venta' && !(vehElegido() && vehElegido().id)) av.push('Elige el vehículo del OS al que corresponde esta venta.');
     var n = num($('neto').value)||0, i = num($('iva').value)||0, e = num($('exento').value)||0, o = num($('otros').value)||0, t = num($('total').value);
     if (t != null && (n || i || e || o) && n + i + e + o !== t) av.push('Neto + IVA + exento + otros = ' + clp(n+i+e+o) + ', no cuadra con el total ' + clp(t) + '.');
     if (n && i && Math.abs(Math.round(n*0.19) - i) > 1) av.push('El IVA no es el 19 % del neto.');
     var f = $('folio').value.trim(), td = $('td').value;
-    if (r && f && td && docs.some(function(x){ return (limpioRut(x.rut_emisor) === limpioRut(r) && String(x.folio) === f && String(x.tipo_dte) === td) || (!x.folio && x.referencia === referencia(+td, f)); }))
+    if (modo === 'venta' && f && td && docs.some(function(x){ return x.venta && String(x.folio) === f && String(x.tipo_dte) === td; }))
+      av.push('Esta venta ya está registrada (mismo tipo y folio).');
+    if (modo === 'compra' && r && f && td && docs.some(function(x){ return !x.venta && ((limpioRut(x.rut_emisor) === limpioRut(r) && String(x.folio) === f && String(x.tipo_dte) === td) || (!x.folio && x.referencia === referencia(+td, f))); }))
       av.push('Este documento ya está cargado (mismo emisor, tipo y folio).');
     if (t == null && partes.length && !partes.some(leyendo)) av.push('No se encontró el total: escríbelo a mano.');
     $('cuadre').innerHTML = av.length ? '<div class="msg bad">' + av.map(esc).join('<br>') + '</div>' : (t != null ? '<div class="msg ok">Montos y RUT cuadran.</div>' : '');
@@ -635,17 +688,17 @@
   }
 
   function limpiar(){
-    partes = []; datos = null; editados = {}; pintarFotos();
+    partes = []; datos = null; editados = {}; modoManual = false; pintarFotos();
     CAMPOS.forEach(function(k){ $(k).value = ''; }); $('cc').value = 'General'; $('cat').value = 'VARIABLE'; $('con').value = ''; $('pagado').checked = false;
     $('formCard').classList.add('hide'); estado('');
   }
   $('bDescartar').onclick = limpiar;
 
   // ---------- guardar ----------
-  async function subir(blob, nombre){
+  async function subir(blob, nombre, carpeta){
     var tok = (await sb.auth.getSession()).data.session.access_token, safe = nombre.replace(/[^a-zA-Z0-9._-]/g,'_');
     try {
-      var r = await fetch(R2_UPLOAD, {method:'POST', headers:{'Authorization':'Bearer '+tok, 'content-type':blob.type||'image/jpeg', 'x-folder':'costos', 'x-filename':safe}, body:blob});
+      var r = await fetch(R2_UPLOAD, {method:'POST', headers:{'Authorization':'Bearer '+tok, 'content-type':blob.type||'image/jpeg', 'x-folder':carpeta||'costos', 'x-filename':safe}, body:blob});
       var d = await r.json(); if (d && d.ok && d.key) return R2_PUBLIC + '/' + d.key;
     } catch(e){}
     throw new Error('No se pudo subir la foto al almacenamiento (R2). Revisa la conexión e intenta de nuevo.');
@@ -667,9 +720,42 @@
     var row2 = {}; Object.keys(row).forEach(function(k){ if (faltan.indexOf(k) < 0) row2[k] = row[k]; });
     return insertarGasto(row2, quitadas.concat(faltan));
   }
+  // Venta nuestra: se registra en dte (vinculada al vehículo) y las fotos se suman al documento del cobro del vehículo
+  async function guardarVenta(b){
+    var ve = vehElegido(); if (!ve || !ve.id) { estado('Elige el vehículo del OS al que corresponde esta venta.','bad'); return; }
+    var total = num($('total').value), td = $('td').value === '' ? null : +$('td').value, folio = num($('folio').value);
+    if (!td || !folio) { estado('Faltan el tipo de documento o el folio.','bad'); return; }
+    b.disabled = true; estado('Adjuntando al vehículo…','info');
+    try {
+      var o = datos && datos.origen.total, origen = o === 'sii' ? 'timbre' : o === 'xml' ? 'xml' : o === 'ocr' ? 'ocr' : 'manual';
+      var cat = [33,34,46,110].indexOf(td) >= 0 ? 'Factura' : 'Boleta', media = [];
+      for (var i = 0; i < partes.length; i++) {
+        var p = partes[i], blob = p.esXml ? p.blob : await aJPEG(p.foto || p.blob, 1800);
+        var url = await subir(blob, p.esXml ? p.nombre : (p.nombre||'foto').replace(/\.\w+$/,'') + '.jpg', 'veh/' + ve.id);
+        media.push({path:url, url:url, tipo:p.esXml ? 'doc' : 'image', nombre:p.nombre, r2:true, cat:cat});
+      }
+      // 1) registro del documento (no se puede repetir el mismo tipo + folio)
+      var rr = $('rut').value ? fmtRut($('rut').value).replace(/\./g,'') : null;
+      var dte = { tipo: td, tipo_nombre: TIPOS[td] || null, folio: folio, rut_emisor: '78270149-5', rut_receptor: rr, receptor: $('razon').value.trim() || null,
+        monto: total || 0, fecha: $('fecha').value || hoyISO(), estado: 'LEIDO', vehiculo_id: String(ve.id),
+        raw: { lector: true, origen: origen, neto: num($('neto').value), iva: num($('iva').value), items: (datos && datos.items) || [], fotos: media.map(function(m){ return m.url; }), subido_por: yo } };
+      var r1 = await sb.from('dte').insert(dte);
+      if (r1.error) throw new Error(r1.error.code === '23505' ? 'Esta venta ya estaba registrada (mismo tipo y folio).' : r1.error.message);
+      // 2) fotos al documento del cobro del vehículo (se lee lo que tiene ahora para no pisar nada)
+      var rv = await sb.from('vehiculos').select('media').eq('id', ve.id).single();
+      if (rv.error) throw new Error('La venta quedó registrada, pero no se pudo leer el vehículo: ' + rv.error.message);
+      var upd = { media: (rv.data.media || []).concat(media), doc_tipo: cat === 'Factura' ? 'FACTURA' : 'BOLETA' };
+      var r2 = await sb.from('vehiculos').update(upd).eq('id', ve.id);
+      if (r2.error) throw new Error('La venta quedó registrada, pero no se pudieron adjuntar las fotos al vehículo: ' + r2.error.message);
+      limpiar(); cargarDocs();
+      estado(cat + ' adjuntada a ' + esc(ve.patente) + '. La ves en Cobro → Documento del vehículo.','ok');
+    } catch(e) { estado(esc(e.message),'bad'); }
+    b.disabled = false;
+  }
   $('bGuardar').onclick = async function(){
     if (partes.some(leyendo)) { estado('Espera a que terminen de leerse las fotos.','bad'); return; }
     var total = num($('total').value); if (total == null) { estado('Falta el total.','bad'); return; }
+    if (modo === 'venta') return guardarVenta(this);
     if ($('rut').value && !rutValido($('rut').value) && !confirm('El RUT del emisor no es válido. ¿Guardar igual?')) return;
     var b = this; b.disabled = true; estado('Guardando…','info');
     try {
@@ -686,7 +772,7 @@
       if (editados.total) origen = 'manual';
       var pagado = $('pagado').checked, fecha = $('fecha').value || hoyISO();
       var fila = { concepto: concepto, tipo: $('cat').value || 'VARIABLE', monto: total, fecha: fecha, referencia: referencia(td, folio) || null,
-        centro: $('cc').value || 'General', patente: $('veh').value || null, pagado: pagado, fecha_pago: pagado ? fecha : null, media: media,
+        centro: $('cc').value || 'General', patente: (vehElegido() || {}).patente || null, pagado: pagado, fecha_pago: pagado ? fecha : null, media: media,
         tipo_dte: td, folio: folio, rut_emisor: $('rut').value ? fmtRut($('rut').value) : null, razon_social: $('razon').value.trim() || null,
         neto: num($('neto').value), iva: num($('iva').value), items: (datos && datos.items) || [], origen: origen };
       var res = await insertarGasto(fila);
@@ -700,27 +786,42 @@
   // ---------- lista ----------
   // Muestra los costos cargados con el lector (o, si la base aún no tiene el SQL 59, los últimos costos)
   function cargarDocs(){
-    var fin = function(r){
-      if (r.error) { $('lista').innerHTML = '<tr><td colspan="6" class="muted">No se pudo cargar: '+esc(r.error.message)+'</td></tr>'; return; }
-      docs = (r.data || []).map(function(x){ x.total = x.monto; x.fotos = x.media || []; return x; }); pintarLista();
+    var compras = [], ventas = [];
+    var fin = function(){
+      docs = compras.concat(ventas).sort(function(a, b){ return String(b.created_at).localeCompare(String(a.created_at)); }); pintarLista();
     };
-    sb.from('gastos').select('*').not('origen','is',null).order('created_at',{ascending:false}).limit(200).then(function(r){
-      if (r.error && /origen/i.test(r.error.message||'')) { hayCols = false; sb.from('gastos').select('*').order('created_at',{ascending:false}).limit(50).then(fin); return; }
-      fin(r);
+    var deCompras = function(r){
+      if (r.error) { $('lista').innerHTML = '<tr><td colspan="6" class="muted">No se pudo cargar: '+esc(r.error.message)+'</td></tr>'; return; }
+      compras = (r.data || []).map(function(x){ x.total = x.monto; x.fotos = x.media || []; return x; });
+    };
+    var pc = sb.from('gastos').select('*').not('origen','is',null).order('created_at',{ascending:false}).limit(200).then(function(r){
+      if (r.error && /origen/i.test(r.error.message||'')) { hayCols = false; return sb.from('gastos').select('*').order('created_at',{ascending:false}).limit(50).then(deCompras); }
+      deCompras(r);
     });
+    // Ventas nuestras registradas con el lector
+    var pv = sb.from('dte').select('*').not('raw->lector','is',null).order('created_at',{ascending:false}).limit(200).then(function(r){
+      ventas = ((r && r.data) || []).map(function(x){ var w = x.raw || {};
+        return {id:x.id, venta:true, created_at:x.created_at, fecha:x.fecha, tipo_dte:x.tipo, folio:x.folio == null ? null : String(x.folio), razon_social:x.receptor, rut_emisor:x.rut_emisor,
+          total:x.monto, vehiculo_id:x.vehiculo_id, subido_por:w.subido_por, fotos:(w.fotos||[]).map(function(u){ return {url:u}; })}; });
+    }, function(){});
+    Promise.all([pc, pv]).then(fin, fin);
   }
+  function patenteDe(id){ var v = vehs.filter(function(e){ return String(e.id) === String(id); })[0]; return v ? (v.patente||'').toUpperCase() : 'Vehículo'; }
   function pintarLista(){
     $('lista').innerHTML = docs.map(function(x){
       var doc = x.tipo_dte != null ? (TIPOS[x.tipo_dte]||('Tipo '+x.tipo_dte)).replace(' electrónica','') + (x.folio ? ' N° '+x.folio : '') : (x.referencia || x.concepto || 'Costo');
       var fotos = (x.fotos||[]).map(function(f, i){ var xml = /\.xml($|\?)/i.test(f.url); return '<a href="'+esc(f.url)+'" target="_blank" rel="noopener"'+(xml ? '' : ' data-ver="'+x.id+'" data-i="'+i+'"')+'>'+(xml ? 'XML' : 'foto '+(i+1))+'</a>'; }).join(' · ');
       var cuando = new Date(x.created_at).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       return '<tr><td>'+esc(x.fecha ? x.fecha.split('-').reverse().join('-') : '')+'</td><td>'+esc(doc)+'<small>'+esc(x.razon_social || x.concepto || '')+'</small><small>'+fotos+'</small></td>'+
-        '<td>'+esc(x.patente || 'Sin vehículo')+'<small>'+esc([x.centro, x.tipo, x.pagado ? 'Pagado' : 'Por pagar'].filter(Boolean).join(' · '))+'</small></td><td class="n">'+clp(x.total)+'</td>'+
+        (x.venta ? '<td>'+esc(patenteDe(x.vehiculo_id))+'<small><span class="tag venta">Venta</span></small></td>'
+          : '<td>'+esc(x.patente || 'Sin vehículo')+'<small>'+esc([x.centro, x.tipo, x.pagado ? 'Pagado' : 'Por pagar'].filter(Boolean).join(' · '))+'</small></td>')+'<td class="n">'+clp(x.total)+'</td>'+
         '<td>'+esc(nombreDe(x.subido_por) || '—')+'<small>'+esc(cuando)+'</small></td>'+
         '<td><button class="btn sec mini" data-del="'+x.id+'" title="Eliminar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></td></tr>';
     }).join('') || '<tr><td colspan="6" class="muted">Aún no hay documentos cargados con el lector.</td></tr>';
-    var suma = docs.reduce(function(a, x){ return a + (x.total||0); }, 0);
-    $('resumen').textContent = (docs.length ? docs.length + ' documentos · total ' + clp(suma) + '. ' : '') + (hayCols ? 'Todo lo que guardas aquí aparece también en Costos.' : 'La base aún no tiene el SQL 59: se muestran los últimos costos.');
+    var c = docs.filter(function(x){ return !x.venta; }), v = docs.filter(function(x){ return x.venta; });
+    var suma = function(l){ return l.reduce(function(a, x){ return a + (x.total||0); }, 0); };
+    $('resumen').textContent = (c.length ? c.length + ' compras · ' + clp(suma(c)) + '. ' : '') + (v.length ? v.length + ' ventas adjuntadas · ' + clp(suma(v)) + '. ' : '') +
+      (hayCols ? 'Las compras aparecen también en Costos; las ventas, en el cobro de cada vehículo.' : 'La base aún no tiene el SQL 59: se muestran los últimos costos.');
   }
   $('lista').onclick = async function(e){
     var v = e.target.closest('[data-ver]');
@@ -733,6 +834,12 @@
     }
     var b = e.target.closest('[data-del]'); if (!b) return;
     var x = docs.filter(function(d){ return d.id === b.dataset.del; })[0];
+    if (x && x.venta) {
+      if (!confirm('¿Quitar el registro de esta venta (N° ' + x.folio + ')? Las fotos siguen en el documento del vehículo; si sobran, bórralas desde Cobro.')) return;
+      var rv = await sb.from('dte').delete().eq('id', x.id);
+      if (rv.error) { alert('No se pudo quitar: ' + rv.error.message); return; }
+      return cargarDocs();
+    }
     if (!confirm('¿Eliminar este costo' + (x && x.folio ? ' (N° ' + x.folio + ')' : '') + '? También se quita de Costos. Esta acción no se puede deshacer.')) return;
     var r = await sb.from('gastos').delete().eq('id', b.dataset.del);
     if (r.error) { alert('No se pudo eliminar: ' + r.error.message); return; }
