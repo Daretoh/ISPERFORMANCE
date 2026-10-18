@@ -1136,7 +1136,7 @@
             <div class="row c4">
               <label class="f"><span class="lab">Marca</span><input name="marca" list="marcas" placeholder="Nissan" required></label>
               <label class="f"><span class="lab">Modelo</span><input name="modelo" placeholder="Versa"></label>
-              <label class="f"><span class="lab">Patente</span><input name="patente" placeholder="ABCD12" style="text-transform:uppercase"></label>
+              <label class="f"><span class="lab">Patente</span><input name="patente" placeholder="ABCD-12" style="text-transform:uppercase"></label>
               <label class="f"><span class="lab">Año</span><input name="anioVeh" type="number" min="1950" max="2030" placeholder="2022"></label>
             </div>
             <div class="row c4" style="margin-top:12px">
@@ -1253,7 +1253,7 @@
             <label class="f"><span class="lab">Concepto</span><input name="gCon" required placeholder="Arriendo, luz, insumos…"></label>
             <label class="f"><span class="lab">Tipo</span><select name="gTipo"><option>VARIABLE</option><option>FIJO</option></select></label>
             <label class="f"><span class="lab">Centro</span><select name="gCentro"><option>General</option><option>Pintura</option><option>Taller</option><option>Oficina</option><option>POS</option><option>Bodega</option></select></label>
-            <label class="f"><span class="lab">Vehículo <span class="hint" style="text-transform:none;letter-spacing:0">— patente (opcional)</span></span><input name="gPatente" list="gasto-pat-list" placeholder="Ej: ABCD12"><datalist id="gasto-pat-list"></datalist></label>
+            <label class="f"><span class="lab">Vehículo <span class="hint" style="text-transform:none;letter-spacing:0">— patente (opcional)</span></span><input name="gPatente" list="gasto-pat-list" placeholder="Ej: ABCD-12"><datalist id="gasto-pat-list"></datalist></label>
             <label class="f"><span class="lab">Monto</span><input name="gMonto" type="number" min="0" step="1" required placeholder="9594"></label>
             <label class="f"><span class="lab">Referencia <span class="hint" style="text-transform:none;letter-spacing:0">— documento</span></span><input name="gRef" placeholder="FAC 12345, GD 678…"></label>
             <label class="f"><span class="lab">Fecha</span><input name="gFecha" type="date" required></label>
@@ -1979,7 +1979,10 @@
   var data = [];  // se carga desde Supabase al iniciar sesión
 
   // ---- mapeo entre el panel (camelCase) y las columnas de la base (snake_case) ----
-  function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:e.patente||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
+  // Patente con un solo formato: 6 caracteres -> "ABCD-12"; otros largos en mayúsculas sin separadores (= fmt_patente() en la base, SQL 60)
+  function fmtPat(p){ var c=String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,""); return c.length===6?(c.slice(0,4)+"-"+c.slice(4)):c; }
+  document.addEventListener("change",function(ev){ var t=ev.target; if(t && t.matches && t.matches('input[name="patente"],input[name="gPatente"],#ve-patente,.cvb-pat,.gm-pat,input[data-k="patente"]')){ var f=fmtPat(t.value); if(f!==t.value) t.value=f; } },true);
+  function vehToDB(e){ var o={ marca:e.marca||null, modelo:e.modelo||null, patente:fmtPat(e.patente)||null, anio_veh:e.anioVeh||null, talla:e.talla||'M', cliente:e.cliente||null, contacto:e.contacto||null, servicios:e.servicios||[], estado:e.estado||'AGENDADO', trabajador:e.trabajador||null, f_coord:e.fCoord||null, h_coord:e.hCoord||null, f_ingreso:e.fIngreso||null, h_ingreso:e.hIngreso||null, f_inicio:e.fInicio||null, h_inicio:e.hInicio||null, f_salida:e.fSalida||null, h_salida:e.hSalida||null, t_muerto:e.tMuerto||0, doc_tipo:e.docTipo||'BOLETA', modo_pago:e.modoPago||null, aplica_bono:e.aplicaBono||'NO', tipo_venta:e.tipoVenta||'NORMAL', abono:e.abono||0, precio_venta:e.precioVenta||0, costo_producto:e.costoProducto||0, envio:e.envio||0, costo_externo:e.costoExterno||0, costo_empresa:e.costoEmpresa||0, cobrado:!!e.cobrado, media:e.media||[] };
     if(_vehExtra){ o.trabajos=e.trabajos||[]; o.prioridad=e.prioridad||null; o.f_entrega=e.fEntrega||null; o.h_entrega=e.hEntrega||null; o.orden=(+e.orden||0); }
     return o; }
   var _vehExtra=true, _vehExtraWarned=false; // columnas cotizar_despues / trabajos (SQL 18_trabajos_cotizar). Si faltan, se desactivan solas.
@@ -1994,9 +1997,9 @@
   var SVC_POR_COTIZAR="Pendiente de cotización";
   var AUTOMOTORAS_COTIZAR=["guillermo morales"];
   function esAutomotoraCotizar(nombre){ var n=(nombre||"").trim().toLowerCase(); return !!n && AUTOMOTORAS_COTIZAR.some(function(a){ return n.indexOf(a)>=0; }); }
-  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:r.patente||"", anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
+  function vehFromDB(r){ return { id:r.id, marca:r.marca||"", modelo:r.modelo||"", patente:fmtPat(r.patente), anioVeh:r.anio_veh||0, talla:r.talla||"M", cliente:r.cliente||"", contacto:r.contacto||"", servicios:r.servicios||[], estado:r.estado||"AGENDADO", trabajador:r.trabajador||"", fCoord:r.f_coord||"", hCoord:r.h_coord||"", fIngreso:r.f_ingreso||"", hIngreso:r.h_ingreso||"", fInicio:r.f_inicio||"", hInicio:r.h_inicio||"", fSalida:r.f_salida||"", hSalida:r.h_salida||"", tMuerto:r.t_muerto||0, docTipo:r.doc_tipo||"BOLETA", modoPago:r.modo_pago||"", aplicaBono:r.aplica_bono||"NO", tipoVenta:r.tipo_venta||"NORMAL", abono:r.abono||0, precioVenta:r.precio_venta||0, costoProducto:r.costo_producto||0, envio:r.envio||0, costoExterno:r.costo_externo||0, costoEmpresa:r.costo_empresa||0, cobrado:!!r.cobrado, media:(r.media||[]), cotizarDespues:!!r.cotizar_despues, trabajos:(r.trabajos||[]), prioridad:(r.prioridad||""), fEntrega:(r.f_entrega||""), hEntrega:(r.h_entrega||""), orden:(+r.orden||0) }; }
   function relojFromDB(r){ return {id:r.id, trab:r.trabajador, fecha:r.fecha, hIn:r.h_in||"", hOut:r.h_out||"", desc:r.descanso||0}; }
-  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", centro:r.centro||"", patente:r.patente||"", mov_id:r.mov_id||null, pagado:!!r.pagado, fecha_pago:r.fecha_pago||null, media:(r.media||[])}; }
+  function gastoFromDB(r){ return {id:r.id, con:r.concepto, tipo:r.tipo, monto:r.monto, fecha:r.fecha, ref:r.referencia||"", centro:r.centro||"", patente:fmtPat(r.patente), mov_id:r.mov_id||null, pagado:!!r.pagado, fecha_pago:r.fecha_pago||null, media:(r.media||[])}; }
   function sbc(){ return window.ISP_SB; }
   // Bandeja de avisos: cada accion deja un aviso para el equipo (lo reparte el robot + apps abiertas)
   function emitirNotif(titulo,cuerpo,destinatario,origen){ var sb=sbc(); if(sb) sb.from('notificaciones').insert({titulo:titulo,cuerpo:cuerpo,destinatario:destinatario||'ALL',origen:origen||'',autor:(window.ISP_EMAIL||'')}).then(function(){}); }
@@ -2010,7 +2013,7 @@
   function addRelojDB(o){ var sb=sbc(); if(!sb)return Promise.resolve(); return sb.from('reloj').insert({trabajador:o.trab,fecha:o.fecha,h_in:o.hIn,h_out:o.hOut,descanso:o.desc}).select().single().then(function(r){ if(!r.error) reloj.unshift(relojFromDB(r.data)); else toast('⚠ Error'); }); }
   function delRelojDB(id){ var sb=sbc(); if(sb) sb.from('reloj').delete().eq('id',id).then(function(){}); }
   function addGastoDB(o){ var sb=sbc(); if(!sb)return Promise.resolve();
-    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),centro:(o.centro||null),patente:(o.patente||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
+    var row={concepto:o.con,tipo:o.tipo,monto:o.monto,fecha:o.fecha,referencia:(o.ref||null),centro:(o.centro||null),patente:(fmtPat(o.patente)||null),mov_id:(o.mov_id||null),pagado:(o.pagado||false),fecha_pago:(o.pagado?(o.fecha_pago||o.fecha||todayISO()):null),media:(o.media||[])};
     var GOPT=["referencia","centro","patente","mov_id","pagado","fecha_pago","media"];
     function ins(rw,dropped){ dropped=dropped||[]; return sb.from('gastos').insert(rw).select().single().then(function(r){
       if(r.error){ var em=(r.error.message||"")+" "+(r.error.details||"");
@@ -3769,7 +3772,7 @@
   }
   function cotCliFill(){ var c=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]; if(c){ var tel=document.getElementById("cot-tel"); if(tel && !tel.value)tel.value=c.tel||""; var cc=document.getElementById("cot-correo"); if(cc && !cc.value)cc.value=c.correo||""; var cx=document.getElementById("cot-contacto"); if(cx && !cx.value)cx.value=c.contacto||""; } cotRefreshPendientes(); }
   function cotFilasDe(block){ return Array.prototype.map.call(cotItemsOf(block).querySelectorAll(".cotiz-item"),function(r){ return { desc:r.querySelector(".cot-desc").value.trim(), cant:+r.querySelector(".cot-cant").value||0, precio:(+xlNum(r.querySelector(".cot-precio").value)||0), descPct:+r.querySelector(".cot-descp").value||0, costos:cotCostosDe(r), sec:cotSecDe(r) }; }); }
-  function cotVehData(block){ return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:(block.querySelector(".cvb-pat").value||"").trim(), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), secs:Array.prototype.map.call(cotItemsOf(block).querySelectorAll('.cs-title'),function(x){ return x.value.trim(); }), items:cotFilasDe(block) }; }
+  function cotVehData(block){ return { veh:(block.querySelector(".cvb-veh").value||"").trim(), patente:fmtPat(block.querySelector(".cvb-pat").value), anio:(block.querySelector(".cvb-anio").value||"").trim(), talla:(block.querySelector(".cvb-talla").value||"M"), vehiculo_id:(block.dataset.vehid||null), secs:Array.prototype.map.call(cotItemsOf(block).querySelectorAll('.cs-title'),function(x){ return x.value.trim(); }), items:cotFilasDe(block) }; }
   // El descuento es un porcentaje 0–100. Datos viejos vienen ×10.000 (ej: 150000 = 15%): se corrigen aquí.
   function cotDescNorm(d){ d=+d||0; if(d>100) d=d/10000; if(d<0)d=0; if(d>100)d=100; return d; }
   function _pctTxt(d){ d=Math.round((+d||0)*100)/100; return String(d).replace('.',','); }
@@ -4384,7 +4387,7 @@
       trabajador:"",fIngreso:"",hIngreso:"",fInicio:"",hInicio:"",fSalida:"",hSalida:"",tMuerto:0,docTipo:"BOLETA",modoPago:"",aplicaBono:"NO",precioVenta:0,costoProducto:0,envio:0,costoExterno:0,costoEmpresa:0};
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord","tipoVenta"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.abono=parseFloat(form.abono.value)||0;
-    e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=(e.patente||"").toUpperCase();
+    e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=fmtPat(e.patente);
     e.trabajos=[];
     addVehiculo(e);
     chosenSvcs=[]; renderSvcList();
@@ -4548,7 +4551,7 @@
     document.getElementById("ve-guardar").onclick=function(){
       e.marca=(document.getElementById("ve-marca").value||"").trim();
       e.modelo=(document.getElementById("ve-modelo").value||"").trim();
-      e.patente=(document.getElementById("ve-patente").value||"").trim().toUpperCase();
+      e.patente=fmtPat(document.getElementById("ve-patente").value);
       e.talla=document.getElementById("ve-talla").value;
       e.anioVeh=(document.getElementById("ve-anio").value||"").trim();
       e.estado=document.getElementById("ve-estado").value;
@@ -4702,7 +4705,7 @@
     }); });
     board.querySelectorAll(".vedit").forEach(function(inp){ inp.addEventListener("change",function(){
       var e=data.filter(function(x){return x.id===inp.dataset.id;})[0]; if(!e)return;
-      var k=inp.dataset.k, val=inp.value; if(k==="patente") val=val.toUpperCase();
+      var k=inp.dataset.k, val=inp.value; if(k==="patente") val=fmtPat(val);
       e[k]=val; inp.value=val; persistVeh(e);
       var card=inp.closest(".kcard"); if(card){ var v1=card.querySelector(".kv1"); if(v1) v1.textContent=(e.marca||"")+" "+(e.modelo||""); var v2=card.querySelector(".kv2"); if(v2){ v2.textContent=(e.patente||"sin patente"); if(esPorCotizar(e)) v2.insertAdjacentHTML("beforeend",'<span class="kcotiz-tag">Por cotizar</span>'); } }
       toast("Datos del vehículo actualizados");
@@ -4857,7 +4860,7 @@
   var gastoForm=document.getElementById("gasto-form");
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
-    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),centro:(gastoForm.gCentro?gastoForm.gCentro.value:""),patente:(gastoForm.gPatente?gastoForm.gPatente.value.trim().toUpperCase():""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
+    var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),centro:(gastoForm.gCentro?gastoForm.gCentro.value:""),patente:(gastoForm.gPatente?fmtPat(gastoForm.gPatente.value):""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
     addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPatente)gastoForm.gPatente.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
   });
   // ---- Costos: modo "Editar" (toda la tabla como planilla tipo Excel) ----
@@ -4901,7 +4904,7 @@
     if(g[k]===v)return; g[k]=v; if(c===1)el.title=v;
     clearTimeout(_geSave[g.id]); _geSave[g.id]=setTimeout(function(){ delete _geSave[g.id]; updateGastoCampos(g); },500); }
   function updateGastoCampos(g){ var sb=sbc(); if(!sb)return;
-    var row={concepto:g.con,tipo:g.tipo,monto:+g.monto||0,fecha:g.fecha,referencia:(g.ref||null),centro:(g.centro||null),patente:(g.patente||null)};
+    var row={concepto:g.con,tipo:g.tipo,monto:+g.monto||0,fecha:g.fecha,referencia:(g.ref||null),centro:(g.centro||null),patente:(fmtPat(g.patente)||null)};
     function up(rw){ sb.from('gastos').update(rw).eq('id',g.id).then(function(r){ if(!r||!r.error)return; var em=(r.error.message||"")+" "+(r.error.details||"");
       var faltan=["referencia","centro","patente"].filter(function(k){ return (k in rw)&&new RegExp("(^|[^a-z_])"+k+"([^a-z_]|$)","i").test(em); });
       if(faltan.length){ var rw2={}; Object.keys(rw).forEach(function(k){ if(faltan.indexOf(k)<0)rw2[k]=rw[k]; }); toast('⚠ Guardado sin: '+faltan.join(', ')+'. Corré el SQL 58.'); return up(rw2); }
@@ -5148,7 +5151,7 @@
   // ---------- Finanzas · Resultado: utilidad por vehículo y por cobrar / por pagar ----------
   var _resMes=null, _resTab="vehiculos", _resOrden="fecha";
   var RESULTADO_EMAILS=GERENCIA_EMAILS.concat(['enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl']); // es información confidencial
-  function patNorm(p){ return String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+  function patNorm(p){ return fmtPat(p); }
   function fechaMas(f,d){ var x=new Date(f+"T12:00:00"); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); }
   // Compras (Costos) que corresponden a la visita: misma patente y fecha entre 10 días antes del ingreso y 10 después de la salida
   function comprasDeVisita(e){
@@ -5895,7 +5898,7 @@
     function isCol(e){ return e && /cerrado|column|schema cache|PGRST204/i.test((e.message||'')+(e.details||'')); }
     sb.from('gm_cierre_mes').upsert(build(true),{onConflict:'mes'}).select().single().then(function(res){ if(res&&res.data){ rec.id=res.data.id; } else if(res&&res.error){ if(isCol(res.error)) sb.from('gm_cierre_mes').upsert(build(false),{onConflict:'mes'}).select().single().then(function(r2){ if(r2&&r2.data)rec.id=r2.data.id; }); else toast('⚠ No se pudo guardar el flujo (¿corriste el SQL 41?)'); } }); }
   function gmUpsert(r){ var sb=sbc(); if(!sb)return;
-    function build(ex){ var p={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:r.patente||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") }; if(ex)p.excluido=!!r.excluido; return p; }
+    function build(ex){ var p={ mes:r.mes, vehiculo_id:(r.vehiculo_id||null), marca:r.marca||null, modelo:r.modelo||null, patente:fmtPat(r.patente)||null, talla:r.talla||'M', items:r.items||{}, descuento:(+r.descuento||0), cobrado:!!r.cobrado, notas:r.notas||null, autor:(window.ISP_EMAIL||"") }; if(ex)p.excluido=!!r.excluido; return p; }
     function isCol(e){ return e && /excluido|column|schema cache|PGRST204/i.test((e.message||'')+(e.details||'')); }
     if(r.id){ sb.from('gm_cierre').update(build(true)).eq('id',r.id).then(function(res){ if(res&&res.error){ if(isCol(res.error)) sb.from('gm_cierre').update(build(false)).eq('id',r.id).then(function(){}); else toast('⚠ No se pudo guardar (¿SQL 40?)'); } }); return; }
     if(r._inserting){ r._dirty=true; return; } // ya hay un insert en curso: no dupliques, guarda cambios para después
@@ -6008,7 +6011,7 @@
       var pcs=document.getElementById('gm-porcobrar'); if(pcs)pcs.textContent=clp(m2.total); }
     root.querySelectorAll('.gm-marca').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.marca=x.value; }); }; });
     root.querySelectorAll('.gm-modelo').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.modelo=x.value; }); }; });
-    root.querySelectorAll('.gm-pat').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.patente=x.value; }); }; });
+    root.querySelectorAll('.gm-pat').forEach(function(x){ x.onchange=function(){ editNoRender(x.dataset.rid,function(r){ r.patente=fmtPat(x.value); }); }; });
     root.querySelectorAll('.gm-chk').forEach(function(c){ c.onchange=function(){ editLive(c.dataset.rid,function(r){ r.items=r.items||{}; if(c.checked)r.items[c.dataset.k]=1; else delete r.items[c.dataset.k]; }); }; });
     root.querySelectorAll('.gm-qty').forEach(function(q){ q.onchange=function(){ editLive(q.dataset.rid,function(r){ r.items=r.items||{}; var n=Math.max(0,parseInt(q.value,10)||0); if(n)r.items[q.dataset.k]=n; else delete r.items[q.dataset.k]; }); }; });
     root.querySelectorAll('.gm-talla').forEach(function(s){ s.onchange=function(){ editLive(s.dataset.rid,function(r){ r.talla=s.value; }); }; });

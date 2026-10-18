@@ -284,7 +284,9 @@
   function latin1(b){ try { return new TextDecoder('iso-8859-1').decode(b); } catch(e){ return String.fromCharCode.apply(null, b); } }
   function hoyISO(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
   function masDias(f,n){ var d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
-  function vehStr(v){ return [v.patente, [v.marca, v.modelo].filter(Boolean).join(' '), v.cliente].filter(Boolean).join(' · '); }
+  // Patente con un solo formato (= fmtPat del OS y fmt_patente() del SQL 60): "ABCD-12"
+  function fmtPat(p){ var c=String(p||'').toUpperCase().replace(/[^A-Z0-9]/g,''); return c.length===6?(c.slice(0,4)+'-'+c.slice(4)):c; }
+  function vehStr(v){ return [fmtPat(v.patente), [v.marca, v.modelo].filter(Boolean).join(' '), v.cliente].filter(Boolean).join(' · '); }
   function nombreDe(email){ return NOMBRES[email] || BETA[email] || email || ''; }
   function leyendo(p){ return /Leyendo|Buscando|cola/.test(p.estado); }
 
@@ -312,7 +314,7 @@
     $('veh').innerHTML = (palabras.length ? '' : '<option value="">'+(modo === 'venta' ? 'Elige el vehículo…' : 'Sin vehículo (gasto general)')+'</option>') +
       (taller.length ? '<optgroup label="En el taller">'+taller.map(opt).join('')+'</optgroup>' : '') +
       (resto.length ? '<optgroup label="'+(palabras.length ? 'Resultados' : 'Entregados (más recientes primero)')+'">'+resto.slice(0, 300).map(opt).join('')+'</optgroup>' : '') +
-      (libre ? '<option value="pat:'+esc(String(q).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))+'">Usar la patente '+esc(String(q).trim().toUpperCase())+' (no está en el OS)</option>' : '') +
+      (libre ? '<option value="pat:'+esc(String(q).trim().toUpperCase().replace(/[^A-Z0-9]/g,''))+'">Usar la patente '+esc(fmtPat(q))+' (no está en el OS)</option>' : '') +
       (palabras.length && !unicos.length && !libre ? '<option value="">No se encontró ningún vehículo con “'+esc(q)+'”</option>' : '') +
       (palabras.length ? '<option value="">'+(modo === 'venta' ? 'Elige el vehículo…' : 'Sin vehículo (gasto general)')+'</option>' : '');
     if ([].some.call($('veh').options, function(o){ return o.value && o.value === sel; })) $('veh').value = sel;
@@ -322,9 +324,9 @@
   // Vehículo elegido: {id, patente} (id null si la patente se escribió a mano)
   function vehElegido(){
     var v = $('veh').value; if (!v) return null;
-    if (v.indexOf('pat:') === 0) return {id:null, patente:v.slice(4)};
+    if (v.indexOf('pat:') === 0) return {id:null, patente:fmtPat(v.slice(4))};
     var x = vehs.filter(function(e){ return String(e.id) === v; })[0];
-    return x ? {id:x.id, patente:(x.patente||'').toUpperCase(), media:x.media} : null;
+    return x ? {id:x.id, patente:fmtPat(x.patente), media:x.media} : null;
   }
 
   // ---------- compra (costo) o venta nuestra ----------
@@ -810,7 +812,7 @@
     }, function(){});
     Promise.all([pc, pv]).then(fin, fin);
   }
-  function patenteDe(id){ var v = vehs.filter(function(e){ return String(e.id) === String(id); })[0]; return v ? (v.patente||'').toUpperCase() : 'Vehículo'; }
+  function patenteDe(id){ var v = vehs.filter(function(e){ return String(e.id) === String(id); })[0]; return v ? fmtPat(v.patente) : 'Vehículo'; }
   function pintarLista(){
     $('lista').innerHTML = docs.map(function(x){
       var doc = x.tipo_dte != null ? (TIPOS[x.tipo_dte]||('Tipo '+x.tipo_dte)).replace(' electrónica','') + (x.folio ? ' N° '+x.folio : '') : (x.referencia || x.concepto || 'Costo');
