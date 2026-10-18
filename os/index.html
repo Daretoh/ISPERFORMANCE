@@ -243,6 +243,33 @@
   /* ---- Finanzas: pestañas comunes de Cobro, Costos, Movimientos y Gerencia ---- */
   .fin-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
   .fin-tabs:empty{display:none;}
+
+  /* ---- Finanzas · Resultado ---- */
+  .res-sub{position:static;margin-bottom:6px;}
+  .res-meses{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}
+  .res-nota{font-size:12.5px;color:var(--ink-muted);margin:4px 0 10px;}
+  .res-orden{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink-muted);margin-bottom:10px;}
+  .res-orden button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:5px 10px;font:600 12px/1 var(--sans);cursor:pointer;}
+  .res-orden button.on{background:var(--ink);color:var(--ground);border-color:var(--ink);}
+  .res-lista{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .res-row{display:grid;grid-template-columns:minmax(0,2.2fr) repeat(4,minmax(0,1fr));gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .res-row:last-child{border-bottom:none;} .res-row:hover{background:var(--surface-2);}
+  .res-row:has(.res-pagar){grid-template-columns:minmax(0,1fr) auto auto;cursor:default;}
+  .res-veh{min-width:0;} .res-veh b{color:var(--ink);} .res-veh small{display:block;color:var(--ink-muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .res-pat{font:700 11px/1 var(--mono);background:var(--surface-3);padding:2px 6px;border-radius:5px;}
+  .res-n{text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;color:var(--ink);}
+  .res-n span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint);}
+  .res-u{font-weight:800;}
+  .res-m{display:inline-block;margin-left:6px;font-style:normal;font-size:11px;padding:2px 6px;border-radius:999px;background:var(--surface-3);}
+  .res-m.alto{background:var(--ok-soft);color:var(--ok);} .res-m.medio{background:var(--warn-soft);color:var(--warn);} .res-m.bajo{background:var(--crit-soft);color:var(--crit);}
+  .res-sub-t{font-weight:700;font-size:13px;color:var(--ink-2);margin:12px 0 6px;}
+  @media (max-width:640px){
+    .res-row{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .res-row .res-veh{grid-column:1/-1;}
+    .res-row:has(.res-pagar){grid-template-columns:minmax(0,1fr) auto;}
+    .res-row:has(.res-pagar) .res-veh{grid-column:1/-1;}
+    .res-n{text-align:left;}
+  }
   .doc-nota{margin:-6px 0 12px;color:var(--ink-muted);font-size:13.5px;}
   .doc-frame{display:block;width:100%;height:calc(100dvh - 210px);min-height:560px;border:1px solid var(--line);border-radius:var(--radius);background:var(--ground);box-shadow:var(--shadow);}
   @media (max-width:640px){ .doc-frame{height:calc(100dvh - 190px);border:none;border-radius:0;box-shadow:none;margin:0 -20px;width:calc(100% + 40px);} .doc-nota{font-size:12.5px;} }
@@ -1071,6 +1098,7 @@
         <div class="nav-group-title">Finanzas</div>
         <button data-view="cobro"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Cobro / Ventas</button>
         <button data-view="costos"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Costos</button>
+        <button data-view="resultado" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-6"/></svg>Resultado</button>
         <button data-view="documentos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 .7V2l-1 .7-3-2-3 2-3-2-3 2-3-2z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>Documentos</button>
         <button data-view="movimientos" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M21 7H8a4 4 0 0 0-4 4v0"/><path d="M7 21l-4-4 4-4"/><path d="M3 17h13a4 4 0 0 0 4-4v0"/></svg>Movimientos</button>
         <button data-view="gerencia" style="display:none"><svg class="ic" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1M9 21v-4h6v4"/></svg>Gerencia</button>
@@ -1407,6 +1435,11 @@
       </style>
       <div class="vhead"><div class="eye">Cuenta por cliente</div><h1>Cierres cliente</h1></div>
       <div id="cc-root"></div>
+    </section>
+
+    <section class="view" id="view-resultado">
+      <div class="vhead"><div class="eye">Finanzas · confidencial</div><h1>Resultado</h1><div class="fin-tabs" data-act="resultado"></div></div>
+      <div id="res-content"></div>
     </section>
 
     <section class="view" id="view-documentos">
@@ -2233,7 +2266,7 @@
   // ---- roles/accesos: qué pestañas ve cada correo (dueño ve todo; no listado = ve todo) ----
   var OWNER_EMAIL='ventas@isperformance.cl';
   var GERENCIA_EMAILS=['ventas@isperformance.cl','cristopher.ruiz@innovaservi.com'], LECTOR_BETA=['ventas@isperformance.cl','enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl','jorge.castro@innovaservi.com','cristopher.ruiz@innovaservi.com'] /* lector de boletas en Costos (beta) = BETA en costos-lector.html */; // vista Gerencia (costos): solo estos correos
-  var FIN_VISTAS=[['cobro','Cobro / Ventas'],['costos','Costos'],['documentos','Documentos <span class="beta">BETA</span>'],['movimientos','Movimientos'],['gerencia','Gerencia']];
+  var FIN_VISTAS=[['resultado','Resultado'],['cobro','Cobro / Ventas'],['costos','Costos'],['documentos','Documentos <span class="beta">BETA</span>'],['movimientos','Movimientos'],['gerencia','Gerencia']];
   function pintarFinTabs(email){
     var visible=function(v){ var b=document.querySelector('#tabs button[data-view="'+v+'"]'); return b && b.style.display!=='none'; };
     document.querySelectorAll('.fin-tabs').forEach(function(box){ var act=box.dataset.act;
@@ -2254,7 +2287,7 @@
     document.body.classList.toggle('kiosco-user',kiosco);
     permAll().forEach(function(p){ document.body.classList.toggle('perm-no-'+p, !puedeEmail(email,p)); }); // permisos de acción
     tabsEl.querySelectorAll('button').forEach(function(b){ var v=b.dataset.view;
-      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(v==='documentos')?(LECTOR_BETA.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
+      var show=(v==='admin')?(email===OWNER_EMAIL):(v==='gerencia'||v==='movimientos')?(GERENCIA_EMAILS.indexOf(email)>=0):(v==='documentos')?(LECTOR_BETA.indexOf(email)>=0):(v==='resultado')?(RESULTADO_EMAILS.indexOf(email)>=0):(!allowed||allowed.indexOf(v)>=0);
       b.style.display=show?'':'none'; });
     pintarFinTabs(email); // pestañas de Finanzas según lo que ve este usuario
     ordenarNavPara(allowed); // orden personalizado del menú para este usuario
@@ -2324,6 +2357,7 @@
     else if(v==="remu") renderRemu();
     else if(v==="movimientos") renderMovimientosLibro();
     else if(v==="gerencia") renderGerencia();
+    else if(v==="resultado") renderResultado();
     else if(v==="admin") renderAdmin();
   }
 
@@ -5110,6 +5144,86 @@
   var GF_SEED=[{concepto:"Arriendo taller",monto:1220000,dia:5},{concepto:"Internet taller",monto:15990,dia:10},{concepto:"Asesoría contabilidad",monto:40000,dia:5},{concepto:"Asesoría remuneraciones BUK",monto:50000,dia:5},{concepto:"Redes sociales",monto:40000,dia:1}];
   function gerMeses(){ var arr=[], d=new Date(); for(var i=0;i<6;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
   function gfActivo(x){ return x.activo!==false; }
+
+  // ---------- Finanzas · Resultado: utilidad por vehículo y por cobrar / por pagar ----------
+  var _resMes=null, _resTab="vehiculos", _resOrden="fecha";
+  var RESULTADO_EMAILS=GERENCIA_EMAILS.concat(['enzo.castro@innovaservi.com','enzo.castro@innovaservi.cl']); // es información confidencial
+  function patNorm(p){ return String(p||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+  function fechaMas(f,d){ var x=new Date(f+"T12:00:00"); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); }
+  // Compras (Costos) que corresponden a la visita: misma patente y fecha entre 10 días antes del ingreso y 10 después de la salida
+  function comprasDeVisita(e){
+    var p=patNorm(e.patente); if(!p) return [];
+    var fs=[e.fCoord,e.fIngreso,e.fInicio,e.fSalida,e.fEntrega].filter(Boolean).sort(); if(!fs.length) return [];
+    var desde=fechaMas(fs[0],-10), hasta=fechaMas(fs[fs.length-1],10);
+    return (gastos||[]).filter(function(g){ return patNorm(g.patente)===p && g.fecha>=desde && g.fecha<=hasta; });
+  }
+  function resMeses(){ var arr=[], d=new Date(); for(var i=0;i<12;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
+  function totalCobro(e){ var p=+e.precioVenta||sugerirPrecio(e)||0; return (e.docTipo==='FACTURA')?(p+iva(p)):p; }
+  function renderResultado(){
+    if(!_resMes) _resMes=(new Date()).toISOString().slice(0,7);
+    var box=document.getElementById("res-content"); if(!box) return;
+    var sub='<div class="cobro-tabs res-sub"><button type="button" class="cbtab'+(_resTab==="vehiculos"?" on":"")+'" data-rt="vehiculos">Utilidad por vehículo</button><button type="button" class="cbtab'+(_resTab==="pendientes"?" on":"")+'" data-rt="pendientes">Por cobrar / Por pagar</button></div>';
+    box.innerHTML=sub+(_resTab==="vehiculos"?resVehiculosHTML():resPendientesHTML());
+    box.querySelectorAll("[data-rt]").forEach(function(b){ b.onclick=function(){ _resTab=b.dataset.rt; renderResultado(); }; });
+    box.querySelectorAll("[data-rm]").forEach(function(b){ b.onclick=function(){ _resMes=b.dataset.rm; renderResultado(); }; });
+    box.querySelectorAll("[data-ro]").forEach(function(b){ b.onclick=function(){ _resOrden=b.dataset.ro; renderResultado(); }; });
+    box.querySelectorAll("[data-veh]").forEach(function(r){ r.onclick=function(){ state.cobroTab="todos"; state.cobroSel=r.dataset.veh; var b=document.querySelector('#tabs button[data-view="cobro"]'); if(b){ b.click(); window.scrollTo(0,0); } }; });
+    box.querySelectorAll(".res-pagar").forEach(function(b){ b.onclick=function(ev){ ev.stopPropagation(); gastoPagar(b.dataset.id,true); setTimeout(renderResultado,300); }; });
+  }
+  function resVehiculosHTML(){
+    var enMes=function(f){ return _resMes==="todo" || (f||"").slice(0,7)===_resMes; };
+    var filas=(data||[]).filter(function(e){ return e.cobrado && enMes(e.fCoord||e.fIngreso); }).map(function(e){
+      var ing=ingresoReal(e), insumos=costoTotal(e), comp=comprasDeVisita(e), compras=comp.reduce(function(s,g){return s+(+g.monto||0);},0);
+      var util=ing-insumos-compras; return {e:e, ing:ing, insumos:insumos, compras:compras, nComp:comp.length, util:util, margen:ing?util/ing:null};
+    });
+    if(_resOrden==="margen") filas.sort(function(a,b){ return (a.margen==null?9:a.margen)-(b.margen==null?9:b.margen); });
+    else if(_resOrden==="utilidad") filas.sort(function(a,b){ return b.util-a.util; });
+    else filas.sort(function(a,b){ return String(b.e.fCoord||b.e.fIngreso||"").localeCompare(String(a.e.fCoord||a.e.fIngreso||"")); });
+    var sum=function(k){ return filas.reduce(function(s,x){ return s+x[k]; },0); };
+    var ing=sum("ing"), cost=sum("insumos")+sum("compras"), util=ing-cost;
+    var meses='<div class="pfilter res-meses">'+resMeses().map(function(m){ var p=m.split("-"); return '<button data-rm="'+m+'"'+(m===_resMes?' class="on"':'')+'>'+MESLC[+p[1]-1].slice(0,3)+" "+p[0].slice(2)+'</button>'; }).join("")+'<button data-rm="todo"'+(_resMes==="todo"?' class="on"':'')+'>Todo</button></div>';
+    var kpis='<div class="kpis" style="margin:12px 0">'+kstat("Autos cobrados",filas.length,_resMes==="todo"?"total":"del mes")+kstat("Cobrado",clp(ing),"ingreso real")+kstat("Costos directos",clp(cost),"insumos + compras con patente")+
+      kstat("Utilidad directa",clp(util),ing?(Math.round(util/ing*100)+"% de margen"):"—")+'</div>';
+    var orden='<div class="res-orden">Ordenar: '+[["fecha","Más recientes"],["margen","Menor margen"],["utilidad","Mayor utilidad"]].map(function(o){ return '<button type="button" data-ro="'+o[0]+'" class="'+(_resOrden===o[0]?"on":"")+'">'+o[1]+'</button>'; }).join("")+'</div>';
+    var lista=filas.length?filas.map(function(x){ var e=x.e, m=x.margen, cls=m==null?"":(m<0.2?" bajo":(m<0.4?" medio":" alto"));
+      return '<div class="res-row" data-veh="'+av(e.id)+'" title="Abrir el cobro">'+
+        '<div class="res-veh"><b>'+escH((e.marca||"")+" "+(e.modelo||""))+'</b> <span class="res-pat">'+escH(e.patente||"—")+'</span><small>'+escH(e.cliente||"")+(e.servicios&&e.servicios.length?' · '+escH(e.servicios.join(", ")):'')+'</small></div>'+
+        '<div class="res-n"><span>Cobrado</span>'+clp(x.ing)+'</div>'+
+        '<div class="res-n"><span>Insumos</span>'+clp(x.insumos)+'</div>'+
+        '<div class="res-n"><span>Compras'+(x.nComp?' ('+x.nComp+')':'')+'</span>'+clp(x.compras)+'</div>'+
+        '<div class="res-n res-u"><span>Utilidad</span>'+clp(x.util)+'<em class="res-m'+cls+'">'+(m==null?"—":Math.round(m*100)+"%")+'</em></div>'+
+      '</div>'; }).join(""):'<div class="col-empty" style="padding:22px">No hay autos cobrados en este período.</div>';
+    // Compras con patente que no calzan con ningún cobro del período (auto aún sin cobrar, o patente mal escrita)
+    var usados={}; filas.forEach(function(x){ comprasDeVisita(x.e).forEach(function(g){ usados[g.id]=1; }); });
+    var sueltas=(gastos||[]).filter(function(g){ return g.patente && !usados[g.id] && enMes(g.fecha); });
+    var sueltasHTML=sueltas.length?('<details class="chart" style="margin-top:14px"><summary><b>Compras con patente sin cobro en el período</b> <span class="tag">'+sueltas.length+' · '+clp(sueltas.reduce(function(s,g){return s+(+g.monto||0);},0))+'</span></summary>'+
+      '<div class="res-nota">Son costos cargados a un vehículo que todavía no se cobra (o con la patente mal escrita). Se suman a la utilidad cuando el auto se cobre.</div>'+
+      sueltas.map(function(g){ return '<div class="lrow"><span>'+fFecha(g.fecha)+' · '+escH(g.patente)+' · '+escH(g.con||"")+'</span><span class="num">'+clp(g.monto)+'</span></div>'; }).join("")+'</details>'):'';
+    return meses+kpis+'<div class="res-nota">Utilidad directa = lo cobrado − insumos anotados en el cobro − compras de Costos con la patente del auto (desde 10 días antes del ingreso hasta 10 después de la salida). No descuenta gastos fijos ni personal: eso está en Gerencia.</div>'+orden+'<div class="res-lista">'+lista+'</div>'+sueltasHTML;
+  }
+  function resPendientesHTML(){
+    var hoy=todayISO(), dias=function(f){ if(!f) return null; return Math.round((new Date(hoy+"T12:00:00")-new Date(f+"T12:00:00"))/86400000); };
+    var noNormal=function(e){ return e.tipoVenta && e.tipoVenta!=="NORMAL"; };
+    var autos=(data||[]).filter(function(e){ return !e.cobrado && !noNormal(e) && ["TERMINADO","ENTREGADO","EN PROCESO"].indexOf(e.estado)>=0; }).map(function(e){
+      var t=totalCobro(e), saldo=Math.max(0,t-(+e.abono||0)); return {e:e, saldo:saldo, gm:gmEsGM(e), d:dias(e.fSalida||e.fEntrega||e.fCoord||e.fIngreso)}; });
+    var listos=autos.filter(function(x){ return !x.gm && x.e.estado!=="EN PROCESO"; }), proceso=autos.filter(function(x){ return !x.gm && x.e.estado==="EN PROCESO"; }), gm=autos.filter(function(x){ return x.gm; });
+    var cotz=(_cotiz||[]).filter(function(c){ return c.estado==="FACTURADO"; });
+    var tot=function(l,k){ return l.reduce(function(s,x){ return s+(k?x[k]:x); },0); };
+    var porCobrar=tot(listos,"saldo")+tot(gm,"saldo")+cotz.reduce(function(s,c){ return s+cotTotalDe(c); },0);
+    var pagar=(gastos||[]).filter(function(g){ return !g.pagado; }).sort(function(a,b){ return String(a.fecha).localeCompare(String(b.fecha)); });
+    var porPagar=pagar.reduce(function(s,g){ return s+(+g.monto||0); },0);
+    var kpis='<div class="kpis" style="margin:12px 0">'+kstat("Por cobrar",clp(porCobrar),"autos listos, GM y facturas")+kstat("Por pagar",clp(porPagar),pagar.length+" costos sin pagar")+
+      kstat("Diferencia",clp(porCobrar-porPagar),porCobrar>=porPagar?"a favor":"en contra")+kstat("En proceso",clp(tot(proceso,"saldo")),proceso.length+" autos (aún no se cobran)")+'</div>';
+    var fila=function(x){ var e=x.e; return '<div class="res-row" data-veh="'+av(e.id)+'" title="Abrir el cobro"><div class="res-veh"><b>'+escH((e.marca||"")+" "+(e.modelo||""))+'</b> <span class="res-pat">'+escH(e.patente||"—")+'</span><small>'+escH(e.cliente||"")+' · '+escH(e.estado||"")+(x.d!=null&&x.d>0?' · hace '+x.d+' días':'')+(+e.abono?' · abonó '+clp(e.abono):'')+'</small></div><div class="res-n res-u"><span>Saldo</span>'+clp(x.saldo)+'</div></div>'; };
+    var cobrarHTML='<div class="chart"><h3>Por cobrar <span class="tag">'+clp(porCobrar)+'</span></h3>'+
+      (listos.length?'<div class="res-lista">'+listos.sort(function(a,b){ return (b.d||0)-(a.d||0); }).map(fila).join("")+'</div>':'<div class="col-empty" style="padding:12px">No hay autos listos sin cobrar.</div>')+
+      (gm.length?'<div class="res-sub-t">Guillermo Morales · se cobra en el cierre mensual ('+gm.length+' autos · '+clp(tot(gm,"saldo"))+')</div>':'')+
+      (cotz.length?'<div class="res-sub-t">Cotizaciones facturadas sin cobrar</div>'+cotz.map(function(c){ return '<div class="lrow"><span>N° '+escH(c.numero||"")+' · '+escH(c.cliente||"")+'</span><span class="num">'+clp(cotTotalDe(c))+'</span></div>'; }).join(""):'')+
+      (proceso.length?'<details style="margin-top:10px"><summary class="res-sub-t" style="cursor:pointer">En proceso ('+proceso.length+')</summary><div class="res-lista">'+proceso.map(fila).join("")+'</div></details>':'')+'</div>';
+    var pagarHTML='<div class="chart" style="margin-top:14px"><h3>Por pagar <span class="tag">'+clp(porPagar)+'</span></h3>'+(pagar.length?'<div class="res-lista">'+pagar.map(function(g){ var d=dias(g.fecha);
+      return '<div class="res-row"><div class="res-veh"><b>'+escH(g.con||"Costo")+'</b><small>'+fFecha(g.fecha)+(d!=null&&d>0?' · hace '+d+' días':'')+(g.ref?' · '+escH(g.ref):'')+(g.patente?' · '+escH(g.patente):'')+'</small></div><div class="res-n res-u"><span>Monto</span>'+clp(g.monto)+'</div><button type="button" class="cost-b ok res-pagar" data-id="'+av(g.id)+'">✓ Pagar</button></div>'; }).join("")+'</div>':'<div class="col-empty" style="padding:12px">No hay costos por pagar.</div>')+'</div>';
+    return kpis+cobrarHTML+pagarHTML;
+  }
   function renderGerencia(){
     if(!_gerMes) _gerMes=(new Date()).toISOString().slice(0,7);
     var mesEl=document.getElementById("ger-mes"); if(mesEl){ mesEl.innerHTML=gerMeses().map(function(m){ var p=m.split("-"); return '<button data-m="'+m+'"'+(m===_gerMes?' class="on"':'')+'>'+MESLC[+p[1]-1].slice(0,3)+" "+p[0].slice(2)+'</button>'; }).join(""); mesEl.querySelectorAll("button").forEach(function(b){ b.onclick=function(){ _gerMes=b.dataset.m; renderGerencia(); }; }); }
