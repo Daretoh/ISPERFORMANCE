@@ -765,7 +765,7 @@
       var r2 = await sb.from('vehiculos').update(upd).eq('id', ve.id);
       if (r2.error) throw new Error('La venta quedó registrada, pero no se pudieron adjuntar las fotos al vehículo: ' + r2.error.message);
       limpiar(); cargarDocs();
-      estado(cat + ' adjuntada a ' + esc(ve.patente) + '. La ves en Cobro → Documento del vehículo.','ok');
+      estado(cat + ' adjuntada a ' + esc(ve.patente) + '. La ves en Cobro → Documento del vehículo.' + botonVerDoc(media, cat + ' ' + ve.patente) + botonIr('cobro', ve.id, 'Ver cobro del vehículo'),'ok');
     } catch(e) { estado(esc(e.message),'bad'); }
     b.disabled = false;
   }
@@ -794,8 +794,9 @@
         neto: num($('neto').value), iva: num($('iva').value), items: (datos && datos.items) || [], origen: origen };
       var res = await insertarGasto(fila);
       limpiar(); cargarDocs();
-      if (res.quitadas.length) { hayCols = false; estado('Guardado en Costos, pero sin: ' + esc(res.quitadas.join(', ')) + '. Hay que correr el SQL 59 en Supabase para guardar todos los datos del documento.','warn'); }
-      else estado('Guardado en Costos.','ok');
+      var ir = botonVerDoc(media, concepto) + botonIr('costos', res.data && res.data.id, 'Ver en Costos');
+      if (res.quitadas.length) { hayCols = false; estado('Guardado en Costos, pero sin: ' + esc(res.quitadas.join(', ')) + '. Hay que correr el SQL 59 en Supabase para guardar todos los datos del documento.' + ir,'warn'); }
+      else estado('Guardado en Costos.' + ir,'ok');
     } catch(e) { estado(esc(e.message),'bad'); }
     b.disabled = false;
   };
@@ -823,6 +824,26 @@
     }, function(){});
     Promise.all([pc, pv]).then(fin, fin);
   }
+  // Ir al costo o al cobro en el OS (cuando el lector está dentro del OS, en Finanzas → Documentos)
+  var enOS = window.parent !== window && /[?&]embed=1/.test(location.search);
+  function botonIr(vista, id, texto){
+    if (!id) return '';
+    return enOS ? ' <button type="button" class="btn mini" style="margin-left:6px" data-ir="'+vista+'" data-id="'+esc(id)+'">'+texto+'</button>'
+                : ' <a href="./" style="margin-left:6px">Abrir el OS</a>';
+  }
+  // "Ver documento": abre en grande las fotos que se acaban de guardar
+  var ultimoDoc = null;
+  function botonVerDoc(media, titulo){
+    var imgs = (media||[]).filter(function(m){ return m.tipo === 'image'; }); if (!imgs.length) return '';
+    ultimoDoc = imgs.map(function(m, i){ return {src:m.url, titulo:(titulo||'Documento') + ' · foto ' + (i+1) + ' de ' + imgs.length}; });
+    return ' <button type="button" class="btn mini" style="margin-left:6px" data-verdoc="1">Ver documento</button>';
+  }
+  document.addEventListener('click', function(ev){
+    if (ev.target.closest('[data-verdoc]') && ultimoDoc) { abrirVisor(ultimoDoc, 0); return; }
+    var b = ev.target.closest('[data-ir]'); if (!b || !enOS) return;
+    ev.preventDefault();
+    window.parent.postMessage({isp:'ir', vista:b.dataset.ir, id:b.dataset.id}, location.origin);
+  });
   function patenteDe(id){ var v = vehs.filter(function(e){ return String(e.id) === String(id); })[0]; return v ? fmtPat(v.patente) : 'Vehículo'; }
   function pintarLista(){
     $('lista').innerHTML = docs.map(function(x){
@@ -832,7 +853,8 @@
       return '<tr><td>'+esc(x.fecha ? x.fecha.split('-').reverse().join('-') : '')+'</td><td>'+esc(doc)+'<small>'+esc(x.razon_social || x.concepto || '')+'</small><small>'+fotos+'</small></td>'+
         (x.venta ? '<td>'+esc(patenteDe(x.vehiculo_id))+'<small><span class="tag venta">Venta</span></small></td>'
           : '<td>'+esc(x.patente || 'Sin vehículo')+'<small>'+esc([x.centro, x.tipo, x.pagado ? 'Pagado' : 'Por pagar'].filter(Boolean).join(' · '))+'</small></td>')+'<td class="n">'+clp(x.total)+'</td>'+
-        '<td>'+esc(nombreDe(x.subido_por) || '—')+'<small>'+esc(cuando)+'</small></td>'+
+        '<td>'+esc(nombreDe(x.subido_por) || '—')+'<small>'+esc(cuando)+'</small>'+
+          (enOS ? '<small><a href="#" data-ir="'+(x.venta ? 'cobro' : 'costos')+'" data-id="'+esc(x.venta ? x.vehiculo_id : x.id)+'">'+(x.venta ? 'Ver cobro' : 'Ver en Costos')+'</a></small>' : '')+'</td>'+
         '<td><button class="btn sec mini" data-del="'+x.id+'" title="Eliminar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></td></tr>';
     }).join('') || '<tr><td colspan="6" class="muted">Aún no hay documentos cargados con el lector.</td></tr>';
     var c = docs.filter(function(x){ return !x.venta; }), v = docs.filter(function(x){ return x.venta; });

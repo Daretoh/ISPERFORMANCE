@@ -243,6 +243,8 @@
   /* ---- Finanzas: pestañas comunes de Cobro, Costos, Movimientos y Gerencia ---- */
   .fin-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
   .fin-tabs:empty{display:none;}
+  .cost-table tr.fin-flash td, .cost-table tr.fin-flash{background:var(--accent-soft) !important;transition:background .4s;}
+  .cost-table tr.fin-flash{outline:2px solid var(--accent);outline-offset:-2px;}
 
   /* ---- Finanzas · Resultado ---- */
   .res-sub{position:static;margin-bottom:6px;}
@@ -2277,6 +2279,21 @@
       if(box.querySelectorAll('.fin-tab').length<2) box.innerHTML='';
     });
   }
+  // El lector (Finanzas → Documentos) pide abrir el costo recién guardado o el cobro del vehículo
+  window.addEventListener('message',function(ev){ if(ev.origin!==location.origin) return; var d=ev.data||{}; if(d.isp!=='ir'||!d.id) return; var sb=sbc();
+    function abrirVista(v){ var b=document.querySelector('#tabs button[data-view="'+v+'"]'); if(b){ b.click(); window.scrollTo(0,0); } }
+    var tiene=function(){ return (gastos||[]).some(function(g){ return String(g.id)===String(d.id); }); };
+    if(d.vista==='costos'){
+      var mostrar=function(){ state.costGTab='todos'; state.costEdit=false; abrirVista('costos');
+        setTimeout(function(){ var x=document.querySelector('#gasto-list [data-id="'+d.id+'"]'), tr=x&&x.closest('tr'); if(!tr) return; tr.classList.add('fin-flash'); tr.scrollIntoView({block:'center',behavior:'smooth'}); setTimeout(function(){ tr.classList.remove('fin-flash'); },4000); var adj=tr.querySelector('.gadj'); if(adj) adj.click(); },150); }; // abre también el documento adjunto
+      if(tiene()||!sb) return mostrar();
+      sb.from('gastos').select('*').eq('id',d.id).single().then(function(r){ if(r&&r.data&&!tiene()) gastos.unshift(gastoFromDB(r.data)); mostrar(); }, mostrar);
+    } else if(d.vista==='cobro'){
+      var ir=function(){ state.cobroTab='todos'; state.cobroSel=d.id; abrirVista('cobro'); };
+      if(!sb) return ir();
+      sb.from('vehiculos').select('*').eq('id',d.id).single().then(function(r){ if(r&&r.data){ var nv=vehFromDB(r.data), i=(data||[]).map(function(e){ return String(e.id); }).indexOf(String(d.id)); if(i>=0) data[i]=nv; else data.unshift(nv); } ir(); }, ir);
+    }
+  });
   document.addEventListener('click',function(ev){ var t=ev.target.closest('.fin-tab[data-fin]'); if(!t)return; var b=document.querySelector('#tabs button[data-view="'+t.dataset.fin+'"]'); if(b){ b.click(); window.scrollTo(0,0); } });
   function esOwner(){ return (window.ISP_EMAIL||'').toLowerCase()===OWNER_EMAIL; }
   var ROLES={ 'administrativa@innovaservi.com':['recepcion','agenda','seguimiento','tareas','clientes','asistencia'] }; // fallback si no hay nada en la BD
