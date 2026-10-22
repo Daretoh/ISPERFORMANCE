@@ -377,6 +377,11 @@
   .kv-cli{font-size:12px;font-weight:600;color:var(--ink-2);margin-top:2px;}
   .kv-cli.cli-pc{display:inline-block;background:#efe3ff;color:#7a2fd0;border:1px solid #d9c2f7;border-radius:6px;padding:3px 9px;font-weight:700;font-size:11.5px;margin-top:4px;}
   .cob-adj-title{font:800 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin:14px 0 8px;}
+  .gpat{all:unset;cursor:pointer;color:var(--accent-ink);font-weight:700;text-decoration:underline;text-underline-offset:2px;}
+  .gpat:hover{color:var(--accent);}
+  .cob-costos{display:flex;flex-direction:column;}
+  .cob-costo{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px;width:100%;cursor:pointer;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px;}
+  .cob-costo:hover{background:var(--surface-2);}
   .cob-adj-empty{font-size:12.5px;color:var(--ink-muted);background:var(--surface-2);border:1px dashed var(--line-strong);border-radius:10px;padding:16px;text-align:center;}
   .cob-adj-grid{display:flex;flex-wrap:wrap;gap:10px;}
   .cob-adj-img,.cob-adj-file{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;text-decoration:none;color:var(--ink-2);font-size:10.5px;}
@@ -4922,6 +4927,7 @@
           '<label class="f"><span class="lab">Documento adjunto</span><button type="button" class="mediabtn" id="doc-btn" style="padding:9px">'+((e.media&&e.media.length)?'📎 Ver / agregar ('+e.media.length+')':'📎 Adjuntar boleta / voucher')+'</button></label>'+
         '</div>'+
         '<div class="cob-adj-title">Documento / respaldo del cobro</div>'+cobAdjHTML(e)+
+        cobCostosHTML(e)+
       '</div>'+
     '</div>'+
     '<aside class="summary"><div class="panel sum-card"><div class="sum-head"><div class="t">◆ Resumen automático</div></div>'+
@@ -4936,6 +4942,7 @@
     '</div></aside></div>';
 
     var f=wrap.querySelector(".formgrid");
+    wrap.querySelectorAll(".cob-costo").forEach(function(b){ b.onclick=function(){ window.postMessage({isp:'ir',vista:'costos',id:b.dataset.gid},location.origin); }; });
     function readForm(){
       ["docTipo","modoPago","tipoVenta"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=el.value; });
       ["precioVenta","abono","costoProducto","envio","costoExterno","costoEmpresa"].forEach(function(k){ var el=f.querySelector('[name="'+k+'"]'); if(el)e[k]=parseFloat(el.value)||0; });
@@ -4978,7 +4985,11 @@
   gastoForm.gFecha.value=todayISO();
   gastoForm.addEventListener("submit",function(ev){ ev.preventDefault();
     var o={con:gastoForm.gCon.value.trim(),tipo:gastoForm.gTipo.value,monto:parseFloat(gastoForm.gMonto.value)||0,ref:(gastoForm.gRef?gastoForm.gRef.value.trim():""),centro:(gastoForm.gCentro?gastoForm.gCentro.value:""),patente:(gastoForm.gPatente?fmtPat(gastoForm.gPatente.value):""),fecha:gastoForm.gFecha.value,pagado:!!(gastoForm.gPagado&&gastoForm.gPagado.checked)};
-    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPatente)gastoForm.gPatente.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos(); toast("✓ Costo agregado"+(o.pagado?" (pagado)":" (por pagar)")); });
+    addGastoDB(o).then(function(){ registrarAccion({tipo:"GASTO", fecha:o.fecha, descripcion:o.con, monto:o.monto, ref_num:o.ref}); if(o.pagado) registrarAccion({tipo:"PAGO", fecha:o.fecha, descripcion:"Pago · "+o.con, monto:o.monto, ref_num:o.ref}); gastoForm.gCon.value=""; gastoForm.gMonto.value=""; if(gastoForm.gRef)gastoForm.gRef.value=""; if(gastoForm.gPatente)gastoForm.gPatente.value=""; if(gastoForm.gPagado)gastoForm.gPagado.checked=false; renderCostos();
+      var gN=gastos[0], ve=(o.patente&&gN)?vehDeGasto(gN):null;
+      if(o.patente && gN && !gN.patente) toast("⚠ El costo se guardó SIN la patente "+o.patente+" (falta la columna en la base: correr SQL 58)");
+      else if(o.patente && !ve) toast("✓ Costo agregado con patente "+o.patente+" — ojo: esa patente no está en el OS");
+      else toast("✓ Costo agregado"+(ve?" y enlazado a "+(ve.marca||"")+" "+o.patente:"")+(o.pagado?" (pagado)":" (por pagar)")); });
   });
   // ---- Costos: modo "Editar" (toda la tabla como planilla tipo Excel) ----
   var GE_COLS=["fecha","con","centro","patente","tipo","ref","monto"];
@@ -5071,7 +5082,7 @@
       '<td>'+fFecha(g.fecha)+'</td>'+
       '<td title="'+av(g.con||"")+'">'+escH(g.con||"")+'</td>'+
       '<td>'+(g.centro?('<span class="cost-centro">'+escH(g.centro)+'</span>'):'<span class="cost-mut">—</span>')+'</td>'+
-      '<td>'+(g.patente?escH(g.patente):'<span class="cost-mut">—</span>')+'</td>'+
+      '<td>'+(g.patente?(vehDeGasto(g)?'<button type="button" class="gpat" data-id="'+av(g.id)+'" title="Abrir el cobro del vehículo">'+escH(g.patente)+'</button>':'<span title="Esta patente no está en el OS">'+escH(g.patente)+'</span>'):'<span class="cost-mut">—</span>')+'</td>'+
       '<td>'+escH(g.tipo||"")+'</td>'+
       '<td title="'+av(g.ref||"")+'">'+(g.ref?escH(g.ref):'<span class="cost-mut">—</span>')+'</td>'+
       '<td class="r">'+clp(g.monto)+'</td>'+
@@ -5103,6 +5114,7 @@
     document.querySelectorAll("#gasto-list .cbtab").forEach(function(b){ b.addEventListener("click",function(){ var a=document.activeElement; if(gePos(a)) geCommit(a); state.costGTab=b.dataset.gtab; renderCostos(); }); });
     var geb=document.getElementById("gasto-edit"); if(geb) geb.addEventListener("click",function(){ var a=document.activeElement; if(gePos(a)) geCommit(a); geFlush(); state.costEdit=!state.costEdit; _ge.a=_ge.b=null; renderCostos(); if(state.costEdit) geFocus(0,1); else toast("✓ Cambios guardados"); });
     document.querySelectorAll("#gasto-list .gpay").forEach(function(b){ b.addEventListener("click",function(){ gastoPagar(b.dataset.id, b.dataset.p==="1"); }); });
+    document.querySelectorAll("#gasto-list .gpat").forEach(function(b){ b.addEventListener("click",function(){ var g=gastos.filter(function(x){ return String(x.id)===b.dataset.id; })[0], e=g&&vehDeGasto(g); if(e) abrirCobroVeh(e.id); }); });
     document.querySelectorAll("#view-costos .ldel").forEach(function(b){ b.addEventListener("click",function(){
       if(b.dataset.s==="reloj"){ reloj=reloj.filter(function(x){return x.id!==b.dataset.id;}); delRelojDB(b.dataset.id); }
       else { gastos=gastos.filter(function(x){return x.id!==b.dataset.id;}); delGastoDB(b.dataset.id); }
@@ -5276,6 +5288,26 @@
     var fs=[e.fCoord,e.fIngreso,e.fInicio,e.fSalida,e.fEntrega].filter(Boolean).sort(); if(!fs.length) return [];
     var desde=fechaMas(fs[0],-10), hasta=fechaMas(fs[fs.length-1],10);
     return (gastos||[]).filter(function(g){ return patNorm(g.patente)===p && g.fecha>=desde && g.fecha<=hasta; });
+  }
+  // Vehículo (visita) al que corresponde un costo: la visita cuya ventana contiene la fecha del costo; si no, el ingreso más reciente con esa patente
+  function vehDeGasto(g){
+    var p=patNorm(g.patente); if(!p) return null;
+    var vs=(data||[]).filter(function(e){ return patNorm(e.patente)===p; }); if(!vs.length) return null;
+    var enVentana=vs.filter(function(e){ return comprasDeVisita(e).some(function(x){ return x.id===g.id; }); })[0];
+    if(enVentana) return enVentana;
+    return vs.slice().sort(function(a,b){ return String(b.fCoord||b.fIngreso||"").localeCompare(String(a.fCoord||a.fIngreso||"")); })[0];
+  }
+  function abrirCobroVeh(id){ state.cobroTab="todos"; state.cobroSel=id; var b=document.querySelector('#tabs button[data-view="cobro"]'); if(b){ b.click(); window.scrollTo(0,0); } }
+  // Costos (compras) cargados con la patente del vehículo, para verlos en su cobro
+  function cobCostosHTML(e){
+    var p=patNorm(e.patente); if(!p) return '';
+    var visita={}; comprasDeVisita(e).forEach(function(g){ visita[g.id]=1; });
+    var lista=(gastos||[]).filter(function(g){ return patNorm(g.patente)===p; }).sort(function(a,b){ return String(b.fecha).localeCompare(String(a.fecha)); });
+    var tot=lista.filter(function(g){ return visita[g.id]; }).reduce(function(s,g){ return s+(+g.monto||0); },0);
+    return '<div class="cob-adj-title">Costos con la patente '+escH(p)+(lista.length?' · '+clp(tot)+' en esta visita':'')+'</div>'+
+      (lista.length?'<div class="cob-costos">'+lista.map(function(g){
+        return '<button type="button" class="lrow cob-costo" data-gid="'+av(g.id)+'" title="Ver en Costos"><span>'+fFecha(g.fecha)+' · '+escH(g.con||"Costo")+(g.ref?' · '+escH(g.ref):'')+(visita[g.id]?'':' <em class="cost-mut">(otra visita)</em>')+(g.pagado?'':' <span class="chip pend">Por pagar</span>')+'</span><span class="num">'+clp(g.monto)+'</span></button>'; }).join('')+'</div>'
+      :'<div class="cob-adj-empty">No hay costos cargados con esta patente. En <b>Costos</b>, escribe la patente al agregar el gasto.</div>');
   }
   function resMeses(){ var arr=[], d=new Date(); for(var i=0;i<12;i++){ arr.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); d.setMonth(d.getMonth()-1); } return arr; }
   function totalCobro(e){ var p=+e.precioVenta||sugerirPrecio(e)||0; return (e.docTipo==='FACTURA')?(p+iva(p)):p; }
