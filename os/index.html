@@ -4505,6 +4505,13 @@
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord","tipoVenta"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.abono=parseFloat(form.abono.value)||0;
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=fmtPat(e.patente);
+    // el telefono agrupa clientes: avisar si ese numero ya es de otro cliente con otro nombre
+    var _kTel=clientKey(e), _nomE=(e.cliente||"").trim().toLowerCase();
+    if(_kTel.indexOf("t:")===0 && _nomE){
+      var _dueno=agruparClientes().filter(function(x){return x.clave===_kTel;})[0];
+      if(_dueno && (cliNombre(_dueno)||"").toLowerCase()!==_nomE && (_dueno.nombre||"").toLowerCase()!==_nomE &&
+         !confirm("El teléfono "+e.contacto+" ya es del cliente «"+cliNombre(_dueno)+"».\nSi sigues, este vehículo quedará dentro de ese cliente.\n\n¿Guardar igual?")) return;
+    }
     try{ if(cliTipo(clientKey(e))==='EMPRESA') e.docTipo='FACTURA'; }catch(_){ } // empresa -> factura automatica (suma IVA al cobrar)
     e.trabajos=[];
     addVehiculo(e);
@@ -6270,8 +6277,8 @@
     });
     L.push('TOTALES');
     L.push('   Total aprobado: '+clp(t.total));
-    L.push('   Total abonado: '+clp(t.abonado));
-    L.push('   Saldo pendiente: '+clp(t.saldo));
+    L.push('   Abonos: -'+clp(t.abonado));
+    L.push('   '+(t.saldo<0?'Saldo a favor: ':'Total a pagar: ')+clp(Math.abs(t.saldo)));
     L.push('');
     L.push('Adjuntamos el detalle con los trabajos realizados y pendientes por vehículo (PDF).');
     L.push('');
@@ -6474,7 +6481,7 @@
       +(fa?('<table class="cp-table"><colgroup><col style="width:16%"><col style="width:60%"><col style="width:24%"></colgroup><thead><tr><th>Fecha</th><th>Vehículo / medio / referencia</th><th class="r">Abono</th></tr></thead><tbody>'+fa+'</tbody></table>'):'<div style="font-size:12.5px;color:#555;margin-top:6px">Sin abonos registrados a la fecha.</div>')
       +'</div><div id="cp-cierre">'
       +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
-      +'<div class="cp-totbox"><div class="r1"><span>Total aprobado</span><span>'+clp(t.total)+'</span></div><div class="r1"><span>Total abonado</span><span>- '+clp(t.abonado)+'</span></div><div class="r1 big"><span>Saldo pendiente</span><span>'+clp(t.saldo)+'</span></div></div></div>'
+      +'<div class="cp-totbox"><div class="r1"><span>Total aprobado</span><span>'+clp(t.total)+'</span></div><div class="r1"><span>− Abonos</span><span>- '+clp(t.abonado)+'</span></div><div class="r1 big"><span>'+(t.saldo<0?'Saldo a favor':'Total a pagar')+'</span><span>'+clp(Math.abs(t.saldo))+'</span></div></div></div>'
       +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
       +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
       +'</div></div>';
@@ -6714,6 +6721,24 @@
     delete clientesInfo[cA];
     state.clienteSel=cB; renderClientes(); toast('✓ Clientes fusionados');
   }
+  // Cambia (o borra) el telefono de un cliente. El telefono es la llave del cliente (clientKey),
+  // asi que se reescribe en sus vehiculos y la ficha + seguimiento pasan a la nueva llave.
+  // Si no, el telefono "vuelve" al recargar y los autos nuevos con ese numero caen en este cliente.
+  function cambiarTelCliente(c, cur, tel){
+    var oldK=c.clave, newK=clientKey({contacto:tel, cliente:c.nombre});
+    if(newK===oldK){ cur.contacto=tel; return true; }
+    if(!newK){ toast('El cliente necesita teléfono o nombre'); return false; }
+    var otro=agruparClientes().filter(function(x){return x.clave===newK;})[0];
+    if(otro){ toast('Ese teléfono ya es de «'+cliNombre(otro)+'». Usa «Fusionar» si son el mismo cliente'); return false; }
+    (c.items||[]).forEach(function(e){ e.contacto=tel; persistVeh(e); });
+    var sb=sbc(); if(sb) sb.from('seguimientos').update({clave:newK}).eq('clave',oldK).then(function(){});
+    seguimientosAll.forEach(function(s){ if(s.clave===oldK) s.clave=newK; });
+    if(sb) sb.from('clientes').delete().eq('clave',oldK).then(function(){});
+    delete clientesInfo[oldK];
+    cur.clave=newK; cur.contacto=tel; clientesInfo[newK]=cur;
+    state.clienteSel=newK;
+    return true;
+  }
   // Mueve SOLO los vehiculos (por patente) y/o cotizaciones elegidos hacia otro cliente.
   // Sirve para corregir cruces: ej. autos/cotizaciones de GM que quedaron bajo NGUERRA.
   function moverSeleccionACliente(fromClave, toClave, pats, cotIds){
@@ -6923,7 +6948,7 @@
       var _rep=wrap.querySelector("#cli-rep"); cur.representante=_rep?_rep.value.trim():"";
       cur.giro=wrap.querySelector("#cli-giro").value.trim();
       cur.email=wrap.querySelector("#cli-email").value.trim();
-      var _tl=wrap.querySelector("#cli-tel"); if(_tl)cur.contacto=_tl.value.trim();
+      var _tl=wrap.querySelector("#cli-tel"); if(_tl && !cambiarTelCliente(c, cur, _tl.value.trim())) return;
       cur.direccion=wrap.querySelector("#cli-dir").value.trim();
       upsertCliente(cur); renderClientes(); toast("✓ Datos guardados");
     });
