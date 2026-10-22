@@ -4036,7 +4036,8 @@
     var _cli=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]||{};
     var row={ numero:numero, fecha:((document.getElementById("cot-fecha")||{}).value||todayISO()), fecha_hasta:(((document.getElementById("cot-fecha2")||{}).value)||null), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), cliente_correo:(document.getElementById("cot-correo")||{}).value||"", cliente_contacto:(document.getElementById("cot-contacto")||{}).value||"", cliente_rut:(_cli.rut||""), cliente_giro:(_cli.giro||""), vehiculo:(vehs.length>1?(vehs.length+" vehículos"):(first.veh||"")), anio:(first.anio||""), items:allItems, vehiculos:vehs, desc_adic_pct:d.da, con_iva:d.conIva, mostrar_item_val:!!(document.getElementById("cot-itemval")&&document.getElementById("cot-itemval").checked), agrupar_sec:!!(document.getElementById("cot-agrupsec")&&document.getElementById("cot-agrupsec").checked), vehiculo_id:(first.vehiculo_id||null), estado:(confirmar?"CONFIRMADA":"BORRADOR") };
     var _me=(window.ISP_EMAIL||""); if(_cotEditId){ row.editado_por=_me; row.updated_at=new Date().toISOString(); } else { row.autor=_me; } // crea: autor; edita: editado_por
-    function ok(data){ var i=_cotiz.map(function(x){return x.id;}).indexOf(data.id); if(i>=0)_cotiz[i]=data; else _cotiz.unshift(data);
+    function ok(data){ if(data){ ['agrupar_sec','mostrar_item_val','con_iva','vehiculos'].forEach(function(k){ if(data[k]==null && (k in row)) data[k]=row[k]; }); } // si la BD aún no tiene la columna, reflejar el flag en memoria (PDF/lista de esta sesión)
+      var i=_cotiz.map(function(x){return x.id;}).indexOf(data.id); if(i>=0)_cotiz[i]=data; else _cotiz.unshift(data);
       _cotEditId=data.id; _cotEditNum=data.numero||null;
       pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+nextCotizGlobal();
       if(confirmar){ cotImprimir(data); toast("✓ Cotización N°"+data.numero+" confirmada"); _cotEditId=null; _cotEditNum=null; cotLimpiar(); }
@@ -4127,7 +4128,7 @@
         _orden.forEach(function(sc){
           if(_agrup && sc){ // agrupado: una sola línea por sección (nombre + total), sin ítems
             var spre=0, spost=0; _bySec[sc].forEach(function(it){ spre+=it.pre; spost+=it.lt; });
-            rows+='<tr><td class="cp-desc" style="padding-left:18px;font-weight:700">'+escH(sc)+'</td><td class="r">1</td>'+_cells(spre,spost,0,false,true)+'</tr>'; return; }
+            rows+='<tr><td class="cp-desc" style="padding-left:18px;font-weight:700">'+escH(sc)+'</td><td class="r"></td>'+_cells(spre,spost,0,false,true)+'</tr>'; return; }
           if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00;text-align:center">'+escH(sc)+'</td></tr>';
           _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td>'+_cells(it.pre,it.lt,it.dp,false,false)+'</tr>'; }); });
         // subtotal del vehículo (siempre)
