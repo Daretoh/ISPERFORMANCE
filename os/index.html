@@ -3717,11 +3717,19 @@
     cotAddVeh({ veh:limpiaBasura((e.marca||"")+" "+(e.modelo||"")).trim(), patente:limpiaBasura(e.patente||""), anio:e.anioVeh||"", talla:(e.talla||"M"), vehiculo_id:e.id, items:cotItemsDeVeh(e) }, true);
     cotRefreshPendientes(); toast("✓ Vehículo agregado a la cotización"); }
   // convierte una fila del Cierre GM (servicios con talla + extra) en líneas de cotización
+  // GM: los servicios del catálogo se agrupan en 2 items estándar que ve el cliente
+  // ("Preparación de Venta" y "Pulido / Realce de Brillo"); los Extra fuera de catálogo van aparte.
   function cotItemsDeGMRow(r){ var t=r.talla||"M", out=[];
+    var PUL={brillo:1,barniz:1}; // van a "Pulido / Realce de Brillo"
+    var prep=0, pul=0, extras=[];
     (typeof GM_SERV!=="undefined"?GM_SERV:[]).forEach(function(s){ var v=(r.items&&r.items[s.k])||0; if(!v)return;
-      if(s.manual){ out.push({ desc:(r.notas?("Extra: "+r.notas):(s.n||"Extra")), cant:1, precio:(+v||0), descPct:0 }); }
-      else { out.push({ desc:s.n, cant:(+v||1), precio:((s.p&&s.p[t])||0), descPct:0 }); } });
-    out.push({ desc:"Retiro / entrega", cant:1, precio:((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000), descPct:0 });
+      if(s.manual){ extras.push({ desc:(r.notas?("Extra: "+r.notas):(s.n||"Extra")), cant:1, precio:(+v||0), descPct:0 }); return; }
+      var lt=((s.p&&s.p[t])||0)*(+v||1);
+      if(PUL[s.k]) pul+=lt; else prep+=lt; });
+    prep += ((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000); // retiro/entrega dentro de Preparación de Venta
+    if(prep) out.push({ desc:"Preparación de Venta", cant:1, precio:prep, descPct:0 });
+    if(pul)  out.push({ desc:"Pulido / Realce de Brillo", cant:1, precio:pul, descPct:0 });
+    extras.forEach(function(x){ out.push(x); });
     return out; }
   var _gmiRows=[];
   // modal: traer autos del Cierre GM de un mes elegido
@@ -3732,6 +3740,28 @@
     rows+='<tr style="border-top:1px solid var(--line,#f0f0f0)"><td style="padding:5px 6px"><b>Retiro / entrega</b> (siempre)</td>'+tallas.map(function(t){return '<td style="padding:5px 6px;text-align:right">'+clp(ret[t]||0)+'</td>';}).join("")+'</tr>';
     rows+='<tr style="border-top:1px solid var(--line,#f0f0f0)"><td style="padding:5px 6px;color:#888" colspan="5">Extra ($): monto manual según el trabajo (desab./pintura, etc.)</td></tr>';
     return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'; }
+  // Exporta el detalle completo del mes de GM a un Excel (.xlsx) para enviar al cliente.
+  function gmExportXLSX(mes){
+    if(typeof gmRows!=="function"){ toast("Cierre GM no disponible"); return; }
+    var rows=gmRows(mes).filter(function(r){ return r.vehiculo_id||r.marca||r.patente; });
+    if(!rows.length){ toast("Sin vehículos de GM en "+gmMesNom(mes)); return; }
+    var serv=(typeof GM_SERV!=="undefined"?GM_SERV:[]), fijos=serv.filter(function(s){return !s.manual;}), man=serv.filter(function(s){return s.manual;})[0];
+    var header=["N°","Vehículo","Patente","Talla"].concat(fijos.map(function(s){return s.n;})).concat(["Extra $","Retiro/entrega","Descuento","Total","Notas / Obs"]);
+    var aoa=[header], tot=0;
+    rows.forEach(function(r,i){ var t=r.talla||"M", line=[i+1, (((r.marca||"")+" "+(r.modelo||"")).trim()||"Vehículo"), (r.patente||""), t];
+      fijos.forEach(function(s){ var v=(r.items&&r.items[s.k])||0; line.push(v?((s.p&&s.p[t])||0)*(+v||1):0); });
+      var extra=man?((r.items&&r.items[man.k])||0):0, ret=((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000), val=(typeof gmValor==="function")?gmValor(r):0;
+      line.push(+extra||0); line.push(ret); line.push(+r.descuento||0); line.push(val); line.push(r.notas||"");
+      tot+=val; aoa.push(line); });
+    aoa.push([]); var totRow=[]; for(var q=0;q<header.length;q++)totRow.push(""); totRow[0]="TOTAL DEL MES"; totRow[header.length-2]=tot; aoa.push(totRow);
+    function build(){ if(!window.XLSX){ toast("No se pudo cargar Excel"); return; }
+      var ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=header.map(function(h,i){ return {wch:(i===1?22:(i===0?5:(i===header.length-1?26:12)))}; });
+      var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Detalle "+mes);
+      XLSX.writeFile(wb, "GM_detalle_"+mes+".xlsx"); toast("✓ Excel generado: GM_detalle_"+mes+".xlsx"); }
+    if(window.XLSX){ build(); return; }
+    toast("Generando Excel…");
+    cargarLib("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js").then(build, function(){ cargarLib("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js").then(build, function(){ toast("No se pudo cargar la librería de Excel"); }); });
+  }
   function abrirGMImport(){
     if(typeof gmRows!=="function"){ toast("Cierre GM no disponible"); return; }
     var mesDef=(function(){ var mx=""; (data||[]).forEach(function(e){ if(typeof gmEsGM==="function"&&gmEsGM(e)){ var m=(e.fIngreso||e.fCoord||"").slice(0,7); if(m>mx)mx=m; } }); return mx||todayISO().slice(0,7); })();
@@ -3755,13 +3785,14 @@
           '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px"><button id="gmi-prev" class="btn sm" style="padding:6px 12px">‹</button><b id="gmi-meslbl" style="min-width:160px;text-align:center;font-size:15px">'+escH(gmMesNom(mes))+'</b><button id="gmi-next" class="btn sm" style="padding:6px 12px">›</button></div>'+
           '<div id="gmi-list">'+lista(mes)+'</div>'+
           '<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:700;font-size:13px">Ver tabla de precios (flota GM)</summary><div style="margin-top:8px">'+gmPreciosTablaHTML()+'</div></details>'+
-          '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="gmi-add" class="btn primary">Agregar seleccionados</button><button id="gmi-all" class="btn ghost">Marcar/desmarcar todos</button></div>'+
+          '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button id="gmi-add" class="btn primary">Agregar seleccionados</button><button id="gmi-all" class="btn ghost">Marcar/desmarcar todos</button><button id="gmi-xlsx" class="btn ghost" title="Descarga el detalle completo del mes en Excel para enviárselo al cliente">⬇ Exportar detalle (Excel)</button></div>'+
         '</div></div>';
       ov.querySelector("#gmi-x").onclick=close;
       ov.querySelector("#gmi-prev").onclick=function(){ render(gmMesShift(mes,-1)); };
       ov.querySelector("#gmi-next").onclick=function(){ render(gmMesShift(mes,1)); };
       ov.querySelectorAll(".gmi-row").forEach(function(tr){ tr.onclick=function(ev){ if(ev.target&&ev.target.classList.contains("gmi-chk"))return; var c=tr.querySelector(".gmi-chk"); if(c)c.checked=!c.checked; }; });
       ov.querySelector("#gmi-all").onclick=function(){ var cs=ov.querySelectorAll(".gmi-chk"), any=Array.prototype.some.call(cs,function(c){return !c.checked;}); cs.forEach(function(c){ c.checked=any; }); };
+      var _xb=ov.querySelector("#gmi-xlsx"); if(_xb) _xb.onclick=function(){ gmExportXLSX(mes); };
       ov.querySelector("#gmi-add").onclick=function(){ var rids=Array.prototype.slice.call(ov.querySelectorAll(".gmi-chk:checked")).map(function(c){return c.dataset.rid;});
         if(!rids.length){ toast("Marca al menos un vehículo"); return; }
         var bs=cotBlocks(); if(bs.length===1){ var d=cotVehData(bs[0]); if(!d.veh&&!d.patente&&!d.items.some(function(x){return x.desc||x.precio;})) bs[0].remove(); }
