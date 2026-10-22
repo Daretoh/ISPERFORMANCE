@@ -1651,8 +1651,7 @@
           <div style="display:flex;flex-direction:column;gap:10px">
             <label class="f cotiz-descadic"><span class="lab">Descuento adicional %</span><input id="cot-descadic" type="number" min="0" step="0.1" value="0"></label>
             <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="cot-iva" checked> Aplicar IVA (19%)</label>
-            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600" title="Si lo apagás, el PDF muestra los ítems y el subtotal por vehículo, sin el valor de cada ítem"><input type="checkbox" id="cot-itemval" checked> Mostrar valor por ítem</label>
-            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600" title="En el PDF, cada sección se muestra como UNA sola línea (nombre + total), sin los ítems. El detalle lo seguís viendo acá en el editor. Los ítems sueltos (sin sección, ej. Extras) sí se muestran."><input type="checkbox" id="cot-agrupsec"> Agrupar secciones en el PDF</label>
+            <div class="hint" style="text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--ink-muted)">En el PDF cada sección se muestra como una línea (nombre + total); el detalle lo ves solo acá. Los ítems sueltos (sin sección) sí se muestran.</div>
           </div>
           <div class="cotiz-tot-box">
             <div><span>Subtotal</span><b id="cot-sub">$0</b></div>
@@ -4020,7 +4019,7 @@
     if(!confirm("¿Dividir la cotización N°"+c.numero+" en "+vehs.length+" cotizaciones (una por vehículo)?\nSe crean "+vehs.length+" nuevas con su propio N°. La N°"+c.numero+" se mantiene (la puedes eliminar después)."))return;
     var base=nextCotizGlobal(), hechas=0, nums=[];
     vehs.forEach(function(v,i){ var items=(v.items||[]).filter(function(f){return f.desc||f.precio;});
-      var row={ numero:base+i, fecha:(c.fecha||todayISO()), fecha_hasta:(c.fecha_hasta||null), cliente_nombre:(c.cliente_nombre||""), cliente_tel:(c.cliente_tel||""), cliente_correo:(c.cliente_correo||""), cliente_contacto:(c.cliente_contacto||""), cliente_rut:(c.cliente_rut||""), cliente_giro:(c.cliente_giro||""), vehiculo:(v.veh||""), anio:(v.anio||""), items:items, vehiculos:[v], desc_adic_pct:(+c.desc_adic_pct||0), con_iva:!!c.con_iva, mostrar_item_val:(c.mostrar_item_val!==false), agrupar_sec:!!c.agrupar_sec, vehiculo_id:(v.vehiculo_id||null), origen_num:(c.numero||null), estado:(c.estado||"CONFIRMADA"), autor:(window.ISP_EMAIL||"") };
+      var row={ numero:base+i, fecha:(c.fecha||todayISO()), fecha_hasta:(c.fecha_hasta||null), cliente_nombre:(c.cliente_nombre||""), cliente_tel:(c.cliente_tel||""), cliente_correo:(c.cliente_correo||""), cliente_contacto:(c.cliente_contacto||""), cliente_rut:(c.cliente_rut||""), cliente_giro:(c.cliente_giro||""), vehiculo:(v.veh||""), anio:(v.anio||""), items:items, vehiculos:[v], desc_adic_pct:(+c.desc_adic_pct||0), con_iva:!!c.con_iva, mostrar_item_val:true, agrupar_sec:true, vehiculo_id:(v.vehiculo_id||null), origen_num:(c.numero||null), estado:(c.estado||"CONFIRMADA"), autor:(window.ISP_EMAIL||"") };
       cotInsertRow(row, function(data){ hechas++; if(data){ _cotiz.unshift(data); nums.push(data.numero); }
         if(hechas===vehs.length){ _cotiz.sort(function(a,b){return (+b.numero||0)-(+a.numero||0);}); pintarCotList(); var tg=document.getElementById("cot-num-tag"); if(tg)tg.textContent="N° "+nextCotizGlobal();
           nums.sort(function(a,b){return a-b;}); toast(nums.length?("✓ Creadas: N°"+nums.join(", N°")):"⚠ No se pudo dividir"); } }); });
@@ -4034,7 +4033,7 @@
     var numero=_cotEditNum||nextCotizGlobal();
     var first=vehs[0]||{};
     var _cli=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]||{};
-    var row={ numero:numero, fecha:((document.getElementById("cot-fecha")||{}).value||todayISO()), fecha_hasta:(((document.getElementById("cot-fecha2")||{}).value)||null), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), cliente_correo:(document.getElementById("cot-correo")||{}).value||"", cliente_contacto:(document.getElementById("cot-contacto")||{}).value||"", cliente_rut:(_cli.rut||""), cliente_giro:(_cli.giro||""), vehiculo:(vehs.length>1?(vehs.length+" vehículos"):(first.veh||"")), anio:(first.anio||""), items:allItems, vehiculos:vehs, desc_adic_pct:d.da, con_iva:d.conIva, mostrar_item_val:!!(document.getElementById("cot-itemval")&&document.getElementById("cot-itemval").checked), agrupar_sec:!!(document.getElementById("cot-agrupsec")&&document.getElementById("cot-agrupsec").checked), vehiculo_id:(first.vehiculo_id||null), estado:(confirmar?"CONFIRMADA":"BORRADOR") };
+    var row={ numero:numero, fecha:((document.getElementById("cot-fecha")||{}).value||todayISO()), fecha_hasta:(((document.getElementById("cot-fecha2")||{}).value)||null), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), cliente_correo:(document.getElementById("cot-correo")||{}).value||"", cliente_contacto:(document.getElementById("cot-contacto")||{}).value||"", cliente_rut:(_cli.rut||""), cliente_giro:(_cli.giro||""), vehiculo:(vehs.length>1?(vehs.length+" vehículos"):(first.veh||"")), anio:(first.anio||""), items:allItems, vehiculos:vehs, desc_adic_pct:d.da, con_iva:d.conIva, mostrar_item_val:true, agrupar_sec:true, vehiculo_id:(first.vehiculo_id||null), estado:(confirmar?"CONFIRMADA":"BORRADOR") };
     var _me=(window.ISP_EMAIL||""); if(_cotEditId){ row.editado_por=_me; row.updated_at=new Date().toISOString(); } else { row.autor=_me; } // crea: autor; edita: editado_por
     function ok(data){ if(data){ ['agrupar_sec','mostrar_item_val','con_iva','vehiculos'].forEach(function(k){ if(data[k]==null && (k in row)) data[k]=row[k]; }); } // si la BD aún no tiene la columna, reflejar el flag en memoria (PDF/lista de esta sesión)
       var i=_cotiz.map(function(x){return x.id;}).indexOf(data.id); if(i>=0)_cotiz[i]=data; else _cotiz.unshift(data);
@@ -4104,7 +4103,7 @@
     var nom=(c.cliente_nombre||"").trim().toLowerCase(); if(!nom)return out;
     Object.keys(clientesInfo||{}).forEach(function(k){ var i=clientesInfo[k]||{}; var nm=((i.nombre_mostrar||i.razon_social||i.nombre||"")+"").trim().toLowerCase(); if(nm&&nm===nom){ if(!out.rut)out.rut=i.rut||""; if(!out.giro)out.giro=i.giro||""; } });
     return out; }
-  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=(c.mostrar_item_val!==false), _agrup=!!c.agrupar_sec;
+  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=true, _agrup=true; // PDF: siempre agrupa secciones (una línea por sección) y muestra valores; detalle solo en el editor
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
     if(vehs){ var rows="", n=0, _hasIva=!!c.con_iva;
       // muestra columna de descuento por ítem solo si hay descuentos (y si se muestran valores)
