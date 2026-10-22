@@ -3970,6 +3970,11 @@
   }
   // avance de una cotización = trabajos hechos/total de sus vehículos vinculados
   function cotAvancePct(c){ var ids={}; ((c&&c.vehiculos)||[]).forEach(function(v){ if(!v)return; if(v.vehiculo_id){ ids[v.vehiculo_id]=1; } else if(v.patente){ var m=(data||[]).filter(function(x){return cotPatNorm(x.patente)===cotPatNorm(v.patente);})[0]; if(m)ids[m.id]=1; } }); if(c&&c.vehiculo_id)ids[c.vehiculo_id]=1; var done=0,tot=0; Object.keys(ids).forEach(function(id){ var e=(data||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(e&&e.trabajos){ tot+=e.trabajos.length; done+=e.trabajos.filter(function(w){return w.ok;}).length; } }); return tot?{done:done,tot:tot,pct:Math.round(done*100/tot)}:null; }
+  // nombres (minúscula) de trabajos HECHOS en Seguimiento para los vehículos de la cotización
+  function cotDoneSet(c){ var ids={}; ((c&&c.vehiculos)||[]).forEach(function(v){ if(!v)return; if(v.vehiculo_id){ids[v.vehiculo_id]=1;} else if(v.patente){ var m=(data||[]).filter(function(x){return cotPatNorm(x.patente)===cotPatNorm(v.patente);})[0]; if(m)ids[m.id]=1; } }); if(c&&c.vehiculo_id)ids[c.vehiculo_id]=1;
+    var done={}; Object.keys(ids).forEach(function(id){ var e=(data||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(e&&e.trabajos)e.trabajos.forEach(function(w){ if(w.ok){ var k=(w.t||'').trim().toLowerCase(); if(k)done[k]=1; } }); }); return done; }
+  // un ítem está hecho si se marcó manual (it.done) o si su trabajo está hecho en Seguimiento
+  function cotItemHecho(c,it,ds){ if(it&&it.done)return true; ds=ds||cotDoneSet(c); var k=((it&&it.desc)||'').trim().toLowerCase(); return !!(k&&ds[k]); }
   function pintarCotList(){ var el=document.getElementById("cot-list"); if(!el)return;
     var bs=document.getElementById("cot-buscar"), q=((bs&&bs.value)||"").toLowerCase().trim();
     var list=q?_cotiz.filter(function(c){ return ("n°"+c.numero+" "+(c.cliente_nombre||"")+" "+(c.vehiculo||"")).toLowerCase().indexOf(q)>=0 || String(c.numero).indexOf(q)>=0; }):_cotiz;
@@ -4123,6 +4128,7 @@
       tablaHTML='<table class="cp-table"><colgroup><col style="width:4%"><col style="width:42%"><col style="width:8%"><col style="width:13%"><col style="width:9%"><col style="width:11%"><col style="width:13%"></colgroup><thead><tr><th>#</th><th>Descripción</th><th class="r">Cant.</th><th class="r">Precio'+_su+'</th><th class="r">Desc.</th><th class="r">Valor desc.</th><th class="r">Total'+_su+'</th></tr></thead><tbody>'+filasHTML+'</tbody></table>'; }
     var da=+c.desc_adic_pct||0, daval=Math.round(sub*da/100), neto=sub-daval;
     var ivaVal=c.con_iva?Math.round(neto*0.19):0, total=neto+ivaVal;
+    var _abonado=0; (_ccList||[]).forEach(function(cc){ try{ _abonado+=ccAbonadoCot(cc,c.numero); }catch(_){ } }); // abonos asignados a esta cotización (desde Cierres por cliente)
     function _fFmt(s){ var p=(s||"").slice(0,10).split("-"); return (p[2]||"")+"/"+(p[1]||"")+"/"+(p[0]||""); }
     var _fdesde=(c.fecha||todayISO()).slice(0,10), _fhasta=(c.fecha_hasta||"").slice(0,10);
     var _rango=(_fhasta && _fhasta!==_fdesde), fechaLbl=(_rango?"Periodo":"Fecha"), fechaTxt=(_rango?(_fFmt(_fdesde)+" – "+_fFmt(_fhasta)):_fFmt(_fdesde));
@@ -4148,7 +4154,7 @@
       +'</div>'
       +'<div id="cp-cierre">'
         +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
-        +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div>'+(c.con_iva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(ivaVal)+'</span></div>'):'')+'<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div></div></div>'
+        +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div>'+(c.con_iva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(ivaVal)+'</span></div>'):'')+(_abonado>0?('<div class="r1"><span>Total</span><span>'+clp(total)+'</span></div><div class="r1"><span>− Abonos</span><span>- '+clp(_abonado)+'</span></div><div class="r1 big"><span>Total a pagar</span><span>'+clp(Math.max(0,total-_abonado))+'</span></div>'):('<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div>'))+'</div></div>'
         +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
         +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
         +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
@@ -6262,8 +6268,11 @@
   var CC_AV={pendiente:['#b91c1c','#fee2e2','Pendiente'],proceso:['#9a5b00','#ffedcc','En proceso'],hecho:['#0f6e56','#dcfce7','Hecho']};
   function ccAvanceOpts(v){ v=v||'pendiente'; return Object.keys(CC_AV).map(function(k){ return '<option value="'+k+'"'+(k===v?' selected':'')+'>'+CC_AV[k][2]+'</option>'; }).join(''); }
   function ccAvanceBadge(v){ var c=CC_AV[v||'pendiente']||CC_AV.pendiente; return '<span style="display:inline-block;font:700 10px/1 sans-serif;padding:2px 7px;border-radius:20px;background:'+c[1]+';color:'+c[0]+'">'+c[2]+'</span>'; }
-  // Avance de una cotización según sus ítems marcados como hechos.
-  function ccAvanceDe(c){ var its=(c&&c.items)||[]; var tot=its.length, d=0; its.forEach(function(it){ if(it.done)d++; }); var k=(!tot)?'pendiente':(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
+  // Avance de una cotización: ítems hechos (manual o según Seguimiento). Si no tiene ítems, usa el checklist del vehículo.
+  function ccAvanceDe(c){ var its=(c&&c.items)||[];
+    if(its.length){ var ds=cotDoneSet(c), tot=its.length, d=0; its.forEach(function(it){ if(cotItemHecho(c,it,ds))d++; }); var k=(d===0?'pendiente':(d>=tot?'hecho':'proceso')); return {k:k,done:d,total:tot}; }
+    var a=(typeof cotAvancePct==='function')?cotAvancePct(c):null; if(a) return {k:(a.done>=a.tot?'hecho':(a.done>0?'proceso':'pendiente')),done:a.done,total:a.tot};
+    return {k:'pendiente',done:0,total:0}; }
   // Cuerpo de correo para el cliente: resumen por cotización (total, abonado, saldo, avance).
   function ccCorreoTexto(cc){ var t=ccTotales(cc); var L=[];
     L.push('Estimado/a '+(cc.cliente||cc.nombre||'')+',');
@@ -6446,8 +6455,8 @@
     var abOrd=(cc.abonos||[]).slice().sort(function(x,y){return String(x.fecha||'').localeCompare(String(y.fecha||''));});
     // 1) resumen: una fila por cotizacion aprobada con lo abonado y su saldo
     var fc=(cc.cotiz||[]).map(function(l,i){ var c=ccCot(l.numero), mt=ccMontoLinea(l), abn=ccAbonadoCot(cc,l.numero), sld=mt-abn, av=ccAvanceDe(c);
-      var its=(c&&c.items)||[], hechos=[], pend=[];
-      its.forEach(function(it){ (it.done?hechos:pend).push(it.desc||''); });
+      var its=(c&&c.items)||[], hechos=[], pend=[], _ds=cotDoneSet(c);
+      its.forEach(function(it){ (cotItemHecho(c,it,_ds)?hechos:pend).push(it.desc||''); });
       var avTxt='';
       if(its.length){ avTxt='<div style="font-size:10.5px;color:#333;margin-top:3px">'
         +(hechos.length?('<span style="color:#0f6e56">✓ Hecho:</span> '+escH(hechos.filter(Boolean).join(', '))):'')
