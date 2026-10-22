@@ -3640,7 +3640,9 @@
   document.addEventListener('mouseup',function(){ if(_cotDrag) cotDragEnd(true); });
   document.addEventListener('keydown',function(ev){ if(ev.key!=='Escape')return; if(_cotDrag) cotDragEnd(false); else cotPickClear(); });
   function cotBindBlock(block){ block.querySelector('.cvb-del').onclick=function(){ block.remove(); if(!cotBlocks().length)cotAddVeh({}); cotCalc(); };
-    block.querySelector('.cvb-additem').onclick=function(){ cotAddRow(null, cotItemsOf(block)); };
+    block.querySelector('.cvb-additem').onclick=function(){ var cont=cotItemsOf(block); var firstSec=cont.querySelector('.cot-sec'); // la línea nueva queda SUELTA (arriba de las secciones), ideal para un extra
+      if(firstSec){ firstSec.insertAdjacentHTML('beforebegin', cotRowHTML(null)); cotBind(); cotCalc(); var r=firstSec.previousElementSibling; var d=r&&r.querySelector('.cot-desc'); if(d)d.focus(); }
+      else { cotAddRow(null, cont); } };
     var as=block.querySelector('.cvb-addsec'); if(as)as.onclick=function(){ var it=cotItemsOf(block); it.insertAdjacentHTML('beforeend', cotSecHTML('')+cotRowHTML(null)); cotBind(); cotCalc(); var hs=it.querySelectorAll('.cs-title'); var t=hs[hs.length-1]; if(t)t.focus(); };
     var tl=block.querySelector('.cvb-talla'); if(tl)tl.onchange=cotCalc;
     var _pat=block.querySelector('.cvb-pat'); if(_pat)_pat.onchange=function(){ cotAutoLink(block,true); cotRenderAvance(block); }; // al escribir la patente, si coincide con un vehículo, se vincula solo
