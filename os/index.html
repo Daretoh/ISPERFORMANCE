@@ -371,7 +371,17 @@
   .ktrab-next .ktrab-count{flex:none;}
   .kcard .ktrab-full{display:none;}
   .kcard.editing .ktrab-full{display:flex;}
-  .kcard.editing .ktrab-next{display:none;}
+  .kcard.editing .ktrab-next,.kcard.editing .ktrab-fold{display:none;}
+  /* ---- checklist desplegable (compacto) agrupado por servicio ---- */
+  .ktrab-fold{margin:9px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+  .ktrab-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:7px;font:800 11px/1.2 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ground);background:var(--ink);padding:8px 11px;}
+  .ktrab-fold>summary::-webkit-details-marker{display:none;}
+  .ktrab-fold>summary::before{content:"\25B8";font-size:10px;opacity:.8;}
+  .ktrab-fold[open]>summary::before{content:"\25BE";}
+  .ktrab-grp{padding:7px 10px;background:var(--surface);}
+  .ktrab-grp+.ktrab-grp{border-top:1px solid var(--line);}
+  .ktrab-grp-h{display:flex;align-items:center;gap:6px;font:700 10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.04em;color:var(--ink-muted);margin:0 0 5px;}
+  .ktrab-grp .ktrab-row{margin:3px 0;}
   /* ---- prioridad de la card ---- */
   .kcard.prio-URGENTE{border-left:5px solid var(--crit);}
   .kcard.prio-PRIORIDAD{border-left:5px solid var(--warn);}
@@ -4715,6 +4725,7 @@
     board.innerHTML=ESTADOS.map(function(st,ci){
       var items=data.filter(function(e){return e.estado===st;});
       var ocultos=0;
+      if(ci<3){ var _po={URGENTE:0,PRIORIDAD:1,NORMAL:2,PROGRAMADO:3}; items=items.slice().sort(function(a,b){ var pa=_po[prioDeVeh(a)]; if(pa==null)pa=2; var pb=_po[prioDeVeh(b)]; if(pb==null)pb=2; if(pa!==pb)return pa-pb; var fa=a.fCoord||a.fIngreso||"", fb=b.fCoord||b.fIngreso||""; return fa<fb?-1:(fa>fb?1:0); }); } // orden por prioridad (urgente primero), luego por fecha
       if(ci>=3){ // Terminado / Entregado: solo de ESTE MES (lo antiguo vive en Clientes/Agenda)
         items=items.slice().sort(function(a,b){ var fa=a.fSalida||a.fCoord||a.fIngreso||"",fb=b.fSalida||b.fCoord||b.fIngreso||""; return fa<fb?1:-1; });
         var tot=items.length; items=items.filter(function(e){ var f=e.fSalida||e.fCoord||e.fIngreso||""; return !f || esEsteMes(f); }); ocultos=tot-items.length;
@@ -4769,14 +4780,21 @@
           '</div>';
         // tareas del servicio: visibles siempre (no solo al editar)
         var vsvcInc=svcIncHTML?('<div class="svc-inc-wrap">'+svcIncHTML+'</div>'):'';
-        // vista compacta (card cerrada): TODAS las tareas pendientes (marcables)
+        // vista compacta (card cerrada): checklist DESPLEGABLE, agrupado por servicio, con contador
         var vtrabCompact='';
         if(trarr.length){
-          var pend=[]; for(var _ti=0;_ti<trarr.length;_ti++){ if(!trarr[_ti].ok) pend.push(_ti); }
-          if(pend.length){
-            vtrabCompact='<div class="ktrab-next">'+pend.map(function(idx){ return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+idx+'"><span>'+escH(trarr[idx].t||"")+'</span></label>'; }).join("")+'</div>';
+          if(trPend>0){
+            // agrupa cada trabajo bajo su servicio (por coincidencia con las tareas del servicio); el resto a "Otros"
+            var _usa={}, _grupos=[];
+            (e.servicios||[]).forEach(function(sv){ var tn=svcTareas(sv).map(function(x){return (x||'').trim().toLowerCase();}); var ix=[]; trarr.forEach(function(w,i){ if(_usa[i])return; var k=(w.t||'').trim().toLowerCase(); if(k&&tn.indexOf(k)>=0){ ix.push(i); _usa[i]=1; } }); if(ix.length)_grupos.push({sv:sv,ix:ix}); });
+            var _ot=[]; trarr.forEach(function(w,i){ if(!_usa[i])_ot.push(i); }); if(_ot.length)_grupos.push({sv:(_grupos.length?'Otros trabajos':''),ix:_ot});
+            var _grpHTML=_grupos.map(function(g){ var gt=g.ix.length, gd=g.ix.filter(function(i){return trarr[i].ok;}).length, gp=gt-gd;
+              var rows=g.ix.map(function(i){ var w=trarr[i]; return '<label class="ktrab-row"><input type="checkbox" class="ktrab-ck" data-id="'+e.id+'" data-i="'+i+'"'+(w.ok?' checked':'')+'><span'+(w.ok?' class="done"':'')+'>'+escH(w.t||"")+'</span></label>'; }).join("");
+              var h=g.sv?('<div class="ktrab-grp-h">'+escH(g.sv)+' <span class="ktrab-count '+(gp>0?'pend':'done')+'">'+(gp>0?(gp+'/'+gt):('✓ '+gt))+'</span></div>'):'';
+              return '<div class="ktrab-grp">'+h+rows+'</div>'; }).join("");
+            vtrabCompact='<details class="ktrab-fold"><summary class="ktrab-foldh">🔧 Trabajos <span class="ktrab-count pend">faltan '+trPend+' de '+trarr.length+'</span></summary>'+_grpHTML+'</details>';
           } else {
-            vtrabCompact='<div class="ktrab-next allok"><span class="ktrab-count done">✓ Trabajos listos</span></div>';
+            vtrabCompact='<div class="ktrab-next allok"><span class="ktrab-count done">✓ Trabajos listos ('+trarr.length+')</span></div>';
           }
         }
         var vtrab=vtrabCompact+vtrabFull;
