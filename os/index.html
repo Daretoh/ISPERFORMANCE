@@ -3746,21 +3746,54 @@
     var rows=gmRows(mes).filter(function(r){ return r.vehiculo_id||r.marca||r.patente; });
     if(!rows.length){ toast("Sin vehículos de GM en "+gmMesNom(mes)); return; }
     var serv=(typeof GM_SERV!=="undefined"?GM_SERV:[]), fijos=serv.filter(function(s){return !s.manual;}), man=serv.filter(function(s){return s.manual;})[0];
-    var header=["N°","Vehículo","Patente","Talla"].concat(fijos.map(function(s){return s.n;})).concat(["Extra $","Retiro/entrega","Descuento","Total","Notas / Obs"]);
-    var aoa=[header], tot=0;
+    var header=["N°","Vehículo","Patente","Talla"].concat(fijos.map(function(s){return s.n;})).concat(["Extra $","Retiro/entrega","Descuento","Total vehículo","Notas / Obs"]);
+    var COLS=header.length, hoy=todayISO().split('-').reverse().join('/');
+    // filas de título (3) + spacer (1) -> encabezado en la fila 4 (índice 4)
+    var aoa=[["IS PERFORMANCE"],["Detalle de servicios · Flota Guillermo Morales"],["Mes: "+gmMesNom(mes)+"   ·   Emitido: "+hoy],[],header];
+    var HDR=4, tot=0, totExtra=0;
     rows.forEach(function(r,i){ var t=r.talla||"M", line=[i+1, (((r.marca||"")+" "+(r.modelo||"")).trim()||"Vehículo"), (r.patente||""), t];
       fijos.forEach(function(s){ var v=(r.items&&r.items[s.k])||0; line.push(v?((s.p&&s.p[t])||0)*(+v||1):0); });
       var extra=man?((r.items&&r.items[man.k])||0):0, ret=((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000), val=(typeof gmValor==="function")?gmValor(r):0;
       line.push(+extra||0); line.push(ret); line.push(+r.descuento||0); line.push(val); line.push(r.notas||"");
-      tot+=val; aoa.push(line); });
-    aoa.push([]); var totRow=[]; for(var q=0;q<header.length;q++)totRow.push(""); totRow[0]="TOTAL DEL MES"; totRow[header.length-2]=tot; aoa.push(totRow);
+      tot+=val; totExtra+=(+extra||0); aoa.push(line); });
+    var totR=aoa.length; var totRow=[]; for(var q=0;q<COLS;q++)totRow.push(""); totRow[0]="TOTAL DEL MES ("+rows.length+" vehículos)"; totRow[COLS-2]=tot; aoa.push(totRow);
     function build(){ if(!window.XLSX){ toast("No se pudo cargar Excel"); return; }
-      var ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=header.map(function(h,i){ return {wch:(i===1?22:(i===0?5:(i===header.length-1?26:12)))}; });
-      var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Detalle "+mes);
+      var ws=XLSX.utils.aoa_to_sheet(aoa);
+      // anchos de columna
+      ws['!cols']=header.map(function(h,i){ return {wch:(i===0?5:(i===1?24:(i===2?11:(i===3?7:(i===COLS-1?28:(i===COLS-2?15:12))))))}; });
+      ws['!rows']=[{hpt:26},{hpt:17},{hpt:15},{hpt:6},{hpt:22}];
+      ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:COLS-1}},{s:{r:1,c:0},e:{r:1,c:COLS-1}},{s:{r:2,c:0},e:{r:2,c:COLS-1}},{s:{r:totR,c:0},e:{r:totR,c:COLS-3}}];
+      var ORA="FF6B00", ORALT="FFF3E9", ORAMED="FFE0C7", ZEB="FAF7F3";
+      function B(){ return {style:"thin",color:{rgb:"E7E1D8"}}; }
+      var bd={top:B(),bottom:B(),left:B(),right:B()};
+      function S(r,c,st){ var a=XLSX.utils.encode_cell({r:r,c:c}); if(!ws[a])ws[a]={t:"s",v:""}; ws[a].s=st; }
+      // títulos
+      S(0,0,{font:{bold:true,sz:17,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:ORA}},alignment:{horizontal:"center",vertical:"center"}});
+      S(1,0,{font:{bold:true,sz:11,color:{rgb:"3A3A3A"}},fill:{fgColor:{rgb:ORALT}},alignment:{horizontal:"center",vertical:"center"}});
+      S(2,0,{font:{sz:10,color:{rgb:"8A8A8A"}},alignment:{horizontal:"center"}});
+      // encabezado
+      for(var c=0;c<COLS;c++) S(HDR,c,{font:{bold:true,sz:10,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:ORA}},alignment:{horizontal:(c===1?"left":"center"),vertical:"center",wrapText:true},border:bd});
+      // datos
+      for(var i=0;i<rows.length;i++){ var r=HDR+1+i, zeb=(i%2===1);
+        for(var cc=0;cc<COLS;cc++){
+          var money=(cc>=4 && cc<=COLS-2), isTot=(cc===COLS-2);
+          var st={border:bd,font:{sz:10,color:{rgb:"222222"}},alignment:{vertical:"center",horizontal:(cc===1||cc===COLS-1?"left":(money?"right":"center"))}};
+          if(zeb) st.fill={fgColor:{rgb:ZEB}};
+          if(isTot){ st.font={sz:10,bold:true,color:{rgb:"7A3B00"}}; st.fill={fgColor:{rgb:ORALT}}; }
+          if(money){ st.numFmt='#,##0'; var a=XLSX.utils.encode_cell({r:r,c:cc}); if(ws[a])ws[a].z='#,##0'; }
+          S(r,cc,st);
+        } }
+      // total del mes
+      for(var c2=0;c2<COLS;c2++){ var mo=(c2===COLS-2); var st2={border:bd,fill:{fgColor:{rgb:ORAMED}},font:{bold:true,sz:(mo?12:11),color:{rgb:"7A3B00"}},alignment:{vertical:"center",horizontal:(c2===0?"left":(mo?"right":"center"))}};
+        if(mo){ st2.numFmt='#,##0'; var at=XLSX.utils.encode_cell({r:totR,c:c2}); if(ws[at])ws[at].z='#,##0'; }
+        S(totR,c2,st2); }
+      var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "GM "+mes);
       XLSX.writeFile(wb, "GM_detalle_"+mes+".xlsx"); toast("✓ Excel generado: GM_detalle_"+mes+".xlsx"); }
-    if(window.XLSX){ build(); return; }
     toast("Generando Excel…");
-    cargarLib("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js").then(build, function(){ cargarLib("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js").then(build, function(){ toast("No se pudo cargar la librería de Excel"); }); });
+    if(window.XLSX && window.XLSX.__styled){ build(); return; }
+    cargarLib("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js").then(function(){ if(window.XLSX)window.XLSX.__styled=true; build(); }, function(){
+      cargarLib("https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js").then(function(){ if(window.XLSX)window.XLSX.__styled=true; build(); }, function(){
+        cargarLib("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js").then(build, function(){ toast("No se pudo cargar la librería de Excel"); }); }); });
   }
   function abrirGMImport(){
     if(typeof gmRows!=="function"){ toast("Cierre GM no disponible"); return; }
