@@ -4093,14 +4093,13 @@
     if(vehs){ var rows="", n=0, _hasIva=!!c.con_iva;
       // muestra columna de descuento por ítem solo si hay descuentos (y si se muestran valores)
       var _anyDesc=_showVal && vehs.some(function(v){ return (v.items||[]).some(function(it){ return cotDescNorm(it.descPct)>0; }); });
-      var _nc=3+(_anyDesc?2:0)+(_hasIva?1:0);
-      // celdas de valor de una fila: con descuento -> Neto | Desc% | Neto c/desc ; luego c/IVA. Sin descuento -> Neto ; c/IVA
+      var _nc=3+(_anyDesc?2:0);
+      // celdas de valor de una fila (sin c/IVA por ítem; el IVA va solo en el total). Con descuento -> Neto | Desc% | Neto c/desc ; sin descuento -> Neto
       function _cells(pre,post,dp,bold,isSub){ var b=bold?' style="font-weight:800"':'', s='';
         if(_anyDesc){ s+='<td class="r"'+b+'>'+(_showVal?clp(pre):'')+'</td>';
           s+='<td class="r">'+(isSub?'':(dp?(_pctTxt(dp)+'%'):'—'))+'</td>';
           s+='<td class="r"'+b+'>'+(_showVal?clp(post):'')+'</td>'; }
         else { s+='<td class="r"'+b+'>'+(_showVal?clp(post):'')+'</td>'; }
-        if(_hasIva) s+='<td class="r"'+b+'>'+(_showVal?clp(Math.round(post*1.19)):'')+'</td>';
         return s; }
       vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
         var vsub=0, vpre=0, _secs=[], _bySec={};
@@ -4114,12 +4113,10 @@
           _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td>'+_cells(it.pre,it.lt,it.dp,false,false)+'</tr>'; }); });
         // subtotal del vehículo (siempre)
         rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td>'+_cells(vpre,vsub,0,true,true)+'</tr>'; });
-      var _cg; if(_anyDesc && _hasIva) _cg='<col style="width:38%"><col style="width:8%"><col style="width:14%"><col style="width:8%"><col style="width:16%"><col style="width:16%">';
-        else if(_anyDesc) _cg='<col style="width:44%"><col style="width:10%"><col style="width:16%"><col style="width:10%"><col style="width:20%">';
-        else if(_hasIva) _cg='<col style="width:56%"><col style="width:10%"><col style="width:17%"><col style="width:17%">';
+      var _cg; if(_anyDesc) _cg='<col style="width:44%"><col style="width:10%"><col style="width:16%"><col style="width:10%"><col style="width:20%">';
         else _cg='<col style="width:68%"><col style="width:12%"><col style="width:20%">';
       var _vhdr=(_hasIva?'Neto':'Valor');
-      var _thead='<tr><th>Descripción de servicio</th><th class="r">Cant.</th>'+(_anyDesc?('<th class="r">Neto</th><th class="r">Desc.</th><th class="r">Neto c/desc</th>'):('<th class="r">'+_vhdr+'</th>'))+(_hasIva?'<th class="r">c/IVA</th>':'')+'</tr>';
+      var _thead='<tr><th>Descripción de servicio</th><th class="r">Cant.</th>'+(_anyDesc?('<th class="r">Neto</th><th class="r">Desc.</th><th class="r">Neto c/desc</th>'):('<th class="r">'+_vhdr+'</th>'))+'</tr>';
       tablaHTML='<table class="cp-table"><colgroup>'+_cg+'</colgroup><thead>'+_thead+'</thead><tbody>'+rows+'</tbody></table>';
     } else { var filasHTML="", _idx=0, _su=(c.con_iva?" c/IVA":"");
       var _fila=function(it){ var dp=cotDescNorm(it.descPct); var lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}); sub+=lt; var dval=Math.round((+it.cant||0)*(+it.precio||0)*dp/100); _idx++;
@@ -4154,7 +4151,13 @@
       +'</div>'
       +'<div id="cp-cierre">'
         +'<div class="cp-bottom"><div class="cp-pay"><div class="cp-sec">Información de pago</div>'+escH(PAGO.razon)+'<br>RUT: '+escH(PAGO.rut)+'<br>'+escH(PAGO.banco)+'<br>N° Cuenta: '+escH(PAGO.cuenta)+'<br>'+escH(PAGO.correo)+'</div>'
-        +'<div class="cp-totbox"><div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div><div class="r1"><span>Descuento adicional '+(da?da+"%":"")+'</span><span>'+clp(daval)+'</span></div>'+(c.con_iva?('<div class="r1"><span>Neto</span><span>'+clp(neto)+'</span></div><div class="r1"><span>IVA 19%</span><span>'+clp(ivaVal)+'</span></div>'):'')+(_abonado>0?('<div class="r1"><span>Total</span><span>'+clp(total)+'</span></div><div class="r1"><span>− Abonos</span><span>- '+clp(_abonado)+'</span></div><div class="r1 big"><span>Total a pagar</span><span>'+clp(Math.max(0,total-_abonado))+'</span></div>'):('<div class="r1 big"><span>Total a pagar</span><span>'+clp(total)+'</span></div>'))+'</div></div>'
+        +'<div class="cp-totbox">'
+          +'<div class="r1"><span>Subtotal</span><span>'+clp(sub)+'</span></div>'
+          +(da>0?('<div class="r1"><span>Descuento adicional '+da+'%</span><span>- '+clp(daval)+'</span></div>'):'')
+          +(c.con_iva?('<div class="r1"><span>IVA 19%</span><span>'+clp(ivaVal)+'</span></div><div class="r1"><span>Total c/IVA</span><span>'+clp(total)+'</span></div>'):'')
+          +(_abonado>0?('<div class="r1"><span>− Abonos</span><span>- '+clp(_abonado)+'</span></div>'):'')
+          +'<div class="r1 big"><span>Total a pagar</span><span>'+clp(Math.max(0,(c.con_iva?total:neto)-_abonado))+'</span></div>'
+        +'</div></div>'
         +'<div class="cp-firma"><div class="cp-sign">IS Performance</div><div class="ln"></div><b>'+escH(miNombre())+'</b></div>'
         +'<div class="cp-nota"><b>Nota:</b> La cotización es válida por 7 días. La fecha de ejecución del servicio se coordinará según disponibilidad de taller.</div>'
         +'<div class="cp-foot-brand"><img class="cp-foot-logo" src="'+LOGO_ISP_B64+'" alt=""><div class="cp-foot-items"><span>'+icoTel+'+569 8561 5636</span><span>'+icoWeb+'isperformance.cl</span><span>'+icoMail+escH(PAGO.correo)+'</span></div></div>'
