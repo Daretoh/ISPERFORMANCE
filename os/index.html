@@ -1638,6 +1638,7 @@
             <label class="f cotiz-descadic"><span class="lab">Descuento adicional %</span><input id="cot-descadic" type="number" min="0" step="0.1" value="0"></label>
             <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="cot-iva" checked> Aplicar IVA (19%)</label>
             <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600" title="Si lo apagás, el PDF muestra los ítems y el subtotal por vehículo, sin el valor de cada ítem"><input type="checkbox" id="cot-itemval" checked> Mostrar valor por ítem</label>
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:600" title="En el PDF, cada sección se muestra como UNA sola línea (nombre + total), sin los ítems. El detalle lo seguís viendo acá en el editor. Los ítems sueltos (sin sección, ej. Extras) sí se muestran."><input type="checkbox" id="cot-agrupsec"> Agrupar secciones en el PDF</label>
           </div>
           <div class="cotiz-tot-box">
             <div><span>Subtotal</span><b id="cot-sub">$0</b></div>
@@ -3722,19 +3723,15 @@
     cotAddVeh({ veh:limpiaBasura((e.marca||"")+" "+(e.modelo||"")).trim(), patente:limpiaBasura(e.patente||""), anio:e.anioVeh||"", talla:(e.talla||"M"), vehiculo_id:e.id, items:cotItemsDeVeh(e) }, true);
     cotRefreshPendientes(); toast("✓ Vehículo agregado a la cotización"); }
   // convierte una fila del Cierre GM (servicios con talla + extra) en líneas de cotización
-  // GM: los servicios del catálogo se agrupan en 2 items estándar que ve el cliente
-  // ("Preparación de Venta" y "Pulido / Realce de Brillo"); los Extra fuera de catálogo van aparte.
+  // GM: trae el DETALLE completo, cada ítem etiquetado en su sección (Preparación de Venta /
+  // Pulido / Realce de Brillo). Los Extra fuera de catálogo quedan sueltos (sin sección).
+  // En el PDF, con el toggle "Agrupar secciones", cada sección se muestra como una sola línea.
   function cotItemsDeGMRow(r){ var t=r.talla||"M", out=[];
     var PUL={brillo:1,barniz:1}; // van a "Pulido / Realce de Brillo"
-    var prep=0, pul=0, extras=[];
     (typeof GM_SERV!=="undefined"?GM_SERV:[]).forEach(function(s){ var v=(r.items&&r.items[s.k])||0; if(!v)return;
-      if(s.manual){ extras.push({ desc:(r.notas?("Extra: "+r.notas):(s.n||"Extra")), cant:1, precio:(+v||0), descPct:0 }); return; }
-      var lt=((s.p&&s.p[t])||0)*(+v||1);
-      if(PUL[s.k]) pul+=lt; else prep+=lt; });
-    prep += ((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000); // retiro/entrega dentro de Preparación de Venta
-    if(prep) out.push({ desc:"Preparación de Venta", cant:1, precio:prep, descPct:0 });
-    if(pul)  out.push({ desc:"Pulido / Realce de Brillo", cant:1, precio:pul, descPct:0 });
-    extras.forEach(function(x){ out.push(x); });
+      if(s.manual){ out.push({ desc:(r.notas?("Extra: "+r.notas):(s.n||"Extra")), cant:1, precio:(+v||0), descPct:0, sec:'' }); return; } // extra: suelto, siempre visible
+      out.push({ desc:s.n, cant:(+v||1), precio:((s.p&&s.p[t])||0), descPct:0, sec:(PUL[s.k]?'Pulido / Realce de Brillo':'Preparación de Venta') }); });
+    out.push({ desc:"Retiro / entrega", cant:1, precio:((typeof GM_RETIRO!=="undefined"&&GM_RETIRO[t])||5000), descPct:0, sec:'Preparación de Venta' });
     return out; }
   var _gmiRows=[];
   // modal: traer autos del Cierre GM de un mes elegido
@@ -3840,7 +3837,8 @@
           if(!cliName && e) cliName=nomCliVeh(e)||e.cliente||"";
           cotAddVeh({ veh:((r.marca||"")+" "+(r.modelo||"")).trim(), patente:r.patente||"", anio:(e&&e.anioVeh)||"", talla:r.talla||"M", vehiculo_id:r.vehiculo_id||null, items:cotItemsDeGMRow(r) }); added++; });
         var nomI=document.getElementById("cot-nom"); if(nomI && !(nomI.value||"").trim()) nomI.value=cliName||"Guillermo Morales";
-        cotCliFill(); cotCalc(); close(); toast("✓ "+added+" vehículo(s) traídos de Cierre GM"); };
+        var _ag=document.getElementById("cot-agrupsec"); if(_ag)_ag.checked=true; // GM: PDF agrupado por sección por defecto
+        cotCliFill(); cotCalc(); close(); toast("✓ "+added+" vehículo(s) traídos de Cierre GM — detalle acá, PDF agrupado"); };
     }
     function close(){ try{document.body.removeChild(ov);}catch(e){} }
     ov.addEventListener("click",function(ev){ if(ev.target===ov)close(); });
@@ -3947,7 +3945,7 @@
     var save=document.getElementById('cot-save'); if(save) save.textContent=editing?('Actualizar N°'+(_cotEditNum||'')+' y generar PDF'):'Confirmar y generar PDF';
     var nb=document.getElementById('cot-nueva'); if(nb) nb.style.display=editing?'':'none';
   }
-  function cotCargar(c){ if(!c)return; document.getElementById('cot-nom').value=c.cliente_nombre||''; document.getElementById('cot-tel').value=c.cliente_tel||''; var _cc=document.getElementById('cot-correo'); if(_cc)_cc.value=c.cliente_correo||''; var _cx=document.getElementById('cot-contacto'); if(_cx)_cx.value=c.cliente_contacto||''; var _fa=document.getElementById('cot-fecha'); if(_fa)_fa.value=(c.fecha||'').slice(0,10); var _fb=document.getElementById('cot-fecha2'); if(_fb)_fb.value=(c.fecha_hasta||'').slice(0,10); document.getElementById('cot-descadic').value=(+c.desc_adic_pct||0); var iv=document.getElementById('cot-iva'); if(iv)iv.checked=!!c.con_iva; var _ivl=document.getElementById('cot-itemval'); if(_ivl)_ivl.checked=(c.mostrar_item_val!==false);
+  function cotCargar(c){ if(!c)return; document.getElementById('cot-nom').value=c.cliente_nombre||''; document.getElementById('cot-tel').value=c.cliente_tel||''; var _cc=document.getElementById('cot-correo'); if(_cc)_cc.value=c.cliente_correo||''; var _cx=document.getElementById('cot-contacto'); if(_cx)_cx.value=c.cliente_contacto||''; var _fa=document.getElementById('cot-fecha'); if(_fa)_fa.value=(c.fecha||'').slice(0,10); var _fb=document.getElementById('cot-fecha2'); if(_fb)_fb.value=(c.fecha_hasta||'').slice(0,10); document.getElementById('cot-descadic').value=(+c.desc_adic_pct||0); var iv=document.getElementById('cot-iva'); if(iv)iv.checked=!!c.con_iva; var _ivl=document.getElementById('cot-itemval'); if(_ivl)_ivl.checked=(c.mostrar_item_val!==false); var _ag=document.getElementById('cot-agrupsec'); if(_ag)_ag.checked=!!c.agrupar_sec;
     document.getElementById('cot-vehiculos').innerHTML='';
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:[{ veh:c.vehiculo||'', anio:c.anio||'', patente:'', talla:'M', vehiculo_id:(c.vehiculo_id||null), items:(c.items||[]) }];
     vehs.forEach(function(v){ cotAddVeh(v); }); if(!cotBlocks().length) cotAddVeh({});
@@ -3991,7 +3989,7 @@
   }
   // inserta una cotización nueva, quitando solo la(s) columna(s) que falten (mismo criterio que cotGuardar)
   function cotInsertRow(row, done){ var sb=sbc(); if(!sb){ if(done)done(null); return; }
-    var OPT=["vehiculos","cliente_correo","cliente_contacto","cliente_rut","cliente_giro","fecha_hasta","origen_num","mostrar_item_val","con_iva","estado"];
+    var OPT=["vehiculos","cliente_correo","cliente_contacto","cliente_rut","cliente_giro","fecha_hasta","origen_num","mostrar_item_val","agrupar_sec","con_iva","estado"];
     (function run(rw){ sb.from("cotizaciones").insert(rw).select().single().then(function(r){
       if(r.error){ var em=(r.error.message||"")+" "+(r.error.details||"");
         var faltan=OPT.filter(function(k){ return (k in rw) && new RegExp("(^|[^a-z_])"+k+"([^a-z_]|$)","i").test(em); });
@@ -4005,7 +4003,7 @@
     if(!confirm("¿Dividir la cotización N°"+c.numero+" en "+vehs.length+" cotizaciones (una por vehículo)?\nSe crean "+vehs.length+" nuevas con su propio N°. La N°"+c.numero+" se mantiene (la puedes eliminar después)."))return;
     var base=nextCotizGlobal(), hechas=0, nums=[];
     vehs.forEach(function(v,i){ var items=(v.items||[]).filter(function(f){return f.desc||f.precio;});
-      var row={ numero:base+i, fecha:(c.fecha||todayISO()), fecha_hasta:(c.fecha_hasta||null), cliente_nombre:(c.cliente_nombre||""), cliente_tel:(c.cliente_tel||""), cliente_correo:(c.cliente_correo||""), cliente_contacto:(c.cliente_contacto||""), cliente_rut:(c.cliente_rut||""), cliente_giro:(c.cliente_giro||""), vehiculo:(v.veh||""), anio:(v.anio||""), items:items, vehiculos:[v], desc_adic_pct:(+c.desc_adic_pct||0), con_iva:!!c.con_iva, mostrar_item_val:(c.mostrar_item_val!==false), vehiculo_id:(v.vehiculo_id||null), origen_num:(c.numero||null), estado:(c.estado||"CONFIRMADA"), autor:(window.ISP_EMAIL||"") };
+      var row={ numero:base+i, fecha:(c.fecha||todayISO()), fecha_hasta:(c.fecha_hasta||null), cliente_nombre:(c.cliente_nombre||""), cliente_tel:(c.cliente_tel||""), cliente_correo:(c.cliente_correo||""), cliente_contacto:(c.cliente_contacto||""), cliente_rut:(c.cliente_rut||""), cliente_giro:(c.cliente_giro||""), vehiculo:(v.veh||""), anio:(v.anio||""), items:items, vehiculos:[v], desc_adic_pct:(+c.desc_adic_pct||0), con_iva:!!c.con_iva, mostrar_item_val:(c.mostrar_item_val!==false), agrupar_sec:!!c.agrupar_sec, vehiculo_id:(v.vehiculo_id||null), origen_num:(c.numero||null), estado:(c.estado||"CONFIRMADA"), autor:(window.ISP_EMAIL||"") };
       cotInsertRow(row, function(data){ hechas++; if(data){ _cotiz.unshift(data); nums.push(data.numero); }
         if(hechas===vehs.length){ _cotiz.sort(function(a,b){return (+b.numero||0)-(+a.numero||0);}); pintarCotList(); var tg=document.getElementById("cot-num-tag"); if(tg)tg.textContent="N° "+nextCotizGlobal();
           nums.sort(function(a,b){return a-b;}); toast(nums.length?("✓ Creadas: N°"+nums.join(", N°")):"⚠ No se pudo dividir"); } }); });
@@ -4019,14 +4017,14 @@
     var numero=_cotEditNum||nextCotizGlobal();
     var first=vehs[0]||{};
     var _cli=_cotCliMap[(document.getElementById("cot-nom").value||"").trim().toLowerCase()]||{};
-    var row={ numero:numero, fecha:((document.getElementById("cot-fecha")||{}).value||todayISO()), fecha_hasta:(((document.getElementById("cot-fecha2")||{}).value)||null), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), cliente_correo:(document.getElementById("cot-correo")||{}).value||"", cliente_contacto:(document.getElementById("cot-contacto")||{}).value||"", cliente_rut:(_cli.rut||""), cliente_giro:(_cli.giro||""), vehiculo:(vehs.length>1?(vehs.length+" vehículos"):(first.veh||"")), anio:(first.anio||""), items:allItems, vehiculos:vehs, desc_adic_pct:d.da, con_iva:d.conIva, mostrar_item_val:!!(document.getElementById("cot-itemval")&&document.getElementById("cot-itemval").checked), vehiculo_id:(first.vehiculo_id||null), estado:(confirmar?"CONFIRMADA":"BORRADOR") };
+    var row={ numero:numero, fecha:((document.getElementById("cot-fecha")||{}).value||todayISO()), fecha_hasta:(((document.getElementById("cot-fecha2")||{}).value)||null), cliente_nombre:document.getElementById("cot-nom").value.trim(), cliente_tel:document.getElementById("cot-tel").value.trim(), cliente_correo:(document.getElementById("cot-correo")||{}).value||"", cliente_contacto:(document.getElementById("cot-contacto")||{}).value||"", cliente_rut:(_cli.rut||""), cliente_giro:(_cli.giro||""), vehiculo:(vehs.length>1?(vehs.length+" vehículos"):(first.veh||"")), anio:(first.anio||""), items:allItems, vehiculos:vehs, desc_adic_pct:d.da, con_iva:d.conIva, mostrar_item_val:!!(document.getElementById("cot-itemval")&&document.getElementById("cot-itemval").checked), agrupar_sec:!!(document.getElementById("cot-agrupsec")&&document.getElementById("cot-agrupsec").checked), vehiculo_id:(first.vehiculo_id||null), estado:(confirmar?"CONFIRMADA":"BORRADOR") };
     var _me=(window.ISP_EMAIL||""); if(_cotEditId){ row.editado_por=_me; row.updated_at=new Date().toISOString(); } else { row.autor=_me; } // crea: autor; edita: editado_por
     function ok(data){ var i=_cotiz.map(function(x){return x.id;}).indexOf(data.id); if(i>=0)_cotiz[i]=data; else _cotiz.unshift(data);
       _cotEditId=data.id; _cotEditNum=data.numero||null;
       pintarCotList(); document.getElementById("cot-num-tag").textContent="N° "+nextCotizGlobal();
       if(confirmar){ cotImprimir(data); toast("✓ Cotización N°"+data.numero+" confirmada"); _cotEditId=null; _cotEditNum=null; cotLimpiar(); }
       else { toast("✓ Borrador N°"+data.numero+" guardado"); cotSetMode(); } }
-    var OPT_COLS=["vehiculos","cliente_correo","cliente_contacto","cliente_rut","cliente_giro","fecha_hasta","origen_num","editado_por","updated_at","mostrar_item_val","con_iva","estado"];
+    var OPT_COLS=["vehiculos","cliente_correo","cliente_contacto","cliente_rut","cliente_giro","fecha_hasta","origen_num","editado_por","updated_at","mostrar_item_val","agrupar_sec","con_iva","estado"];
     function run(rw,dropped){ dropped=dropped||[]; var q=_cotEditId?sb.from("cotizaciones").update(rw).eq("id",_cotEditId).select().single():sb.from("cotizaciones").insert(rw).select().single();
       q.then(function(r){ if(r.error){ var em=(r.error.message||"")+" "+(r.error.details||"");
           // quita SOLO la(s) columna(s) que el error reporta como faltante (no todas) y reintenta
@@ -4037,7 +4035,7 @@
         if(dropped.length) toast("⚠ Guardado sin: "+dropped.join(", ")+". Corré los SQL 48–51 para que se guarden."); ok(r.data); }); }
     run(row,[]);
   }
-  function cotLimpiar(){ _cotEditId=null; _cotEditNum=null; document.getElementById("cot-vehiculos").innerHTML=""; document.getElementById("cot-nom").value=""; document.getElementById("cot-tel").value=""; var _cc=document.getElementById("cot-correo"); if(_cc)_cc.value=""; var _cx=document.getElementById("cot-contacto"); if(_cx)_cx.value=""; var _fa=document.getElementById("cot-fecha"); if(_fa)_fa.value=todayISO(); var _fb=document.getElementById("cot-fecha2"); if(_fb)_fb.value=""; document.getElementById("cot-descadic").value="0"; var iv=document.getElementById("cot-iva"); if(iv)iv.checked=true; var _ivl=document.getElementById("cot-itemval"); if(_ivl)_ivl.checked=true; cotAddVeh({}); cotCalc(); cotRefreshPendientes(); var tg=document.getElementById("cot-num-tag"); if(tg)tg.textContent="N° "+nextCotizGlobal(); cotSetMode(); }
+  function cotLimpiar(){ _cotEditId=null; _cotEditNum=null; document.getElementById("cot-vehiculos").innerHTML=""; document.getElementById("cot-nom").value=""; document.getElementById("cot-tel").value=""; var _cc=document.getElementById("cot-correo"); if(_cc)_cc.value=""; var _cx=document.getElementById("cot-contacto"); if(_cx)_cx.value=""; var _fa=document.getElementById("cot-fecha"); if(_fa)_fa.value=todayISO(); var _fb=document.getElementById("cot-fecha2"); if(_fb)_fb.value=""; document.getElementById("cot-descadic").value="0"; var iv=document.getElementById("cot-iva"); if(iv)iv.checked=true; var _ivl=document.getElementById("cot-itemval"); if(_ivl)_ivl.checked=true; var _ag=document.getElementById("cot-agrupsec"); if(_ag)_ag.checked=false; cotAddVeh({}); cotCalc(); cotRefreshPendientes(); var tg=document.getElementById("cot-num-tag"); if(tg)tg.textContent="N° "+nextCotizGlobal(); cotSetMode(); }
   var CP_CSS='*{box-sizing:border-box}body{margin:0;padding:0;font-family:Inter,-apple-system,Segoe UI,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cp-sheet{max-width:800px;margin:0 auto}.cp-head{background:#111;color:#fff;border-radius:10px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:4px solid #FF6B00}.cp-head .cp-logo-img{height:56px;width:auto;display:block}.cp-head .cp-meta{text-align:right;font-size:12px;color:#cfc9c2;display:flex;flex-direction:column;gap:2px}.cp-head .cp-meta b{font-size:20px;color:#fff}.cp-sec{font:800 12px/1 sans-serif;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;color:#111;border-left:4px solid #FF6B00;padding-left:8px}.cp-cliente-box{margin-top:16px;border:1px solid #e5e2dd;border-radius:10px;overflow:hidden}.cp-cli-title{background:#f5f2ee;font:800 11px/1 sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#333;padding:9px 14px;border-left:4px solid #FF6B00}.cp-cli-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;padding:14px}.cp-cli-grid>div{display:flex;flex-direction:column;gap:2px}.cp-cli-grid span{font:700 9.5px/1 monospace;letter-spacing:.06em;text-transform:uppercase;color:#948b80}.cp-cli-grid b{font-size:14px;color:#111}table.cp-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:16px;table-layout:fixed}table.cp-table th{background:#111;color:#fff;padding:9px 8px;text-align:left;font-weight:700;font-size:11px}table.cp-table th:first-child{border-left:3px solid #FF6B00}table.cp-table th.r,table.cp-table td.r{text-align:right}table.cp-table td{padding:7px 8px;border-bottom:1px solid #e5e5e5;vertical-align:top}table.cp-table tbody tr:nth-child(even){background:#faf8f5}table.cp-table td.cp-desc{white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.35}.cp-bottom{display:flex;justify-content:space-between;gap:24px;margin-top:18px;flex-wrap:wrap}.cp-pay{font-size:12.5px;line-height:1.7}.cp-pay .cp-sec{margin-top:0}.cp-totbox{min-width:260px}.cp-totbox .r1{display:flex;justify-content:space-between;background:#f2f2f2;padding:8px 12px;font-size:13px}.cp-totbox .r1.big{background:#FF6B00;color:#fff;font-weight:800;font-size:15px;border-radius:0 0 6px 6px}.cp-firma{margin-top:38px;text-align:center}.cp-firma .cp-sign{font:italic 36px/1 "Segoe Script","Brush Script MT","Bradley Hand",cursive;color:#111;margin-bottom:2px}.cp-firma .ln{border-top:1px solid #111;width:260px;margin:0 auto 4px}.cp-firma b{font-size:14px}.cp-firma small{color:#555}.cp-nota{margin-top:22px;font-size:11.5px;color:#333;background:#f7f7f7;border-left:3px solid #FF6B00;border-radius:6px;padding:12px 14px}.cp-foot-brand{margin-top:22px;background:#111;border-radius:16px 16px 8px 8px;padding:18px 24px;display:flex;flex-direction:column;align-items:center;gap:12px}.cp-foot-logo{height:44px;width:auto}.cp-foot-items{display:flex;flex-direction:row;align-items:center;width:100%;font-size:12px;color:#e8e4de}.cp-foot-items span{flex:1;display:flex;align-items:center;gap:8px}.cp-foot-items span:nth-child(1){justify-content:flex-start}.cp-foot-items span:nth-child(2){justify-content:center}.cp-foot-items span:nth-child(3){justify-content:flex-end}table.cp-table tr{page-break-inside:avoid;break-inside:avoid}table.cp-table thead{display:table-header-group}#cp-cierre{page-break-inside:avoid;break-inside:avoid}@page{margin:12mm}';
   var _cotActual="";
   function cargarLib(src){ return new Promise(function(res,rej){ var s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=function(){rej(new Error("no cargo "+src));}; document.head.appendChild(s); }); }
@@ -4088,7 +4086,7 @@
     var nom=(c.cliente_nombre||"").trim().toLowerCase(); if(!nom)return out;
     Object.keys(clientesInfo||{}).forEach(function(k){ var i=clientesInfo[k]||{}; var nm=((i.nombre_mostrar||i.razon_social||i.nombre||"")+"").trim().toLowerCase(); if(nm&&nm===nom){ if(!out.rut)out.rut=i.rut||""; if(!out.giro)out.giro=i.giro||""; } });
     return out; }
-  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=(c.mostrar_item_val!==false);
+  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=(c.mostrar_item_val!==false), _agrup=!!c.agrupar_sec;
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
     if(vehs){ var rows="", n=0, _hasIva=!!c.con_iva;
       // muestra columna de descuento por ítem solo si hay descuentos (y si se muestran valores)
@@ -4109,7 +4107,11 @@
         var _veh=(v.veh||("Vehículo "+n)).trim();
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="'+_nc+'" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
-        _orden.forEach(function(sc){ if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00;text-align:center">'+escH(sc)+'</td></tr>';
+        _orden.forEach(function(sc){
+          if(_agrup && sc){ // agrupado: una sola línea por sección (nombre + total), sin ítems
+            var spre=0, spost=0; _bySec[sc].forEach(function(it){ spre+=it.pre; spost+=it.lt; });
+            rows+='<tr><td class="cp-desc" style="padding-left:18px;font-weight:700">'+escH(sc)+'</td><td class="r">1</td>'+_cells(spre,spost,0,false,true)+'</tr>'; return; }
+          if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00;text-align:center">'+escH(sc)+'</td></tr>';
           _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td>'+_cells(it.pre,it.lt,it.dp,false,false)+'</tr>'; }); });
         // subtotal del vehículo (siempre)
         rows+='<tr><td class="r" style="font-weight:700;color:#555;padding:6px 10px">Subtotal '+escH(_veh)+'</td><td></td>'+_cells(vpre,vsub,0,true,true)+'</tr>'; });
