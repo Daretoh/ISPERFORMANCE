@@ -1182,6 +1182,7 @@
               <div class="sline"><span class="k">Vehículo</span><span class="v" id="r-veh">—</span></div>
               <div class="sline"><span class="k">Servicios</span><span class="v" id="r-svc">0</span></div>
               <div class="sline"><span class="k">Cita</span><span class="v" id="r-cita">—</span></div>
+              <div class="sline"><span class="k">Documento</span><span class="v" id="r-doc">Boleta</span></div>
               <div class="sline big"><span class="k">Precio estimado</span><span class="v num" id="r-precio" style="color:var(--accent-ink)">$0</span></div>
             </div>
             <div class="actions">
@@ -1961,7 +1962,8 @@
   function clpK(n){ n=+n||0; var a=Math.abs(n), sg=(n<0?"-":""); if(a>=1000000) return sg+"$"+(a/1000000).toFixed(a>=10000000?0:1)+"M"; if(a>=1000) return sg+"$"+Math.round(a/1000)+"k"; return clp(n); }
   function costoTotal(e){ return (+e.costoProducto||0)+(+e.envio||0)+(+e.costoExterno||0)+(+e.costoEmpresa||0); }
   // Regalo/Sorteo/Cortesía/Garantía NO son ingreso: solo cuenta lo abonado (normalmente $0).
-  function ingresoReal(e){ return (e.tipoVenta && e.tipoVenta!=="NORMAL") ? (+e.abono||0) : (+e.precioVenta||0); }
+  // precioVenta = NETO. Si es FACTURA se le suma el IVA 19% (total que realmente se cobra).
+  function ingresoReal(e){ var base=(e.tipoVenta && e.tipoVenta!=="NORMAL") ? (+e.abono||0) : (+e.precioVenta||0); return (e&&e.docTipo==='FACTURA') ? (base+iva(base)) : base; }
   function utilidad(e){ return ingresoReal(e)-costoTotal(e); }
   function iva(p){ return Math.round((+p||0)*0.19); }
   function nowTime(){ var d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
@@ -4394,7 +4396,10 @@
     document.getElementById("r-cita").textContent=form.fCoord.value?(fFecha(form.fCoord.value)+" "+(form.hCoord.value||"")):"—";
     var t=form.talla.value, est=0, variable=false;
     chosenSvcs.forEach(function(n){ var s=svcInfo(n); if(s&&s.p){ est+=precioServicio(n,t); } else { variable=true; } });
-    document.getElementById("r-precio").textContent=(est===0&&variable)?"Por cotizar":(clp(est)+(variable?" +":""));
+    var esEmp=false; try{ esEmp=(cliTipo(clientKey({cliente:form.cliente.value,contacto:form.contacto.value}))==='EMPRESA'); }catch(_){ }
+    var tot=esEmp?(est+iva(est)):est;
+    document.getElementById("r-precio").textContent=(est===0&&variable)?"Por cotizar":(clp(tot)+(variable?" +":"")+(esEmp&&est>0?" c/IVA":""));
+    var rd=document.getElementById("r-doc"); if(rd) rd.textContent=esEmp?"Factura (empresa)":"Boleta";
   }
   form.addEventListener("input",recepSummary);
   form.addEventListener("reset",function(){ chosenSvcs=[]; renderSvcList(); setTimeout(function(){form.fCoord.value=todayISO();recepSummary();},0); });
@@ -4405,6 +4410,7 @@
     ["marca","modelo","patente","anioVeh","talla","cliente","contacto","fCoord","hCoord","tipoVenta"].forEach(function(k){ e[k]=form[k]?form[k].value:""; });
     e.abono=parseFloat(form.abono.value)||0;
     e.anioVeh=parseFloat(e.anioVeh)||0; e.patente=fmtPat(e.patente);
+    try{ if(cliTipo(clientKey(e))==='EMPRESA') e.docTipo='FACTURA'; }catch(_){ } // empresa -> factura automatica (suma IVA al cobrar)
     e.trabajos=[];
     addVehiculo(e);
     chosenSvcs=[]; renderSvcList();
@@ -4830,10 +4836,11 @@
     '</div>'+
     '<aside class="summary"><div class="panel sum-card"><div class="sum-head"><div class="t">◆ Resumen automático</div></div>'+
       '<div class="sum-body">'+
-        '<div class="sline"><span class="k">Precio venta</span><span class="v num" id="c-precio">'+clp(e.precioVenta)+'</span></div>'+
+        '<div class="sline"><span class="k">Precio neto</span><span class="v num" id="c-precio">'+clp(e.precioVenta)+'</span></div>'+
+        '<div class="sline" id="c-iva-row"'+(e.docTipo==='FACTURA'?'':' style="display:none"')+'><span class="k">IVA 19% (factura)</span><span class="v num" id="c-ivaadd">'+clp(iva(e.precioVenta))+'</span></div>'+
+        '<div class="sline"><span class="k">Total'+(e.docTipo==='FACTURA'?' c/IVA':'')+'</span><span class="v num" id="c-total">'+clp((e.precioVenta||0)+(e.docTipo==='FACTURA'?iva(e.precioVenta):0))+'</span></div>'+
         '<div class="sline"><span class="k">Abono / anticipo</span><span class="v num" id="c-abono">'+clp(e.abono)+'</span></div>'+
-        '<div class="sline"><span class="k">Saldo a cobrar</span><span class="v num" id="c-saldo" style="color:var(--accent-ink);font-weight:800">'+clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:((e.precioVenta||0)-(e.abono||0)))+'</span></div>'+
-        '<div class="sline"><span class="k">IVA incluido (19%)</span><span class="v num" id="c-iva">'+clp(iva(ingresoReal(e)))+'</span></div>'+
+        '<div class="sline"><span class="k">Saldo a cobrar</span><span class="v num" id="c-saldo" style="color:var(--accent-ink);font-weight:800">'+clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:((e.precioVenta||0)+(e.docTipo==='FACTURA'?iva(e.precioVenta):0)-(e.abono||0)))+'</span></div>'+
       '</div>'+
       '<div class="actions"><button type="button" class="btn primary" id="c-save">'+(e.cobrado?"✓ Actualizar cobro":"Registrar cobro")+'</button></div>'+
     '</div></aside></div>';
@@ -4845,10 +4852,13 @@
     }
     function refresh(){
       readForm();
-      wrap.querySelector("#c-precio").textContent=clp(e.precioVenta);
+      var fac=(e.docTipo==='FACTURA'), neto=(+e.precioVenta||0), ivaV=fac?iva(neto):0, tot=neto+ivaV;
+      wrap.querySelector("#c-precio").textContent=clp(neto);
+      var ir=wrap.querySelector("#c-iva-row"); if(ir)ir.style.display=fac?"":"none";
+      var ia=wrap.querySelector("#c-ivaadd"); if(ia)ia.textContent=clp(ivaV);
+      wrap.querySelector("#c-total").textContent=clp(tot);
       wrap.querySelector("#c-abono").textContent=clp(e.abono);
-      wrap.querySelector("#c-saldo").textContent=clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:((e.precioVenta||0)-(e.abono||0)));
-      wrap.querySelector("#c-iva").textContent=clp(iva(ingresoReal(e)));
+      wrap.querySelector("#c-saldo").textContent=clp((e.tipoVenta&&e.tipoVenta!=="NORMAL")?0:(tot-(e.abono||0)));
     }
     f.addEventListener("input",refresh); f.addEventListener("change",refresh); refresh();
     wrap.querySelector("#doc-btn").addEventListener("click",function(){ e.media=e.media||[]; abrirGaleria("Documentos — "+e.marca+" "+(e.modelo||""), e.media, "veh/"+e.id, "image/*,application/pdf", function(){ persistVeh(e); renderCobroForm(e); }, {cats:['Boleta','Respaldo','Factura','Exterior','Interior','Motor','Otro'],defCat:'Boleta',filter:'Boleta'}); });

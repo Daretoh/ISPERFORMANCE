@@ -180,7 +180,7 @@
   </div>
 
   <div class="card hide" id="formCard">
-    <h2>2. Revisar y guardar</h2>
+    <h2 id="tituloForm">2. Revisar y guardar</h2>
     <div class="grid">
       <div class="fld"><label>Tipo de documento <span class="tag" data-src="td"></span></label><select id="td"></select></div>
       <div class="fld"><label>Folio <span class="tag" data-src="folio"></span></label><input id="folio" inputmode="numeric" /></div>
@@ -696,17 +696,86 @@
     if (t != null && (n || i || e || o) && n + i + e + o !== t) av.push('Neto + IVA + exento + otros = ' + clp(n+i+e+o) + ', no cuadra con el total ' + clp(t) + '.');
     if (n && i && Math.abs(Math.round(n*0.19) - i) > 1) av.push('El IVA no es el 19 % del neto.');
     var f = $('folio').value.trim(), td = $('td').value;
-    if (modo === 'venta' && f && td && docs.some(function(x){ return x.venta && String(x.folio) === f && String(x.tipo_dte) === td; }))
+    if (modo === 'venta' && f && td && docs.some(function(x){ return x.id !== editId && x.venta && String(x.folio) === f && String(x.tipo_dte) === td; }))
       av.push('Esta venta ya está registrada (mismo tipo y folio).');
-    if (modo === 'compra' && r && f && td && docs.some(function(x){ return !x.venta && ((limpioRut(x.rut_emisor) === limpioRut(r) && String(x.folio) === f && String(x.tipo_dte) === td) || (!x.folio && x.referencia === referencia(+td, f))); }))
+    if (modo === 'compra' && r && f && td && docs.some(function(x){ return x.id !== editId && !x.venta && ((limpioRut(x.rut_emisor) === limpioRut(r) && String(x.folio) === f && String(x.tipo_dte) === td) || (!x.folio && x.referencia === referencia(+td, f))); }))
       av.push('Este documento ya está cargado (mismo emisor, tipo y folio).');
     if (t == null && partes.length && !partes.some(leyendo)) av.push('No se encontró el total: escríbelo a mano.');
     $('cuadre').innerHTML = av.length ? '<div class="msg bad">' + av.map(esc).join('<br>') + '</div>' : (t != null ? '<div class="msg ok">Montos y RUT cuadran.</div>' : '');
     return av;
   }
 
+  // ---------- edición de un documento ya cargado ----------
+  var editId = null, editOrig = null;   // documento que se está editando (null = documento nuevo)
+  function modoEdicion(x){
+    editId = x ? x.id : null; editOrig = x || null;
+    $('tituloForm').textContent = x ? (x.venta ? '2. Editar venta' : '2. Editar compra') : '2. Revisar y guardar';
+    $('bDescartar').textContent = x ? 'Cancelar' : 'Descartar';
+    document.querySelectorAll('input[name="modo"]').forEach(function(r){ r.disabled = !!x; });   // una compra no se convierte en venta
+    if (x) $('bGuardar').lastChild.textContent = 'Guardar cambios'; else ponerModo(modo);
+  }
+  function urlDe(m){ return typeof m === 'string' ? m : (m && (m.url || m.path)) || ''; }
+  function editarDoc(x){
+    if (partes.some(leyendo)) { estado('Espera a que terminen de leerse las fotos.','bad'); return; }
+    limpiar(); modoManual = true; ponerModo(x.venta ? 'venta' : 'compra'); modoEdicion(x);
+    var w = x.raw || {};
+    partes = (x.fotos||[]).map(function(m){ var u = urlDe(m), xml = /\.xml($|\?)/i.test(u);
+      return {id: Math.random().toString(36).slice(2), nombre: (m && m.nombre) || (xml ? 'documento.xml' : 'foto.jpg'), url: u, media: m, thumb: xml ? null : u, esXml: xml, existente: true, estado: 'Guardada', texto: ''}; });
+    var val = {td:x.tipo_dte, folio:x.folio, fecha:x.fecha, rut:x.venta ? x.rut_receptor : x.rut_emisor, razon:x.razon_social,
+      neto:x.venta ? w.neto : x.neto, iva:x.venta ? w.iva : x.iva, exento:null, otros:null, total:x.total};
+    CAMPOS.forEach(function(k){ editados[k] = true; $(k).value = val[k] == null ? '' : (k === 'rut' ? fmtRut(val[k]) : val[k]); });   // lo guardado manda
+    if (!x.venta) { $('con').value = x.concepto || ''; $('cc').value = x.centro || 'General'; $('cat').value = x.tipo || 'VARIABLE'; $('pagado').checked = !!x.pagado; ['con','cc','cat','pagado'].forEach(function(k){ editados[k] = true; }); }
+    datos = {origen:{}, items:(x.venta ? w.items : x.items) || [], texto:''};
+    // vehículo: la venta guarda el vehículo exacto; la compra, la patente
+    $('vehQ').value = ''; pintarVehiculos();
+    var sel = '';
+    if (x.venta) sel = String(x.vehiculo_id || '');
+    else if (x.patente) { var p = fmtPat(x.patente), v = vehs.filter(function(e){ return fmtPat(e.patente) === p; })[0]; sel = v ? String(v.id) : 'pat:' + p.replace(/[^A-Z0-9]/g,''); }
+    if (sel && ![].some.call($('veh').options, function(o){ return o.value === sel; })) {
+      var op = document.createElement('option'); op.value = sel; op.textContent = sel.indexOf('pat:') === 0 ? fmtPat(sel.slice(4)) + ' (no está en el OS)' : patenteDe(sel); $('veh').insertBefore(op, $('veh').options[1] || null);
+    }
+    $('veh').value = sel;
+    pintarFotos(); $('formCard').classList.remove('hide'); mostrar();
+    estado('Editando ' + (x.venta ? 'la venta' : 'la compra') + (x.folio ? ' N° ' + esc(x.folio) : '') + '. Cambia lo que necesites y presiona <b>Guardar cambios</b>. Puedes agregar o quitar fotos.','info');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  async function guardarEdicionVenta(b){
+    var ve = vehElegido(); if (!ve || !ve.id) { estado('Elige el vehículo del OS al que corresponde esta venta.','bad'); return; }
+    var x = editOrig, w = x.raw || {}, td = $('td').value === '' ? null : +$('td').value, folio = num($('folio').value);
+    if (!td || !folio) { estado('Faltan el tipo de documento o el folio.','bad'); return; }
+    b.disabled = true; estado('Guardando cambios…','info');
+    try {
+      var cat = [33,34,46,110].indexOf(td) >= 0 ? 'Factura' : 'Boleta', nuevas = [];
+      for (var i = 0; i < partes.length; i++) { var p = partes[i]; if (p.existente) continue;
+        var blob = p.esXml ? p.blob : await aJPEG(p.foto || p.blob, 1800), url = await subir(blob, p.esXml ? p.nombre : (p.nombre||'foto').replace(/\.\w+$/,'') + '.jpg', 'veh/' + ve.id);
+        nuevas.push({path:url, url:url, tipo:p.esXml ? 'doc' : 'image', nombre:p.nombre, r2:true, cat:cat}); }
+      var antes = (x.fotos||[]).map(urlDe), quedan = partes.filter(function(p){ return p.existente; }).map(function(p){ return p.url; });
+      var rr = $('rut').value ? fmtRut($('rut').value).replace(/\./g,'') : null;
+      var raw = Object.assign({}, w, { neto: num($('neto').value), iva: num($('iva').value), items: (datos && datos.items) || [], fotos: quedan.concat(nuevas.map(function(m){ return m.url; })), editado_por: yo });
+      var r1 = await sb.from('dte').update({ tipo: td, tipo_nombre: TIPOS[td] || null, folio: folio, rut_receptor: rr, receptor: $('razon').value.trim() || null,
+        monto: num($('total').value) || 0, fecha: $('fecha').value || x.fecha, vehiculo_id: String(ve.id), raw: raw }).eq('id', x.id);
+      if (r1.error) throw new Error(r1.error.code === '23505' ? 'Ya hay otra venta con ese tipo y folio.' : r1.error.message);
+      // Fotos en el documento del cobro: se quitan las que se borraron y, si cambió el vehículo, se mueven
+      var leer = async function(id){ var r = await sb.from('vehiculos').select('media').eq('id', id).single(); if (r.error) throw new Error('No se pudo leer el vehículo: ' + r.error.message); return r.data.media || []; };
+      var oldId = String(x.vehiculo_id || ''), newId = String(ve.id);
+      if (oldId === newId || !oldId) {
+        var m = (await leer(newId)).filter(function(it){ var u = urlDe(it); return antes.indexOf(u) < 0 || quedan.indexOf(u) >= 0; });
+        await sb.from('vehiculos').update({ media: m.concat(nuevas), doc_tipo: cat === 'Factura' ? 'FACTURA' : 'BOLETA' }).eq('id', newId);
+      } else {
+        var mOld = await leer(oldId), movidas = mOld.filter(function(it){ return quedan.indexOf(urlDe(it)) >= 0; });
+        await sb.from('vehiculos').update({ media: mOld.filter(function(it){ return antes.indexOf(urlDe(it)) < 0; }) }).eq('id', oldId);
+        var mNew = await leer(newId);
+        await sb.from('vehiculos').update({ media: mNew.concat(movidas, nuevas), doc_tipo: cat === 'Factura' ? 'FACTURA' : 'BOLETA' }).eq('id', newId);
+      }
+      var verMedia = quedan.map(function(u){ return {url:u, tipo:/\.xml($|\?)/i.test(u) ? 'doc' : 'image'}; }).concat(nuevas);
+      limpiar(); cargarDocs();
+      estado('Cambios guardados en la venta de ' + esc(ve.patente) + '.' + botonVerDoc(verMedia, cat + ' ' + ve.patente) + botonIr('cobro', ve.id, 'Ver cobro del vehículo'),'ok');
+    } catch(e) { estado(esc(e.message),'bad'); }
+    b.disabled = false;
+  }
+
   function limpiar(){
-    partes = []; datos = null; editados = {}; modoManual = false; pintarFotos();
+    partes = []; datos = null; editados = {}; modoManual = false; modoEdicion(null); pintarFotos();
     CAMPOS.forEach(function(k){ $(k).value = ''; }); $('cc').value = 'General'; $('cat').value = 'VARIABLE'; $('con').value = ''; $('pagado').checked = false;
     $('formCard').classList.add('hide'); estado('');
   }
@@ -773,7 +842,7 @@
   $('bGuardar').onclick = async function(){
     if (partes.some(leyendo)) { estado('Espera a que terminen de leerse las fotos.','bad'); return; }
     var total = num($('total').value); if (total == null) { estado('Falta el total.','bad'); return; }
-    if (modo === 'venta') return guardarVenta(this);
+    if (modo === 'venta') return editId ? guardarEdicionVenta(this) : guardarVenta(this);
     if ($('rut').value && !rutValido($('rut').value) && !confirm('El RUT del emisor no es válido. ¿Guardar igual?')) return;
     var b = this; b.disabled = true; estado('Guardando…','info');
     try {
@@ -782,19 +851,27 @@
       // El mismo formato de adjunto que usa Costos (se ven en la galería del gasto)
       var media = [];
       for (var i = 0; i < partes.length; i++) {
+        if (partes[i].existente) { media.push(typeof partes[i].media === 'object' ? partes[i].media : {path:partes[i].url, url:partes[i].url, tipo:'image', nombre:partes[i].nombre, r2:true, cat:'Documento'}); continue; }   // ya estaba subida
         var p = partes[i], blob = p.esXml ? p.blob : await aJPEG(p.foto || p.blob, 1800);
         var url = await subir(blob, p.esXml ? p.nombre : (p.nombre||'foto').replace(/\.\w+$/,'') + '.jpg');
         media.push({path:url, url:url, tipo:p.esXml ? 'doc' : 'image', nombre:p.nombre, r2:true, cat:'Documento'});
       }
       var o = datos && datos.origen.total, origen = o === 'sii' ? 'timbre' : o === 'xml' ? 'xml' : o === 'ocr' ? 'ocr' : 'manual';
       if (editados.total) origen = 'manual';
+      if (editId && !partes.some(function(p){ return !p.existente; })) origen = editOrig.origen || origen;   // editar no cambia de dónde salió el dato
       var pagado = $('pagado').checked, fecha = $('fecha').value || hoyISO();
       var fila = { concepto: concepto, tipo: $('cat').value || 'VARIABLE', monto: total, fecha: fecha, referencia: referencia(td, folio) || null,
-        centro: $('cc').value || 'General', patente: (vehElegido() || {}).patente || null, pagado: pagado, fecha_pago: pagado ? fecha : null, media: media,
+        centro: $('cc').value || 'General', patente: (vehElegido() || {}).patente || null, pagado: pagado, fecha_pago: pagado ? ((editOrig && editOrig.fecha_pago) || fecha) : null, media: media,
         tipo_dte: td, folio: folio, rut_emisor: $('rut').value ? fmtRut($('rut').value) : null, razon_social: $('razon').value.trim() || null,
         neto: num($('neto').value), iva: num($('iva').value), items: (datos && datos.items) || [], origen: origen };
-      var res = await insertarGasto(fila);
+      var eraEdicion = !!editId, res;
+      if (editId) {
+        var ru = await sb.from('gastos').update(fila).eq('id', editId).select().single();
+        if (ru.error) throw new Error(ru.error.code === '23505' ? 'Ya hay otro documento con el mismo emisor, tipo y folio.' : ru.error.message);
+        res = {data: ru.data, quitadas: []};
+      } else res = await insertarGasto(fila);
       limpiar(); cargarDocs();
+      if (eraEdicion) { estado('Cambios guardados en Costos.' + botonVerDoc(media, concepto) + botonIr('costos', res.data && res.data.id, 'Ver en Costos'),'ok'); b.disabled = false; return; }
       var ir = botonVerDoc(media, concepto) + botonIr('costos', res.data && res.data.id, 'Ver en Costos');
       if (res.quitadas.length) { hayCols = false; estado('Guardado en Costos, pero sin: ' + esc(res.quitadas.join(', ')) + '. Hay que correr el SQL 59 en Supabase para guardar todos los datos del documento.' + ir,'warn'); }
       else estado('Guardado en Costos.' + ir,'ok');
@@ -821,7 +898,7 @@
     var pv = sb.from('dte').select('*').not('raw->lector','is',null).order('created_at',{ascending:false}).limit(200).then(function(r){
       ventas = ((r && r.data) || []).map(function(x){ var w = x.raw || {};
         return {id:x.id, venta:true, created_at:x.created_at, fecha:x.fecha, tipo_dte:x.tipo, folio:x.folio == null ? null : String(x.folio), razon_social:x.receptor, rut_emisor:x.rut_emisor,
-          total:x.monto, vehiculo_id:x.vehiculo_id, subido_por:w.subido_por, fotos:(w.fotos||[]).map(function(u){ return {url:u}; })}; });
+          total:x.monto, vehiculo_id:x.vehiculo_id, subido_por:w.subido_por, rut_receptor:x.rut_receptor, raw:w, fotos:(w.fotos||[]).map(function(u){ return {url:u}; })}; });
     }, function(){});
     Promise.all([pc, pv]).then(fin, fin);
   }
@@ -856,7 +933,7 @@
           : '<td>'+esc(x.patente || 'Sin vehículo')+'<small>'+esc([x.centro, x.tipo, x.pagado ? 'Pagado' : 'Por pagar'].filter(Boolean).join(' · '))+'</small></td>')+'<td class="n">'+clp(x.total)+'</td>'+
         '<td>'+esc(nombreDe(x.subido_por) || '—')+'<small>'+esc(cuando)+'</small>'+
           (enOS ? '<small><a href="#" data-ir="'+(x.venta ? 'cobro' : 'costos')+'" data-id="'+esc(x.venta ? x.vehiculo_id : x.id)+'">'+(x.venta ? 'Ver cobro' : 'Ver en Costos')+'</a></small>' : '')+'</td>'+
-        '<td><button class="btn sec mini" data-del="'+x.id+'" title="Eliminar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></td></tr>';
+        '<td style="white-space:nowrap"><button class="btn sec mini" data-edit="'+x.id+'" title="Editar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button> <button class="btn sec mini" data-del="'+x.id+'" title="Eliminar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></td></tr>';
     }).join('') || '<tr><td colspan="6" class="muted">Aún no hay documentos cargados con el lector.</td></tr>';
     var c = docs.filter(function(x){ return !x.venta; }), v = docs.filter(function(x){ return x.venta; });
     var suma = function(l){ return l.reduce(function(a, x){ return a + (x.total||0); }, 0); };
@@ -872,6 +949,8 @@
       abrirVisor(imgs.map(function(f, i){ return {src:f.url, titulo:tit + ' · foto ' + (i+1) + ' de ' + imgs.length}; }), imgs.indexOf(dv.fotos[+v.dataset.i]));
       return;
     }
+    var ed = e.target.closest('[data-edit]');
+    if (ed) { var de = docs.filter(function(d){ return String(d.id) === ed.dataset.edit; })[0]; if (de) editarDoc(de); return; }
     var b = e.target.closest('[data-del]'); if (!b) return;
     var x = docs.filter(function(d){ return d.id === b.dataset.del; })[0];
     if (x && x.venta) {
