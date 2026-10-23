@@ -2659,8 +2659,13 @@
   function trabUpsert(t){ var sb=sbc(); if(!sb)return; var pay={ nombre:t.nombre, cargo:t.cargo||null, estado:t.estado||'activo', tipo_pago:t.tipo_pago||'hora', jornada_horas:((t.jornada_horas!=null&&t.jornada_horas!=='')?+t.jornada_horas:null), chofer:!!t.chofer, fecha_ingreso:t.fecha_ingreso||null, telefono:t.telefono||null, email:t.email||null, talla_botas:t.talla_botas||null, talla_ropa:t.talla_ropa||null, afp:t.afp||null, salud:t.salud||null, direccion:t.direccion||null, emergencia:t.emergencia||null, notas:t.notas||null };
     if('sueldo_base' in t){ pay.sueldo_base=(t.sueldo_base!=null&&t.sueldo_base!=='')?+t.sueldo_base:null; pay.sueldo_desde=t.sueldo_desde||null; }
     if('contrato_desde' in t){ pay.contrato_desde=t.contrato_desde||null; }
-    sb.from('trabajadores').update(pay).eq('id',t.id).then(function(r){ if(r&&r.error)toast('⚠ No se pudo guardar (¿corriste el SQL 47?)'); }); }
+    if('horario' in t){ pay.horario=t.horario||null; }
+    (function upd(p){ sb.from('trabajadores').update(p).eq('id',t.id).then(function(r){ if(r&&r.error){ var em=((r.error.message||'')+' '+(r.error.details||''));
+      if(('horario' in p) && /horario|schema cache|PGRST204/i.test(em)){ var p2={}; Object.keys(p).forEach(function(k){ if(k!=='horario')p2[k]=p[k]; }); if(!_horarioWarned){ _horarioWarned=true; toast('⚠ El horario no se guardará: falta correr el SQL 60'); } upd(p2); return; }
+      toast('⚠ No se pudo guardar (¿corriste el SQL 47?)'); } }); })(pay); }
+  var _horarioWarned=false;
   function abrirFichaTrab(id){ var t=(_trab||[]).filter(function(x){return String(x.id)===String(id);})[0]; if(!t)return;
+    var _ho=(t.horario&&typeof t.horario==='object')?t.horario:{};
     var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     function opCargos(cur){ var o='<option value="">— sin cargo —</option>'; (_cargos||[]).slice().sort(function(a,b){return normNom(a.nombre)<normNom(b.nombre)?-1:1;}).forEach(function(c){ o+='<option value="'+av(c.nombre)+'"'+(normNom(c.nombre)===normNom(cur||'')?' selected':'')+'>'+escH(c.nombre)+' ('+clp(Math.round((+c.trato||0)/8))+'/h)</option>'; }); return o; }
     function fld(lab,inner){ return '<label class="f" style="display:block"><span class="lab">'+lab+'</span>'+inner+'</label>'; }
@@ -2673,6 +2678,12 @@
         fld('Estado','<select id="ft-estado" '+inS+'><option value="activo"'+(trabActivo(t)?' selected':'')+'>Activo</option><option value="inactivo"'+(!trabActivo(t)?' selected':'')+'>Inactivo</option></select>')+
         fld('Tipo de pago','<select id="ft-tipo" '+inS+'><option value="hora"'+(!esFijo(t)?' selected':'')+'>Spot (por hora)</option><option value="contrato"'+(esFijo(t)?' selected':'')+'>Contrato fijo</option></select>')+
         '<div id="ft-jornada-row"'+(esFijo(t)?'':' hidden')+'>'+fld('Jornada normal (h/día)','<input id="ft-jornada" type="number" min="0" step="0.5" value="'+(t.jornada_horas!=null?t.jornada_horas:'')+'" placeholder="9" '+inS+'>')+
+          '<div style="grid-column:1/-1;border:1px solid var(--line,#eee);border-radius:8px;padding:10px 12px;margin:2px 0 8px"><div style="font-weight:800;font-size:12px;margin-bottom:6px">Horario base <span class="rh-sub" style="font-weight:500">— para calcular las horas extra (solo registrás cuando sale más tarde o trabaja finde)</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px">'+
+            fld('Entrada','<input id="ft-h-ent" type="time" value="'+av(_ho.entrada||'')+'" '+inS+'>')+
+            fld('Colación (min)','<input id="ft-h-col" type="number" min="0" step="5" value="'+((_ho.colacion!=null&&_ho.colacion!=='')?_ho.colacion:'')+'" placeholder="45" '+inS+'>')+
+            fld('Salida lun–jue','<input id="ft-h-sal" type="time" value="'+av(_ho.salida||'')+'" '+inS+'>')+
+            fld('Salida viernes','<input id="ft-h-salv" type="time" value="'+av(_ho.salida_vie||'')+'" '+inS+'>')+
+          '</div></div>'+
           fld('Contrato fijo desde (mes)','<input id="ft-contrato-desde" type="month" value="'+av(t.contrato_desde?String(t.contrato_desde).slice(0,7):'')+'" '+inS+'>')+
           '<div class="rh-sub" style="margin:-4px 0 6px">Los meses anteriores se pagan como spot (no cambia lo ya cerrado). Vacío = siempre fijo.</div>'+
           fld('Sueldo base mensual ($)','<input id="ft-sueldo" type="number" min="0" step="1000" value="'+(t.sueldo_base!=null?t.sueldo_base:'')+'" placeholder="'+(sueldoCargo(t.cargo)?('del cargo: '+sueldoCargo(t.cargo)):'750000')+'" '+inS+'>')+
@@ -2702,6 +2713,8 @@
     g('#ft-estado').onchange=function(){ t.estado=this.value; save(); pintarAsistencia(); };
     g('#ft-tipo').onchange=function(){ t.tipo_pago=this.value; g('#ft-jornada-row').hidden=(this.value!=='contrato'); save(); pintarAsistencia(); };
     g('#ft-jornada').onchange=function(){ t.jornada_horas=(this.value===''?null:Math.max(0,parseFloat(this.value)||0)); save(); };
+    function saveHorario(){ var ent=(g('#ft-h-ent')||{}).value||'', sal=(g('#ft-h-sal')||{}).value||'', salv=(g('#ft-h-salv')||{}).value||'', colv=(g('#ft-h-col')||{}).value; var col=(colv===''||colv==null)?null:Math.max(0,parseInt(colv,10)||0); t.horario=(ent||sal||salv||col!=null)?{entrada:ent,salida:sal,salida_vie:salv,colacion:col}:null; save(); }
+    ['#ft-h-ent','#ft-h-sal','#ft-h-salv','#ft-h-col'].forEach(function(id){ var el=g(id); if(el)el.onchange=saveHorario; });
     g('#ft-contrato-desde').onchange=function(){ if(!('contrato_desde' in t)){ toast('⚠ Falta correr el SQL 56 (contrato desde) en Supabase'); return; } t.contrato_desde=this.value?(this.value+'-01'):null; save(); };
     g('#ft-sueldo').onchange=function(){ if(!('sueldo_base' in t)){ toast('⚠ Falta correr el SQL 55 (sueldo) en Supabase'); return; } t.sueldo_base=(this.value===''?null:Math.max(0,parseInt(this.value,10)||0)); save(); };
     g('#ft-sueldo-desde').onchange=function(){ if(!('sueldo_base' in t)){ toast('⚠ Falta correr el SQL 55 (sueldo) en Supabase'); return; } t.sueldo_desde=this.value?(this.value+'-01'):null; save(); };
@@ -3733,7 +3746,7 @@
   function cotItemsDeVeh(v){ var out=[], fl=flotaDe(v), seen={};
     function add(t){ t=(t||"").trim(); if(!t||seen[t.toLowerCase()])return; seen[t.toLowerCase()]=1;
       var pr=precioFlota(v,t); if(!pr){ var s=(typeof svcInfo==="function")?svcInfo(t):null; if(s){ pr=precioServicio(s.n,"M")||precioServicio(s.n,"L")||precioServicio(s.n,"S")||precioServicio(s.n,"XL")||0; } }
-      out.push({desc:t,cant:1,precio:pr,descPct:0}); }
+      var it={desc:t,cant:1,precio:pr,descPct:0}; if(gmEsGM(v)){ var sc=gmSecDe(t); if(sc) it.sec=sc; } out.push(it); }
     (v.trabajos||[]).forEach(function(w){ add((w&&w.t)||""); });
     if(fl) add("Retiro / entrega");
     return out; }
@@ -3751,6 +3764,12 @@
   // GM: trae el DETALLE completo, cada ítem etiquetado en su sección (Preparación de Venta /
   // Pulido / Realce de Brillo). Los Extra fuera de catálogo quedan sueltos (sin sección).
   // En el PDF, con el toggle "Agrupar secciones", cada sección se muestra como una sola línea.
+  // GM: seccion de un item normal por su nombre (Preparación de Venta / Pulido / Realce de Brillo). Lo que no calza (extras, textos libres) queda suelto.
+  function gmSecDe(desc){ var t=String(desc||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s*\/\s*/g,"/").replace(/\s+/g," ").trim();
+    if({"realce brillo":1,"realce de brillo":1,"corr. barniz":1,"correccion barniz":1,"correccion de barniz":1,"pulido":1,"pulido/realce de brillo":1}[t]) return 'Pulido / Realce de Brillo';
+    if({"interior":1,"exterior":1,"motor":1,"tapiz":1,"desc. vidrios":1,"descontaminacion de vidrios":1,"vidrios":1,"retiro/entrega":1,"retiro":1,"entrega":1,"preparacion de venta":1}[t]) return 'Preparación de Venta';
+    return ''; }
+  function cotEsGM(nombre){ return String(nombre||"").toUpperCase().indexOf("GUILLERMO MORALES")>=0; }
   function cotItemsDeGMRow(r){ var t=r.talla||"M", out=[];
     var PUL={brillo:1,barniz:1}; // van a "Pulido / Realce de Brillo"
     (typeof GM_SERV!=="undefined"?GM_SERV:[]).forEach(function(s){ var v=(r.items&&r.items[s.k])||0; if(!v)return;
@@ -3973,6 +3992,7 @@
   function cotCargar(c){ if(!c)return; document.getElementById('cot-nom').value=c.cliente_nombre||''; document.getElementById('cot-tel').value=c.cliente_tel||''; var _cc=document.getElementById('cot-correo'); if(_cc)_cc.value=c.cliente_correo||''; var _cx=document.getElementById('cot-contacto'); if(_cx)_cx.value=c.cliente_contacto||''; var _fa=document.getElementById('cot-fecha'); if(_fa)_fa.value=(c.fecha||'').slice(0,10); var _fb=document.getElementById('cot-fecha2'); if(_fb)_fb.value=(c.fecha_hasta||'').slice(0,10); document.getElementById('cot-descadic').value=(+c.desc_adic_pct||0); var iv=document.getElementById('cot-iva'); if(iv)iv.checked=!!c.con_iva; var _ivl=document.getElementById('cot-itemval'); if(_ivl)_ivl.checked=(c.mostrar_item_val!==false); var _ag=document.getElementById('cot-agrupsec'); if(_ag)_ag.checked=!!c.agrupar_sec;
     document.getElementById('cot-vehiculos').innerHTML='';
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:[{ veh:c.vehiculo||'', anio:c.anio||'', patente:'', talla:'M', vehiculo_id:(c.vehiculo_id||null), items:(c.items||[]) }];
+    if(cotEsGM(c.cliente_nombre)) vehs.forEach(function(v){ (v.items||[]).forEach(function(it){ if(it && !it.sec){ var sc=gmSecDe(it.desc); if(sc) it.sec=sc; } }); });
     vehs.forEach(function(v){ cotAddVeh(v); }); if(!cotBlocks().length) cotAddVeh({});
     _cotEditId=c.id; _cotEditNum=c.numero||null; cotCalc(); cotRefreshPendientes();
     document.getElementById('cot-num-tag').textContent='N° '+(c.numero||nextCotizGlobal())+(c.estado==='BORRADOR'?' (borrador)':''); cotSetMode(); try{ document.getElementById('cot-nom').scrollIntoView({block:'center'}); }catch(e){} toast('Cotización N°'+c.numero+' cargada — edítala y vuelve a confirmar'); }
@@ -4125,9 +4145,10 @@
           s+='<td class="r"'+b+'>'+(_showVal?clp(post):'')+'</td>'; }
         else { s+='<td class="r"'+b+'>'+(_showVal?clp(post):'')+'</td>'; }
         return s; }
+      var _esGM=cotEsGM(c.cliente_nombre);
       vehs.forEach(function(v){ var its=(v.items||[]).filter(function(it){ return it && (((it.desc||"").trim())||(+it.precio||0)||(+it.cant||0)); }); if(!its.length && !v.veh && !v.patente)return; n++;
         var vsub=0, vpre=0, _secs=[], _bySec={};
-        its.forEach(function(it){ var _lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}), _pre=Math.round((+it.cant||0)*(+it.precio||0)); vsub+=_lt; vpre+=_pre; var sc=(it.sec||''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push({d:(it.desc||""), c:((+it.cant||0)||1), lt:_lt, pre:_pre, dp:cotDescNorm(it.descPct)}); });
+        its.forEach(function(it){ var _lt=cotLineaTotal({cant:+it.cant||0,precio:+it.precio||0,descPct:+it.descPct||0}), _pre=Math.round((+it.cant||0)*(+it.precio||0)); vsub+=_lt; vpre+=_pre; var sc=(it.sec||'')||(_esGM?gmSecDe(it.desc):''); if(!_bySec[sc]){ _bySec[sc]=[]; _secs.push(sc); } _bySec[sc].push({d:(it.desc||""), c:((+it.cant||0)||1), lt:_lt, pre:_pre, dp:cotDescNorm(it.descPct)}); });
         var _orden=_secs.filter(function(x){return !x;}).concat((v.secs||[]).filter(function(x){return _bySec[x];})).concat(_secs.filter(function(x){ return x && (v.secs||[]).indexOf(x)<0; }));
         sub+=vsub;
         var _veh=(v.veh||("Vehículo "+n)).trim();
