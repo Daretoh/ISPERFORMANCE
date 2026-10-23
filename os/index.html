@@ -3052,6 +3052,8 @@
   // detalle de un trabajador en el mes: días (real vs contable editable), desglose, bono autos y extras/descuentos
   function abrirRemuTrab(x){ if(!x)return; var D=REMU_DATA, dirty=false;
     var _jor=+((x.t&&x.t.jornada_horas)||0); // jornada diaria (h) del fijo; 0 = no definida → todo cuenta como extra
+    var _ho=(x.t&&x.t.horario&&typeof x.t.horario==='object')?x.t.horario:{}; // horario base del fijo (entrada/salida)
+    var _vhx=x.t?valorHoraDe(x.t):0;
     var fechas=Object.keys(x.dias).sort();
     var diasHtml=fechas.length?fechas.map(function(f){ var d=x.dias[f];
       var tramos=d.ivs.map(function(iv){ return '<span class="rh-sub" style="display:block">'+escH(iv[3])+'</span>'; }).join('');
@@ -3075,9 +3077,18 @@
       '<button type="button" class="btn primary" id="rm-add" style="margin-top:8px;width:100%">Agregar</button></div>'):
       '<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Nombre sin ficha</b><p class="hint" style="display:block;margin:4px 0 0">Estas horas vienen de «'+escH(x.nombre)+'», que no calza con ningún trabajador de RRHH. Se pagan con el valor hora general y sin bono por autos. Crea su ficha en <b>RRHH → Trabajadores</b> con el mismo nombre (o corrige el nombre en el reloj).</p></div>';
     var jorWarn=(x.t&&x.fijo&&_jor<=0)?('<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Sin jornada definida — todas las horas se pagan como extra</b><p class="hint" style="display:block;margin:4px 0 0">Es un trabajador <b>fijo</b> sin <b>jornada diaria</b> configurada. Como su sueldo base ya cubre la jornada normal, de lunes a viernes solo deberían pagarse como <b>extra</b> las horas que <b>exceden</b> su turno. Definí su jornada (ej. <b>9 h/día</b>) en <b>RRHH → Trabajadores → '+escH(x.nombre)+' → Jornada</b>. Los fines de semana se pagan completos.</p></div>'):'';
+    var _hoOk=!!(_ho && (_ho.salida||_ho.salida_vie));
+    var _hoTxt='entra '+escH(_ho.entrada||'—')+' · sale '+escH(_ho.salida||'—')+' (L–J) / '+escH(_ho.salida_vie||_ho.salida||'—')+' (vie)'+(_ho.colacion?(' · colación '+_ho.colacion+'m'):'');
+    var xtraHtml=(x.t&&x.fijo)?('<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Horas extra (según horario)</h3>'+
+      (_hoOk?(
+        '<div class="rh-sub" style="margin-bottom:8px">Horario base: '+_hoTxt+'. Registrá solo la <b>salida más tarde</b> (día de semana) o un <b>fin de semana</b>; calcula lo extra y lo suma como bono del mes.</div>'+
+        '<div class="row c3" style="gap:8px"><label class="f"><span class="lab">Fecha</span><input id="rmx-fecha" type="date" min="'+D.ini+'" max="'+D.fin+'"></label><label class="f"><span class="lab">Entrada (si es finde)</span><input id="rmx-entrada" type="time" value="'+av(_ho.entrada||'')+'"></label><label class="f"><span class="lab">Salida real</span><input id="rmx-salida" type="time"></label></div>'+
+        '<div class="row c3" style="gap:8px;margin-top:6px"><label class="f"><span class="lab">Recargo %</span><input id="rmx-recargo" type="number" min="0" step="5" value="50"></label><label class="f"><span class="lab">Monto $ (auto)</span><input id="rmx-monto" type="number" min="0"></label><div class="f"><span class="lab">Cálculo</span><div id="rmx-det" class="rh-sub" style="padding:8px 0">—</div></div></div>'+
+        '<button type="button" class="btn primary" id="rmx-add" style="margin-top:8px;width:100%">Agregar hora extra</button>'
+      ):('<div class="col-empty" style="text-align:left;padding:4px 0">Definí el <b>horario base</b> (entrada/salida) en <b>RRHH → '+escH(x.nombre)+'</b> para calcular las extra automáticamente.</div>'))+'</div>'):'';
     var M=rhModal(escH(x.nombre)+' · '+escH(mesLabel(D.mes)),
       '<div class="card"><h3 style="margin:0 0 8px">Desglose del mes</h3>'+desg+'</div>'+jorWarn+
-      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· '+(x.fijo?(_jor>0?('jornada '+_jor+' h/día — solo lo que excede es extra'):'el monto de cada día es editable'):'el monto de cada día es editable')+'</span>':'')+'</h3>'+diasHtml+'</div>'+itemsHtml, 620);
+      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· '+(x.fijo?(_jor>0?('jornada '+_jor+' h/día — solo lo que excede es extra'):'el monto de cada día es editable'):'el monto de cada día es editable')+'</span>':'')+'</h3>'+diasHtml+'</div>'+xtraHtml+itemsHtml, 620);
     var close0=M.close; M.close=function(){ close0(); if(dirty) remuRefrescar(); };
     M.q('.rh-x').onclick=M.close; M.ov.addEventListener('click',function(ev){ if(ev.target===M.ov && dirty) remuRefrescar(); });
     if(!x.t)return;
@@ -3097,7 +3108,27 @@
       sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),periodo:D.ini,tipo:tipo,concepto:obs,monto:monto,autor:(window.ISP_EMAIL||null)}).then(function(r){ b.disabled=false;
         if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ No se pudo: '+r.error.message)); return; }
         toast('✓ Agregado'); dirty=true; M.close(); }); };
-    M.ov.querySelectorAll('.rm-idel').forEach(function(b){ b.onclick=function(){ if(!confirm('¿Quitar este monto?'))return; var sb=sbc(); if(!sb)return; sb.from('remuneracion_items').delete().eq('id',b.dataset.id).then(function(r){ if(r&&r.error){ toast('⚠ No se pudo quitar'); return; } toast('✓ Quitado'); dirty=true; M.close(); }); }; }); }
+    M.ov.querySelectorAll('.rm-idel').forEach(function(b){ b.onclick=function(){ if(!confirm('¿Quitar este monto?'))return; var sb=sbc(); if(!sb)return; sb.from('remuneracion_items').delete().eq('id',b.dataset.id).then(function(r){ if(r&&r.error){ toast('⚠ No se pudo quitar'); return; } toast('✓ Quitado'); dirty=true; M.close(); }); }; });
+    // ---- hora extra según horario base (fijos) ----
+    if(_hoOk && M.q('#rmx-add')){
+      var _m2=function(hhmm){ var p=(hhmm||'').split(':'); return (+p[0]||0)*60+(+(p[1]||0)); };
+      var rmxCalc=function(){ var ff=(M.q('#rmx-fecha')||{}).value, sal=(M.q('#rmx-salida')||{}).value; if(!ff||!sal)return null;
+        var dow=new Date(ff+'T00:00:00').getDay(), finde=(dow===0||dow===6), emin=0, det='';
+        if(finde){ var ent=(M.q('#rmx-entrada')||{}).value||_ho.entrada||''; if(!ent)return {min:0,det:'falta la entrada',ff:ff}; var col=(_ho.colacion!=null?+_ho.colacion:0); emin=Math.max(0,_m2(sal)-_m2(ent)-col); det='finde '+ent+'→'+sal+(col?(' − '+col+'m colación'):'')+' = '+hm(emin)+' extra'; }
+        else { var prog=(dow===5)?(_ho.salida_vie||_ho.salida||''):(_ho.salida||''); if(!prog)return {min:0,det:'falta la salida programada',ff:ff}; emin=Math.max(0,_m2(sal)-_m2(prog)); det='salió '+sal+' vs programado '+prog+' = '+hm(emin)+' extra'; }
+        return {min:emin,det:det,ff:ff}; };
+      var rmxLive=function(){ var c=rmxCalc(), det=M.q('#rmx-det'), mo=M.q('#rmx-monto'); if(!c){ if(det)det.textContent='—'; return; } var rec=+(M.q('#rmx-recargo')||{}).value||0, monto=Math.round(c.min/60*_vhx*(1+rec/100));
+        if(det)det.innerHTML=escH(c.det)+(c.min>0?(' · '+hm(c.min)+' × '+clp(_vhx)+(rec?(' +'+rec+'%'):'')+' = <b>'+clp(monto)+'</b>'):''); if(mo && !mo._touched) mo.value=(c.min>0?monto:''); };
+      ['#rmx-fecha','#rmx-salida','#rmx-entrada','#rmx-recargo'].forEach(function(id){ var el=M.q(id); if(el)el.addEventListener('input',rmxLive); });
+      var _rmxMo=M.q('#rmx-monto'); if(_rmxMo) _rmxMo.addEventListener('input',function(){ _rmxMo._touched=true; });
+      M.q('#rmx-add').onclick=function(){ var b=this; if(b.disabled)return; var c=rmxCalc(); if(!c||!c.ff){ toast('Completá fecha y salida'); return; } if(c.min<=0){ toast('No hay horas extra (salió a la hora o antes)'); return; }
+        var monto=+(M.q('#rmx-monto').value||0); if(!monto){ toast('Monto 0 — revisá el valor hora del trabajador'); return; }
+        var rec=+(M.q('#rmx-recargo')||{}).value||0, concepto='Hora extra '+c.ff.slice(8,10)+'/'+c.ff.slice(5,7)+' · '+hm(c.min)+(rec?(' +'+rec+'%'):'');
+        var sb=sbc(); if(!sb)return; b.disabled=true;
+        sb.from('remuneracion_items').insert({trabajador_id:String(x.t.id),periodo:D.ini,tipo:'bono',concepto:concepto,monto:monto,autor:(window.ISP_EMAIL||null)}).then(function(r){ b.disabled=false;
+          if(r.error){ toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ No se pudo: '+r.error.message)); return; }
+          toast('✓ Hora extra agregada'); dirty=true; M.close(); }); };
+    } }
   // detalle de un día: quién trabajó, horas y monto por persona
   function abrirRemuDia(f){ var D=REMU_DATA; if(!D)return;
     var rows=(D.filas||[]).filter(function(x){ return x.dias[f]; });
