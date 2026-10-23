@@ -3038,10 +3038,15 @@
     sb.from('remu_ajuste_dia').upsert({trabajador_id:String(tid),fecha:f,monto:monto,obs:obs||null,autor:(window.ISP_EMAIL||null)},{onConflict:'trabajador_id,fecha'}).then(function(r){ if(r&&r.error) toast(rhFaltaSQL(r.error)?'⚠ Falta correr el SQL 54 en Supabase':('⚠ '+r.error.message)); }); }
   // detalle de un trabajador en el mes: días (real vs contable editable), desglose, bono autos y extras/descuentos
   function abrirRemuTrab(x){ if(!x)return; var D=REMU_DATA, dirty=false;
+    var _jor=+((x.t&&x.t.jornada_horas)||0); // jornada diaria (h) del fijo; 0 = no definida → todo cuenta como extra
     var fechas=Object.keys(x.dias).sort();
     var diasHtml=fechas.length?fechas.map(function(f){ var d=x.dias[f];
       var tramos=d.ivs.map(function(iv){ return '<span class="rh-sub" style="display:block">'+escH(iv[3])+'</span>'; }).join('');
-      var fijoTxt=(x.fijo&&!esFinde(f))?'<span class="rh-sub" style="display:block;color:var(--info)">fijo: '+hm(d.min)+' − jornada '+hm(d.min-d.pagMin)+' = '+hm(d.pagMin)+' extra</span>':(x.fijo?'<span class="rh-sub" style="display:block;color:var(--info)">fin de semana: cuenta completo</span>':'');
+      var fijoTxt='';
+      if(x.fijo && !esFinde(f)){
+        if(_jor>0) fijoTxt='<span class="rh-sub" style="display:block;color:var(--info)">día de semana · fijo: '+hm(d.min)+' trabajadas − '+hm(_jor*60)+' de jornada = <b>'+hm(d.pagMin)+' extra</b></span>';
+        else fijoTxt='<span class="rh-sub" style="display:block;color:var(--warn)">⚠ sin jornada definida: las '+hm(d.min)+' cuentan como extra</span>';
+      } else if(x.fijo){ fijoTxt='<span class="rh-sub" style="display:block;color:var(--info)">fin de semana: se paga completo ('+hm(d.min)+')</span>'; }
       var right=x.t?('<div class="rm-dcol"><span class="rh-sub rm-real'+(d.cont!==d.real?' aj':'')+'">real '+clp(d.real)+'</span><input type="number" min="0" class="rm-dcont" data-f="'+f+'" data-real="'+d.real+'" value="'+d.cont+'" title="Monto a pagar este día (editable)"><input class="rm-dobs" data-f="'+f+'" value="'+av(d.aj?d.aj.obs:'')+'" placeholder="motivo si ajustas"></div>'):('<b>'+clp(d.real)+'</b>');
       return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas este mes.</div>';
     var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
@@ -3056,9 +3061,10 @@
       '<div class="row c3" style="gap:8px;margin-top:8px"><label class="f"><span class="lab">Tipo</span><select id="rm-tipo"><option value="bono|">Extra / bono (+)</option><option value="bono|Aguinaldo">Aguinaldo (+)</option><option value="bono|Hora extra">Hora extra (+)</option><option value="descuento|Quincena">Quincena / anticipo (−)</option><option value="descuento|Préstamo">Préstamo (−)</option><option value="descuento|">Descuento (−)</option><option value="otro|">Otro monto (+)</option></select></label><label class="f"><span class="lab">Monto ($)</span><input id="rm-monto" type="number" min="0"></label><label class="f"><span class="lab">Motivo *</span><input id="rm-concepto" placeholder="Ej: aguinaldo, quincena, anticipo, colación…"></label></div>'+
       '<button type="button" class="btn primary" id="rm-add" style="margin-top:8px;width:100%">Agregar</button></div>'):
       '<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Nombre sin ficha</b><p class="hint" style="display:block;margin:4px 0 0">Estas horas vienen de «'+escH(x.nombre)+'», que no calza con ningún trabajador de RRHH. Se pagan con el valor hora general y sin bono por autos. Crea su ficha en <b>RRHH → Trabajadores</b> con el mismo nombre (o corrige el nombre en el reloj).</p></div>';
+    var jorWarn=(x.t&&x.fijo&&_jor<=0)?('<div class="card" style="margin-top:12px;border-color:var(--warn)"><b style="color:var(--warn)">⚠ Sin jornada definida — todas las horas se pagan como extra</b><p class="hint" style="display:block;margin:4px 0 0">Es un trabajador <b>fijo</b> sin <b>jornada diaria</b> configurada. Como su sueldo base ya cubre la jornada normal, de lunes a viernes solo deberían pagarse como <b>extra</b> las horas que <b>exceden</b> su turno. Definí su jornada (ej. <b>9 h/día</b>) en <b>RRHH → Trabajadores → '+escH(x.nombre)+' → Jornada</b>. Los fines de semana se pagan completos.</p></div>'):'';
     var M=rhModal(escH(x.nombre)+' · '+escH(mesLabel(D.mes)),
-      '<div class="card"><h3 style="margin:0 0 8px">Desglose del mes</h3>'+desg+'</div>'+
-      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· el monto de cada día es editable</span>':'')+'</h3>'+diasHtml+'</div>'+itemsHtml, 620);
+      '<div class="card"><h3 style="margin:0 0 8px">Desglose del mes</h3>'+desg+'</div>'+jorWarn+
+      '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 8px">Días trabajados'+(x.t?' <span class="rh-sub" style="font-weight:500">· '+(x.fijo?(_jor>0?('jornada '+_jor+' h/día — solo lo que excede es extra'):'el monto de cada día es editable'):'el monto de cada día es editable')+'</span>':'')+'</h3>'+diasHtml+'</div>'+itemsHtml, 620);
     var close0=M.close; M.close=function(){ close0(); if(dirty) remuRefrescar(); };
     M.q('.rh-x').onclick=M.close; M.ov.addEventListener('click',function(ev){ if(ev.target===M.ov && dirty) remuRefrescar(); });
     if(!x.t)return;
