@@ -4226,7 +4226,7 @@
     var nom=(c.cliente_nombre||"").trim().toLowerCase(); if(!nom)return out;
     Object.keys(clientesInfo||{}).forEach(function(k){ var i=clientesInfo[k]||{}; var nm=((i.nombre_mostrar||i.razon_social||i.nombre||"")+"").trim().toLowerCase(); if(nm&&nm===nom){ if(!out.rut)out.rut=i.rut||""; if(!out.giro)out.giro=i.giro||""; } });
     return out; }
-  function cotImprimir(c){ var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=true, _agrup=true; // PDF: siempre agrupa secciones (una línea por sección) y muestra valores; detalle solo en el editor
+  function cotImprimir(c,opt){ opt=opt||{}; var sub=0, tablaHTML="", _ex=cotCliExtra(c), _iva=(c.con_iva?1.19:1), _valLbl=(c.con_iva?"Valor c/IVA":"Valor"), _showVal=true, _agrup=!opt.detalle; // opt.detalle (Cierre de clientes): muestra los ítems de cada sección. PDF: siempre agrupa secciones (una línea por sección) y muestra valores; detalle solo en el editor
     var vehs=(c.vehiculos&&c.vehiculos.length)?c.vehiculos:null;
     if(vehs){ var rows="", n=0, _hasIva=!!c.con_iva;
       // muestra columna de descuento por ítem solo si hay descuentos (y si se muestran valores)
@@ -6581,7 +6581,7 @@
     root.querySelectorAll('.cc-cnota').forEach(function(x){ x.onchange=function(){ var l=cc.cotiz[+x.dataset.i]; if(!l)return; l.nota=x.value; save(); }; });
     root.querySelectorAll('.cc-avbtn').forEach(function(b){ b.onclick=function(){ ccAvanceModal(cc, +b.dataset.i); }; });
     root.querySelectorAll('.cc-editcot').forEach(function(b){ b.onclick=function(){ ccEditarCot(b.dataset.n); }; });
-    root.querySelectorAll('.cc-verpdf').forEach(function(b){ b.onclick=function(){ var c=ccCot(b.dataset.n); if(c) cotImprimir(c); }; });
+    root.querySelectorAll('.cc-verpdf').forEach(function(b){ b.onclick=function(){ var c=ccCot(b.dataset.n); if(c) cotImprimir(c,{detalle:true}); }; }); // cierre de clientes: con detalle de ítems (no agrupa secciones)
     root.querySelectorAll('.cc-qcot').forEach(function(b){ b.onclick=function(){ var l=cc.cotiz[+b.dataset.i]; if(!l||!confirm('¿Quitar la cotización N°'+l.numero+' de este cierre?\n(La cotización no se borra.)'))return; cc.cotiz.splice(+b.dataset.i,1); save(); ccLog(cc,'quitó cotización','N°'+l.numero); renderCierreCli(); }; });
     var ac=document.getElementById('cc-add-cot'); if(ac)ac.onclick=function(){ var n=parseInt((document.getElementById('cc-add-num')||{}).value,10); if(!n){ toast('Escribe el N° de cotización'); return; }
       if((cc.cotiz||[]).some(function(l){return +l.numero===n;})){ toast('La N°'+n+' ya está en este cierre'); return; }
