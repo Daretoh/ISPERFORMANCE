@@ -3813,7 +3813,8 @@
   // GM: seccion de un item normal por su nombre (Preparación de Venta / Pulido / Realce de Brillo). Lo que no calza (extras, textos libres) queda suelto.
   function gmSecDe(desc){ var t=String(desc||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s*\/\s*/g,"/").replace(/\s+/g," ").trim();
     if({"realce brillo":1,"realce de brillo":1,"corr. barniz":1,"correccion barniz":1,"correccion de barniz":1,"pulido":1,"pulido/realce de brillo":1,
-        "interior":1,"exterior":1,"motor":1,"tapiz":1,"desc. vidrios":1,"descontaminacion de vidrios":1,"vidrios":1,"retiro/entrega":1,"retiro":1,"entrega":1,"preparacion de venta":1}[t]) return GM_SEC;
+        "interior":1,"exterior":1,"motor":1,"tapiz":1,"desc. vidrios":1,"descontaminacion de vidrios":1,"vidrios":1,"retiro/entrega":1,"retiro":1,"entrega":1,"preparacion de venta":1,
+        "preparacion de venta y pulido/realce de brillo":1}[t]) return GM_SEC;
     return ''; }
   // GM: Preparación de Venta + Pulido / Realce de Brillo van juntos en UNA línea; solo los extras salen aparte
   var GM_SEC='Preparación de Venta y Pulido / Realce de Brillo';
