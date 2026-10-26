@@ -3819,7 +3819,7 @@
   // GM: Preparación de Venta + Pulido / Realce de Brillo van juntos en UNA línea; solo los extras salen aparte
   var GM_SEC='Preparación de Venta y Pulido / Realce de Brillo';
   function gmSecNorm(sc){ return (sc==='Preparación de Venta'||sc==='Pulido / Realce de Brillo')?GM_SEC:sc; } // cotizaciones guardadas con las 2 secciones antiguas
-  function cotEsGM(nombre){ return String(nombre||"").toUpperCase().indexOf("GUILLERMO MORALES")>=0; }
+  function cotEsGM(nombre){ return /guillermo\s+morales/i.test(String(nombre||"")); }
   function cotItemsDeGMRow(r){ var t=r.talla||"M", out=[];
     var PUL={brillo:1,barniz:1}; // van a "Pulido / Realce de Brillo"
     (typeof GM_SERV!=="undefined"?GM_SERV:[]).forEach(function(s){ var v=(r.items&&r.items[s.k])||0; if(!v)return;
@@ -4258,7 +4258,7 @@
             var spre=0, spost=0; _bySec[sc].forEach(function(it){ spre+=it.pre; spost+=it.lt; });
             rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(sc)+'</td><td class="r"></td>'+_cells(spre,spost,0,false,true,_showItemVal)+'</tr>'; return; }
           if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00;text-align:center">'+escH(sc)+'</td></tr>';
-          _bySec[sc].forEach(function(it){ rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+it.c+'</td>'+_cells(it.pre,it.lt,it.dp,false,false,_showItemVal)+'</tr>'; }); });
+          _bySec[sc].forEach(function(it){ var _gl=(it.d===GM_SEC||gmSecDe(it.d)===GM_SEC); rows+='<tr><td class="cp-desc" style="padding-left:18px">'+escH(it.d)+'</td><td class="r">'+(_gl?'':it.c)+'</td>'+_cells(it.pre,it.lt,it.dp,false,false,_showItemVal)+'</tr>'; }); });
         // subtotal del vehículo (siempre)
         rows+='<tr style="border-top:2px solid #2a2a2a"><td class="r" style="font-weight:700;color:#555;padding:6px 10px;border-top:2px solid #2a2a2a">'+((_esGM&&_agrup)?'Total ':'Subtotal ')+escH(_veh)+'</td><td></td>'+_cells(vpre,vsub,0,true,true,true)+'</tr>'; });
       var _cg; if(_anyDesc) _cg='<col style="width:44%"><col style="width:10%"><col style="width:16%"><col style="width:10%"><col style="width:20%">';
