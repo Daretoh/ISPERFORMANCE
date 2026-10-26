@@ -4249,7 +4249,9 @@
         // encabezado del vehículo (una sola vez), ocupa toda la fila
         rows+='<tr><td colspan="'+_nc+'" style="background:#f0ece6;border-left:3px solid #FF6B00;font-weight:800;padding:8px 10px;font-size:12px">'+escH(n+". "+_veh)+(v.patente?('<span style="font-weight:600;color:#555"> &middot; '+escH(v.patente)+'</span>'):"")+(v.talla?('<span style="font-weight:600;color:#888;font-size:10.5px"> &middot; Talla '+escH(v.talla)+'</span>'):"")+'</td></tr>';
         _orden.forEach(function(sc){
-          if(_agrup && sc){ // agrupado: una sola línea por sección (nombre + total), sin ítems
+          // se agrupa la sección de servicios predeterminados; los EXTRAS (y en GM toda sección que no sea la predeterminada) muestran cada ítem con su detalle real
+          var _agSec=_agrup && sc && !/^\s*extras?\s*$/i.test(sc) && (!_esGM || sc===GM_SEC);
+          if(_agSec){ // agrupado: una sola línea por sección (nombre + total), sin ítems
             var spre=0, spost=0; _bySec[sc].forEach(function(it){ spre+=it.pre; spost+=it.lt; });
             rows+='<tr><td class="cp-desc" style="padding-left:18px;font-weight:700">'+escH(sc)+'</td><td class="r"></td>'+_cells(spre,spost,0,false,true)+'</tr>'; return; }
           if(sc) rows+='<tr><td colspan="'+_nc+'" style="background:#fff3e9;border-left:3px solid #FF6B00;padding:6px 10px;font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#c24f00;text-align:center">'+escH(sc)+'</td></tr>';
