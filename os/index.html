@@ -2974,6 +2974,9 @@
   var DIAS3=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], DIASL=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   function diaLargo(f){ var d=new Date(f+'T12:00:00'); return DIASL[d.getDay()]+' '+d.getDate(); }
   function hm2min(s){ var p=String(s||'').split(':'); return p.length<2?null:(+p[0]*60+(+p[1]||0)); }
+  // Bono de producción: $ por auto del mes con tope por persona (decisión 2026-10-22: $1.000 por auto, tope $50.000).
+  var BONO_AUTO_TOPE=50000;
+  function bonoAutoMonto(nAutos,valor){ return Math.min(nAutos*valor, BONO_AUTO_TOPE); }
   function bonoAutoValor(){ var v=(typeof CONFIG!=='undefined'&&CONFIG)?CONFIG['bono_auto']:null; return (v===undefined||v===null||v==='')?1000:(+v||0); }
   // autos del mes: los que se trabajaron (en proceso / terminado / entregado) con ingreso (o agenda) en ese mes
   function autosDelMes(m){ return (data||[]).filter(function(e){ return ['EN PROCESO','TERMINADO','ENTREGADO'].indexOf(e.estado)>=0 && (e.fIngreso||e.fCoord||'').slice(0,7)===m; }); }
@@ -3030,14 +3033,14 @@
       var sueldo=sueldoMes(t,D.mes);
       if(t && !trabActivo(t) && !totMin && !bono && !desc && !sueldo) return;
       // bono por autos: a cada persona con ficha que trabajó al menos un día en el mes
-      var nD=Object.keys(dias).length, bAutos=(t && nD && !sinBono)?nAutos*D.valorAuto:0;
+      var nD=Object.keys(dias).length, bAutos=(t && nD && !sinBono)?bonoAutoMonto(nAutos,D.valorAuto):0;
       var x={t:t,nombre:S.nombre,fijo:!!(t&&fijoEnMes(t,D.mes)),vh:vh,dias:dias,nDias:nD,totMin:totMin,pagMin:pagMin,base:real,baseCont:cont,aj:hayAj,bonoAutos:bAutos,sinBono:sinBono,bono:bono,desc:desc,items:its,sueldo:sueldo,real:sueldo+real+bAutos+bono-desc,contable:sueldo+cont+bAutos+bono-desc};
       filas.push(x); total+=x.contable; totBonoAutos+=bAutos; });
     filas.sort(function(a,b){ if(!!a.t!==!!b.t) return a.t?-1:1; if(a.fijo!==b.fijo) return a.fijo?1:-1; return normNom(a.nombre)<normNom(b.nombre)?-1:1; });
     D.filas=filas; D.porDiaMonto=porDiaMonto; D.porDiaMin=porDiaMin;
     var tv=document.getElementById('remu-total-val'); if(tv) tv.textContent=clp(total);
     var cn=document.getElementById('remu-cnt'); if(cn) cn.innerHTML='· '+filas.length+(filas.length===1?' trabajador':' trabajadores')+(solapes?(' · <span style="color:var(--warn);font-weight:700">'+solapes+' día'+(solapes>1?'s':'')+' con horas que se pisaban (contadas una vez)</span>'):'');
-    var ba=document.getElementById('remu-autos'); if(ba) ba.innerHTML='<span>🚗 Bono por autos: <b>'+nAutos+' auto'+(nAutos===1?'':'s')+'</b> en '+escH(mesLabel(D.mes))+' × <b>'+clp(D.valorAuto)+'</b> = <b>'+clp(nAutos*D.valorAuto)+'</b> por persona</span><span style="color:var(--ink-muted)">Total bono: '+clp(totBonoAutos)+'</span><span style="display:flex;gap:6px;margin-left:auto"><button type="button" class="stk-btn" id="remu-autos-ver">Ver autos</button><button type="button" class="stk-btn" id="remu-autos-val">$ por auto</button></span>';
+    var ba=document.getElementById('remu-autos'); if(ba) ba.innerHTML='<span>🚗 Bono por autos: <b>'+nAutos+' auto'+(nAutos===1?'':'s')+'</b> en '+escH(mesLabel(D.mes))+' × <b>'+clp(D.valorAuto)+'</b> = <b>'+clp(bonoAutoMonto(nAutos,D.valorAuto))+'</b> por persona'+(nAutos*D.valorAuto>BONO_AUTO_TOPE?(' <span style="color:var(--ink-muted)">(tope '+clp(BONO_AUTO_TOPE)+')</span>'):'')+'</span><span style="color:var(--ink-muted)">Total bono: '+clp(totBonoAutos)+'</span><span style="display:flex;gap:6px;margin-left:auto"><button type="button" class="stk-btn" id="remu-autos-ver">Ver autos</button><button type="button" class="stk-btn" id="remu-autos-val">$ por auto</button></span>';
     var bv=document.getElementById('remu-autos-ver'); if(bv) bv.onclick=abrirAutosMes;
     var bval=document.getElementById('remu-autos-val'); if(bval) bval.onclick=function(){ var v=prompt('Bono por auto ($) que recibe cada persona:',String(D.valorAuto)); if(v===null)return; v=Math.max(0,parseInt(String(v).replace(/[^0-9]/g,''),10)||0); guardarConfig('bono_auto',v); computarRemu(); toast('✓ Bono por auto: '+clp(v)); };
     // calendario del mes (lunes a domingo)
@@ -3080,7 +3083,7 @@
       return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas este mes.</div>';
     var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
     var desg=(x.sueldo?lin('Sueldo base',clp(x.sueldo)):'')+lin((x.fijo?'Horas extra pagadas':'Horas')+' ('+hm(x.pagMin)+(x.vh?' × '+clp(x.vh):'')+')',clp(x.base));
-    if(x.t) desg+=x.sinBono?lin('Bono por autos','excluido este mes','color:var(--ink-muted)'):lin('Bono por autos ('+D.autos.length+' × '+clp(D.valorAuto)+')',clp(x.bonoAutos),'color:var(--ok)');
+    if(x.t) desg+=x.sinBono?lin('Bono por autos','excluido este mes','color:var(--ink-muted)'):lin('Bono por autos ('+D.autos.length+' × '+clp(D.valorAuto)+(D.autos.length*D.valorAuto>BONO_AUTO_TOPE?(', tope '+clp(BONO_AUTO_TOPE)):'')+')',clp(x.bonoAutos),'color:var(--ok)');
     if(x.bono) desg+=lin('Extras / bonos',clp(x.bono),'color:var(--ok)'); if(x.desc) desg+=lin('Descuentos / anticipos','− '+clp(x.desc),'color:var(--crit)');
     desg+=lin('Total real (por horas)',clp(x.real))+'<div class="rm-lin tot"><span>Total a pagar (contable)</span><b id="rm-live">'+clp(x.contable)+'</b></div>';
     if(x.t && x.nDias) desg+='<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:8px"><input type="checkbox" id="rm-sinbono"'+(x.sinBono?' checked':'')+'> No pagarle bono por autos este mes</label>';
