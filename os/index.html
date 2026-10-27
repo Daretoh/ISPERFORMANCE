@@ -3003,7 +3003,11 @@
   // minutos a pagar de un día: spot = todo; fijo = lo que excede la jornada (sáb/dom completo)
   // Sueldo base del mes (solo fijos, desde el mes de vigencia).
   function sueldoMes(t,m){ if(!t||!fijoEnMes(t,m)) return 0; var sb=(+t.sueldo_base)||sueldoCargo(t.cargo); if(!sb) return 0; if(t.sueldo_desde && m<String(t.sueldo_desde).slice(0,7)) return 0; return sb; }
-  function pagoMinDia(t,f,min){ if(!fijoEnMes(t,String(f).slice(0,7))||esFinde(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
+  // Feriados de Chile: para los fijos, ese día todas las horas se pagan como trato (igual que sábado y domingo), como en InnovaGestión.
+  var FERIADOS_MMDD=['01-01','05-01','05-21','06-29','07-16','08-15','09-18','09-19','10-12','10-31','11-01','12-08','12-25'];
+  var FERIADOS_ISO=['2026-04-03','2026-04-04','2026-06-21','2027-03-26','2027-03-27'];   // movibles: agregar cada año
+  function esFeriado(f){ f=String(f||''); return FERIADOS_MMDD.indexOf(f.slice(5))>=0 || FERIADOS_ISO.indexOf(f)>=0; }
+  function pagoMinDia(t,f,min){ if(!fijoEnMes(t,String(f).slice(0,7))||esFinde(f)||esFeriado(f)) return min; var jor=(+t.jornada_horas||0)*60; return Math.max(0,min-jor); }
   function computarRemu(){ var D=REMU_DATA; if(!D)return;
     D.autos=autosDelMes(D.mes); D.valorAuto=bonoAutoValor();
     var byRut={}, byNom={}; (_trab||[]).forEach(function(t){ if(t.rut4) byRut[String(t.rut4)]=t; byNom[normNom(t.nombre)]=t; });
@@ -3075,10 +3079,10 @@
     var diasHtml=fechas.length?fechas.map(function(f){ var d=x.dias[f];
       var tramos=d.ivs.map(function(iv){ return '<span class="rh-sub" style="display:block">'+escH(iv[3])+'</span>'; }).join('');
       var fijoTxt='';
-      if(x.fijo && !esFinde(f)){
+      if(x.fijo && !esFinde(f) && !esFeriado(f)){
         if(_jor>0) fijoTxt='<span class="rh-sub" style="display:block;color:var(--info)">día de semana · fijo: '+hm(d.min)+' trabajadas − '+hm(_jor*60)+' de jornada = <b>'+hm(d.pagMin)+' extra</b></span>';
         else fijoTxt='<span class="rh-sub" style="display:block;color:var(--warn)">⚠ sin jornada definida: las '+hm(d.min)+' cuentan como extra</span>';
-      } else if(x.fijo){ fijoTxt='<span class="rh-sub" style="display:block;color:var(--info)">fin de semana: se paga completo ('+hm(d.min)+')</span>'; }
+      } else if(x.fijo){ fijoTxt='<span class="rh-sub" style="display:block;color:var(--info)">'+(esFinde(f)?'fin de semana':'feriado')+': se paga completo ('+hm(d.min)+')</span>'; }
       var right=x.t?('<div class="rm-dcol"><span class="rh-sub rm-real'+(d.cont!==d.real?' aj':'')+'">real '+clp(d.real)+'</span><input type="number" min="0" class="rm-dcont" data-f="'+f+'" data-real="'+d.real+'" value="'+d.cont+'" title="Monto a pagar este día (editable)"><input class="rm-dobs" data-f="'+f+'" value="'+av(d.aj?d.aj.obs:'')+'" placeholder="motivo si ajustas"></div>'):('<b>'+clp(d.real)+'</b>');
       return '<div class="rm-day"><div style="flex:1;min-width:0"><b style="text-transform:capitalize">'+diaLargo(f)+'</b> <span class="rh-sub">· '+hm(d.min)+'</span>'+tramos+fijoTxt+'</div>'+right+'</div>'; }).join(''):'<div class="col-empty">Sin horas registradas este mes.</div>';
     var lin=function(a,b,st){ return '<div class="rm-lin"><span>'+a+'</span><b'+(st?' style="'+st+'"':'')+'>'+b+'</b></div>'; };
